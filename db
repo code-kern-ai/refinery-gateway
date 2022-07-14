@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [[ "$(docker images -q graphql-dev 2> /dev/null)" == "" ]]; then
+    echo -ne 'building container...'
+    docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
+    echo -ne '\t\t [done]\n'
+fi
+
+migrate() {
+    docker run --rm \
+    --name graphql-gateway-migration \
+    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    --mount type=bind,source="$(pwd)"/,target=/app \
+    --network dev-setup_default \
+    --entrypoint /usr/local/bin/alembic \
+    graphql-dev upgrade head
+}
+
+commit() {
+    docker run --rm \
+    --name graphql-gateway-migration \
+    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    --mount type=bind,source="$(pwd)"/,target=/app \
+    --network dev-setup_default \
+    --entrypoint /usr/local/bin/alembic \
+    graphql-dev revision --autogenerate -m "$@"
+}
+
+alembic() {
+    docker run --rm \
+    --name graphql-gateway-migration \
+    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    --mount type=bind,source="$(pwd)"/,target=/app \
+    --network dev-setup_default \
+    --entrypoint /usr/local/bin/alembic \
+    graphql-dev "$@"
+}
+
+if [ "$1" == "commit" ]; then
+    if [ -z ${2+x} ]; 
+    then echo "Please provide a commit message"; 
+    else commit "$2";
+    fi
+fi
+
+if [ "$1" == "migrate" ]; then
+    migrate
+else
+    alembic "$@"
+fi

@@ -1,0 +1,31 @@
+#!/bin/bash
+CONFIG_EXISTS=0
+if [ -n "$(docker ps -q -f name=dev-setup_config-service_1)" ]
+then
+    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup_config-service_1 )" == "running" ]; 
+    then
+        CONFIG_EXISTS=1
+    fi
+elif [ -n "$(docker ps -q -f name=dev-setup-config-service-1)" ]
+then
+    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup-config-service-1 )" == "running" ]; 
+    then
+        CONFIG_EXISTS=1
+    fi
+else
+    if [ -n "$(docker ps -q -f name=config-service)" ];
+    then
+        if [ "$( docker container inspect -f '{{.State.Status}}' config-service )" == "running" ];
+        then
+            CONFIG_EXISTS=1
+        fi
+    fi
+fi
+if [ $CONFIG_EXISTS -eq 0 ]
+then 
+    echo "config-service couldn't be found - exit"
+    exit 1
+else
+    echo "config-service found -> proceeding"
+fi
+
