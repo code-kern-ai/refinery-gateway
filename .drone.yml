@@ -120,7 +120,7 @@ type: docker
 name: arm64-dockerhub
 
 platform:
-  arch: arm64-dockerhub
+  arch: arm64
 
 steps:
   - name: submodules
