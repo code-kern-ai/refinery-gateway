@@ -1,21 +1,21 @@
 #!/bin/bash
 CONFIG_EXISTS=0
-if [ -n "$(docker ps -q -f name=dev-setup_config-service_1)" ]
+if [ -n "$(docker ps -q -f name=dev-setup_refinery-config_1)" ]
 then
-    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup_config-service_1 )" == "running" ]; 
+    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup_refinery-config_1 )" == "running" ]; 
     then
         CONFIG_EXISTS=1
     fi
-elif [ -n "$(docker ps -q -f name=dev-setup-config-service-1)" ]
+elif [ -n "$(docker ps -q -f name=dev-setup-refinery-config-1)" ]
 then
-    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup-config-service-1 )" == "running" ]; 
+    if [ "$( docker container inspect -f '{{.State.Status}}' dev-setup-refinery-config-1 )" == "running" ]; 
     then
         CONFIG_EXISTS=1
     fi
 else
-    if [ -n "$(docker ps -q -f name=config-service)" ];
+    if [ -n "$(docker ps -q -f name=refinery-config)" ];
     then
-        if [ "$( docker container inspect -f '{{.State.Status}}' config-service )" == "running" ];
+        if [ "$( docker container inspect -f '{{.State.Status}}' refinery-config )" == "running" ];
         then
             CONFIG_EXISTS=1
         fi
@@ -23,9 +23,9 @@ else
 fi
 if [ $CONFIG_EXISTS -eq 0 ]
 then 
-    echo "config-service couldn't be found - exit"
+    echo "refinery-config couldn't be found - exit"
     exit 1
 else
-    echo "config-service found -> proceeding"
+    echo "refinery-config found -> proceeding"
 fi
 
