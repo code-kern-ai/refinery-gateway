@@ -1,12 +1,12 @@
 #!/bin/bash
-trap "echo -ne '\nstopping container...' && docker stop graphql-gateway > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
+trap "echo -ne '\nstopping container...' && docker stop refinery-gateway > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
 
 source check_config_service
 
 HOST_IP=$(docker network inspect bridge --format='{{json .IPAM.Config}}' | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | tail -1)
 
 echo -ne 'stopping old container...'
-docker stop graphql-gateway > /dev/null 2>&1
+docker stop refinery-gateway > /dev/null 2>&1
 echo -ne '\t [done]\n'
 
 echo -ne 'downloading exec-envs...'
@@ -21,7 +21,7 @@ echo -ne '\t\t [done]\n'
 
 echo -ne 'migrating db...\n'
 docker run --rm \
---name graphql-gateway-migration \
+--name refinery-gateway-migration \
 -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
 --mount type=bind,source="$(pwd)"/,target=/app \
 --network dev-setup_default \
@@ -31,7 +31,7 @@ echo -ne 'migration done\n'
 
 echo -ne 'starting...'
 docker run -d --rm \
---name graphql-gateway \
+--name refinery-gateway \
 -p 7051:80 \
 -e LF_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/lf-execution-environment:dev \
 -e ML_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/ml-execution-environment:main \
@@ -57,4 +57,4 @@ docker run -d --rm \
 graphql-dev > /dev/null 2>&1
 echo -ne '\t\t\t [done]\n'
 
-docker logs -f graphql-gateway \
+docker logs -f refinery-gateway \

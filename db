@@ -8,7 +8,7 @@ fi
 
 migrate() {
     docker run --rm \
-    --name graphql-gateway-migration \
+    --name refinery-gateway-migration \
     -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
@@ -18,7 +18,7 @@ migrate() {
 
 commit() {
     docker run --rm \
-    --name graphql-gateway-migration \
+    --name refinery-gateway-migration \
     -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
@@ -28,7 +28,7 @@ commit() {
 
 alembic() {
     docker run --rm \
-    --name graphql-gateway-migration \
+    --name refinery-gateway-migration \
     -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
