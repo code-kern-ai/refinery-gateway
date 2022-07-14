@@ -117,7 +117,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: arm64
+name: arm64-dockerhub
 
 platform:
   arch: arm64-dockerhub
