@@ -97,7 +97,7 @@ def run_record_ide(
         os.remove(knowledge_base_tar_path)
 
         if error:
-            logs += f"\n\nUnfortunatly the {error} was exceeded.\n\nIf this is not by misstake an infinite loop situation please contact our support."
+            logs += f"\n\nUnfortunatly the {error} was exceeded.\n\nIf this is not by mistake an infinite loop situation please contact our support."
     del __containers_running[container_name]
     return logs
 
