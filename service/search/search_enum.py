@@ -1,0 +1,74 @@
+from enum import Enum
+
+
+class SearchTargetTables(Enum):
+    RECORD_LABEL_ASSOCIATION = "RECORD_LABEL_ASSOCIATION"
+    RECORD = "RECORD"
+    # RECORD_CB_USER = "RECORD_CB_USER"  # caution user name not in db needs to be collected beforehand with kratos e.g. resolve_user_name_by_id
+
+
+class SearchColumn(Enum):
+    ID = "id"
+    CREATED_AT = "created_at"
+    DATA = "data"
+    NAME = "name"
+    SOURCE_TYPE = "source_type"
+    CATEGORY = "category"
+    LABELING_TASK_LABEL_ID = "labeling_task_label_id"
+    SOURCE_ID = "source_id"
+    CONFIDENCE = "confidence"
+
+
+class SearchOperators(Enum):
+    EQUAL = "EQUAL"
+    BEGINS_WITH = "BEGINS_WITH"
+    ENDS_WITH = "ENDS_WITH"
+    CONTAINS = "CONTAINS"
+    IN = "IN"
+
+
+class FilterDataDictKeys(Enum):
+    RELATION = "RELATION"
+    NEGATION = "NEGATION"
+    TARGET_TABLE = "TARGET_TABLE"
+    TARGET_COLUMN = "TARGET_COLUMN"
+    OPERATOR = "OPERATOR"
+    VALUES = "VALUES"
+    FILTER = "FILTER"
+    ORDER_BY = "ORDER_BY"
+    ORDER_DIRECTION = "ORDER_DIRECTION"
+    SUBQUERIES = "SUBQUERIES"
+    SUBQUERY_TYPE = "SUBQUERY_TYPE"
+    QUERY_TEMPLATE = "QUERY_TEMPLATE"  # SearchQueryTemplate
+
+
+class SearchTableLookupKeys(Enum):
+    SEARCH_KEY = "SEARCH_KEY"
+    TABLE = "TABLE"
+    PARENT = "PARENT"
+    ALIAS = "ALIAS"
+    DEPTH = "DEPTH"
+    GROUP_NEEDED = "GROUP_NEEDED"
+    USER_NEEDED = "USER_NEEDED"
+    LEFT_JOIN_IF_NEGATION = "LEFT_JOIN_IF_NEGATION"
+
+
+class SearchOrderBy(Enum):
+    CONFIDENCE = "CONFIDENCE"
+    RECORD_ID = "RECORD_ID"
+    RECORD_CREATED_AT = "RECORD_CR_DATE"
+    RECORD_DATA = "RECORD_DATA"
+
+
+class SearchQueryTemplate(Enum):
+    BASE_QUERY = "BASE_QUERY"
+    SUBQUERY_RLA_LABEL = "SUBQUERY_RLA_LABEL"
+    SUBQUERY_RLA_CONFIDENCE = "SUBQUERY_RLA_CONFIDENCE"
+    SUBQUERY_RLA_NO_LABEL = "SUBQUERY_RLA_NO_LABEL"
+    SUBQUERY_RLA_INFORMATION_SOURCE = "SUBQUERY_RLA_INFORMATION_SOURCE"
+    SUBQUERY_RLA_CREATED_BY = "SUBQUERY_RLA_CREATED_BY"
+    SUBQUERY_RLA_DIFFERENT_IS_CLASSIFICATION = (
+        "SUBQUERY_RLA_DIFFERENT_IS_CLASSIFICATION"
+    )
+    SUBQUERY_RLA_DIFFERENT_IS_EXTRACTION = "SUBQUERY_RLA_DIFFERENT_IS_EXTRACTION"
+    ORDER_RLA = "ORDER_RLA"

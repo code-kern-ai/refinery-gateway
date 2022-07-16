@@ -1,0 +1,5 @@
+# Specifies only dev-specific requirements
+# But imports the common ones too
+-r requirements.txt
+pytest-cov==3.0.0
+pytest-postgresql==3.1.2
