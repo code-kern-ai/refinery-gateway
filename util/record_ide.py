@@ -45,7 +45,7 @@ def run_record_ide(
     knowledge_base_bytes_path = pack_knowledge_base(project_id)
 
     command = [code, record_bytes_path, knowledge_base_bytes_path]
-    cpu_limit = docker.types.Ulimit(name="cpu", soft=25, hard=25)
+    cpu_limit = docker.types.Ulimit(name="cpu", soft=50, hard=50)
     container_name = str(uuid.uuid4())
     container = client.containers.create(
         command=command,
@@ -61,10 +61,14 @@ def run_record_ide(
         knowledge_base_tar_path = f"{project_id}.tar"
 
         copy_to(
-            f"./{record_bytes_path}", f"{container.name}:/{record_bytes_path}", record_tar_path
+            f"./{record_bytes_path}",
+            f"{container.name}:/{record_bytes_path}",
+            record_tar_path,
         )
         copy_to(
-            f"./{knowledge_base_bytes_path}", f"{container.name}:/{knowledge_base_bytes_path}", knowledge_base_tar_path
+            f"./{knowledge_base_bytes_path}",
+            f"{container.name}:/{knowledge_base_bytes_path}",
+            knowledge_base_tar_path,
         )
         daemon.run(cancel_container, container_name, container)
         __containers_running[container_name] = True
@@ -99,7 +103,7 @@ def run_record_ide(
 
 
 def cancel_container(name: str, container: Any):
-    TIMEOUT = 15
+    TIMEOUT = 60
     time.sleep(TIMEOUT)
     if name in __containers_running and __containers_running[name]:
         __containers_running[name] = False
@@ -132,6 +136,7 @@ def pack_record_data(project_id: str, record_id: str) -> str:
     with open(record_bytes_path, "wb") as file:
         pickle.dump(full_data, file)
     return record_bytes_path
+
 
 def pack_knowledge_base(project_id: str) -> str:
     knowledge_base_source = knowledge_base.build_knowledge_base_from_project(project_id)
