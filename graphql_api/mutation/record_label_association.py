@@ -31,6 +31,7 @@ class CreateClassificationAssociation(graphene.Mutation):
         labeling_task_id: str,
         as_gold_star: Optional[bool] = None,
     ):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         record = manager.create_classification_label(
@@ -77,6 +78,7 @@ class CreateExtractionAssociation(graphene.Mutation):
         value: str,
         as_gold_star: Optional[bool] = None,
     ):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         record = manager.create_extraction_label(
@@ -119,6 +121,7 @@ class SetGoldStarAnnotationForTask(graphene.Mutation):
         labeling_task_id: str,
         gold_user_id: str,
     ):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         task_type = manager.create_gold_star_association(
@@ -129,7 +132,8 @@ class SetGoldStarAnnotationForTask(graphene.Mutation):
         doc_ock.post_event(
             user,
             events.AddLabelsToRecord(
-                ProjectName=f"{project.name}-{project.id}", Type=task_type,
+                ProjectName=f"{project.name}-{project.id}",
+                Type=task_type,
             ),
         )
         notification.send_organization_update(project_id, f"rla_created:{record_id}")
@@ -146,6 +150,7 @@ class DeleteRecordLabelAssociationByIds(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, record_id: str, association_ids: List[str]):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.delete_record_label_association(project_id, record_id, association_ids)
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
@@ -162,6 +167,7 @@ class DeleteGoldStarAssociationForTask(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, record_id: str, labeling_task_id: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         manager.delete_gold_star_association(

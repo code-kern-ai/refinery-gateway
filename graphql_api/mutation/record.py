@@ -13,6 +13,7 @@ class DeleteRecord(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, record_id: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.delete_record(project_id, record_id)
         notification.send_organization_update(project_id, f"record_deleted:{record_id}")

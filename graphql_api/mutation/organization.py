@@ -19,6 +19,7 @@ class AddUserToOrganization(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, organization_name: str, user_mail: str):
+        auth.check_is_demo()
         if config_service.get_config_value("is_managed"):
             auth.check_admin_access(info)
         else:
@@ -38,6 +39,7 @@ class RemoveUserFromOrganization(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, user_mail: str):
+        auth.check_is_demo()
         auth.check_admin_access(info)
         user_manager.remove_organization_from_user(user_mail)
         return RemoveUserFromOrganization(ok=True)
@@ -50,6 +52,7 @@ class CreateOrganization(graphene.Mutation):
     organization = graphene.Field(lambda: Organization)
 
     def mutate(self, info, name: str):
+        auth.check_is_demo()
         if config_service.get_config_value("is_managed"):
             auth.check_admin_access(info)
         else:
@@ -66,6 +69,7 @@ class DeleteOrganization(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, name: str):
+        auth.check_is_demo()
         auth.check_admin_access(info)
         organization_manager.delete_organization(name)
         return DeleteOrganization(ok=True)

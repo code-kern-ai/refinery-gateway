@@ -41,6 +41,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         create_notification(
@@ -50,7 +51,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
             "Weak Supervision Task",
         )
         notification.send_organization_update(project_id, f"weak_supervision_started")
-        
+
         weak_supervision_task = ws_manager.create_task(
             project_id=project_id,
             created_by=user.id,
@@ -110,8 +111,6 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
         return InitiateWeakSupervisionByProjectId(ok=True)
 
 
-
-
 class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -120,17 +119,20 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, information_source_id: str, labeling_task_id: str):
+    def mutate(
+        self, info, project_id: str, information_source_id: str, labeling_task_id: str
+    ):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         pl_manager.create_payload(
             info, project_id, information_source_id, user.id, asynchronous=False
         )
-        labeling_task_item =  labeling_task.get(project_id, labeling_task_id)
+        labeling_task_item = labeling_task.get(project_id, labeling_task_id)
         for information_source in labeling_task_item.information_sources:
             information_source.is_selected = any(
-                source_statistic.true_positives > 0 
-                for source_statistic in information_source.source_statistics 
+                source_statistic.true_positives > 0
+                for source_statistic in information_source.source_statistics
                 if source_statistic.true_positives is not None
             )
         general.commit()
@@ -143,7 +145,9 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 project_id,
                 "Weak Supervision Task",
             )
-            notification.send_organization_update(project_id, f"weak_supervision_started")
+            notification.send_organization_update(
+                project_id, f"weak_supervision_started"
+            )
 
             weak_supervision_task = ws_manager.create_task(
                 project_id=project_id,
@@ -197,7 +201,6 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 project_id, f"weak_supervision_failed"
             )
         return RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(ok=True)
-
 
 
 class WeakSupervisionMutation(graphene.ObjectType):

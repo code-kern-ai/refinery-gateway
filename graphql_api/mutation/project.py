@@ -60,6 +60,7 @@ class DeleteProject(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, status=enums.ProjectStatus.IN_DELETION.value)
         user = auth.get_user_by_info(info)
@@ -83,6 +84,7 @@ class UpdateProjectStatus(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, new_status: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, status=new_status)
         return UpdateProjectStatus(ok=True)
@@ -103,6 +105,7 @@ class UpdateProjectNameAndDescription(graphene.Mutation):
         name: Optional[str] = None,
         description: Optional[str] = None,
     ):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, name=name, description=description)
         # one global for e.g notification center
@@ -120,6 +123,7 @@ class UpdateProjectTokenizer(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, tokenizer: str):
+        auth.check_is_demo()
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, tokenizer=tokenizer)
         return UpdateProjectTokenizer(ok=True)

@@ -1,4 +1,6 @@
 from typing import Any, Dict
+from controller.misc import config_service
+from exceptions.exceptions import NotAllowedInDemoError
 import jwt
 from graphql import GraphQLError
 from controller.project import manager as project_manager
@@ -16,6 +18,7 @@ def get_organization_id_by_info(info) -> Organization:
 def get_user_by_info(info) -> User:
     user_id: str = get_user_id_by_jwt_token(info.context["request"])
     return user_manager.get_or_create_user(user_id)
+
 
 def get_user_by_email(email: str) -> User:
     return user_manager.get_or_create_user_by_email(email)
@@ -78,3 +81,8 @@ def check_is_admin(request: Any) -> bool:
         ):
             return True
     return False
+
+
+def check_is_demo() -> bool:
+    if config_service.get_config_value("is_demo"):
+        raise NotAllowedInDemoError()
