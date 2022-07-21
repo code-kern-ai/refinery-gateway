@@ -19,6 +19,7 @@ class CreateProject(graphene.Mutation):
     project = graphene.Field(lambda: Project)
 
     def mutate(self, info, name: str, description: Optional[str] = None):
+        auth.check_is_demo()
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
         project = manager.create_project(
@@ -40,6 +41,7 @@ class CreateSampleProject(graphene.Mutation):
     project = graphene.Field(lambda: Project)
 
     def mutate(self, info, name: Optional[str] = None):
+        auth.check_is_demo()
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
         project = manager.import_sample_project(user.id, organization.id, name)
