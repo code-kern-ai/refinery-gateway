@@ -16,3 +16,7 @@ class NoSuchDataSliceFoundException(Exception):
 
 class MissingArgumentsException(Exception):
     pass
+
+
+class NotAllowedInDemoError(Exception):
+    pass
