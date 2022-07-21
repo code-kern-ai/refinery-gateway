@@ -115,6 +115,7 @@ class UpdateSliceTypeManual(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, execute=False):
+        auth.check_is_demo()
         if execute:
             manager.update_slice_type_manual_for_all()
 

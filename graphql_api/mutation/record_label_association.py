@@ -186,6 +186,7 @@ class UpdateRlaIsValidManual(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, execute: Optional[bool] = False):
+        auth.check_is_demo()
         if execute:
             manager.update_is_valid_manual_label_for_all()
 
