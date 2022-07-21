@@ -52,7 +52,6 @@ class CreateOrganization(graphene.Mutation):
     organization = graphene.Field(lambda: Organization)
 
     def mutate(self, info, name: str):
-        auth.check_is_demo()
         if config_service.get_config_value("is_managed"):
             auth.check_admin_access(info)
         else:

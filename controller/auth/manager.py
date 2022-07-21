@@ -85,4 +85,4 @@ def check_is_admin(request: Any) -> bool:
 
 def check_is_demo() -> bool:
     if config_service.get_config_value("is_demo"):
-        raise NotAllowedInDemoError()
+        raise NotAllowedInDemoError
