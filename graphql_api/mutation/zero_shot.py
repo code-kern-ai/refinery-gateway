@@ -17,7 +17,7 @@ class ZeroShotProject(graphene.Mutation):
         project_id: str,
         information_source_id: str,
     ):
-        auth_manager.check_is_demo()
+        auth_manager.check_is_demo(info)
         auth_manager.check_project_access(info, project_id)
         user_id = auth_manager.get_user_id_by_info(info)
         manager.start_zero_shot_for_project_thread(
@@ -44,7 +44,7 @@ class CreateZeroShotInformationSource(graphene.Mutation):
         labeling_task_id: str,
         attribute_id: str = "",
     ):
-        auth_manager.check_is_demo()
+        auth_manager.check_is_demo(info)
         auth_manager.check_project_access(info, project_id)
         user_id = auth_manager.get_user_id_by_info(info)
         zero_shot_id = manager.create_zero_shot_information_source(

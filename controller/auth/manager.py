@@ -83,6 +83,8 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_is_demo() -> bool:
-    if config_service.get_config_value("is_demo"):
+def check_is_demo(info: Any) -> bool:
+    if not check_is_admin(info.context["request"]) and config_service.get_config_value(
+        "is_demo"
+    ):
         raise NotAllowedInDemoError

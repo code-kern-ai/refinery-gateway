@@ -30,7 +30,7 @@ class CreateDataSlice(graphene.Mutation):
         filter_raw: Dict[str, Any],
         filter_data: List[Dict[str, Any]],
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         try:
@@ -63,7 +63,7 @@ class UpdateDataSlice(graphene.Mutation):
         filter_raw: Dict[str, Any],
         filter_data: Optional[List[Dict[str, Any]]] = None,
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         try:
@@ -85,7 +85,7 @@ class DeleteDataSlice(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, data_slice_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.delete_data_slice(project_id, data_slice_id)
         notification.send_organization_update(project_id, f"data_slice_deleted")
@@ -100,7 +100,7 @@ class CreateOutlierSlice(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id, embedding_id):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
         manager.create_outlier_slice(project_id, user_id, embedding_id)
@@ -115,7 +115,7 @@ class UpdateSliceTypeManual(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, execute=False):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         if execute:
             manager.update_slice_type_manual_for_all()
 

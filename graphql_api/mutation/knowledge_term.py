@@ -18,7 +18,7 @@ class CreateKnowledgeTerm(graphene.Mutation):
     def mutate(
         self, info, project_id: str, knowledge_base_id: str, value: str, comment: str
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         manager.create_term(user.id, project_id, knowledge_base_id, value, comment)
@@ -47,7 +47,7 @@ class PasteKnowledgeTerms(graphene.Mutation):
         split: str = "\n",
         delete: bool = False,
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.paste_knowledge_terms(
             project_id, knowledge_base_id, values, split, delete
@@ -68,7 +68,7 @@ class UpdateKnowledgeTerm(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, term_id: str, value: str, comment: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         base = base_manager.get_knowledge_base_by_term(project_id, term_id)
         user = get_user_by_info(info)
@@ -87,7 +87,7 @@ class DeleteKnowledgeTerm(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, term_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         base = base_manager.get_knowledge_base_by_term(project_id, term_id)
         manager.delete_term(project_id, term_id)
@@ -105,7 +105,7 @@ class BlacklistTerm(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, term_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.blacklist_term(term_id)
         return BlacklistTerm(ok=True)

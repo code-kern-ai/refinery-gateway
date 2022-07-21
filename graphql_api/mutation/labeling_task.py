@@ -25,7 +25,7 @@ class CreateLabelingTask(graphene.Mutation):
         labeling_task_type: str,
         labeling_task_target_id: Optional[str] = None,
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         project = project_manager.get_project(project_id)
@@ -63,7 +63,7 @@ class UpdateLabelingTask(graphene.Mutation):
         labeling_task_type: str,
         labeling_task_target_id: Optional[str] = None,
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.update_labeling_task(
             project_id,
@@ -87,7 +87,7 @@ class DeleteLabelingTask(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, labeling_task_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.delete_labeling_task(project_id, labeling_task_id)
         notification.send_organization_update(project_id, f"labeling_task_deleted")

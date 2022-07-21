@@ -34,4 +34,4 @@ class MiscQuery(graphene.ObjectType):
         return manager.check_is_managed()
 
     def resolve_is_demo(self, info) -> bool:
-        return auth.check_is_demo()
+        return auth.check_is_demo(info)

@@ -16,7 +16,7 @@ class CreateKnowledgeBase(graphene.Mutation):
     knowledge_base = graphene.Field(KnowledgeBase)
 
     def mutate(self, info, project_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         knowledge_base = manager.create_knowledge_base(project_id)
         prj_notification.send_organization_update(
@@ -33,7 +33,7 @@ class DeleteKnowledgeBase(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, knowledge_base_id: str):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         manager.delete_knowledge_base(project_id, knowledge_base_id)
         prj_notification.send_organization_update(
@@ -59,7 +59,7 @@ class UpdateKnowledgeBase(graphene.Mutation):
         name: Optional[str] = None,
         description: Optional[str] = None,
     ):
-        auth.check_is_demo()
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         manager.update_knowledge_base(
