@@ -1,22 +1,21 @@
 import logging
-
+import graphene
 from api.project import ProjectDetails
 from api.transfer import (
-    DatabaseSessionHandler,
     FileExport,
     KnowledgeBaseExport,
     Notify,
     PrepareImport,
+    UploadTask,
 )
-
-import graphene
+from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
 from starlette.middleware import Middleware
 from starlette.routing import Route
 
 from graphql_api import schema
-from submodules.model.models import Base, UploadTask
+from submodules.model.models import Base
 from submodules.model.session import engine
 
 logging.basicConfig(level=logging.DEBUG)
