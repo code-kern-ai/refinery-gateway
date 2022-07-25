@@ -88,3 +88,8 @@ def check_is_demo(info: Any) -> None:
         "is_demo"
     ):
         raise NotAllowedInDemoError
+
+
+def check_is_demo_without_info() -> None:
+    if config_service.get_config_value("is_demo"):
+        raise NotAllowedInDemoError

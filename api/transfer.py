@@ -11,6 +11,7 @@ from controller.transfer import manager as upload_manager
 from controller.upload_task import manager as task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
+from controller.auth import manager as auth
 
 from submodules.model import enums
 from util.notification import create_notification
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class Notify(HTTPEndpoint):
     async def post(self, request) -> PlainTextResponse:
+        auth.check_is_demo_without_info()
         data = await request.json()
         file_path = data["Key"]
 
@@ -78,6 +80,7 @@ class KnowledgeBaseExport(HTTPEndpoint):
 
 class PrepareImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
+        auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
         request_body = await request.json()
 
@@ -98,6 +101,7 @@ class PrepareImport(HTTPEndpoint):
 
 class UploadTask(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
+        auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
         task_id = request.path_params["task_id"]
         user_id = request.query_params["user_id"]
