@@ -15,7 +15,7 @@ class UpdateConfig(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, dict_str: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         if manager.check_is_managed():
             print(
                 "config should only be changed for open source/local version to prevent limit issues"
@@ -42,7 +42,7 @@ class PostDocOck(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, event_name: str, event_data: Dict[str, Any]):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         event = globals()[event_name]
         event_instance = event(**event_data)

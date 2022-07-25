@@ -14,7 +14,7 @@ class CreatePayload(graphene.Mutation):
     payload = graphene.Field(InformationSourcePayload)
 
     def mutate(self, info, project_id: str, information_source_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         payload = manager.create_payload(

@@ -86,7 +86,7 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_is_demo(info: ResolveInfo) -> None:
+def check_demo_access(info: ResolveInfo) -> None:
     if not check_is_admin(info.context["request"]) and config_service.get_config_value(
         "is_demo"
     ):

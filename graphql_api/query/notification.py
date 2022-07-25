@@ -30,7 +30,7 @@ class NotificationQuery(graphene.ObjectType):
     )
 
     def resolve_notifications_by_user_id(self, info, **kwargs) -> List[Notification]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         return get_notifications_by_user_id(user.id)
 
@@ -43,7 +43,7 @@ class NotificationQuery(graphene.ObjectType):
         user_filter: Optional[bool] = True,
         limit: Optional[int] = 50,
     ) -> List[Notification]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
 
         if project_filter is None:
             project_filter = []
@@ -61,5 +61,5 @@ class NotificationQuery(graphene.ObjectType):
         )
 
     def resolve_notification_types(self, info) -> List[str]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         return [notification_type.name for notification_type in NotificationType]

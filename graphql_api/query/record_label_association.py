@@ -22,13 +22,13 @@ class RecordLabelAssociationQuery(graphene.ObjectType):
     def resolve_last_annotated_records(
         self, info, project_id: str, top_n: int
     ) -> List[RecordLabelAssociation]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_last_annotated_record_id(project_id, top_n)
 
     def resolve_is_any_record_manually_labeled(
         self, info, project_id: str
     ) -> List[RecordLabelAssociation]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.is_any_record_manually_labeled(project_id)

@@ -14,7 +14,7 @@ class CreateAttribute(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, attribute_name: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.create_attribute(project_id, attribute_name)
         return CreateAttribute(ok=True)
@@ -37,7 +37,7 @@ class UpdateAttribute(graphene.Mutation):
         data_type: str,
         is_primary_key: bool,
     ):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_attribute(project_id, attribute_id, data_type, is_primary_key)
         notification.send_organization_update(project_id, f"attributes_updated")
@@ -52,7 +52,7 @@ class DeleteAttribute(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, attribute_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_attribute(project_id, attribute_id)
         return DeleteAttribute(ok=True)
@@ -66,7 +66,7 @@ class AddRunningId(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, attribute_name: str = "running_id"):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         manager.add_running_id(str(user.id), project_id, attribute_name)

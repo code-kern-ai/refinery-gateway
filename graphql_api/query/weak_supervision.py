@@ -14,6 +14,6 @@ class WeakSupervisionQuery(graphene.ObjectType):
     def resolve_current_weak_supervision_run(
         self, info, project_id: str
     ) -> WeakSupervisionTask:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return weak_supervision.get_current_weak_supervision_run(project_id)

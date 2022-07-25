@@ -42,7 +42,7 @@ def __parse_black_white_list():
     __blacklist_query_demo_parsed = tmp
 
 
-# class names
+# caution this is not nessecarily the class name but often times similar or equal. This is the schema name we would use in gql
 __whitelist_mutation_demo = {
     "CreateDataSlice",
     "UpdateDataSlice",
@@ -64,13 +64,13 @@ __whitelist_mutation_demo = {
     "DeleteKnowledgeTerm",
     "BlacklistTerm",
     # "CreateLabelingTaskLabel",
-    "UpdateLabelingTaskLabelColor",
-    "UpdateLabelingTaskLabelHotkey",
+    "UpdateLabelColor",
+    "UpdateLabelHotkey",
     # "DeleteLabelingTaskLabel",
     "PostEvent",
     "CreateNotification",
-    "CreateClassificationAssociation",
-    "CreateExtractionAssociation",
+    "AddClassificationLabelsToRecord",
+    "AddExtractionLabelToRecord",
     "SetGoldStarAnnotationForTask",
     "DeleteRecordLabelAssociationByIds",
     "DeleteGoldStarAssociationForTask",

@@ -23,17 +23,17 @@ class EmbeddingQuery(graphene.ObjectType):
     )
 
     def resolve_recommended_encoders(self, info, project_id: str) -> List[Encoder]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_recommended_encoders()
 
     def resolve_language_models(self, info) -> List[LanguageModel]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         return spacy_util.get_language_models()
 
     def resolve_project_tokenization(
         self, info, project_id: str
     ) -> RecordTokenizationTask:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return tokenization.get_record_tokenization_task(project_id)

@@ -16,7 +16,7 @@ class UploadTaskQuery(graphene.ObjectType):
     def resolve_upload_task_by_id(
         self, info, project_id: str, upload_task_id: str
     ) -> UploadTask:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         if upload_task_id.find("/") != -1:
             upload_task_id = upload_task_id.split("/")[-1]

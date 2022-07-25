@@ -41,7 +41,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         create_notification(
@@ -122,7 +122,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
     def mutate(
         self, info, project_id: str, information_source_id: str, labeling_task_id: str
     ):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         pl_manager.create_payload(

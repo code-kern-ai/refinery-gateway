@@ -30,7 +30,7 @@ class CreateInformationSource(graphene.Mutation):
         source_code: Optional[str] = None,
         description: Optional[str] = None,
     ):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         information_source = manager.create_information_source(
@@ -48,7 +48,7 @@ class DeleteInformationSource(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, information_source_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_information_source(project_id, information_source_id)
         notification.send_organization_update(
@@ -65,7 +65,7 @@ class ToggleInformationSource(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, information_source_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.toggle_information_source(project_id, information_source_id)
         notification.send_organization_update(
@@ -82,7 +82,7 @@ class SetAllInformationSourceSelected(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, value: bool):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.set_all_information_source_selected(project_id, value)
         notification.send_organization_update(
@@ -112,7 +112,7 @@ class UpdateInformationSource(graphene.Mutation):
         description: Optional[str] = None,
         name: Optional[str] = None,
     ):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_information_source(
             project_id, information_source_id, labeling_task_id, code, description, name

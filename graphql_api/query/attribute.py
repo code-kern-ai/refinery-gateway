@@ -30,19 +30,19 @@ class AttributeQuery(graphene.ObjectType):
     def resolve_attribute_by_attribute_id(
         self, info, project_id: str, attribute_id: str
     ) -> Attribute:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_attribute(project_id, attribute_id)
 
     def resolve_attributes_by_project_id(
         self, info, project_id: str
     ) -> List[Attribute]:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_all_attributes(project_id)
 
     def resolve_check_composite_key(self, info, project_id: str) -> bool:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         is_valid = manager.check_composite_key(project_id)

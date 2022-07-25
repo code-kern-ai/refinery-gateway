@@ -14,7 +14,7 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         manager.create_attribute_level_embedding(
@@ -32,7 +32,7 @@ class CreateTokenLevelEmbedding(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
         manager.create_token_level_embedding(
@@ -49,7 +49,7 @@ class DeleteEmbedding(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, embedding_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_embedding(project_id, embedding_id)
         notification.send_organization_update(

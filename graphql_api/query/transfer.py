@@ -48,7 +48,7 @@ class TransferQuery(graphene.ObjectType):
     def resolve_export_project(
         self, info, project_id: str, export_options: Optional[str] = None
     ) -> str:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.export_project(project_id, export_options)
 
@@ -60,7 +60,7 @@ class TransferQuery(graphene.ObjectType):
         file_type: str,
         file_import_options: Optional[str] = "",
     ) -> str:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         return upload_manager.get_upload_credentials_and_id(
@@ -70,23 +70,23 @@ class TransferQuery(graphene.ObjectType):
     def resolve_export(
         self, info, project_id: str, session_id: Optional[str] = None
     ) -> str:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.export_records(project_id, None, session_id)
 
     def resolve_export_knowledge_base(self, info, project_id: str, list_id: str) -> str:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.export_knowledge_base(project_id, list_id)
 
     def resolve_prepare_project_export(
         self, info, project_id: str, export_options: Optional[str] = None
     ) -> bool:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.prepare_project_export(project_id, export_options)
 
     def resolve_last_project_export_credentials(self, info, project_id: str) -> str:
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.last_project_export_credentials(project_id)

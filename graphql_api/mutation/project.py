@@ -19,7 +19,7 @@ class CreateProject(graphene.Mutation):
     project = graphene.Field(lambda: Project)
 
     def mutate(self, info, name: str, description: Optional[str] = None):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
         project = manager.create_project(
@@ -41,7 +41,7 @@ class CreateSampleProject(graphene.Mutation):
     project = graphene.Field(lambda: Project)
 
     def mutate(self, info, name: Optional[str] = None):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
         project = manager.import_sample_project(user.id, organization.id, name)
@@ -62,7 +62,7 @@ class DeleteProject(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, status=enums.ProjectStatus.IN_DELETION.value)
         user = auth.get_user_by_info(info)
@@ -86,7 +86,7 @@ class UpdateProjectStatus(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, new_status: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, status=new_status)
         return UpdateProjectStatus(ok=True)
@@ -107,7 +107,7 @@ class UpdateProjectNameAndDescription(graphene.Mutation):
         name: Optional[str] = None,
         description: Optional[str] = None,
     ):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, name=name, description=description)
         # one global for e.g notification center
@@ -125,7 +125,7 @@ class UpdateProjectTokenizer(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, tokenizer: str):
-        auth.check_is_demo(info)
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, tokenizer=tokenizer)
         return UpdateProjectTokenizer(ok=True)
