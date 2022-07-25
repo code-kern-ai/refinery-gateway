@@ -5,7 +5,7 @@ import util.user_activity
 from controller.auth import manager as auth
 from graphql_api.types import ToolTip, UserActivityWrapper
 from util import tooltip
-from controller.misc import manager
+from controller.misc import config_service, manager
 
 
 class MiscQuery(graphene.ObjectType):
@@ -24,6 +24,7 @@ class MiscQuery(graphene.ObjectType):
     is_demo = graphene.Field(graphene.Boolean)
 
     restricted_endpoints = graphene.List(graphene.String)
+    is_admin = graphene.Field(graphene.Boolean)
 
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
@@ -36,7 +37,10 @@ class MiscQuery(graphene.ObjectType):
         return manager.check_is_managed()
 
     def resolve_is_demo(self, info) -> bool:
-        return auth.check_is_demo(info)
+        return config_service.get_config_value("is_demo")
+
+    def resolve_is_admin(self, info) -> bool:
+        return auth.check_is_admin(info.context["request"])
 
     def resolve_restricted_endpoints(self, info):
         return manager.get_restricted_endpoints()

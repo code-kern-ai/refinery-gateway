@@ -83,7 +83,7 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_is_demo(info: Any) -> bool:
+def check_is_demo(info: Any) -> None:
     if not check_is_admin(info.context["request"]) and config_service.get_config_value(
         "is_demo"
     ):
