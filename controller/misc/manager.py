@@ -1,8 +1,9 @@
 from controller.misc import config_service
+from . import util
 
 
 def get_restricted_endpoints():
-    return []
+    return util.get_restricted_endpoints()
 
 
 def check_is_managed() -> bool:
