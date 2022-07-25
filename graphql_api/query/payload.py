@@ -16,5 +16,6 @@ class PayloadQuery(graphene.ObjectType):
     def resolve_payload_by_payload_id(
         self, info, payload_id: str, project_id: str
     ) -> InformationSourcePayload:
+        auth.check_is_demo(info)
         auth.check_project_access(info, project_id)
         return manager.get_payload(project_id, payload_id)

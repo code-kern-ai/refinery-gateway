@@ -12,7 +12,9 @@ from submodules.model.business_objects.notification import (
 
 
 class NotificationQuery(graphene.ObjectType):
-    notifications_by_user_id = graphene.Field(graphene.List(Notification),)
+    notifications_by_user_id = graphene.Field(
+        graphene.List(Notification),
+    )
 
     notifications = graphene.Field(
         graphene.List(Notification),
@@ -23,9 +25,12 @@ class NotificationQuery(graphene.ObjectType):
         limit=graphene.Int(required=False),
     )
 
-    notification_types = graphene.Field(graphene.List(graphene.String),)
+    notification_types = graphene.Field(
+        graphene.List(graphene.String),
+    )
 
     def resolve_notifications_by_user_id(self, info, **kwargs) -> List[Notification]:
+        auth.check_is_demo(info)
         user = auth.get_user_by_info(info)
         return get_notifications_by_user_id(user.id)
 
@@ -38,6 +43,7 @@ class NotificationQuery(graphene.ObjectType):
         user_filter: Optional[bool] = True,
         limit: Optional[int] = 50,
     ) -> List[Notification]:
+        auth.check_is_demo(info)
 
         if project_filter is None:
             project_filter = []
@@ -55,4 +61,5 @@ class NotificationQuery(graphene.ObjectType):
         )
 
     def resolve_notification_types(self, info) -> List[str]:
+        auth.check_is_demo(info)
         return [notification_type.name for notification_type in NotificationType]

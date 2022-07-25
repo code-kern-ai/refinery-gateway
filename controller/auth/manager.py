@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Set
+
+from graphene import ResolveInfo
 from controller.misc import config_service
 from exceptions.exceptions import NotAllowedInDemoError
 import jwt
@@ -6,6 +8,7 @@ from graphql import GraphQLError
 from controller.project import manager as project_manager
 from controller.user import manager as user_manager
 from submodules.model.models import Organization, Project, User
+from controller.misc import manager as misc_manager
 
 
 def get_organization_id_by_info(info) -> Organization:
@@ -83,8 +86,18 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_is_demo(info: Any) -> None:
+def check_is_demo(info: ResolveInfo) -> None:
     if not check_is_admin(info.context["request"]) and config_service.get_config_value(
         "is_demo"
     ):
-        raise NotAllowedInDemoError
+        check_black_white(info)
+
+
+def check_black_white(info: ResolveInfo):
+    black_white = misc_manager.get_black_white_demo()
+    if str(info.parent_type) == "Mutation":
+        if info.field_name not in black_white["mutations"]:
+            raise NotAllowedInDemoError
+    elif str(info.parent_type) == "Query":
+        if info.field_name in black_white["queries"]:
+            raise NotAllowedInDemoError

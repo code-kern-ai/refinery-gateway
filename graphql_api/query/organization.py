@@ -23,22 +23,27 @@ class OrganizationQuery(graphene.ObjectType):
     can_create_local_org = graphene.Field(graphene.Boolean)
 
     def resolve_user_info(self, info) -> User:
+        auth_manager.check_is_demo(info)
         return auth_manager.get_user_by_info(info)
 
     def resolve_all_users(self, info) -> List[User]:
+        auth_manager.check_is_demo(info)
         organization_id = str(auth_manager.get_user_by_info(info).organization.id)
         return manager.get_all_users(organization_id)
 
     def resolve_all_users_with_record_count(
         self, info, project_id: str
     ) -> List[UserCountsWrapper]:
+        auth_manager.check_is_demo(info)
         organization_id = str(auth_manager.get_user_by_info(info).organization.id)
         return manager.get_all_users_with_record_count(organization_id, project_id)
 
     def resolve_user_organization(self, info) -> Organization:
+        auth_manager.check_is_demo(info)
         return auth_manager.get_user_by_info(info).organization
 
     def resolve_all_organizations(self, info, sort) -> List[Organization]:
+        auth_manager.check_is_demo(info)
         auth_manager.check_admin_access(info)
         return manager.get_all_organizations()
 
@@ -46,8 +51,10 @@ class OrganizationQuery(graphene.ObjectType):
         self,
         info,
     ) -> str:
+        auth_manager.check_is_demo(info)
         org_id = str(auth_manager.get_user_by_info(info).organization_id)
         return manager.get_overview_stats(org_id)
 
     def resolve_can_create_local_org(self, info) -> bool:
+        auth_manager.check_is_demo(info)
         return manager.can_create_local()

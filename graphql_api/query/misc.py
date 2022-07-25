@@ -25,10 +25,13 @@ class MiscQuery(graphene.ObjectType):
 
     is_admin = graphene.Field(graphene.Boolean)
 
+    get_black_white_demo = graphene.Field(graphene.JSONString)
+
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
 
     def resolve_all_users_activity(self, info) -> List[UserActivityWrapper]:
+        auth.check_is_demo(info)
         auth.check_admin_access(info)
         return util.user_activity.resolve_all_users_activity()
 
@@ -40,3 +43,6 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_is_admin(self, info) -> bool:
         return auth.check_is_admin(info.context["request"])
+
+    def resolve_get_black_white_demo(self, info) -> str:
+        return manager.get_black_white_demo()

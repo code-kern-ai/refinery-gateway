@@ -1,4 +1,6 @@
+from typing import Dict, List
 from controller.misc import config_service
+from controller.misc import black_white_demo
 
 
 def check_is_managed() -> bool:
@@ -11,3 +13,7 @@ def update_config(dict_str: str) -> None:
 
 def refresh_config() -> None:
     config_service.refresh_config()
+
+
+def get_black_white_demo() -> Dict[str, List[str]]:
+    return black_white_demo.get_black_white_demo()
