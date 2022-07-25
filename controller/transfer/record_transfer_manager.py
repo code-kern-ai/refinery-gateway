@@ -237,6 +237,9 @@ def split_record_data_and_label_data(
         label_data = {}
         for imported_key, item in data_item.items():
             if "__" in imported_key:
+                if not __check_label_has_letters(item):
+                    continue
+
                 task_name = controller.labeling_task.util.infer_labeling_task_name(
                     imported_key
                 )
@@ -254,6 +257,12 @@ def split_record_data_and_label_data(
         labels_data.append(label_data)
 
     return records_data, labels_data, tasks_data
+
+
+def __check_label_has_letters(label_value):
+    if label_value == "" or label_value.isspace():
+        return False
+    return True
 
 
 def create_attributes_and_get_text_attributes(
