@@ -23,6 +23,7 @@ class MiscQuery(graphene.ObjectType):
 
     is_demo = graphene.Field(graphene.Boolean)
 
+    restricted_endpoints = graphene.List(graphene.String)
     is_admin = graphene.Field(graphene.Boolean)
 
     get_black_white_demo = graphene.Field(graphene.JSONString)
@@ -46,3 +47,6 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_get_black_white_demo(self, info) -> str:
         return manager.get_black_white_demo()
+
+    def resolve_restricted_endpoints(self, info):
+        return manager.get_restricted_endpoints()

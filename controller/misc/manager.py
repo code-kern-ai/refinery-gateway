@@ -1,6 +1,11 @@
 from typing import Dict, List
 from controller.misc import config_service
 from controller.misc import black_white_demo
+from . import util
+
+
+def get_restricted_endpoints():
+    return util.get_restricted_endpoints()
 
 
 def check_is_managed() -> bool:

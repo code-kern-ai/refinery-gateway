@@ -101,3 +101,8 @@ def check_black_white(info: ResolveInfo):
     elif str(info.parent_type) == "Query":
         if info.field_name in black_white["queries"]:
             raise NotAllowedInDemoError
+
+
+def check_is_demo_without_info() -> None:
+    if config_service.get_config_value("is_demo"):
+        raise NotAllowedInDemoError
