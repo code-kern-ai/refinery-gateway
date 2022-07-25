@@ -260,7 +260,7 @@ def split_record_data_and_label_data(
 
 
 def __check_label_has_letters(label_value: str) -> bool:
-    if label_value == "" or label_value.isspace():
+    if label_value.strip() == "":
         return False
     return True
 
