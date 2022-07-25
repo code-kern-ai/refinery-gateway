@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 class Notify(HTTPEndpoint):
     async def post(self, request) -> PlainTextResponse:
-        auth.check_is_demo_without_info()
         data = await request.json()
         file_path = data["Key"]
 
