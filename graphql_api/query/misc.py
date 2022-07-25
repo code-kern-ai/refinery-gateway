@@ -23,6 +23,8 @@ class MiscQuery(graphene.ObjectType):
 
     is_demo = graphene.Field(graphene.Boolean)
 
+    restricted_endpoints = graphene.List(graphene.String)
+
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
 
@@ -35,3 +37,6 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_is_demo(self, info) -> bool:
         return auth.check_is_demo(info)
+
+    def resolve_restricted_endpoints(self, info):
+        return manager.get_restricted_endpoints()

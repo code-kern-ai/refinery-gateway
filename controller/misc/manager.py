@@ -1,6 +1,10 @@
 from controller.misc import config_service
 
 
+def get_restricted_endpoints():
+    return []
+
+
 def check_is_managed() -> bool:
     return config_service.get_config_value("is_managed")
 
