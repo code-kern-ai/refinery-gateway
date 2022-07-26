@@ -237,6 +237,11 @@ def split_record_data_and_label_data(
         label_data = {}
         for imported_key, item in data_item.items():
             if "__" in imported_key:
+                if (
+                    item.strip() == ""
+                ):  # if a label is only consists of whitespaces or is empty continue
+                    continue
+
                 task_name = controller.labeling_task.util.infer_labeling_task_name(
                     imported_key
                 )
