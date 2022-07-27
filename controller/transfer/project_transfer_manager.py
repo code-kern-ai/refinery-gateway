@@ -103,7 +103,7 @@ def import_sample_project(
             "Once the project has been initialized, you'll be redirected into it."
         )
         project_item = project.create(
-            organization_id, project_name, project_description, user_id, status = enums.ProjectStatus.INIT_SAMPLE_PROJECT.value
+            organization_id, project_name, project_description, user_id, status = enums.ProjectStatus.INIT_SAMPLE_PROJECT
         )
         create_notification(
             NotificationType.IMPORT_SAMPLE_PROJECT,
