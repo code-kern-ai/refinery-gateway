@@ -26,6 +26,7 @@ class CreateLabelingTaskLabel(graphene.Mutation):
         label_name: str,
         label_color: str = None,
     ):
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         label = manager.create_label(
@@ -59,6 +60,7 @@ class UpdateLabelingTaskLabelColor(graphene.Mutation):
     def mutate(
         self, info, project_id: str, labeling_task_label_id: str, label_color: str
     ):
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_label_color(project_id, labeling_task_label_id, label_color)
         return UpdateLabelingTaskLabelColor(ok=True)
@@ -75,6 +77,7 @@ class UpdateLabelingTaskLabelHotkey(graphene.Mutation):
     def mutate(
         self, info, project_id: str, labeling_task_label_id: str, label_hotkey: str
     ):
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_label_hotkey(project_id, labeling_task_label_id, label_hotkey)
         return UpdateLabelingTaskLabelColor(ok=True)
@@ -88,6 +91,7 @@ class DeleteLabelingTaskLabel(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, project_id: str, label_id: str):
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         label = manager.get_label(project_id, label_id)
         labeling_task_id = label.labeling_task_id

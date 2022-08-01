@@ -13,10 +13,13 @@ class CreateNotification(graphene.Mutation):
     ok = graphene.Boolean()
 
     def mutate(self, info, message: str, project_id: str):
-
+        auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         create_notification(
-            enums.NotificationType.CUSTOM, user.id, project_id, message,
+            enums.NotificationType.CUSTOM,
+            user.id,
+            project_id,
+            message,
         )
         return CreateNotification(ok=True)
 

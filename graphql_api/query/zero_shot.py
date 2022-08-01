@@ -44,6 +44,7 @@ class ZeroShotQuery(graphene.ObjectType):
         run_individually: bool,
         label_names: List[str],
     ) -> ZeroShotTextResult:
+        auth_manager.check_demo_access(info)
         return manager.get_zero_shot_text(
             project_id,
             information_source_id,
@@ -56,6 +57,7 @@ class ZeroShotQuery(graphene.ObjectType):
     def resolve_zero_shot_recommendations(
         self, info, project_id: Optional[str] = None
     ) -> List[Dict[str, str]]:
+        auth_manager.check_demo_access(info)
         auth_manager.check_project_access(info, project_id)
         return manager.get_zero_shot_recommendations(project_id)
 
@@ -66,6 +68,7 @@ class ZeroShotQuery(graphene.ObjectType):
         information_source_id: str,
         label_names: List[str] = None,
     ) -> ZeroShotNRecordsWrapper:
+        auth_manager.check_demo_access(info)
         auth_manager.check_project_access(info, project_id)
         return manager.get_zero_shot_10_records(
             project_id,

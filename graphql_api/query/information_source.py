@@ -27,12 +27,14 @@ class InformationSourceQuery(graphene.ObjectType):
     def resolve_information_source_by_source_id(
         self, info, project_id: str, information_source_id: str
     ) -> InformationSource:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_information_source(project_id, information_source_id)
 
     def resolve_information_sources_by_project_id(
         self, info, project_id: str
     ) -> List[InformationSource]:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_all_information_sources(project_id)
 
@@ -41,5 +43,6 @@ class InformationSourceQuery(graphene.ObjectType):
         info,
         project_id: str,
     ) -> str:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_overview_data(project_id)

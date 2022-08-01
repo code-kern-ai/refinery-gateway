@@ -11,8 +11,7 @@ class RunRecordIDEPayload(graphene.ObjectType):
     )
 
     def resolve_run_record_ide(self, info, project_id, record_id, code):
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_by_info(info).id
-        return manager.create_record_ide_payload(
-            user_id, project_id, record_id, code
-        )
+        return manager.create_record_ide_payload(user_id, project_id, record_id, code)

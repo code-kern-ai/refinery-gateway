@@ -19,5 +19,6 @@ class KnowledgeTermQuery(graphene.ObjectType):
     def resolve_terms_by_knowledge_base_id(
         self, info, project_id: str, knowledge_base_id: str
     ) -> List[Term]:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_terms_by_knowledge_base(project_id, knowledge_base_id)

@@ -69,20 +69,24 @@ class ProjectQuery(graphene.ObjectType):
     )
 
     def resolve_project_by_project_id(self, info, project_id: str) -> Project:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_project(project_id)
 
     def resolve_project_size(self, info, project_id: str) -> List[ProjectSize]:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_project_size(project_id)
 
     def resolve_all_projects(self, info, sort) -> List[Project]:
+        auth.check_demo_access(info)
         organization = auth.get_organization_id_by_info(info)
         return manager.get_all_projects(organization.id)
 
     def resolve_user_session_by_session_id(
         self, info, project_id: str, session_id: str
     ) -> UserSession:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_by_info(info).id
         return search.resolve_labeling_session(project_id, user_id, session_id)
@@ -96,6 +100,7 @@ class ProjectQuery(graphene.ObjectType):
         include_all_org_user: Optional[bool] = False,
         only_on_static_slice: Optional[str] = None,
     ) -> InterAnnotatorMatrix:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         labeling_task = task_manager.get_labeling_task(project_id, labeling_task_id)
         if not labeling_task:
@@ -125,6 +130,7 @@ class ProjectQuery(graphene.ObjectType):
         labeling_task_id: Optional[str] = None,
         slice_id: Optional[str] = None,
     ) -> str:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_general_project_stats(project_id, labeling_task_id, slice_id)
 
@@ -135,6 +141,7 @@ class ProjectQuery(graphene.ObjectType):
         labeling_task_id: Optional[str] = None,
         slice_id: Optional[str] = None,
     ) -> str:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_label_distribution(project_id, labeling_task_id, slice_id)
 
@@ -145,9 +152,11 @@ class ProjectQuery(graphene.ObjectType):
         labeling_task_id: str,
         slice_id: Optional[str] = None,
     ) -> str:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_confusion_matrix(project_id, labeling_task_id, slice_id)
 
     def resolve_is_rats_tokenization_still_running(self, info, project_id) -> bool:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.is_rats_tokenization_still_running(project_id)
