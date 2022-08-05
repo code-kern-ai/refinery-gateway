@@ -52,7 +52,9 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
     general.commit()
 
 
-def import_exported_file(project_id, knowledge_base_id, df):
+def import_exported_file(
+    project_id: str, knowledge_base_id: str, df: pd.DataFrame
+) -> None:
     """
     try to import the structure of export
     if the structure does not fit an exception gets raised
