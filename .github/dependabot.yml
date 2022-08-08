@@ -4,6 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 5    
+    open-pull-requests-limit: 0 # not created automatically for version updates so only security ones are created
     pull-request-branch-name:
       separator: "-"
