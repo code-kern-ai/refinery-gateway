@@ -18,7 +18,7 @@ graphene==2.1.9
 docker==5.0.0
 requests==2.25.1
 minio==7.0.3
-pyjwt==2.1.0
+pyjwt==2.4.0
 numpy==1.21.0
 sqlalchemy==1.4.25
 graphene_sqlalchemy==2.3.0
