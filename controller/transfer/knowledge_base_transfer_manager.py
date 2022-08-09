@@ -55,10 +55,10 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
 def import_exported_file(
     project_id: str, knowledge_base_id: str, df: pd.DataFrame
 ) -> None:
-    """
-    try to import the structure of export
+    """Make use of the EAFP principle here
+    try to import by making use of the structure of exported knowledge terms
     if the structure does not fit an exception gets raised
-    and the original import flow is done
+    and the original import flow is continued
     """
     for value in df["terms"]:
         term = knowledge_term.get_by_value(knowledge_base_id, value.get("value"))
