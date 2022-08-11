@@ -319,6 +319,13 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.CREATE_EMBEDDINGS.value,
     },
+    enums.NotificationType.EMBEDDING_CREATION_WARNING.value: {
+        "message_template": "",
+        "title": "Embedding creation",
+        "level": enums.Notification.WARNING.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.CREATE_EMBEDDINGS.value,
+    },
 }
 
 

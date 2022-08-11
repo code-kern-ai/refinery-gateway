@@ -146,8 +146,13 @@ class Embedding(SQLAlchemyObjectType):
 
     def resolve_dimension(self, info):
         embedding_item = embedding.get_tensor(self.id)
+
         if embedding_item is not None:
-            return len(embedding_item.data)
+            # distinguish between token and attribute embeddings
+            if type(embedding_item.data[0]) is list:
+                return len(embedding_item.data[0])
+            else:
+                return len(embedding_item.data)
         else:
             return 0
 
