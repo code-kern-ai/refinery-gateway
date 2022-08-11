@@ -179,7 +179,6 @@ def __ensure_text(filter_data: List[Dict[str, Any]]) -> None:
                 if isinstance(element[key], list):
                     __ensure_text(element[key])
                     continue
-    pass
 
 
 def resolve_labeling_session(
