@@ -166,7 +166,7 @@ def resolve_extended_search(
     return extended_search
 
 
-def __ensure_text(filter_data: List[Dict[str, Any]]) -> None:
+def __ensure_text(filter_data: List[str | Dict[str, Any]]) -> None:
     for idx, element in enumerate(filter_data):
         if isinstance(element, str):
             filter_data[idx] = element.replace("'", "''")
