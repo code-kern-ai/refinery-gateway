@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import zlib
-from typing import Tuple, Dict, List, Any, Optional
+from typing import Tuple, Dict, List, Any, Optional, Union
 
 from exceptions.exceptions import TooManyRecordsForStaticSliceException
 from graphql_api import types
@@ -136,6 +136,8 @@ def resolve_extended_search(
 ) -> ExtendedSearch:
     global __seed_number
     local_seed = None
+
+    __ensure_text(filter_data)
     sql_statement_count = generate_count_sql(project_id, filter_data)
 
     count = general.execute_distinct_count(sql_statement_count)
@@ -162,6 +164,21 @@ def resolve_extended_search(
 
     extended_search.session_id = __write_user_session_entry(user_session_data)
     return extended_search
+
+
+def __ensure_text(filter_data: List[Union[str, Dict[str, Any]]]) -> None:
+    for idx, element in enumerate(filter_data):
+        if isinstance(element, str):
+            filter_data[idx] = element.replace("'", "''")
+            continue
+        if isinstance(element, dict):
+            for key in element:
+                if isinstance(element[key], str):
+                    element[key] = element[key].replace("'", "''")
+                    continue
+                if isinstance(element[key], list):
+                    __ensure_text(element[key])
+                    continue
 
 
 def resolve_labeling_session(
