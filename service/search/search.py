@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import zlib
-from typing import Tuple, Dict, List, Any, Optional
+from typing import Tuple, Dict, List, Any, Optional, Union
 
 from exceptions.exceptions import TooManyRecordsForStaticSliceException
 from graphql_api import types
@@ -166,7 +166,7 @@ def resolve_extended_search(
     return extended_search
 
 
-def __ensure_text(filter_data: List[str | Dict[str, Any]]) -> None:
+def __ensure_text(filter_data: List[Union[str, Dict[str, Any]]]) -> None:
     for idx, element in enumerate(filter_data):
         if isinstance(element, str):
             filter_data[idx] = element.replace("'", "''")
