@@ -78,7 +78,6 @@ steps:
 trigger:
   branch:
     - dev
-    - beta-v2
   event:
     - push
 
