@@ -78,7 +78,7 @@ steps:
 trigger:
   branch:
     - dev
-    - beta-v2
+    - hotfix-inter-annotator
   event:
     - push
 
