@@ -9,10 +9,20 @@ echo -ne 'stopping old container...'
 docker stop refinery-gateway > /dev/null 2>&1
 echo -ne '\t [done]\n'
 
+IS_ARM64=""
+currentArch="$(uname -m)"
+if [ "$currentArch" == "arm64" ];
+then
+    echo "architecture: arm64"
+    IS_ARM64="_arm64"
+else
+    echo "architecture: $currentArch"
+fi
+
 echo -ne 'downloading exec-envs...'
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev > /dev/null 2>&1
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev > /dev/null 2>&1
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev > /dev/null 2>&1
+docker pull registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 > /dev/null 2>&1
+docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 > /dev/null 2>&1
+docker pull registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 > /dev/null 2>&1
 echo -ne '\t [done]\n'
 
 echo -ne 'building container...'
@@ -33,9 +43,9 @@ echo -ne 'starting...'
 docker run -d --rm \
 --name refinery-gateway \
 -p 7051:80 \
--e LF_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev \
--e ML_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev \
--e RECORD_IDE_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev \
+-e LF_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 \
+-e ML_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 \
+-e RECORD_IDE_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 \
 -e LF_NETWORK=dev-setup_default \
 -e S3_ENDPOINT="http://$HOST_IP:7053" \
 -e S3_ENDPOINT_LOCAL=object-storage:9000 \

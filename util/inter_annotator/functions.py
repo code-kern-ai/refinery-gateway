@@ -196,7 +196,7 @@ def resolve_inter_annotator_matrix_extraction(
                 if amount is None:
                     amount = 0
                 full_count = max_lookup.get(user_lookup)
-                if full_count is None:
+                if full_count is None or full_count == 0:
                     percent = -1
                 else:
                     percent = round(amount / full_count, 4)

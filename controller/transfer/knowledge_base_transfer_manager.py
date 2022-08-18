@@ -11,6 +11,8 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
     task_manager.update_task(
         project_id, task.id, state=enums.UploadStates.PENDING.value
     )
+    general.commit()
+
     file_type = task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
     list_id = task.file_name.rsplit("_", 1)[1]
 
@@ -32,13 +34,42 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
 
     if os.path.exists(download_file_name):
         os.remove(download_file_name)
-    term_list = set(df["value"].unique())
-    to_add = term_list - existing_names
 
-    knowledge_term.create_by_value_list(project_id, list_id, to_add, with_commit=True)
+    try:
+        import_exported_file(project_id, list_id, df)
+    except Exception:
+        general.rollback()
+        term_list = set(df["value"].unique())
+        to_add = term_list - existing_names
+        knowledge_term.create_by_value_list(
+            project_id, list_id, to_add, with_commit=True
+        )
 
     task_manager.update_task(
         project_id, task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
     task.state = enums.UploadStates.DONE.value
     general.commit()
+
+
+def import_exported_file(
+    project_id: str, knowledge_base_id: str, df: pd.DataFrame
+) -> None:
+    """Make use of the EAFP principle here
+    try to import by making use of the structure of exported knowledge terms
+    if the structure does not fit an exception gets raised
+    and the original import flow is continued
+    """
+    for value in df["terms"]:
+        term = knowledge_term.get_by_value(knowledge_base_id, value.get("value"))
+        if term:
+            term.comment = value["comment"]
+            term.blacklisted = value["blacklisted"]
+        else:
+            knowledge_term.create(
+                project_id,
+                knowledge_base_id,
+                value["value"],
+                value["comment"],
+                value["blacklisted"],
+            )
