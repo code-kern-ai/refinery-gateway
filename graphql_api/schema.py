@@ -18,6 +18,7 @@ from graphql_api.query.zero_shot import ZeroShotQuery
 from graphql_api.query.upload_task import UploadTaskQuery
 from graphql_api.query.weak_supervision import WeakSupervisionQuery
 from graphql_api.query.record_ide import RunRecordIDEPayload
+from graphql_api.query.model_provider import ModelProviderQuery
 
 from graphql_api.mutation.attribute import AttributeMutation
 from graphql_api.mutation.misc import MiscMutation
@@ -49,6 +50,7 @@ class Query(
     KnowledgeTermQuery,
     LabelingTaskQuery,
     MiscQuery,
+    ModelProviderQuery,
     OrganizationQuery,
     PayloadQuery,
     ProjectQuery,
@@ -59,7 +61,7 @@ class Query(
     WeakSupervisionQuery,
     ZeroShotQuery,
     RunRecordIDEPayload,
-    graphene.ObjectType,
+    graphene.ObjectType
 ):
     pass
 
