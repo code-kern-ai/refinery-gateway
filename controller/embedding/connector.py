@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from util import service_requests
+from . import model_provider_connector
 
 BASE_URI = os.getenv("EMBEDDING_SERVICE")
 
@@ -14,12 +15,14 @@ def request_listing_recommended_encoders() -> Any:
 def request_creating_attribute_level_embedding(
     project_id: str, attribute_id: str, user_id: str, config_string: str
 ) -> Any:
+    model_path = model_provider_connector.get_model_path(config_string)
+
     url = f"{BASE_URI}/classification/encode"
     data = {
         "project_id": str(project_id),
         "attribute_id": str(attribute_id),
         "user_id": str(user_id),
-        "config_string": config_string,
+        "config_string": model_path,
     }
     return service_requests.post_call_or_raise(url, data)
 
@@ -27,12 +30,14 @@ def request_creating_attribute_level_embedding(
 def request_creating_token_level_embedding(
     project_id: str, attribute_id: str, user_id: str, config_string: str
 ) -> Any:
+    model_path = model_provider_connector.get_model_path(config_string)
+
     url = f"{BASE_URI}/extraction/encode"
     data = {
         "project_id": str(project_id),
         "attribute_id": str(attribute_id),
         "user_id": str(user_id),
-        "config_string": config_string,
+        "config_string": model_path,
     }
     return service_requests.post_call_or_raise(url, data)
 
