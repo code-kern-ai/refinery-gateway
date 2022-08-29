@@ -1,6 +1,4 @@
-
 import graphene
-from util import notification
 from controller.model_provider import manager
 
 
@@ -11,34 +9,21 @@ class CreateModelProvider(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(
-        self,
-        info,
-        model_name: str,
-        revision: str = None
-    ):
-       
-        manager.create_model_provider(
-            model_name, revision
-        )
+    def mutate(self, info, model_name: str, revision: str = None):
+        manager.create_model_provider(model_name, revision)
 
         return CreateModelProvider(ok=True)
 
 
 class DeleteModelProvider(graphene.Mutation):
     class Arguments:
-        name = graphene.String(required=True)
-        revision = graphene.String(required=False)
+        model_name = graphene.String(required=True)
+        revision = graphene.String()
 
     ok = graphene.Boolean()
 
-    def mutate(
-        self, 
-        info,
-        name: str,
-        revision: str
-    ):
-        manager.delete_model_provider(name, revision)
+    def mutate(self, info, model_name: str, revision: str):
+        manager.delete_model_provider(model_name, revision)
 
         return DeleteModelProvider(ok=True)
 
