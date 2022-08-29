@@ -4,8 +4,8 @@ import requests
 from graphql import GraphQLError
 
 
-def post_call_or_raise(url: str, data: Dict[str, Any]) -> Any:
-    response = requests.post(url, json=data)
+def post_call_or_raise(url: str, data: Dict[str, Any], params: Dict = {}) -> Any:
+    response = requests.post(url, json=data, params=params)
     if response.status_code == 200:
         result, _ = response.json()
         return result

@@ -29,6 +29,7 @@ from graphql_api.mutation.knowledge_base import KnowledgeBaseMutation
 from graphql_api.mutation.knowledge_term import KnowledgeTermMutation
 from graphql_api.mutation.labeling_task import LabelingTaskMutation
 from graphql_api.mutation.labeling_task_label import LabelingTaskLabelMutation
+from graphql_api.mutation.model_provider import ModelProviderMutation
 from graphql_api.mutation.notification import NotificationMutation
 from graphql_api.mutation.organization import OrganizationMutation
 from graphql_api.mutation.payload import PayloadMutation
@@ -74,6 +75,7 @@ class Mutation(
     KnowledgeBaseMutation,
     KnowledgeTermMutation,
     MiscMutation,
+    ModelProviderMutation,
     LabelingTaskLabelMutation,
     LabelingTaskMutation,
     NotificationMutation,
