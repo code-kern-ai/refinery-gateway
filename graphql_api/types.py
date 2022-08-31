@@ -690,3 +690,4 @@ class ModelProviderInfoResult(graphene.ObjectType):
     link = graphene.String()
     date = graphene.Float()
     size = graphene.Int()
+    status = graphene.String()
