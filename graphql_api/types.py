@@ -691,3 +691,4 @@ class ModelProviderInfoResult(graphene.ObjectType):
     date = graphene.Float()
     size = graphene.Int()
     status = graphene.String()
+    zero_shot_pipeline = graphene.Boolean()
