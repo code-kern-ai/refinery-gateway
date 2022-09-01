@@ -7,6 +7,7 @@ import jwt
 from graphql import GraphQLError
 from controller.project import manager as project_manager
 from controller.user import manager as user_manager
+from controller.organization import manager as organization_manager
 from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
 
@@ -106,3 +107,7 @@ def check_black_white(info: ResolveInfo):
 def check_is_demo_without_info() -> None:
     if config_service.get_config_value("is_demo"):
         raise NotAllowedInDemoError
+
+
+def check_is_single_organization() -> bool:
+    return len(organization_manager.get_all_organizations()) == 1
