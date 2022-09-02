@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import Any, List
 from graphql_api.types import ModelProviderInfoResult
 
@@ -9,7 +10,14 @@ BASE_URI = os.getenv("MODEL_PROVIDER")
 
 def get_model_provider_info() -> List[ModelProviderInfoResult]:
     url = f"{BASE_URI}/info"
-    return service_requests.get_call_or_raise(url)
+    model_info = service_requests.get_call_or_raise(url)
+
+    # parse dates to datetime format
+    for model in model_info:
+        if model["date"]:
+            model["date"] = datetime.fromisoformat(model["date"])
+
+    return model_info
 
 
 def model_provider_download_model(model_name: str) -> Any:
