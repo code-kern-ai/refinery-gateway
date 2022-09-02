@@ -688,7 +688,7 @@ class ModelProviderInfoResult(graphene.ObjectType):
     name = graphene.String()
     revision = graphene.String()
     link = graphene.String()
-    date = graphene.Float()
-    size = graphene.Int()
+    date = graphene.Date()
+    size = graphene.Float()  # int is to small therfore as float
     status = graphene.String()
     zero_shot_pipeline = graphene.Boolean()

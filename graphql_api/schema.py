@@ -62,7 +62,7 @@ class Query(
     WeakSupervisionQuery,
     ZeroShotQuery,
     RunRecordIDEPayload,
-    graphene.ObjectType
+    graphene.ObjectType,
 ):
     pass
 

@@ -13,7 +13,9 @@ def post_call_or_raise(url: str, data: Dict[str, Any]) -> Any:
         raise GraphQLError(response.text)
 
 
-def get_call_or_raise(url: str, params: Dict = {}) -> Any:
+def get_call_or_raise(url: str, params: Dict = None) -> Any:
+    if params is None:
+        params = {}
     response = requests.get(url=url, params=params)
     if response.status_code == 200:
         result, _ = response.json()
