@@ -682,3 +682,13 @@ class ZeroShotNRecords(graphene.ObjectType):
 class ZeroShotNRecordsWrapper(graphene.ObjectType):
     duration = graphene.Float()
     records = graphene.List(ZeroShotNRecords)
+
+
+class ModelProviderInfoResult(graphene.ObjectType):
+    name = graphene.String()
+    revision = graphene.String()
+    link = graphene.String()
+    date = graphene.DateTime()
+    size = graphene.Float()  # int is to small therfore as float
+    status = graphene.String()
+    zero_shot_pipeline = graphene.Boolean()
