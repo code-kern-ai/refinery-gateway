@@ -26,8 +26,10 @@ class MiscQuery(graphene.ObjectType):
     is_admin = graphene.Field(graphene.Boolean)
 
     get_black_white_demo = graphene.Field(graphene.JSONString)
-    
+
     version_overview = graphene.Field(graphene.List(ServiceVersionResult))
+
+    has_updates = graphene.Field(graphene.Boolean)
 
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
@@ -51,3 +53,6 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_version_overview(self, info) -> List[ServiceVersionResult]:
         return manager.get_version_overview()
+
+    def resolve_has_updates(self, info) -> bool:
+        return manager.has_updates()
