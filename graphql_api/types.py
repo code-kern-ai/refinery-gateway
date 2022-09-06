@@ -683,9 +683,20 @@ class ZeroShotNRecordsWrapper(graphene.ObjectType):
     duration = graphene.Float()
     records = graphene.List(ZeroShotNRecords)
 
+
 class ServiceVersionResult(graphene.ObjectType):
     service = graphene.String()
     installed_version = graphene.String()
     checked_version = graphene.String()
     last_checked = graphene.DateTime()
     link = graphene.String()
+
+
+class ModelProviderInfoResult(graphene.ObjectType):
+    name = graphene.String()
+    revision = graphene.String()
+    link = graphene.String()
+    date = graphene.DateTime()
+    size = graphene.Float()  # int is to small therfore as float
+    status = graphene.String()
+    zero_shot_pipeline = graphene.Boolean()
