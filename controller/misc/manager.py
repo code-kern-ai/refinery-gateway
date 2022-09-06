@@ -35,6 +35,7 @@ def get_version_overview() -> List[ServiceVersionResult]:
             installed_version=service["installed_version"],
             remote_version=service["remote_version"],
             last_checked=datetime.strptime(service["last_checked"], date_format),
+            remote_has_newer=service["remote_has_newer"],
             link=service["link"],
         )
         for service in updater_version_overview

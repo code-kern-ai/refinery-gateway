@@ -689,6 +689,7 @@ class ServiceVersionResult(graphene.ObjectType):
     installed_version = graphene.String()
     remote_version = graphene.String()
     last_checked = graphene.DateTime()
+    remote_has_newer = graphene.Boolean()
     link = graphene.String()
 
 
