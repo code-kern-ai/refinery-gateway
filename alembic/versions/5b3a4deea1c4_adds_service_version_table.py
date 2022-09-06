@@ -23,7 +23,7 @@ def upgrade():
         "app_version",
         sa.Column("service", sa.String(), nullable=False),
         sa.Column("installed_version", sa.String(), nullable=True),
-        sa.Column("checked_version", sa.String(), nullable=True),
+        sa.Column("remote_version", sa.String(), nullable=True),
         sa.Column("last_checked", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("service"),
     )
