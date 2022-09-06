@@ -21,9 +21,9 @@ def get_black_white_demo() -> Dict[str, List[str]]:
 
 def get_version_overview() -> List[ServiceVersionResult]:
     testArray = []
-    testDat = ServiceVersionResult(service='test', installed_version='1.0.0', checked_version='1.0.1', last_checked = date.today(), link='https://www.google.com')
+    testDat = ServiceVersionResult(service='test', installed_version='1.0.0', remote_version='1.0.1', last_checked = date.today(), link='https://www.google.com')
     testArray.append(testDat)
-    testDat1 = ServiceVersionResult(service='test1', installed_version='1.0.0', checked_version='1.0.2', last_checked = date.today(), link='https://www.google.com')
+    testDat1 = ServiceVersionResult(service='test1', installed_version='1.0.0', remote_version='1.0.0', last_checked = date.today(), link='https://www.google.com')
     testArray.append(testDat1)
 
     return testArray

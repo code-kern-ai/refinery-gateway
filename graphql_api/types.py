@@ -687,7 +687,7 @@ class ZeroShotNRecordsWrapper(graphene.ObjectType):
 class ServiceVersionResult(graphene.ObjectType):
     service = graphene.String()
     installed_version = graphene.String()
-    checked_version = graphene.String()
+    remote_version = graphene.String()
     last_checked = graphene.DateTime()
     link = graphene.String()
 
