@@ -45,7 +45,6 @@ def get_version_overview() -> List[ServiceVersionResult]:
 
 def has_updates() -> List[ServiceVersionResult]:
     has_updates = __updater_has_updates()
-    print(has_updates)
     return has_updates
 
 
