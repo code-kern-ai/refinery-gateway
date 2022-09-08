@@ -87,5 +87,5 @@ class UpdateEmbedder(graphene.Mutation):
 
 class EmbedderMutation(graphene.ObjectType):
     create_embedder = CreateEmbedder.Field()
-    delete_information_source = DeleteEmbedder.Field()
-    update_information_source = UpdateEmbedder.Field()
+    delete_embedder = DeleteEmbedder.Field()
+    update_embedder = UpdateEmbedder.Field()
