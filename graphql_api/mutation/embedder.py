@@ -40,7 +40,7 @@ class CreateEmbedder(graphene.Mutation):
 
 class DeleteEmbedder(graphene.Mutation):
     class Arguments:
-        information_source_id = graphene.ID(required=True)
+        embedder_id = graphene.ID(required=True)
         project_id = graphene.ID(required=True)
 
     ok = graphene.Boolean()
