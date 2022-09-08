@@ -8,6 +8,7 @@ from graphene.types.generic import GenericScalar
 from graphene_sqlalchemy.types import SQLAlchemyObjectType
 from submodules.model import enums
 from submodules.model.business_objects import (
+    embedder,
     knowledge_term,
     record_label_association,
     embedding,
@@ -240,6 +241,14 @@ class InformationSourcePayload(SQLAlchemyObjectType):
     id = graphene.ID(source="id", required=True)
 
 
+class EmbedderPayload(SQLAlchemyObjectType):
+    class Meta:
+        model = models.EmbedderPayload
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+
+
 class SourceStatistics(SQLAlchemyObjectType):
     class Meta:
         model = models.InformationSourceStatistics
@@ -431,6 +440,18 @@ class InformationSource(SQLAlchemyObjectType):
 
     def resolve_last_payload(self, info):
         return information_source.get_last_payload(self.project_id, self.id)
+
+
+class Embedder(SQLAlchemyObjectType):
+    class Meta:
+        model = models.Embedder
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+    last_payload = graphene.Field(EmbedderPayload)
+
+    def resolve_last_payload(self, info):
+        return embedder.get_last_payload(self.project_id, self.id)
 
 
 class Organization(SQLAlchemyObjectType):
