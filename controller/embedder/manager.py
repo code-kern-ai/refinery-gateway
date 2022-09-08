@@ -23,7 +23,7 @@ def create_embedder(
     description: str,
     type: str,
 ) -> Embedder:
-    embedder: Embedder = embedder.create(
+    embedder_obj: Embedder = embedder.create(
         project_id=project_id,
         name=name,
         source_code=source_code,
@@ -32,7 +32,7 @@ def create_embedder(
         created_by=user_id,
         with_commit=True,
     )
-    return embedder
+    return embedder_obj
 
 
 def update_embedder(
