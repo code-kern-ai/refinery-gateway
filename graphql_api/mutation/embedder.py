@@ -59,7 +59,6 @@ class UpdateEmbedder(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
         embedder_id = graphene.ID(required=True)
-        labeling_task_id = graphene.ID(required=True)
         code = graphene.String()
         description = graphene.String()
         name = graphene.String()
