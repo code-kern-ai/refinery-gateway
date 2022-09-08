@@ -3,7 +3,7 @@ from typing import List
 import graphene
 import util.user_activity
 from controller.auth import manager as auth
-from graphql_api.types import ToolTip, UserActivityWrapper
+from graphql_api.types import ServiceVersionResult, ToolTip, UserActivityWrapper
 from util import tooltip
 from controller.misc import config_service, manager
 
@@ -27,6 +27,10 @@ class MiscQuery(graphene.ObjectType):
 
     get_black_white_demo = graphene.Field(graphene.JSONString)
 
+    version_overview = graphene.Field(graphene.List(ServiceVersionResult))
+
+    has_updates = graphene.Field(graphene.Boolean)
+
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
 
@@ -46,3 +50,9 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_get_black_white_demo(self, info) -> str:
         return manager.get_black_white_demo()
+
+    def resolve_version_overview(self, info) -> List[ServiceVersionResult]:
+        return manager.get_version_overview()
+
+    def resolve_has_updates(self, info) -> bool:
+        return manager.has_updates()
