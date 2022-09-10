@@ -1,5 +1,6 @@
 import graphene
 from graphql_api.mutation.embedder import EmbedderMutation
+from graphql_api.mutation.embedder_payload import EmbedderPayloadMutation
 from graphql_api.query.attribute import AttributeQuery
 from graphql_api.query.data_slice import DataSliceQuery
 from graphql_api.query.embedder import EmbedderQuery
@@ -85,6 +86,7 @@ class Mutation(
     NotificationMutation,
     OrganizationMutation,
     PayloadMutation,
+    EmbedderPayloadMutation,
     ProjectMutation,
     RecordLabelAssociationMutation,
     RecordMutation,
