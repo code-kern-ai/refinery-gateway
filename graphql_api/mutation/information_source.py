@@ -91,6 +91,23 @@ class SetAllInformationSourceSelected(graphene.Mutation):
         return ToggleInformationSource(ok=True)
 
 
+class SetAllModelCallbacksSelected(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        value = graphene.Boolean(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, value: bool):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.set_all_model_callbacks_selected(project_id, value)
+        notification.send_organization_update(
+            project_id, f"information_source_updated:all"
+        )
+        return SetAllModelCallbacksSelected(ok=True)
+
+
 class UpdateInformationSource(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -130,3 +147,4 @@ class InformationSourceMutation(graphene.ObjectType):
     toggle_information_source = ToggleInformationSource.Field()
     update_information_source = UpdateInformationSource.Field()
     set_all_information_source_selected = SetAllInformationSourceSelected.Field()
+    set_all_model_callbacks_selected = SetAllModelCallbacksSelected.Field()

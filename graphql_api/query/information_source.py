@@ -24,6 +24,11 @@ class InformationSourceQuery(graphene.ObjectType):
         project_id=graphene.ID(required=True),
     )
 
+    model_callbacks_overview_data = graphene.Field(
+        graphene.JSONString,
+        project_id=graphene.ID(required=True),
+    )
+
     def resolve_information_source_by_source_id(
         self, info, project_id: str, information_source_id: str
     ) -> InformationSource:
@@ -46,3 +51,12 @@ class InformationSourceQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_overview_data(project_id)
+
+    def resolve_model_callbacks_overview_data(
+        self,
+        info,
+        project_id: str,
+    ) -> str:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return manager.get_overview_data(project_id, operator="=")

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask
 from submodules.model.business_objects import general, labeling_task, information_source
@@ -16,8 +16,8 @@ def get_all_information_sources(project_id: str) -> List[InformationSource]:
     return information_source.get_all(project_id)
 
 
-def get_overview_data(project_id: str) -> str:
-    return information_source.get_overview_data(project_id)
+def get_overview_data(project_id: str, operator: Optional[str] = "!=") -> str:
+    return information_source.get_overview_data(project_id, operator)
 
 
 def create_information_source(
@@ -78,4 +78,10 @@ def toggle_information_source(project_id: str, source_id: str) -> None:
 def set_all_information_source_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True
+    )
+
+
+def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
+    information_source.update_is_selected_for_project(
+        project_id, value, with_commit=True, operator="="
     )
