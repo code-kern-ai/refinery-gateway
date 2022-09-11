@@ -2,6 +2,7 @@ import logging
 import graphene
 from api.project import ProjectDetails
 from api.transfer import (
+    AssociationsImport,
     FileExport,
     KnowledgeBaseExport,
     Notify,
@@ -36,6 +37,7 @@ routes = [
         "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",
         KnowledgeBaseExport,
     ),
+    Route("/project/{project_id:str}/associations", AssociationsImport),
     Route("/project/{project_id:str}/export", FileExport),
     Route("/project/{project_id:str}/import", PrepareImport),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),

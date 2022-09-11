@@ -11,6 +11,7 @@ from controller.transfer import manager as upload_manager
 from controller.upload_task import manager as task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
+from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 
 from submodules.model import enums
@@ -96,6 +97,29 @@ class PrepareImport(HTTPEndpoint):
             org_id, f"{project_id}/{task.id}"
         )
         return JSONResponse(credentials_and_id)
+
+
+class AssociationsImport(HTTPEndpoint):
+    async def post(self, request) -> JSONResponse:
+        project_id = request.path_params["project_id"]
+        request_body = await request.json()
+        user_id = request_body["user_id"]
+        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        associations = request_body["associations"]
+        indices = request_body["indices"]
+        name = request_body["name"]
+        label_task_name = request_body["label_task_name"]
+        source_type = request_body["source_type"]
+        new_associations_added = association_transfer_manager.import_associations(
+            project_id,
+            user_id,
+            name,
+            label_task_name,
+            associations,
+            indices,
+            source_type,
+        )
+        return JSONResponse(new_associations_added)
 
 
 class UploadTask(HTTPEndpoint):

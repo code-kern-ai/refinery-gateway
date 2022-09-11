@@ -34,7 +34,7 @@ class CreateClassificationAssociation(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        record = manager.create_classification_label(
+        record = manager.create_manual_classification_label(
             project_id, user.id, record_id, label_id, labeling_task_id, as_gold_star
         )
 
@@ -81,7 +81,7 @@ class CreateExtractionAssociation(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        record = manager.create_extraction_label(
+        record = manager.create_manual_extraction_label(
             project_id,
             user.id,
             record_id,

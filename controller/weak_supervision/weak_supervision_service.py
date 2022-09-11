@@ -24,7 +24,9 @@ def initiate_weak_supervision(
 # if for 5 sec nothing happens for the task the statistics are calculated
 # since this is only relevant for changing record label associations as own function
 @debounce(5)
-def calculate_quality_after_labeling(project_id: str, labeling_task_id: str, user_id: str) -> Any:
+def calculate_quality_after_labeling(
+    project_id: str, labeling_task_id: str, user_id: str
+) -> Any:
     url = f"{BASE_URI}/labeling_task_statistics"
     data = {
         "project_id": str(project_id),
@@ -34,7 +36,10 @@ def calculate_quality_after_labeling(project_id: str, labeling_task_id: str, use
     return service_requests.post_call_or_raise(url, data)
 
 
-def calculate_stats_after_source_run(project_id: str, source_id: str, user_id: str) -> Any:
+@debounce(2)
+def calculate_stats_after_source_run(
+    project_id: str, source_id: str, user_id: str
+) -> Any:
     url = f"{BASE_URI}/source_statistics"
     data = {
         "project_id": str(project_id),

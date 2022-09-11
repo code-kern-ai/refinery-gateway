@@ -8,6 +8,10 @@ def get_information_source(project_id: str, source_id: str) -> InformationSource
     return information_source.get(project_id, source_id)
 
 
+def get_information_source_by_name(project_id: str, name: str) -> InformationSource:
+    return information_source.get_by_name(project_id, name)
+
+
 def get_all_information_sources(project_id: str) -> List[InformationSource]:
     return information_source.get_all(project_id)
 

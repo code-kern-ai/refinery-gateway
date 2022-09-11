@@ -9,6 +9,12 @@ def get_attribute(project_id: str, attribute_id: str) -> Attribute:
     return attribute.get(project_id, attribute_id)
 
 
+def get_all_attributes_by_names(
+    project_id: str, attribute_names: List[str]
+) -> List[Attribute]:
+    return attribute.get_all_by_names(project_id, attribute_names)
+
+
 def get_all_attributes(project_id: str) -> List[Attribute]:
     return attribute.get_all_ordered(project_id, True)
 
