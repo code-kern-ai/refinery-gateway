@@ -133,7 +133,10 @@ def build_query_template(
         SearchQueryTemplate.SUBQUERY_RLA_DIFFERENT_IS_EXTRACTION,
     ]:
         template = template.replace("@@LABELING_TASK_ID@@", filter_values[0])
-    elif target == SearchQueryTemplate.SUBQUERY_RLA_CONFIDENCE:
+    elif target in [
+        SearchQueryTemplate.SUBQUERY_RLA_CONFIDENCE,
+        SearchQueryTemplate.SUBQUERY_CALLBACK_CONFIDENCE,
+    ]:
         lower, upper = filter_values
         if isinstance(lower, str):
             lower = "'" + lower + "'"
@@ -172,7 +175,7 @@ def build_order_by_table_select(
         col_text = ""
         alias = ""
         if column == SearchColumn.CONFIDENCE.value:
-            column = f"CASE WHEN source_type = '{LabelSource.WEAK_SUPERVISION.value}' THEN confidence ELSE null END"
+            column = f"CASE WHEN source_type IN ('{LabelSource.WEAK_SUPERVISION.value}', '{LabelSource.MODEL_CALLBACK.value}') THEN confidence ELSE null END"
             alias = "min_confidence" if direction == "ASC" else "max_confidence"
         if direction == "ASC":
             if alias == "":
@@ -208,14 +211,16 @@ __lookup_operator_has_quotes = {
 
 
 __lookup_order_by_table = {
-    SearchOrderBy.CONFIDENCE: SearchTargetTables.RECORD_LABEL_ASSOCIATION,
+    SearchOrderBy.WEAK_SUPERVISION_CONFIDENCE: SearchTargetTables.RECORD_LABEL_ASSOCIATION,
+    SearchOrderBy.MODEL_CALLBACK_CONFIDENCE: SearchTargetTables.RECORD_LABEL_ASSOCIATION,
     SearchOrderBy.RECORD_ID: SearchTargetTables.RECORD,
     SearchOrderBy.RECORD_CREATED_AT: SearchTargetTables.RECORD,
     SearchOrderBy.RECORD_DATA: SearchTargetTables.RECORD,
 }
 
 __lookup_order_by_column = {
-    SearchOrderBy.CONFIDENCE: SearchColumn.CONFIDENCE,
+    SearchOrderBy.WEAK_SUPERVISION_CONFIDENCE: SearchColumn.CONFIDENCE,
+    SearchOrderBy.MODEL_CALLBACK_CONFIDENCE: SearchColumn.CONFIDENCE,
     SearchOrderBy.RECORD_ID: SearchColumn.ID,
     SearchOrderBy.RECORD_CREATED_AT: SearchColumn.CREATED_AT,
 }
@@ -269,6 +274,12 @@ SELECT rla.project_id pID, rla.record_id rID
 FROM record_label_association rla
 WHERE rla.project_id = '@@PROJECT_ID@@'
     AND rla.source_type = 'WEAK_SUPERVISION'
+    AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ """,
+    SearchQueryTemplate.SUBQUERY_CALLBACK_CONFIDENCE: """
+SELECT rla.project_id pID, rla.record_id rID
+FROM record_label_association rla
+WHERE rla.project_id = '@@PROJECT_ID@@'
+    AND rla.source_type = 'MODEL_CALLBACK'
     AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ """,
     SearchQueryTemplate.ORDER_RLA: """
 LEFT JOIN (
