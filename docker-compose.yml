@@ -1,0 +1,347 @@
+version: '3.9'
+services:
+  kratos-migrate:
+    image: oryd/kratos:v0.8.0-alpha.2-sqlite
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./kratos
+        target: /etc/config/kratos
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+    networks:
+      - default
+
+  kratos:
+    depends_on:
+      - kratos-migrate
+    image: oryd/kratos:v0.8.0-alpha.2-sqlite
+    restart: unless-stopped
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      - LOG_LEVEL=trace
+      - SERVE_PUBLIC_BASE_URL=https://app.dev.kern.ai/.ory/kratos/public/
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./kratos
+        target: /etc/config/kratos
+    networks:
+      - default
+
+  oathkeeper:
+    image: oryd/oathkeeper:v0.38.15-beta.1
+    depends_on:
+      - kratos
+    command: serve proxy -c "/etc/config/oathkeeper/oathkeeper.yml"
+    environment:
+      - LOG_LEVEL=debug
+    restart: on-failure
+    networks:
+      - default
+      - gateway
+    volumes:
+      - ./oathkeeper:/etc/config/oathkeeper
+
+  refinery-authorizer:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-authorizer:dev
+    restart: always
+    expose:
+      - 80
+    networks:
+      - default
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    networks:
+      - default
+
+  refinery-ui:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-ui:dev
+    restart: always
+    expose:
+      - 80
+    networks:
+      - default
+
+  admin-dashboard:
+    image: registry.dev.onetask.ai/code-kern-ai/admin-dashboard:dev
+    restart: always
+    expose:
+      - 80
+    networks:
+      - default
+
+  refinery-entry:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-entry:dev
+    restart: always
+    environment:
+      - IS_OS=1
+    expose:
+      - 80
+    networks:
+      - default
+
+  postgres-migrate:
+    depends_on:
+      - graphql-postgres
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-gateway:dev
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+    command: alembic upgrade head
+    networks:
+      - default
+
+  refinery-gateway:
+    depends_on:
+      - postgres-migrate
+      - graphql-postgres
+      - refinery-config
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-gateway:dev
+    restart: always
+    deploy:
+      replicas: 2
+    expose:
+      - 80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:Z
+      - graphql-sqlite:/sqlite
+    environment:
+      - LF_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev
+      - ML_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev
+      - RECORD_IDE_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - LF_NETWORK=dev_user_functions
+      - WEAK_SUPERVISION=http://refinery-weak-supervisor:80
+      - EMBEDDING_SERVICE=http://refinery-embedder:80
+      - DOC_OCK=http://refinery-doc-ock:80
+      - TOKENIZER=http://refinery-tokenizer:80
+      - ZERO_SHOT=http://refinery-zero-shot:80
+      - NEURAL_SEARCH=http://refinery-neural-search:80
+      - KRATOS_ADMIN_URL=http://kratos:4434
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+      - MODEL_PROVIDER=http://refinery-model-provider:80
+      - S3_URI=object-storage:9000
+      - S3_ENDPOINT=https://s3.dev.kern.ai
+      - S3_ENDPOINT_LOCAL=object-storage:9000
+      - S3_ACCESS_KEY=onetask
+      - S3_SECRET_KEY=3GkYhHXi6p8AgYTxpatA2QTJ
+      - SQLITE=/sqlite/db.sqlite
+    networks:
+      - default
+      - user_functions
+
+  graphql-postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=onetask
+      - POSTGRES_USER=postgres
+    expose:
+      - 5432
+    networks:
+      - default
+    volumes:
+      - graphql-postgres-data:/var/lib/postgresql/data
+
+  refinery-gateway-proxy:
+    depends_on:
+      - graphql-postgres
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-gateway-proxy:dev
+    restart: always
+    expose:
+      - 80
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@postgres:5432
+      - GATEWAY=http://refinery-gateway:80
+      - KRATOS=http://kratos:4433
+      - CONFIG=http://refinery-config:80
+    links:
+      - "graphql-postgres:postgres"
+    networks:
+      - default
+
+  object-storage:
+    image: minio/minio
+    restart: always
+    expose:
+      - 9000
+    environment:
+      - MINIO_DOMAIN=s3.dev.kern.ai
+      - MINIO_ROOT_USER=onetask
+      - MINIO_ROOT_PASSWORD=3GkYhHXi6p8AgYTxpatA2QTJ
+      - MINIO_NOTIFY_WEBHOOK_ENABLE=on
+      - MINIO_NOTIFY_WEBHOOK_ENDPOINT=http://refinery-gateway:80/notify
+    command: server /data --address :9000 --console-address ":9001"
+    networks:
+      - default
+      - user_functions
+      - gateway
+    volumes:
+      - object-store:/data
+
+  refinery-weak-supervisor:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-weak-supervisor:dev
+    restart: unless-stopped
+    expose:
+      - 80
+    networks:
+      - default
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+
+  refinery-config:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-config:dev
+    restart: unless-stopped
+    expose:
+      - 80
+    environment:
+      - KERN_S3_ENDPOINT=https://s3.dev.kern.ai
+      - IS_MANAGED=1
+    networks:
+      - default
+
+  refinery-embedder:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-embedder:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - S3_ENDPOINT_LOCAL=object-storage:9000
+      - S3_ACCESS_KEY=onetask
+      - S3_SECRET_KEY=3GkYhHXi6p8AgYTxpatA2QTJ
+      - DOC_OCK=http://refinery-doc-ock:80
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+      - NEURAL_SEARCH=http://refinery-neural-search:80
+      - MODEL_PROVIDER=http://refinery-model-provider:80
+    expose:
+      - 80
+    networks:
+      - default
+    volumes:
+      - ./model-data:/models
+
+  refinery-doc-ock:
+    depends_on:
+      - refinery-config
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-doc-ock:dev
+    restart: unless-stopped
+    expose:
+      - 80
+    environment:
+      - TELEMETRY_URI=https://telemetry.kern.ai
+
+  refinery-tokenizer:
+    depends_on:
+      - refinery-config
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-tokenizer:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - DOC_OCK=http://refinery-doc-ock:80
+      - S3_ENDPOINT_LOCAL=object-storage:9000
+      - S3_ACCESS_KEY=onetask
+      - S3_SECRET_KEY=3GkYhHXi6p8AgYTxpatA2QTJ
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+    expose:
+      - 80
+    networks:
+      - default
+
+  refinery-websocket:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-websocket:dev
+    restart: unless-stopped
+    environment:
+      - DB_DSN=postgresql://postgres:onetask@graphql-postgres:5432?sslmode=disable
+    expose:
+      - 8080
+    networks:
+      - default
+
+  refinery-updater:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-updater:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - S3_ENDPOINT_LOCAL=object-storage:9000
+      - S3_ACCESS_KEY=onetask
+      - S3_SECRET_KEY=3GkYhHXi6p8AgYTxpatA2QTJ
+    expose:
+      - 80
+    networks:
+      - default
+
+  refinery-neural-search:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-neural-search:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - QDRANT_PORT=6333
+    expose:
+      - 80
+    networks:
+      - default
+
+  qdrant:
+    image: qdrant/qdrant:v0.7.0
+    restart: always
+    expose:
+      - 6333
+    networks:
+      - default
+    volumes:
+      - qdrant-store:/qdrant/storage
+
+  refinery-zero-shot:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-zero-shot:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+      - MODEL_PROVIDER=http://refinery-model-provider:80
+    expose:
+      - 80
+    networks:
+      - default
+    volumes:
+      - ./model-data:/models
+  
+  refinery-model-provider:
+    image: registry.dev.onetask.ai/code-kern-ai/refinery-model-provider:dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432
+      - WS_NOTIFY_ENDPOINT=http://refinery-websocket:8080
+    expose:
+      - 80
+    networks:
+      - default
+    volumes:
+      - ./model-data:/models
+
+networks:
+  default:
+  gateway:
+    external:
+      name: gateway
+  user_functions:
+    name: dev_user_functions
+#    internal: true
+
+
+volumes:
+  kratos-sqlite:
+  object-store:
+  qdrant-store:
+  graphql-sqlite:
+  graphql-postgres-data:
+  model-data:
