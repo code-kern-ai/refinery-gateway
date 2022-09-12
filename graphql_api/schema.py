@@ -18,6 +18,7 @@ from graphql_api.query.zero_shot import ZeroShotQuery
 from graphql_api.query.upload_task import UploadTaskQuery
 from graphql_api.query.weak_supervision import WeakSupervisionQuery
 from graphql_api.query.record_ide import RunRecordIDEPayload
+from graphql_api.query.model_provider import ModelProviderQuery
 
 from graphql_api.mutation.attribute import AttributeMutation
 from graphql_api.mutation.misc import MiscMutation
@@ -28,6 +29,7 @@ from graphql_api.mutation.knowledge_base import KnowledgeBaseMutation
 from graphql_api.mutation.knowledge_term import KnowledgeTermMutation
 from graphql_api.mutation.labeling_task import LabelingTaskMutation
 from graphql_api.mutation.labeling_task_label import LabelingTaskLabelMutation
+from graphql_api.mutation.model_provider import ModelProviderMutation
 from graphql_api.mutation.notification import NotificationMutation
 from graphql_api.mutation.organization import OrganizationMutation
 from graphql_api.mutation.payload import PayloadMutation
@@ -49,6 +51,7 @@ class Query(
     KnowledgeTermQuery,
     LabelingTaskQuery,
     MiscQuery,
+    ModelProviderQuery,
     OrganizationQuery,
     PayloadQuery,
     ProjectQuery,
@@ -72,6 +75,7 @@ class Mutation(
     KnowledgeBaseMutation,
     KnowledgeTermMutation,
     MiscMutation,
+    ModelProviderMutation,
     LabelingTaskLabelMutation,
     LabelingTaskMutation,
     NotificationMutation,
