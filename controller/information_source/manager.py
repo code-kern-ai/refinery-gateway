@@ -17,11 +17,7 @@ def get_all_information_sources(project_id: str) -> List[InformationSource]:
 
 
 def get_overview_data(project_id: str, is_model_callback: bool = False) -> str:
-    if is_model_callback:
-        type_selection = " = 'MODEL_CALLBACK'"
-    else:
-        type_selection = " != 'MODEL_CALLBACK'"
-    return information_source.get_overview_data(project_id, type_selection)
+    return information_source.get_overview_data(project_id, is_model_callback)
 
 
 def create_information_source(
