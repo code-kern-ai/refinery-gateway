@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from util import service_requests
+from util import notification, service_requests
 from util.decorator import debounce
 
 BASE_URI = os.getenv("WEAK_SUPERVISION")
@@ -52,4 +52,9 @@ def calculate_stats_after_source_run(
 def calculate_stats_after_source_run_with_debounce(
     project_id: str, source_id: str, user_id: str
 ):
-    return calculate_stats_after_source_run(project_id, source_id, user_id)
+    result = calculate_stats_after_source_run(project_id, source_id, user_id)
+    notification.send_organization_update(
+        project_id,
+        f"model_callback_update_statistics:{source_id}",
+    )
+    return result
