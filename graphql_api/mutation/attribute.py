@@ -3,7 +3,7 @@ from typing import Any
 from controller.auth import manager as auth
 from util import notification
 import graphene
-from controller.attribute import manager
+from controller.attribute import manager, util
 
 
 class CreateAttribute(graphene.Mutation):
@@ -12,12 +12,16 @@ class CreateAttribute(graphene.Mutation):
         attribute_name = graphene.String()
 
     ok = graphene.Boolean()
+    attribute_id = graphene.ID()
 
-    def mutate(self, info, project_id: str, attribute_name: str):
+    def mutate(self, info, project_id: str, attribute_name: str = None):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.create_attribute(project_id, attribute_name)
-        return CreateAttribute(ok=True)
+        if attribute_name is None:
+            attribute_name = util.find_free_name(project_id)
+        
+        attribute = manager.create_attribute(project_id, attribute_name)
+        return CreateAttribute(ok=True, attribute_id=attribute.id)
 
 
 class UpdateAttribute(graphene.Mutation):

@@ -1,3 +1,4 @@
+from tokenize import String
 from typing import List
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import attribute, general
@@ -17,14 +18,15 @@ def check_composite_key(project_id: str) -> bool:
     return attribute.check_composite_key_is_valid(project_id)
 
 
-def create_attribute(project_id: str, name: str) -> None:
+def create_attribute(project_id: str, name: str) -> Attribute:
     relative_position: int = attribute.get_relative_position(project_id)
     if relative_position is None:
         relative_position = 1
     else:
         relative_position += 1
 
-    attribute.create(project_id, name, relative_position, with_commit=True)
+    attributeEntity: Attribute =  attribute.create(project_id, name, relative_position, with_commit=True, is_created=True)
+    return attributeEntity
 
 
 def update_attribute(
