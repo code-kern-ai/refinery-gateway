@@ -34,25 +34,22 @@ def import_associations(
         project_id, model_name
     )
     if information_source is None:
+        
         if source_type == "model_callback":
-            information_source = information_source_manager.create_information_source(
-                project_id,
-                user_id,
-                labeling_task.id,
-                model_name,
-                "",
-                "This is a model callback",
-                enums.LabelSource.MODEL_CALLBACK.value,
-            )
+            description = "This is a model callback"
+            type = enums.LabelSource.MODEL_CALLBACK.value
         elif source_type == "heuristic":
-            information_source = information_source_manager.create_information_source(
+            description = "This is a heuristic"
+            type = enums.LabelSource.INFORMATION_SOURCE.value
+            
+        information_source = information_source_manager.create_information_source(
                 project_id,
                 user_id,
                 labeling_task.id,
                 model_name,
                 "",
-                "This is a heuristic",
-                enums.LabelSource.INFORMATION_SOURCE.value,
+                description,
+                type,
             )
         else:
             raise Exception("Unknown source type")
