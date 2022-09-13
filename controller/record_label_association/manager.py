@@ -31,7 +31,7 @@ def is_any_record_manually_labeled(project_id: str):
     return record_label_association.is_any_record_manually_labeled(project_id)
 
 
-def create_classification_label(
+def create_manual_classification_label(
     project_id: str,
     user_id: str,
     record_id: str,
@@ -91,7 +91,7 @@ def __check_label_duplication_classification_and_react(
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
 
 
-def create_extraction_label(
+def create_manual_extraction_label(
     project_id: str,
     user_id: str,
     record_id: str,
