@@ -1,5 +1,5 @@
 import traceback
-from typing import Dict, Any
+from typing import Dict, Any, List
 from controller.labeling_task import manager as labeling_task_manager
 from controller.attribute import manager as attribute_manager
 from controller.record import manager as record_manager
@@ -23,7 +23,7 @@ def import_associations(
     model_name: str,
     labeling_task_name: str,
     associations: Dict[str, Any],
-    indices: Dict[str, Any],
+    indices: List[Dict[str, Any]],
     source_type: str,
 ) -> int:
     labeling_task = labeling_task_manager.get_labeling_task_by_name(
@@ -33,26 +33,27 @@ def import_associations(
     information_source = information_source_manager.get_information_source_by_name(
         project_id, model_name
     )
+
     if information_source is None:
-        
+
         if source_type == "model_callback":
             description = "This is a model callback"
             type = enums.LabelSource.MODEL_CALLBACK.value
         elif source_type == "heuristic":
             description = "This is a heuristic"
             type = enums.LabelSource.INFORMATION_SOURCE.value
-            
-        information_source = information_source_manager.create_information_source(
-                project_id,
-                user_id,
-                labeling_task.id,
-                model_name,
-                "",
-                description,
-                type,
-            )
         else:
             raise Exception("Unknown source type")
+
+        information_source = information_source_manager.create_information_source(
+            project_id,
+            user_id,
+            labeling_task.id,
+            model_name,
+            "",
+            description,
+            type,
+        )
 
     attribute_names = list(indices[0].keys())
     attribute_list = attribute_manager.get_all_attributes_by_names(
@@ -68,18 +69,16 @@ def import_associations(
     record_ids = [record.id for record in list(records.values())]
 
     record_label_associations = []
+
+    label_options = labeling_task_label.get_all_by_task_id(project_id, labeling_task.id)
+    label_id_by_name_dict = {label.name: label.id for label in label_options}
     for record_id, association in zip(record_ids, associations):
         label_name, confidence = association
-
-        label = labeling_task_label.get_by_name(
-            project_id, labeling_task.id, label_name
-        )
-
         record_label_associations.append(
             RecordLabelAssociation(
                 project_id=project_id,
                 record_id=record_id,
-                labeling_task_label_id=label.id,
+                labeling_task_label_id=label_id_by_name_dict[label_name],
                 source_type=enums.LabelSource.MODEL_CALLBACK.value,
                 source_id=information_source.id,
                 return_type=enums.InformationSourceReturnType.RETURN.value,
@@ -95,13 +94,9 @@ def import_associations(
     general.commit()
 
     try:
-        weak_supervision.calculate_stats_after_source_run(
+        weak_supervision.calculate_stats_after_source_run_with_debounce(
             project_id, information_source.id, user_id
         )
-        notification.send_organization_update(
-            project_id, f"information_source_statistics:{information_source.id}"
-        )
-        general.commit()
     except:
         print(traceback.format_exc())
 

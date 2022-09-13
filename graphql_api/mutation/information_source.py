@@ -102,9 +102,9 @@ class SetAllModelCallbacksSelected(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.set_all_model_callbacks_selected(project_id, value)
-        notification.send_organization_update(
-            project_id, f"information_source_updated:all"
-        )
+        # notification.send_organization_update(
+        #     project_id, f"information_source_updated:all"
+        # )
         return SetAllModelCallbacksSelected(ok=True)
 
 

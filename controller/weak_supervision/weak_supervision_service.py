@@ -36,7 +36,6 @@ def calculate_quality_after_labeling(
     return service_requests.post_call_or_raise(url, data)
 
 
-@debounce(2)
 def calculate_stats_after_source_run(
     project_id: str, source_id: str, user_id: str
 ) -> Any:
@@ -47,3 +46,10 @@ def calculate_stats_after_source_run(
         "user_id": str(user_id),
     }
     return service_requests.post_call_or_raise(url, data)
+
+
+@debounce(1)
+def calculate_stats_after_source_run_with_debounce(
+    project_id: str, source_id: str, user_id: str
+):
+    return calculate_stats_after_source_run(project_id, source_id, user_id)

@@ -59,4 +59,4 @@ class InformationSourceQuery(graphene.ObjectType):
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.get_overview_data(project_id, operator="=")
+        return manager.get_overview_data(project_id, is_model_callback=True)
