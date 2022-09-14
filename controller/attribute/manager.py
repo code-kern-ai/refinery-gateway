@@ -2,6 +2,7 @@ from tokenize import String
 from typing import List
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import attribute, general
+from submodules.model.enums import AttributeState
 from submodules.model.models import Attribute
 from util import daemon
 
@@ -25,15 +26,15 @@ def create_attribute(project_id: str, name: str) -> Attribute:
     else:
         relative_position += 1
 
-    attributeEntity: Attribute =  attribute.create(project_id, name, relative_position, with_commit=True, is_created=True)
+    attributeEntity: Attribute =  attribute.create(project_id, name, relative_position, with_commit=True, is_created=True, code_column = "TODO: Add code column", state = AttributeState.WORK_IN_PROGRESS.value)
     return attributeEntity
 
 
 def update_attribute(
-    project_id: str, attribute_id: str, data_type: str, is_primary_key: bool
+    project_id: str, attribute_id: str, data_type: str, is_primary_key: bool, name: str
 ) -> None:
     attribute.update(
-        project_id, attribute_id, data_type, is_primary_key, with_commit=True
+        project_id, attribute_id, data_type, is_primary_key, with_commit=True, name = name
     )
 
 
