@@ -701,3 +701,9 @@ class ModelProviderInfoResult(graphene.ObjectType):
     size = graphene.Float()  # int is to small therfore as float
     status = graphene.String()
     zero_shot_pipeline = graphene.Boolean()
+
+class LastRunAttributesResult(graphene.ObjectType):
+    created_at = graphene.DateTime()
+    state = graphene.String()
+    iteration = graphene.Int()
+    logs = graphene.List(graphene.DateTime)

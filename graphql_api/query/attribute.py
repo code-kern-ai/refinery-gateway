@@ -5,7 +5,7 @@ import graphene
 from controller.auth import manager as auth
 from controller.attribute import manager
 from submodules.model.enums import NotificationType
-from graphql_api.types import Attribute
+from graphql_api.types import Attribute, LastRunAttributesResult
 from util.notification import create_notification
 
 
@@ -25,6 +25,12 @@ class AttributeQuery(graphene.ObjectType):
     check_composite_key = graphene.Field(
         graphene.Boolean,
         project_id=graphene.ID(required=True),
+    )
+
+    last_run_by_attribute_id = graphene.Field(
+        LastRunAttributesResult,
+        project_id=graphene.ID(required=True),
+        attribute_id=graphene.ID(required=True)
     )
 
     def resolve_attribute_by_attribute_id(
@@ -53,3 +59,10 @@ class AttributeQuery(graphene.ObjectType):
                 project_id,
             )
         return is_valid
+
+    def resolve_last_run_by_attribute_id(
+        self, info, project_id: str, attribute_id: str
+    ) -> LastRunAttributesResult:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return manager.get_last_run_by_attribute_id(project_id, attribute_id)
