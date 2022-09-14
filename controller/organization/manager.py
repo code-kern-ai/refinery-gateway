@@ -1,10 +1,23 @@
-from typing import List, Dict, Union
+from typing import Any, List, Dict, Union
 from controller.misc import config_service
 
 from graphql_api.types import UserCountsWrapper
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
+
+
+def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
+    org = organization.get(org_id)
+    if not org:
+        raise ValueError(f"Organization with id {org_id} does not exist")
+
+    for k in changes:
+        if hasattr(org, k):
+            setattr(org, k, changes[k])
+        else:
+            raise ValueError(f"Organization has no attribute {k}")
+    general.commit()
 
 
 def get_all_organizations() -> List[Organization]:

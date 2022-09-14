@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import graphene
 from graphql import GraphQLError
 
@@ -74,8 +75,24 @@ class DeleteOrganization(graphene.Mutation):
         return DeleteOrganization(ok=True)
 
 
+class ChangeOrganization(graphene.Mutation):
+    class Arguments:
+        org_id = graphene.ID()
+        changes = graphene.JSONString()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, org_id: str, changes: Dict[str, Any]):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+        print(changes)
+        organization_manager.change_organization(org_id, changes)
+        return DeleteOrganization(ok=True)
+
+
 class OrganizationMutation(graphene.ObjectType):
     add_user_to_organization = AddUserToOrganization.Field()
     remove_user_from_organization = RemoveUserFromOrganization.Field()
     create_organization = CreateOrganization.Field()
     delete_organization = DeleteOrganization.Field()
+    change_organization = ChangeOrganization.Field()

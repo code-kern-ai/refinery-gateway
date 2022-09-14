@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Union
 import graphene
 
 from controller.auth import manager as auth
-from graphql_api.types import DataSlice
 from controller.comment import manager
 
 
@@ -15,6 +14,12 @@ class CommentQuery(graphene.ObjectType):
         xfkey=graphene.ID(required=False),
         project_id=graphene.ID(required=False),
         group_by_xfkey=graphene.Boolean(required=False),
+    )
+    get_comments = graphene.Field(
+        graphene.JSONString,
+        xftype=graphene.String(required=True),
+        xfkey=graphene.ID(required=False),
+        project_id=graphene.ID(required=False),
     )
 
     def resolve_has_comments(
@@ -31,3 +36,17 @@ class CommentQuery(graphene.ObjectType):
         else:
             auth.check_admin_access(info)
         return manager.has_comments(xftype, xfkey, project_id, group_by_xfkey)
+
+    def resolve_get_comments(
+        self,
+        info,
+        xftype: str,
+        xfkey: Optional[str] = None,
+        project_id: Optional[str] = None,
+    ) -> str:
+        auth.check_demo_access(info)
+        if project_id:
+            auth.check_project_access(info, project_id)
+        else:
+            auth.check_admin_access(info)
+        return manager.get_comments(xftype, xfkey, project_id)
