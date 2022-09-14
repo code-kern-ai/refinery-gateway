@@ -1,5 +1,6 @@
 import graphene
 from graphql_api.query.attribute import AttributeQuery
+from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
 from graphql_api.query.embedding import EmbeddingQuery
 from graphql_api.query.transfer import TransferQuery
@@ -43,6 +44,7 @@ from graphql_api.mutation.zero_shot import ZeroShotMutation
 
 class Query(
     AttributeQuery,
+    CommentQuery,
     DataSliceQuery,
     EmbeddingQuery,
     TransferQuery,
