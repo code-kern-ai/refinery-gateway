@@ -2,6 +2,7 @@ import graphene
 from graphql_api.query.attribute import AttributeQuery
 from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
+from graphql_api.query.labeling_access_link import LabelingAccessLinkQuery
 from graphql_api.query.embedding import EmbeddingQuery
 from graphql_api.query.transfer import TransferQuery
 from graphql_api.query.information_source import InformationSourceQuery
@@ -24,6 +25,7 @@ from graphql_api.query.model_provider import ModelProviderQuery
 from graphql_api.mutation.attribute import AttributeMutation
 from graphql_api.mutation.misc import MiscMutation
 from graphql_api.mutation.data_slice import DataSliceMutation
+from graphql_api.mutation.labeling_access_link import LabelingAccessLinkMutation
 from graphql_api.mutation.embedding import EmbeddingMutation
 from graphql_api.mutation.information_source import InformationSourceMutation
 from graphql_api.mutation.knowledge_base import KnowledgeBaseMutation
@@ -46,6 +48,7 @@ class Query(
     AttributeQuery,
     CommentQuery,
     DataSliceQuery,
+    LabelingAccessLinkQuery,
     EmbeddingQuery,
     TransferQuery,
     InformationSourceQuery,
@@ -72,6 +75,7 @@ class Query(
 class Mutation(
     AttributeMutation,
     DataSliceMutation,
+    LabelingAccessLinkMutation,
     EmbeddingMutation,
     InformationSourceMutation,
     KnowledgeBaseMutation,

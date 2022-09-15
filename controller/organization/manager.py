@@ -1,7 +1,8 @@
-from typing import Any, List, Dict, Union
+from typing import Any, List, Dict, Optional, Union
 from controller.misc import config_service
 
 from graphql_api.types import UserCountsWrapper
+from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
@@ -28,8 +29,14 @@ def get_organization_by_name(name: str) -> Organization:
     return organization.get_by_name(name)
 
 
-def get_all_users(organization_id: str) -> List[User]:
-    return user.get_all(organization_id)
+def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
+    parsed = None
+    if user_role:
+        try:
+            parsed = enums.UserRoles[user_role.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid UserRoles: {user_role}")
+    return user.get_all(organization_id, parsed)
 
 
 def get_all_users_with_record_count(

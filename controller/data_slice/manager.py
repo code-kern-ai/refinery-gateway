@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Optional
 
 from submodules.model import DataSlice
+from submodules.model import enums
 from submodules.model.business_objects import general, data_slice, embedding
 import uuid
 from service.search import search
@@ -8,8 +9,16 @@ from controller.data_slice import neural_search_connector
 from submodules.model.enums import SliceTypes
 
 
-def get_all_data_slices(project_id: str) -> List[DataSlice]:
-    return data_slice.get_all(project_id)
+def get_all_data_slices(
+    project_id: str, slice_type: Optional[str] = None
+) -> List[DataSlice]:
+    parsed = None
+    if slice_type:
+        try:
+            parsed = enums.SliceTypes[slice_type.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid SliceTypes: {slice_type}")
+    return data_slice.get_all(project_id, parsed)
 
 
 def count_items(project_id: str, data_slice_id: str) -> int:

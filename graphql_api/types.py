@@ -487,6 +487,14 @@ class DataSlice(SQLAlchemyObjectType):
     id = graphene.ID(source="id", required=True)
 
 
+class LabelingAccessLink(SQLAlchemyObjectType):
+    class Meta:
+        model = models.LabelingAccessLink
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+
+
 class Notification(SQLAlchemyObjectType):
     class Meta:
         model = models.Notification

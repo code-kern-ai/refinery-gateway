@@ -9,7 +9,10 @@ from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 
 class OrganizationQuery(graphene.ObjectType):
     user_info = graphene.Field(User)
-    all_users = graphene.List(User)
+    all_users = graphene.List(
+        User,
+        user_role=graphene.String(required=False),
+    )
     all_users_with_record_count = graphene.List(
         UserCountsWrapper, project_id=graphene.ID()
     )
@@ -26,10 +29,10 @@ class OrganizationQuery(graphene.ObjectType):
         auth_manager.check_demo_access(info)
         return auth_manager.get_user_by_info(info)
 
-    def resolve_all_users(self, info) -> List[User]:
+    def resolve_all_users(self, info, user_role: str = None) -> List[User]:
         auth_manager.check_demo_access(info)
         organization_id = str(auth_manager.get_user_by_info(info).organization.id)
-        return manager.get_all_users(organization_id)
+        return manager.get_all_users(organization_id, user_role)
 
     def resolve_all_users_with_record_count(
         self, info, project_id: str
