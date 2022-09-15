@@ -66,3 +66,6 @@ def get_last_run_by_attribute_id(project_id: str, attribute_id: str) -> LastRunA
     logs.append(datetime.today())
     logs.append(datetime.today())
     return LastRunAttributesResult(created_at = date.today(), state="FINISHED", iteration = 1, logs = logs)
+
+def run_attribute_all_records(project_id: str, attribute_id: str) -> None:
+    attribute.update_state_to_usable(project_id, attribute_id, with_commit=True)

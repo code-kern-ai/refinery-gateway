@@ -78,9 +78,22 @@ class AddRunningId(graphene.Mutation):
         manager.add_running_id(str(user.id), project_id, attribute_name)
         return AddRunningId(ok=True)
 
+class RunAttributeAllRecords(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        attribute_id = graphene.ID(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, attribute_id: str):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.run_attribute_all_records(project_id, attribute_id)
+        return RunAttributeAllRecords(ok=True)
 
 class AttributeMutation(graphene.ObjectType):
     create_attribute = CreateAttribute.Field()
     delete_attribute = DeleteAttribute.Field()
     update_attribute = UpdateAttribute.Field()
     add_running_id = AddRunningId.Field()
+    run_attribute_all_records =  RunAttributeAllRecords.Field()
