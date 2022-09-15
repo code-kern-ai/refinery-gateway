@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Optional, Tuple, List
 
 import pandas as pd
 
@@ -17,7 +17,7 @@ from submodules.model.business_objects import (
     record_label_association,
 )
 from controller.user import manager as user_manager
-from controller.upload_task import manager as task_manager
+from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
 from util import doc_ock
 from submodules.s3 import controller as s3
@@ -39,46 +39,25 @@ def extract_first_zip_file(local_file_name: str) -> Dict[str, Any]:
     return file_name
 
 
-def import_file(project_id: str, task: UploadTask) -> None:
-    # load data from s3 and do transfer task/notification management
-    task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.PENDING.value
-    )
-    org_id = organization.get_id_by_project_id(project_id)
-
-    file_type = task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
-    download_file_name = s3.download_object(
-        org_id, project_id + "/" + f"{task.id}/{task.file_name}", file_type
-    )
-    is_zip = file_type == "zip"
-    if is_zip:
-        tmp_file_name = extract_first_zip_file(download_file_name)
-        file_type = tmp_file_name.rsplit(".", 1)[1]
-    else:
-        tmp_file_name = download_file_name
-
-    chunk_size = 500
-
-    data = convert_to_record_dict(
-        file_type, tmp_file_name, task.user_id, task.file_import_options, project_id
-    )
-    if is_zip and os.path.exists(download_file_name):
-        os.remove(download_file_name)
-
-    task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.IN_PROGRESS.value
-    )
-    record_category = category.infer_category(task.file_name)
-    number_records = len(data)
-    chunks = [data[x : x + chunk_size] for x in range(0, len(data), chunk_size)]
+def import_records_and_rlas(
+    project_id: str,
+    user_id: str,
+    data: List,
+    upload_task: Optional[UploadTask] = None,
+    record_category: str = enums.RecordCategory.SCALE.value,
+):
+    CHUNK_SIZE = 500
+    chunks = [data[x : x + CHUNK_SIZE] for x in range(0, len(data), CHUNK_SIZE)]
     chunks_count = len(chunks)
     for idx, chunk in enumerate(chunks):
-        logger.debug(
-            task_manager.get_upload_task_message(
-                task,
-                additional_information=f"--- START CHUNK #{idx} ---",
+        if upload_task is not None:
+            logger.debug(
+                upload_task_manager.get_upload_task_message(
+                    upload_task,
+                    additional_information=f"--- START CHUNK #{idx} ---",
+                )
             )
-        )
+
         (
             records_data,
             labels_data,
@@ -90,9 +69,11 @@ def import_file(project_id: str, task: UploadTask) -> None:
             create_attributes_and_get_text_attributes(project_id, records_data)
             primary_keys = attribute.get_primary_keys(project_id)
 
-        import_tasks_and_labels_pipeline(project_id=project_id, tasks_data=tasks_data)
+        import_labeling_tasks_and_labels_pipeline(
+            project_id=project_id, tasks_data=tasks_data
+        )
         import_records_and_rlas_pipeline(
-            user_id=task.user_id,
+            user_id=user_id,
             project_id=project_id,
             records_data=records_data,
             labels_data=labels_data,
@@ -100,15 +81,68 @@ def import_file(project_id: str, task: UploadTask) -> None:
             primary_keys=primary_keys,
         )
 
-        progress = ((idx + 1) / chunks_count) * 100
-        task_manager.update_task(project_id, task.id, progress=progress)
+        if upload_task is not None:
+            progress = ((idx + 1) / chunks_count) * 100
+            upload_task_manager.update_task(
+                project_id, upload_task.id, progress=progress
+            )
 
-    task_manager.update_upload_task_to_finished(task)
-    task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
+
+def import_record_json(
+    project_id: str, user_id: str, record_data: Dict[str, Any]
+) -> None:
+    import_records_and_rlas(project_id, user_id, record_data)
+    token_manager.request_tokenize_project(project_id, user_id)
+    token_manager.create_rats_entries(project_id, user_id)
+    general.commit()
+
+
+def import_file(project_id: str, upload_task: UploadTask) -> None:
+    # load data from s3 and do transfer task/notification management
+    upload_task_manager.update_task(
+        project_id, upload_task.id, state=enums.UploadStates.PENDING.value
+    )
+    org_id = organization.get_id_by_project_id(project_id)
+
+    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
+    download_file_name = s3.download_object(
+        org_id,
+        project_id + "/" + f"{upload_task.id}/{upload_task.file_name}",
+        file_type,
+    )
+    is_zip = file_type == "zip"
+    if is_zip:
+        tmp_file_name = extract_first_zip_file(download_file_name)
+        file_type = tmp_file_name.rsplit(".", 1)[1]
+    else:
+        tmp_file_name = download_file_name
+
+    if is_zip and os.path.exists(download_file_name):
+        os.remove(download_file_name)
+
+    upload_task_manager.update_task(
+        project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
+    )
+    record_category = category.infer_category(upload_task.file_name)
+
+    data = convert_to_record_dict(
+        file_type,
+        tmp_file_name,
+        upload_task.user_id,
+        upload_task.file_import_options,
+        project_id,
+    )
+    number_records = len(data)
+    import_records_and_rlas(
+        project_id, upload_task.user_id, data, upload_task, record_category
     )
 
-    user = user_manager.get_or_create_user(task.user_id)
+    upload_task_manager.update_upload_task_to_finished(upload_task)
+    upload_task_manager.update_task(
+        project_id, upload_task.id, state=enums.UploadStates.DONE.value, progress=100.0
+    )
+
+    user = user_manager.get_or_create_user(upload_task.user_id)
     project_item = project.get(project_id)
     doc_ock.post_event(
         user,
@@ -120,7 +154,7 @@ def import_file(project_id: str, task: UploadTask) -> None:
 
 
 ##################### LABELING TASK AND LABELS BLOCK #####################
-def import_tasks_and_labels_pipeline(
+def import_labeling_tasks_and_labels_pipeline(
     project_id: str, tasks_data: Dict[str, Dict[str, Any]]
 ) -> None:
     labels_by_tasks = labeling_task_label.get_labels_by_tasks(project_id)
