@@ -1,5 +1,6 @@
 from submodules.model.business_objects import attribute
 
+
 def find_free_name(project_id: str, counter: int = 0) -> str:
     bases_count: int = attribute.count(project_id)
     name: str = f"attribute_{counter}{bases_count}"

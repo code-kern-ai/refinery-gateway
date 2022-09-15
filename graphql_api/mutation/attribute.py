@@ -1,27 +1,21 @@
-from typing import Any
-
 from controller.auth import manager as auth
 from util import notification
 import graphene
-from controller.attribute import manager, util
+from controller.attribute import manager
 
 
-class CreateAttribute(graphene.Mutation):
+class CreateUserAttribute(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
-        attribute_name = graphene.String()
 
     ok = graphene.Boolean()
     attribute_id = graphene.ID()
 
-    def mutate(self, info, project_id: str, attribute_name: str = None):
+    def mutate(self, info, project_id: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        if attribute_name is None:
-            attribute_name = util.find_free_name(project_id)
-        
-        attribute = manager.create_attribute(project_id, attribute_name)
-        return CreateAttribute(ok=True, attribute_id=attribute.id)
+        attribute = manager.create_user_attribute(project_id)
+        return CreateUserAttribute(ok=True, attribute_id=attribute.id)
 
 
 class UpdateAttribute(graphene.Mutation):
@@ -31,6 +25,7 @@ class UpdateAttribute(graphene.Mutation):
         data_type = graphene.String()
         is_primary_key = graphene.Boolean()
         name = graphene.String()
+        source_code = graphene.String()
 
     ok = graphene.Boolean()
 
@@ -41,16 +36,19 @@ class UpdateAttribute(graphene.Mutation):
         attribute_id: str,
         data_type: str,
         is_primary_key: bool,
-        name: str
+        name: str,
+        source_code: str,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.update_attribute(project_id, attribute_id, data_type, is_primary_key, name)
-        notification.send_organization_update(project_id, f"attributes_updated")
+        manager.update_attribute(
+            project_id, attribute_id, data_type, is_primary_key, name, source_code
+        )
+        notification.send_organization_update(project_id, "attributes_updated")
         return UpdateAttribute(ok=True)
 
 
-class DeleteAttribute(graphene.Mutation):
+class DeleteUserAttribute(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
         attribute_id = graphene.ID(required=True)
@@ -61,7 +59,7 @@ class DeleteAttribute(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_attribute(project_id, attribute_id)
-        return DeleteAttribute(ok=True)
+        return DeleteUserAttribute(ok=True)
 
 
 class AddRunningId(graphene.Mutation):
@@ -78,7 +76,8 @@ class AddRunningId(graphene.Mutation):
         manager.add_running_id(str(user.id), project_id, attribute_name)
         return AddRunningId(ok=True)
 
-class RunAttributeAllRecords(graphene.Mutation):
+
+class CalculateUserAttributeAllRecords(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
         attribute_id = graphene.ID(required=True)
@@ -88,12 +87,13 @@ class RunAttributeAllRecords(graphene.Mutation):
     def mutate(self, info, project_id: str, attribute_id: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.run_attribute_all_records(project_id, attribute_id)
-        return RunAttributeAllRecords(ok=True)
+        manager.calculate_user_attribute_all_records(project_id, attribute_id)
+        return CalculateUserAttributeAllRecords(ok=True)
+
 
 class AttributeMutation(graphene.ObjectType):
-    create_attribute = CreateAttribute.Field()
-    delete_attribute = DeleteAttribute.Field()
+    create_user_attribute = CreateUserAttribute.Field()
+    delete_user_attribute = DeleteUserAttribute.Field()
     update_attribute = UpdateAttribute.Field()
     add_running_id = AddRunningId.Field()
-    run_attribute_all_records =  RunAttributeAllRecords.Field()
+    calculate_user_attribute_all_records = CalculateUserAttributeAllRecords.Field()

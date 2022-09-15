@@ -702,15 +702,14 @@ class ModelProviderInfoResult(graphene.ObjectType):
     status = graphene.String()
     zero_shot_pipeline = graphene.Boolean()
 
+
 class LastRunAttributesResult(graphene.ObjectType):
     created_at = graphene.DateTime()
     state = graphene.String()
     iteration = graphene.Int()
     logs = graphene.List(graphene.DateTime)
 
-class AttributeRecordResult(graphene.ObjectType):
-    confidence = graphene.Float()
-    text = graphene.String()
-class Attribute10RecordsResult(graphene.ObjectType):
-    duration = graphene.DateTime()
-    records = graphene.List(AttributeRecordResult)
+
+class UserAttributeSampleRecordsResult(graphene.ObjectType):
+    record_ids = graphene.List(graphene.UUID)
+    calculates_attributes = graphene.List(graphene.String)
