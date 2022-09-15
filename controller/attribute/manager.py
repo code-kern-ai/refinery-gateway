@@ -1,8 +1,8 @@
 from tokenize import String
 from typing import List
 from controller.tokenization.tokenization_service import request_tokenize_project
-from graphql_api.types import LastRunAttributesResult
-from submodules.model.business_objects import attribute, general
+from graphql_api.types import Attribute10RecordsResult, AttributeRecordResult, LastRunAttributesResult
+from submodules.model.business_objects import attribute, general, record
 from submodules.model.enums import AttributeState
 from submodules.model.models import Attribute
 from util import daemon
@@ -61,11 +61,22 @@ def add_running_id(
             user_id,
         )
 
+
 def get_last_run_by_attribute_id(project_id: str, attribute_id: str) -> LastRunAttributesResult:
     logs = []
     logs.append(datetime.today())
     logs.append(datetime.today())
     return LastRunAttributesResult(created_at = date.today(), state="FINISHED", iteration = 1, logs = logs)
 
+
 def run_attribute_all_records(project_id: str, attribute_id: str) -> None:
     attribute.update_state_to_usable(project_id, attribute_id, with_commit=True)
+
+
+def run_attribute_10_records(project_id: str, attribute_id: str) -> Attribute10RecordsResult:
+    records = [];
+    record1 = AttributeRecordResult(confidence = 0.5, text="text1")
+    records.append(record1)
+    record2 = AttributeRecordResult(confidence = 0.9, text="text2")
+    records.append(record2)
+    return Attribute10RecordsResult(duration = date.today(),records=records)

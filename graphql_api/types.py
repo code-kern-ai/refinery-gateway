@@ -707,3 +707,10 @@ class LastRunAttributesResult(graphene.ObjectType):
     state = graphene.String()
     iteration = graphene.Int()
     logs = graphene.List(graphene.DateTime)
+
+class AttributeRecordResult(graphene.ObjectType):
+    confidence = graphene.Float()
+    text = graphene.String()
+class Attribute10RecordsResult(graphene.ObjectType):
+    duration = graphene.DateTime()
+    records = graphene.List(AttributeRecordResult)

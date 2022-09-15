@@ -5,7 +5,7 @@ import graphene
 from controller.auth import manager as auth
 from controller.attribute import manager
 from submodules.model.enums import NotificationType
-from graphql_api.types import Attribute, LastRunAttributesResult
+from graphql_api.types import Attribute, Attribute10RecordsResult, LastRunAttributesResult
 from util.notification import create_notification
 
 
@@ -29,6 +29,12 @@ class AttributeQuery(graphene.ObjectType):
 
     last_run_by_attribute_id = graphene.Field(
         LastRunAttributesResult,
+        project_id=graphene.ID(required=True),
+        attribute_id=graphene.ID(required=True)
+    )
+
+    run_attribute_10_records = graphene.Field(
+        Attribute10RecordsResult,
         project_id=graphene.ID(required=True),
         attribute_id=graphene.ID(required=True)
     )
@@ -66,3 +72,10 @@ class AttributeQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_last_run_by_attribute_id(project_id, attribute_id)
+
+    def resolve_run_attribute_10_records(
+        self, info, project_id: str, attribute_id: str
+    ) -> Attribute10RecordsResult:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return manager.run_attribute_10_records(project_id, attribute_id)
