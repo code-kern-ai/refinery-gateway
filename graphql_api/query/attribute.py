@@ -59,9 +59,11 @@ class AttributeQuery(graphene.ObjectType):
             )
         return is_valid
 
-    def resolve_run_attribute_10_records(
+    def resolve_calculate_user_attribute_sample_records(
         self, info, project_id: str, attribute_id: str
     ) -> UserAttributeSampleRecordsResult:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.calculate_user_attribute_sample_records(project_id, attribute_id)
+        return UserAttributeSampleRecordsResult(
+            *manager.calculate_user_attribute_sample_records(project_id, attribute_id)
+        )

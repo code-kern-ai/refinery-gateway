@@ -711,5 +711,5 @@ class LastRunAttributesResult(graphene.ObjectType):
 
 
 class UserAttributeSampleRecordsResult(graphene.ObjectType):
-    record_ids = graphene.List(graphene.UUID)
-    calculates_attributes = graphene.List(graphene.String)
+    record_ids = graphene.List(graphene.ID)
+    calculated_attributes = graphene.List(graphene.String)
