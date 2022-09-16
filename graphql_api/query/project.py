@@ -4,7 +4,13 @@ import graphene
 
 from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 from submodules.model.enums import LabelingTaskType
-from graphql_api.types import InterAnnotatorMatrix, ProjectSize, Project, UserSession
+from graphql_api.types import (
+    HuddleData,
+    InterAnnotatorMatrix,
+    ProjectSize,
+    Project,
+    UserSession,
+)
 from controller.auth import manager as auth
 from controller.project import manager
 from controller.labeling_task import manager as task_manager
@@ -66,6 +72,13 @@ class ProjectQuery(graphene.ObjectType):
     is_rats_tokenization_still_running = graphene.Field(
         graphene.Boolean,
         project_id=graphene.ID(required=True),
+    )
+
+    request_huddle_data = graphene.Field(
+        HuddleData,
+        project_id=graphene.ID(required=True),
+        huddle_id=graphene.ID(required=True),
+        huddle_type=graphene.String(required=True),
     )
 
     def resolve_project_by_project_id(self, info, project_id: str) -> Project:
@@ -160,3 +173,13 @@ class ProjectQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.is_rats_tokenization_still_running(project_id)
+
+    def resolve_request_huddle_data(
+        self, info, project_id: str, huddle_id: str, huddle_type: str
+    ) -> HuddleData:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_by_info(info).id
+        return manager.resolve_request_huddle_data(
+            project_id, user_id, huddle_id, huddle_type
+        )

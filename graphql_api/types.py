@@ -709,3 +709,14 @@ class ModelProviderInfoResult(graphene.ObjectType):
     size = graphene.Float()  # int is to small therfore as float
     status = graphene.String()
     zero_shot_pipeline = graphene.Boolean()
+
+
+class HuddleData(graphene.ObjectType):
+    huddle_id = graphene.ID()
+    record_ids = graphene.List(graphene.ID)
+    huddle_type = graphene.String()
+    # usually 0 if first unlabled is requested then the position of that
+    start_pos = graphene.Int()
+    # only filled if nessecary
+    allowed_task = graphene.String()
+    can_edit = graphene.Boolean()
