@@ -127,31 +127,39 @@ def get_confusion_matrix(
 def resolve_request_huddle_data(
     project_id: str, user_id: str, data_id: str, huddle_type: str
 ) -> HuddleData:
-    huddle = HuddleData(
-        huddle_id=data_id, huddle_type=huddle_type, start_pos=-1, can_edit=True
-    )
-
+    huddle = HuddleData(huddle_type=huddle_type, start_pos=-1, can_edit=True)
+    # return huddle
     if huddle_type == enums.LinkTypes.SESSION.value:
         session = search.resolve_labeling_session(project_id, user_id, data_id)
         huddle.record_ids = session.session_record_ids
+        if __no_huddle_id(data_id):
+            data_id = session.id
     else:
+        source_type = enums.LabelSource.MANUAL
+        source_id = None
+        if __no_huddle_id(data_id):
+            data_id = __get_first_data_id(project_id, user_id, huddle_type)
         if huddle_type == enums.LinkTypes.DATA_SLICE.value:
             slice_id = data_id
         elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-            # TODO check heurisic user
             is_data = __get_crowd_label_is_data(project_id, data_id)
             slice_id = is_data["data_slice_id"]
             huddle.allowed_task = is_data["labeling_task_id"]
             huddle.can_edit = is_data["annotator_id"] == user_id
-
+            source_type = enums.LabelSource.INFORMATION_SOURCE
+            source_id = data_id
         (
             huddle.record_ids,
             huddle.start_pos,
         ) = ds_manager.get_record_ids_and_first_unlabeled_pos(
-            project_id, user_id, slice_id
+            project_id, user_id, slice_id, source_type, source_id
         )
-
+    huddle.huddle_id = data_id
     return huddle
+
+
+def __no_huddle_id(data_id: str) -> bool:
+    return data_id == "00000000-0000-0000-0000-000000000000" or not data_id
 
 
 def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
@@ -168,3 +176,14 @@ def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
     values = json.loads(information_source_item.source_code)
     values["labeling_task_id"] = information_source_item.labeling_task_id
     return values
+
+
+def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
+    if huddle_type == enums.LinkTypes.DATA_SLICE.value:
+        slices = ds_manager.get_all(project_id, enums.SliceTypes.STATIC_DEFAULT)
+        if slices and len(slices) > 0:
+            return slices[0].id
+    elif huddle_type == enums.LinkTypes.HEURISTIC.value:
+        return is_manager.get_first_crowd_is_for_annotator(project_id, user_id)
+    else:
+        raise ValueError("invalid huddle type")

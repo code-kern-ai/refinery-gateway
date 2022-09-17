@@ -179,7 +179,7 @@ class ProjectQuery(graphene.ObjectType):
     ) -> HuddleData:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        user_id = auth.get_user_by_info(info).id
+        user_id = str(auth.get_user_by_info(info).id)
         return manager.resolve_request_huddle_data(
             project_id, user_id, huddle_id, huddle_type
         )
