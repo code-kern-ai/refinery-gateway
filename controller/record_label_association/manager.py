@@ -77,6 +77,10 @@ def __update_annotator_progress(project_id: str, source_id: str, user_id: str):
     count_labeled = get_count_rlas_with_source_id(project_id, source_id)
     count_slice = data_slice_manager.count_items(project_id, data_slice_id)
 
+    payload_manager.update_payload_progress(
+        project_id, payload.id, count_labeled / count_slice
+    )
+
     if count_labeled == count_slice:
         payload_manager.update_payload_status(
             project_id,

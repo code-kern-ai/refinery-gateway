@@ -29,6 +29,12 @@ def create_empty_crowd_payload(
     )
 
 
+def update_payload_progress(
+    project_id: str, payload_id: str, progress: float
+) -> InformationSourcePayload:
+    return payload.update_progress(project_id, payload_id, progress)
+
+
 def update_payload_status(
     project_id: str, payload_id: str, status: str
 ) -> InformationSourcePayload:
