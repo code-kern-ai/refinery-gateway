@@ -1,6 +1,8 @@
-from typing import List, Union, Optional
+from typing import List, Optional
 from submodules.model.exceptions import EntityNotFoundException
 from util import notification
+import json
+
 
 from submodules.model import enums, RecordLabelAssociation, Record
 from submodules.model.business_objects import (
@@ -21,6 +23,8 @@ from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.knowledge_term import manager as term_manager
 from controller.information_source import manager as information_source_manager
+from controller.payload import manager as payload_manager
+from controller.data_slice import manager as data_slice_manager
 
 
 def get_last_annotated_record_id(
@@ -44,6 +48,41 @@ def __infer_source_type(source_id: str, project_id: str):
     else:
         label_source_type = enums.LabelSource.MANUAL.value
     return label_source_type
+
+
+def get_count_rlas_with_source_id(project_id: str, source_id: str) -> int:
+    return len(
+        record_label_association.get_all_classifications_for_information_source(
+            project_id, source_id
+        )
+    )
+
+
+def __update_annotator_progress(project_id: str, source_id: str, user_id: str):
+    # {"data_slice_id":"a9e54c5a-2b3d-46ba-902d-f6224dd9d24b","annotator_id":"6de83a5b-8e2c-40c2-9923-2b5ed761381b","access_link_id":"c9fcac10-2ba8-40dc-a5ce-ef575dd4a9bf"}
+    information_source = information_source_manager.get_information_source(
+        project_id, source_id
+    )
+
+    if len(information_source.payloads) == 0:
+        payload = payload_manager.create_empty_crowd_payload(
+            project_id, source_id, user_id
+        )
+    else:
+        payload = information_source.payloads[0]
+
+    details = json.loads(information_source.source_code)
+    data_slice_id = details["data_slice_id"]
+
+    count_labeled = get_count_rlas_with_source_id(project_id, source_id)
+    count_slice = data_slice_manager.count_items(project_id, data_slice_id)
+
+    if count_labeled == count_slice:
+        payload_manager.update_payload_status(
+            project_id,
+            payload.id,
+            enums.PayloadState.FINISHED.value,
+        )
 
 
 def create_manual_classification_label(
@@ -86,11 +125,14 @@ def create_manual_classification_label(
         source_id=source_id,
         with_commit=True,
     )
+    if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        __update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
         user_id,
+        source_id,
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
