@@ -33,7 +33,7 @@ def is_any_record_manually_labeled(project_id: str):
     return record_label_association.is_any_record_manually_labeled(project_id)
 
 
-def __infer_source_type(source_id, project_id):
+def __infer_source_type(source_id: str, project_id: str):
     if source_id is not None:
         source = information_source_manager.get_information_source(
             project_id, source_id
@@ -72,6 +72,7 @@ def create_manual_classification_label(
         label_ids,
         as_gold_star,
         source_id,
+        label_source_type,
         with_commit=True,
     )
     record_label_association.create(
