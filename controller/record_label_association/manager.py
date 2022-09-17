@@ -93,6 +93,7 @@ def create_manual_classification_label(
     labeling_task_id: str,
     as_gold_star: Optional[bool] = None,
     source_id: str = None,
+    confidence: float = 1.0,
 ) -> Record:
     if not as_gold_star:
         as_gold_star = None
@@ -124,6 +125,7 @@ def create_manual_classification_label(
         is_gold_star=as_gold_star,
         source_id=source_id,
         with_commit=True,
+        confidence=confidence,
     )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         __update_annotator_progress(project_id, source_id, user_id)
