@@ -6,11 +6,16 @@ from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
 
 
+def get_user(user_id: str) -> User:
+    return user.get(user_id)
+
+
 def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
     return user_item
+
 
 def get_or_create_user_by_email(email: str) -> User:
     user_id = kratos.get_userid_from_mail(email)
