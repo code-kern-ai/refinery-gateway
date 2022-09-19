@@ -7,6 +7,7 @@ import uuid
 from service.search import search
 from controller.data_slice import neural_search_connector
 from submodules.model.enums import SliceTypes
+from controller.labeling_access_link import manager as link_manager
 
 
 def get_all_data_slices(
@@ -86,6 +87,9 @@ def create_data_slice(
     if static:
         __create_data_slice_record_associations(
             project_id, data_slice_item.id, filter_data
+        )
+        link_manager.generate_data_slice_access_link(
+            project_id, user_id, data_slice_item.id
         )
     return data_slice_item
 
