@@ -12,7 +12,7 @@ def get_attribute(project_id: str, attribute_id: str) -> Attribute:
     return attribute.get(project_id, attribute_id)
 
 
-def get_all_attributes(project_id: str, only_usable: bool) -> List[Attribute]:
+def get_all_attributes(project_id: str, only_usable: bool = True) -> List[Attribute]:
     return attribute.get_all_ordered(project_id, True, only_usable)
 
 

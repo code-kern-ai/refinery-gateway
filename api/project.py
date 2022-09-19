@@ -16,7 +16,7 @@ class ProjectDetails(HTTPEndpoint):
         user_id = request.query_params["user_id"]
         auth_manager.check_project_access_from_user_id(user_id, project_id)
         project = project_manager.get_project(project_id)
-        attributes = attribute_manager.get_all_attributes(project_id)
+        attributes = attribute_manager.get_all_attributes(project_id, only_usable=False)
         result = {
             "name": project.name,
             "description": project.description,
