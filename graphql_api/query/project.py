@@ -13,6 +13,7 @@ from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
+from graphql_api import types
 
 
 class ProjectQuery(graphene.ObjectType):
@@ -50,6 +51,13 @@ class ProjectQuery(graphene.ObjectType):
         slice_id=graphene.ID(required=False),
     )
     label_distribution = graphene.Field(
+        graphene.JSONString,
+        project_id=graphene.ID(required=True),
+        labeling_task_id=graphene.ID(required=False),
+        slice_id=graphene.ID(required=False),
+    )
+
+    confidence_distribution = graphene.Field(
         graphene.JSONString,
         project_id=graphene.ID(required=True),
         labeling_task_id=graphene.ID(required=False),
@@ -144,6 +152,21 @@ class ProjectQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_label_distribution(project_id, labeling_task_id, slice_id)
+
+    def resolve_confidence_distribution(
+        self,
+        info,
+        project_id: str,
+        labeling_task_id: str = None,
+        slice_id: str = None,
+        num_samples: int = 100,
+    ) -> List:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        confidence_scores = manager.get_confidence_distribution(
+            project_id, labeling_task_id, slice_id, num_samples
+        )
+        return confidence_scores
 
     def resolve_confusion_matrix(
         self,
