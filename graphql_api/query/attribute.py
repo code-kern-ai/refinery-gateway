@@ -19,6 +19,7 @@ class AttributeQuery(graphene.ObjectType):
     attributes_by_project_id = graphene.Field(
         graphene.List(Attribute),
         project_id=graphene.ID(required=True),
+        only_usable=graphene.Boolean(),
     )
 
     check_composite_key = graphene.Field(
@@ -40,11 +41,11 @@ class AttributeQuery(graphene.ObjectType):
         return manager.get_attribute(project_id, attribute_id)
 
     def resolve_attributes_by_project_id(
-        self, info, project_id: str
+        self, info, project_id: str, only_usable: bool = True
     ) -> List[Attribute]:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.get_all_attributes(project_id)
+        return manager.get_all_attributes(project_id, only_usable)
 
     def resolve_check_composite_key(self, info, project_id: str) -> bool:
         auth.check_demo_access(info)

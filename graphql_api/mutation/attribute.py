@@ -87,7 +87,8 @@ class CalculateUserAttributeAllRecords(graphene.Mutation):
     def mutate(self, info, project_id: str, attribute_id: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.calculate_user_attribute_all_records(project_id, attribute_id)
+        user_id = auth.get_user_by_info(info).id
+        manager.calculate_user_attribute_all_records(project_id, user_id, attribute_id)
         return CalculateUserAttributeAllRecords(ok=True)
 
 
