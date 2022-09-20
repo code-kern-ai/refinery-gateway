@@ -1,6 +1,9 @@
 import docker
 import json
 import os
+import pytz
+import re
+from datetime import datetime
 from submodules.model.business_objects import attribute, record, project, tokenization
 from submodules.s3 import controller as s3
 
@@ -9,14 +12,34 @@ image = os.getenv("AC_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
 
 
-def find_free_name(project_id: str, counter: int = 0) -> str:
-    bases_count: int = attribute.count(project_id)
-    name: str = f"attribute_{counter}{bases_count}"
+def find_free_name(project_id: str) -> str:
+    attribute_items = attribute.get_all(project_id, state_filter=[])
+    reg_ex = "^attribute_([0-9]+)$"
+    counter_list = []
+    for item in attribute_items:
+        match = re.match(reg_ex, item.name)
+        if match:
+            counter_list.append(int(match.group(1)))
 
-    if attribute.get_by_name(project_id, name) is not None:
-        return find_free_name(project_id, counter + 1)
+    if counter_list:
+        counter = max(max(counter_list), len(attribute_items)) + 1
     else:
-        return name
+        counter = len(attribute_items) + 1
+
+    return "attribute_" + str(counter)
+
+
+def add_log_to_attribute_logs(project_id: str, attribute_id: str, log: str) -> None:
+    attribute_item = attribute.get(project_id, attribute_id)
+    berlin_now = datetime.now(pytz.timezone("Europe/Berlin"))
+    attribute.update(
+        project_id=project_id,
+        attribute_id=attribute_id,
+        logs=attribute_item.logs.append(
+            " ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log])
+        ),
+        with_commit=True,
+    )
 
 
 def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:

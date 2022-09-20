@@ -133,6 +133,9 @@ def __calculate_user_attribute_all_records(
         attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
     )
 
+    util.add_log_to_attribute_logs(
+        project_id, attribute_id, "Writing results to the database."
+    )
     # add calculated attributes to database
     record.update_add_user_created_attribute(
         project_id=project_id,
@@ -140,15 +143,21 @@ def __calculate_user_attribute_all_records(
         calculated_attributes=calculated_attributes,
         with_commit=True,
     )
+    util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
+    util.add_log_to_attribute_logs(
+        project_id, attribute_id, "Tokenizing the attribute."
+    )
     tokenization.delete_docbins(project_id, with_commit=True)
     tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
     request_tokenize_project(project_id, user_id)
+    util.add_log_to_attribute_logs(project_id, attribute_id, "Finished tokenizing.")
 
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
         state=AttributeState.USABLE.value,
+        with_commit=True,
     )
 
     notification.send_organization_update(
