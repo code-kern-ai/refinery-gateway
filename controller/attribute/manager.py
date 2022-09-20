@@ -1,3 +1,4 @@
+from graphql import GraphQLError
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import attribute, record, tokenization
@@ -129,29 +130,56 @@ def __calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str
 ) -> None:
 
-    calculated_attributes = util.run_attribute_calculation_exec_env(
-        attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
-    )
+    try:
+        calculated_attributes = util.run_attribute_calculation_exec_env(
+            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
+        )
+    except Exception:
+        attribute.update(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            state=AttributeState.FAILED.value,
+            with_commit=True,
+        )
+        notification.send_organization_update(
+            project_id=project_id, message="calculate_attribute:error:{attribute_id}"
+        )
+        return
 
     util.add_log_to_attribute_logs(
         project_id, attribute_id, "Writing results to the database."
     )
     # add calculated attributes to database
-    record.update_add_user_created_attribute(
-        project_id=project_id,
-        attribute_id=attribute_id,
-        calculated_attributes=calculated_attributes,
-        with_commit=True,
-    )
+    try:
+        record.update_add_user_created_attribute(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            calculated_attributes=calculated_attributes,
+            with_commit=True,
+        )
+    except Exception:
+        record.delete_user_created_attribute(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            with_commit=True,
+        )
+        util.add_log_to_attribute_logs(
+            project_id, attribute_id, "Writing to the database failed."
+        )
+        attribute.update(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            state=AttributeState.FAILED.value,
+            with_commit=True,
+        )
+        return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
-    util.add_log_to_attribute_logs(
-        project_id, attribute_id, "Tokenizing the attribute."
-    )
+    util.add_log_to_attribute_logs(project_id, attribute_id, "Triggering tokenization.")
     tokenization.delete_docbins(project_id, with_commit=True)
     tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
+    tokenization.delete_tokenization_tasks(project_id, with_commit=True)
     request_tokenize_project(project_id, user_id)
-    util.add_log_to_attribute_logs(project_id, attribute_id, "Finished tokenizing.")
 
     attribute.update(
         project_id=project_id,
