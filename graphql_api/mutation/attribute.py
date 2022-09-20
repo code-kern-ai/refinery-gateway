@@ -1,3 +1,4 @@
+from typing import Optional
 from controller.auth import manager as auth
 from util import notification
 import graphene
@@ -34,10 +35,10 @@ class UpdateAttribute(graphene.Mutation):
         info,
         project_id: str,
         attribute_id: str,
-        data_type: str,
-        is_primary_key: bool,
-        name: str,
-        source_code: str,
+        data_type: Optional[str] = None,
+        is_primary_key: Optional[bool] = None,
+        name: Optional[str] = None,
+        source_code: Optional[str] = None,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
