@@ -109,8 +109,8 @@ def get_label_distribution(
 def get_confidence_distribution(
     project_id: str,
     labeling_task_id: str,
-    slice_id: str = None,
-    num_samples: int = None,
+    slice_id: Optional[str] = None,
+    num_samples: Optional[int] = None,
 ) -> str:
     return project.get_confidence_distribution(
         project_id, labeling_task_id, slice_id, num_samples
