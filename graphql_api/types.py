@@ -720,3 +720,4 @@ class HuddleData(graphene.ObjectType):
     # only filled if nessecary
     allowed_task = graphene.String()
     can_edit = graphene.Boolean()
+    checked_at = graphene.DateTime()

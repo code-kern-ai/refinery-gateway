@@ -103,6 +103,9 @@ def update_data_slice(
 ) -> None:
     if static:
         __create_data_slice_record_associations(project_id, data_slice_id, filter_data)
+        link_manager.set_changed_for(
+            project_id, enums.LinkTypes.DATA_SLICE, data_slice_id
+        )
 
     data_slice.update_data_slice(
         project_id,

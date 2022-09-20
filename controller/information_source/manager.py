@@ -3,6 +3,7 @@ from typing import List, Optional
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import general, labeling_task, information_source
+from controller.labeling_access_link import manager as link_manager
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
@@ -93,6 +94,7 @@ def update_information_source(
         name=name,
         with_commit=True,
     )
+    link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
 def delete_information_source(project_id: str, source_id: str) -> None:

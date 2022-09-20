@@ -29,6 +29,7 @@ def upgrade():
     sa.Column('is_private', sa.Boolean(), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('changed_at', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.ForeignKeyConstraint(['project_id'], ['project.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')

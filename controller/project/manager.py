@@ -16,6 +16,7 @@ from controller.tokenization.tokenization_service import request_tokenize_projec
 from submodules.model.business_objects import general
 from submodules.model.business_objects import data_slice as ds_manager
 from submodules.model.business_objects import information_source as is_manager
+from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
 
@@ -128,7 +129,6 @@ def resolve_request_huddle_data(
     project_id: str, user_id: str, data_id: str, huddle_type: str
 ) -> HuddleData:
     huddle = HuddleData(huddle_type=huddle_type, start_pos=-1, can_edit=True)
-    # return huddle
     if huddle_type == enums.LinkTypes.SESSION.value:
         session = search.resolve_labeling_session(project_id, user_id, data_id)
         huddle.record_ids = session.session_record_ids
@@ -155,6 +155,7 @@ def resolve_request_huddle_data(
             project_id, user_id, slice_id, source_type, source_id
         )
     huddle.huddle_id = data_id
+    huddle.checked_at = db_util.get_db_now()
     return huddle
 
 

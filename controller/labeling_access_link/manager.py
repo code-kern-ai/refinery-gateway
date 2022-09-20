@@ -7,6 +7,7 @@ from submodules.model.business_objects import (
     labeling_access_link,
     information_source,
 )
+from util import notification
 
 
 def get(link_id: str) -> LabelingAccessLink:
@@ -92,19 +93,36 @@ def remove(link_id: str) -> str:
 
 
 def change_user_access_to_link_lock(link_id: str, lock_state: bool) -> str:
-    link = labeling_access_link.get(link_id)
+    link = labeling_access_link.change_by_id(
+        link_id, {"is_locked": lock_state}, with_commit=True
+    )
     if link:
-        link.is_locked = lock_state
-        general.commit()
-        return_id = (
-            link.heuristic_id
-            if link.link_type == enums.LinkTypes.HEURISTIC.value
-            else link.data_slice_id
+        return __get_type_id(link)
+
+
+def set_changed_for(project_id: str, type: enums.LinkTypes, id: str) -> None:
+    to_change = labeling_access_link.get_all_by_type_and_external_id(
+        project_id, type, id
+    )
+    for link in to_change:
+        labeling_access_link.change(link, changes=None, with_commit=False)
+        notification.send_organization_update(
+            project_id,
+            f"access_link_changed:{str(link.id)}:{__get_type_id(link)}:{link.is_locked}",
         )
-        return str(return_id)
+    general.commit()
+
+
+def __get_type_id(link: LabelingAccessLink) -> str:
+    return str(
+        link.heuristic_id
+        if link.link_type == enums.LinkTypes.HEURISTIC.value
+        else link.data_slice_id
+    )
 
 
 def check_link_locked(project_id: str, link_route: str) -> bool:
+
     if link_route.find("00000000-0000-0000-0000-000000000000") > -1:
         # dummy session
         return False
@@ -113,3 +131,19 @@ def check_link_locked(project_id: str, link_route: str) -> bool:
         # deleted
         return True
     return item.is_locked
+
+
+def check_link_data_outdated(
+    project_id: str, link_route: str, last_requested_at: datetime
+) -> bool:
+    if link_route.find("00000000-0000-0000-0000-000000000000") > -1:
+        # dummy session
+        return False
+    if link_route.find("type=SESSION") > -1:
+        return False
+    item = labeling_access_link.get_by_link(project_id, link_route)
+    if not item:
+        # deleted
+        return True
+
+    return item.changed_at > last_requested_at
