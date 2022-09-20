@@ -7,6 +7,7 @@ Create Date: 2022-09-13 08:22:52.181427
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -22,6 +23,18 @@ def upgrade():
     op.add_column("attribute", sa.Column("source_code", sa.String(), nullable=True))
     op.add_column("attribute", sa.Column("state", sa.String(), nullable=True))
     op.add_column("attribute", sa.Column("logs", sa.ARRAY(sa.String()), nullable=True))
+    op.add_column(
+        "embedding",
+        sa.Column("attribute_id", postgresql.UUID(as_uuid=True), nullable=True),
+    )
+    op.create_foreign_key(
+        "embedding_attribute_id_fkey",
+        "embedding",
+        "attribute",
+        ["attribute_id"],
+        ["id"],
+        ondelete="CASCADE",
+    ),
     # ### end Alembic commands ###
 
 
@@ -31,4 +44,6 @@ def downgrade():
     op.drop_column("attribute", "source_code")
     op.drop_column("attribute", "state")
     op.drop_column("attribute", "logs")
+    op.drop_column("embedding", "attribute_id")
+    op.drop_constraint("embedding_attribute_id_fkey", "embedding", type_="foreignkey")
     # ### end Alembic commands ###
