@@ -1,7 +1,12 @@
-from graphql import GraphQLError
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import request_tokenize_project
-from submodules.model.business_objects import attribute, record, tokenization
+from submodules.model.business_objects import (
+    attribute,
+    record,
+    tokenization,
+    embedding,
+    labeling_task,
+)
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
 from util import daemon, notification
@@ -88,6 +93,13 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
+            embedding.delete_embeddings_on_attribute(
+                project_id=project_id, attribute_id=attribute_id, with_commit=True
+            )
+            labeling_task.delete_by_attribute_id(
+                project_id=project_id, attribute_id=attribute_id, with_commit=True
+            )
+
         attribute.delete(project_id, attribute_id, with_commit=True)
 
 
