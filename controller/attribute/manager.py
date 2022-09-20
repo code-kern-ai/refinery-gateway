@@ -3,7 +3,7 @@ from controller.tokenization.tokenization_service import request_tokenize_projec
 from submodules.model.business_objects import attribute, record, tokenization
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
-from util import daemon
+from util import daemon, notification
 
 from . import util
 
@@ -52,7 +52,7 @@ def create_user_attribute(project_id: str) -> Attribute:
         data_type=DataTypes.TEXT.value,
         is_primary_key=False,
         user_created=True,
-        state=AttributeState.WORK_IN_PROGRESS.value,
+        state=AttributeState.INITIAL.value,
         with_commit=True,
     )
 
@@ -109,6 +109,12 @@ def add_running_id(
 def calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str
 ) -> None:
+    attribute.update(
+        project_id=project_id,
+        attribute_id=attribute_id,
+        state=AttributeState.RUNNING.value,
+        with_commit=True,
+    )
     daemon.run(
         __calculate_user_attribute_all_records,
         project_id,
@@ -133,15 +139,19 @@ def __calculate_user_attribute_all_records(
         with_commit=True,
     )
 
+    tokenization.delete_docbins(project_id, with_commit=True)
+    tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
+    request_tokenize_project(project_id, user_id)
+
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
         state=AttributeState.USABLE.value,
     )
 
-    tokenization.delete_docbins(project_id, with_commit=True)
-    tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
-    request_tokenize_project(project_id, user_id)
+    notification.send_organization_update(
+        project_id, f"calculate_attribute:finished:{attribute_id}"
+    )
 
 
 def calculate_user_attribute_sample_records(
