@@ -13,7 +13,6 @@ from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
-from graphql_api import types
 
 
 class ProjectQuery(graphene.ObjectType):
@@ -157,8 +156,8 @@ class ProjectQuery(graphene.ObjectType):
         self,
         info,
         project_id: str,
-        labeling_task_id: str = None,
-        slice_id: str = None,
+        labeling_task_id: Optional[str] = None,
+        slice_id: Optional[str] = None,
         num_samples: int = 100,
     ) -> List:
         auth.check_demo_access(info)
