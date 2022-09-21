@@ -111,7 +111,9 @@ def create_manual_extraction_label(
     if label_item is None:
         return None
 
-    existing_tokens = record_label_association.get_manual_tokens_by_record_id(record_id)
+    existing_tokens = record_label_association.get_manual_tokens_by_record_id(
+        project_id, record_id
+    )
 
     tokens = []
     curr_start = None
