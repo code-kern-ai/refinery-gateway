@@ -8,7 +8,7 @@ from submodules.s3 import controller as s3
 from submodules.model.business_objects import organization
 
 from controller.transfer import manager as upload_manager
-from controller.upload_task import manager as task_manager
+from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
@@ -44,7 +44,7 @@ class Notify(HTTPEndpoint):
         if org_id == "archive":
             return PlainTextResponse("OK")
 
-        task = task_manager.get_upload_task_secure(
+        task = upload_task_manager.get_upload_task_secure(
             upload_task_id=upload_task_id,
             project_id=project_id,
             file_name=file_name,
@@ -92,7 +92,7 @@ class KnowledgeBaseExport(HTTPEndpoint):
         return JSONResponse(result)
 
 
-class PrepareImport(HTTPEndpoint):
+class PrepareFileImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
         auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
@@ -110,7 +110,7 @@ class PrepareImport(HTTPEndpoint):
         file_name = request_body["file_name"]
         file_type = request_body["file_type"]
         file_import_options = request_body.get("file_import_options")
-        task = task_manager.create_upload_task(
+        task = upload_task_manager.create_upload_task(
             user_id, project_id, file_name, file_type, file_import_options
         )
         org_id = organization.get_id_by_project_id(project_id)
@@ -118,6 +118,23 @@ class PrepareImport(HTTPEndpoint):
             org_id, f"{project_id}/{task.id}"
         )
         return JSONResponse(credentials_and_id)
+
+
+class JSONImport(HTTPEndpoint):
+    async def post(self, request) -> JSONResponse:
+        auth.check_is_demo_without_info()
+        project_id = request.path_params["project_id"]
+        request_body = await request.json()
+        user_id = request_body["user_id"]
+        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        transfer_manager.import_records_from_json(
+            project_id,
+            user_id,
+            request_body["records"],
+            request_body["request_uuid"],
+            request_body["is_last"],
+        )
+        return JSONResponse({"success": True})
 
 
 class AssociationsImport(HTTPEndpoint):
@@ -159,7 +176,7 @@ class UploadTask(HTTPEndpoint):
             return JSONResponse({"error": "Could not find project"}, status_code=404)
         except exceptions.AccessDeniedException:
             return JSONResponse({"error": "Access denied"}, status_code=403)
-        task = task_manager.get_upload_task(project_id, task_id)
+        task = upload_task_manager.get_upload_task(project_id, task_id)
         task_dict = {
             "id": str(task.id),
             "file_name": str(task.file_name),
@@ -173,7 +190,7 @@ class UploadTask(HTTPEndpoint):
 
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     if "records" in task.file_type:
-        upload_manager.import_records(project_id, task)
+        upload_manager.import_records_from_file(project_id, task)
     elif "project" in task.file_type:
         upload_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
@@ -199,7 +216,7 @@ def file_import_error_handling(
         task.file_type,
     )
     logger.error(
-        task_manager.get_upload_task_message(
+        upload_task_manager.get_upload_task_message(
             task,
         )
     )
