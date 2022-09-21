@@ -223,9 +223,6 @@ def __calculate_user_attribute_all_records(
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
     )
-    notification.send_organization_update(
-        project_id=project_id, message="attributes_updated"
-    )
 
 
 def __notify_attribute_calculation_failed(
