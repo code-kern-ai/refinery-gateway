@@ -30,11 +30,16 @@ def find_free_name(project_id: str) -> str:
     return "attribute_" + str(counter)
 
 
-def add_log_to_attribute_logs(project_id: str, attribute_id: str, log: str) -> None:
+def add_log_to_attribute_logs(
+    project_id: str, attribute_id: str, log: str, append_to_logs: bool = True
+) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     berlin_now = datetime.now(pytz.timezone("Europe/Berlin"))
-    logs = attribute_item.logs
-    logs.append(" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log]))
+    if append_to_logs:
+        logs = attribute_item.logs
+        logs.append(" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log]))
+    else:
+        logs = [" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log])]
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,

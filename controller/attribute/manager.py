@@ -114,6 +114,26 @@ def add_running_id(
 def calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str
 ) -> None:
+    if attribute.get_all(
+        project_id=project_id, state_filter=[AttributeState.RUNNING.value]
+    ):
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Calculation of attribute failed. Another attribute is already running.",
+            append_to_logs=False,
+        )
+        return
+
+    if tokenization.get_doc_bin_progress(project_id):
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Tokenization is not finished",
+            append_to_logs=False,
+        )
+        return
+
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -140,14 +160,10 @@ def __calculate_user_attribute_all_records(
             attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
         )
     except Exception:
-        attribute.update(
+        __notify_attribute_calculation_failed(
             project_id=project_id,
             attribute_id=attribute_id,
-            state=AttributeState.FAILED.value,
-            with_commit=True,
-        )
-        notification.send_organization_update(
-            project_id=project_id, message="calculate_attribute:error:{attribute_id}"
+            log="Attribute calculation failed",
         )
         return
 
@@ -168,14 +184,10 @@ def __calculate_user_attribute_all_records(
             attribute_id=attribute_id,
             with_commit=True,
         )
-        util.add_log_to_attribute_logs(
-            project_id, attribute_id, "Writing to the database failed."
-        )
-        attribute.update(
+        __notify_attribute_calculation_failed(
             project_id=project_id,
             attribute_id=attribute_id,
-            state=AttributeState.FAILED.value,
-            with_commit=True,
+            log="Writing to the database failed.",
         )
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
@@ -195,6 +207,21 @@ def __calculate_user_attribute_all_records(
 
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
+    )
+
+
+def __notify_attribute_calculation_failed(
+    project_id: str, attribute_id: str, log: str, append_to_logs: bool = True
+) -> None:
+    util.add_log_to_attribute_logs(project_id, attribute_id, log, append_to_logs)
+    attribute.update(
+        project_id=project_id,
+        attribute_id=attribute_id,
+        state=AttributeState.FAILED.value,
+        with_commit=True,
+    )
+    notification.send_organization_update(
+        project_id=project_id, message="calculate_attribute:error:{attribute_id}"
     )
 
 
