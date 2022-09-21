@@ -89,6 +89,8 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             )
 
         attribute.delete(project_id, attribute_id, with_commit=True)
+    else:
+        raise ValueError("Attribute is not user created")
 
 
 def add_running_id(
