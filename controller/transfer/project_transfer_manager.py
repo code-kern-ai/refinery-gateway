@@ -821,7 +821,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     # -------------------- READ OF ENTITIES BY SQLALCHEMY --------------------
 
     if "basic project data" in export_options:
-        attributes = attribute.get_all(project_id)
+        attributes = attribute.get_all(project_id, state_filter=[])
         labeling_tasks = labeling_task.get_all(project_id)
         labeling_task_labels = labeling_task_label.get_all(project_id)
         data_slices = data_slice.get_all(project_id)
