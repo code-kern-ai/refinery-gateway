@@ -107,7 +107,11 @@ class JSONImport(HTTPEndpoint):
         user_id = request_body["user_id"]
         auth_manager.check_project_access_from_user_id(user_id, project_id)
         transfer_manager.import_records_from_json(
-            project_id, user_id, request_body["records"]
+            project_id,
+            user_id,
+            request_body["records"],
+            request_body["request_uuid"],
+            request_body["is_last"],
         )
         return JSONResponse({"success": True})
 

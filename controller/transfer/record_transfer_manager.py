@@ -88,15 +88,6 @@ def import_records_and_rlas(
             )
 
 
-def import_record_json(
-    project_id: str, user_id: str, record_data: Dict[str, Any]
-) -> None:
-    import_records_and_rlas(project_id, user_id, record_data)
-    token_manager.request_tokenize_project(project_id, user_id)
-    token_manager.create_rats_entries(project_id, user_id)
-    general.commit()
-
-
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
     upload_task_manager.update_task(

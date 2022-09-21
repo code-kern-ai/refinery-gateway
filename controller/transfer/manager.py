@@ -9,6 +9,7 @@ from controller.transfer.project_transfer_manager import (
     import_file_by_task,
     get_project_export_dump,
 )
+from controller.upload_task import manager as upload_task_manager
 from controller.transfer.record_transfer_manager import import_file, import_record_json
 from controller.attribute import manager as attribute_manager
 from submodules.model import UploadTask, enums
@@ -49,9 +50,31 @@ def import_records_from_file(project_id: str, task: UploadTask) -> None:
 
 
 def import_records_from_json(
-    project_id: str, user_id, record_data: Dict[str, Any]
+    project_id: str,
+    user_id,
+    record_data: Dict[str, Any],
+    request_uuid: str,
+    is_last: bool,
 ) -> None:
-    import_record_json(project_id, user_id, record_data)
+    request_df = pd.DataFrame(record_data)
+    file_path = "tmp_" + request_uuid + ".csv_SCALE"
+    if not os.path.exists(file_path):
+        request_df.to_csv(file_path, index=False)
+    else:
+        request_df.to_csv(file_path, mode="a", header=False, index=False)
+
+    if is_last:
+        organization_id = organization.get_id_by_project_id(project_id)
+        upload_task = upload_task_manager.create_upload_task(
+            str(user_id),
+            str(project_id),
+            f"{file_path}",
+            "records",
+            "",
+        )
+        upload_path = f"{project_id}/{str(upload_task.id)}/{file_path}"
+        s3.upload_object(organization_id, upload_path, file_path)
+        os.remove(file_path)
 
 
 def __check_and_add_running_id(project_id: str, user_id: str):
