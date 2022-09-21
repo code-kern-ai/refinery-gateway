@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import graphene
 
@@ -20,6 +20,10 @@ class CommentQuery(graphene.ObjectType):
         xftype=graphene.String(required=True),
         xfkey=graphene.ID(required=False),
         project_id=graphene.ID(required=False),
+    )
+
+    get_all_comments = graphene.Field(
+        graphene.JSONString, requested=graphene.JSONString(required=True)
     )
 
     def resolve_has_comments(
@@ -49,4 +53,29 @@ class CommentQuery(graphene.ObjectType):
             auth.check_project_access(info, project_id)
         else:
             auth.check_admin_access(info)
-        return manager.get_comments(xftype, xfkey, project_id)
+        user_id = str(auth.get_user_by_info(info).id)
+        return manager.get_comments(xftype, user_id, xfkey, project_id)
+
+    def resolve_get_all_comments(self, info, requested: Dict[str, Any]) -> str:
+        auth.check_demo_access(info)
+        user_id = str(auth.get_user_by_info(info).id)
+
+        to_return = {}
+        for key in requested:
+            project_id = requested[key].get("pId")
+            if project_id:
+                auth.check_project_access(info, project_id)
+            else:
+                auth.check_admin_access(info)
+            data = manager.get_comments(
+                requested[key]["xftype"],
+                user_id,
+                requested[key].get("xfkey"),
+                project_id,
+            )
+            print(data)
+            to_return[key] = {
+                "data": data,
+                "add_info": None,
+            }
+        return to_return

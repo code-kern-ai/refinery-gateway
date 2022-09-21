@@ -8,6 +8,7 @@ from graphene.types.generic import GenericScalar
 from graphene_sqlalchemy.types import SQLAlchemyObjectType
 from submodules.model import enums
 from submodules.model.business_objects import (
+    data_slice,
     knowledge_term,
     record_label_association,
     embedding,
@@ -493,6 +494,14 @@ class LabelingAccessLink(SQLAlchemyObjectType):
         interfaces = (Node,)
 
     id = graphene.ID(source="id", required=True)
+    name = graphene.String()
+
+    def resolve_name(self, info):
+        if self.link_type == enums.LinkTypes.HEURISTIC.value:
+            return information_source.get(self.project_id, self.heuristic_id).name
+        elif self.link_type == enums.LinkTypes.DATA_SLICE.value:
+            return data_slice.get(self.project_id, self.data_slice_id).name
+        return "Unknown type"
 
 
 class Notification(SQLAlchemyObjectType):

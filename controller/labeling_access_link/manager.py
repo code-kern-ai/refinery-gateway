@@ -22,8 +22,14 @@ def get_by_all_by_project_id(project_id: str) -> List[LabelingAccessLink]:
     return labeling_access_link.get_by_all_by_project_id(project_id)
 
 
-def get_by_all_by_user_id(user_id: str) -> List[LabelingAccessLink]:
-    return labeling_access_link.get_by_all_by_user_id(user_id)
+def get_by_all_by_user_id(
+    project_id: str, user_id: str, user_role: str
+) -> List[LabelingAccessLink]:
+    try:
+        role_parsed = enums.UserRoles[user_role.upper()]
+    except KeyError:
+        raise ValueError(f"Invalid User Role: {user_role}")
+    return labeling_access_link.get_by_all_by_user_id(project_id, user_id, role_parsed)
 
 
 def generate_heuristic_access_link(
