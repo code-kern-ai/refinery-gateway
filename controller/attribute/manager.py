@@ -57,6 +57,9 @@ def create_user_attribute(project_id: str) -> Attribute:
         state=AttributeState.INITIAL.value,
         with_commit=True,
     )
+    notification.send_organization_update(
+        project_id=project_id, message="calculate_attribute:created:{attribute_id}"
+    )
 
     return attribute_item
 
@@ -89,6 +92,9 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             )
 
         attribute.delete(project_id, attribute_id, with_commit=True)
+        notification.send_organization_update(
+            project_id=project_id, message="calculate_attribute:deleted:{attribute_id}"
+        )
     else:
         raise ValueError("Attribute is not user created")
 
