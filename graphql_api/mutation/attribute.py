@@ -1,6 +1,5 @@
 from typing import Optional
 from controller.auth import manager as auth
-from util import notification
 import graphene
 from controller.attribute import manager
 
@@ -45,7 +44,6 @@ class UpdateAttribute(graphene.Mutation):
         manager.update_attribute(
             project_id, attribute_id, data_type, is_primary_key, name, source_code
         )
-        notification.send_organization_update(project_id, "attributes_updated")
         return UpdateAttribute(ok=True)
 
 

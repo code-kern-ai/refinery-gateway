@@ -81,20 +81,29 @@ def update_attribute(
         source_code,
         with_commit=True,
     )
+    if attribute.get(project_id, attribute_id).state in [
+        AttributeState.UPLOADED.value,
+        AttributeState.USABLE.value,
+    ]:
+        notification.send_organization_update(project_id, "attributes_updated")
 
 
 def delete_attribute(project_id: str, attribute_id: str) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     if attribute_item.user_created:
-        if attribute_item.state == AttributeState.USABLE.value:
+        is_usable = attribute_item.state == AttributeState.USABLE.value
+        if is_usable:
             record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
-
         attribute.delete(project_id, attribute_id, with_commit=True)
         notification.send_organization_update(
             project_id=project_id, message="calculate_attribute:deleted:{attribute_id}"
         )
+        if is_usable:
+            notification.send_organization_update(
+                project_id=project_id, message="attributes_updated"
+            )
     else:
         raise ValueError("Attribute is not user created")
 
@@ -213,6 +222,9 @@ def __calculate_user_attribute_all_records(
 
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
+    )
+    notification.send_organization_update(
+        project_id=project_id, message="attributes_updated"
     )
 
 
