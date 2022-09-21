@@ -5,6 +5,7 @@ import pytz
 import re
 from datetime import datetime
 from submodules.model.business_objects import attribute, record, project, tokenization
+from submodules.model.enums import DataTypes
 from submodules.s3 import controller as s3
 
 client = docker.from_env()
@@ -48,9 +49,19 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
         record_item
         for record_item, in record.get_attribute_calculation_sample_records(project_id)
     ]
+
+    missing_columns = [
+        attribute_item.name
+        for attribute_item in attribute.get_all(project_id)
+        if attribute_item.data_type != DataTypes.TEXT.value
+    ]
+    missing_columns_str = ",\n".join(
+        ["'" + k + "',r.data->'" + k + "'" for k in missing_columns]
+    )
+
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
         project_id=project_id,
-        missing_columns="",
+        missing_columns=missing_columns_str,
         record_ids=sample_record_ids,
     )
     project_item = project.get(project_id)

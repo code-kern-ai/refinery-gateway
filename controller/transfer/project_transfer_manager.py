@@ -1148,5 +1148,5 @@ def __replace_attribute_id_for_zero_shot_config(
 
 
 def __get_attribute_name_from_embedding_name(embedding_name: str) -> str:
-    regex = "^(.+?)-(?:classification|extraction).*"
+    regex = "^(.+)-(?:classification|extraction).*"
     return re.match(regex, embedding_name).group(1)

@@ -118,6 +118,9 @@ def calculate_user_attribute_all_records(
         state=AttributeState.RUNNING.value,
         with_commit=True,
     )
+    notification.send_organization_update(
+        project_id=project_id, message="calculate_attribute:started:{attribute_id}"
+    )
     daemon.run(
         __calculate_user_attribute_all_records,
         project_id,
