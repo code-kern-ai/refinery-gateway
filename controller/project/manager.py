@@ -106,6 +106,17 @@ def get_label_distribution(
     return project.get_label_distribution(project_id, labeling_task_id, slice_id)
 
 
+def get_confidence_distribution(
+    project_id: str,
+    labeling_task_id: str,
+    slice_id: Optional[str] = None,
+    num_samples: Optional[int] = None,
+) -> str:
+    return project.get_confidence_distribution(
+        project_id, labeling_task_id, slice_id, num_samples
+    )
+
+
 def get_confusion_matrix(
     project_id: str,
     labeling_task_id: str,

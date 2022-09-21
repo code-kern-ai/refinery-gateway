@@ -33,9 +33,7 @@ def get_blank_tokenizer_vocab(project_id: str) -> Any:
     return __blank_tokenizer_vocab.get(project.tokenizer_blank)
 
 
-def get_tokenized_record(
-    project_id: str, record_id: str
-) -> TokenizedRecord:
+def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
     # ensure docs are in db (prio queue)
 
     docs = __get_docs_from_db(project_id, record_id)
@@ -68,8 +66,7 @@ def get_tokenized_record(
     return tokenized_record
 
 
-def create_rats_entries(project_id: str, user_id: str, attribute_id: str) -> None:
-    attribute_id = attribute_id if attribute_id else ""
+def create_rats_entries(project_id: str, user_id: str, attribute_id: str = "") -> None:
     tokenization_service.request_create_rats_entries(project_id, user_id, attribute_id)
 
 
@@ -83,13 +80,17 @@ def delete_docbins(project_id: str, records: List[Record]) -> None:
 
 def start_record_tokenization(project_id: str, record_id: str) -> None:
     daemon.run(
-        request_tokenize_record, project_id, record_id,
+        request_tokenize_record,
+        project_id,
+        record_id,
     )
 
 
 def start_project_tokenization(project_id: str, user_id: str) -> None:
     daemon.run(
-        request_tokenize_project, project_id, user_id,
+        request_tokenize_project,
+        project_id,
+        user_id,
     )
 
 
