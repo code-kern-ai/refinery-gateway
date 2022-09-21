@@ -129,7 +129,7 @@ def run_attribute_calculation_exec_env(
         calculated_attributes = {}
 
     if not doc_bin == "docbin_full":
-        # sample records docbin should be delteted after calculation
+        # sample records docbin should be deleted after calculation
         s3.delete_object(org_id, project_id + "/" + doc_bin)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)

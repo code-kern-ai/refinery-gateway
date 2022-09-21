@@ -5,7 +5,6 @@ from spacy.tokens import DocBin
 from controller.project import manager as project_manager
 from graphql_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
-from graphql_api import types
 from submodules.model.business_objects import tokenization, attribute
 from submodules.model.business_objects.record import __get_tokenized_record
 from util import daemon
@@ -33,9 +32,7 @@ def get_blank_tokenizer_vocab(project_id: str) -> Any:
     return __blank_tokenizer_vocab.get(project.tokenizer_blank)
 
 
-def get_tokenized_record(
-    project_id: str, record_id: str
-) -> TokenizedRecord:
+def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
     # ensure docs are in db (prio queue)
 
     docs = __get_docs_from_db(project_id, record_id)
@@ -45,6 +42,9 @@ def get_tokenized_record(
 
     for attribute_name in docs:
         attribute_item = attribute.get_by_name(project_id, attribute_name)
+        if attribute_item is None:
+            # the docs could contain already deleted user created attributes
+            continue
 
         tokenized_attribute = TokenizedAttribute()
         tokenized_attribute.raw = docs[attribute_name].text
@@ -83,13 +83,17 @@ def delete_docbins(project_id: str, records: List[Record]) -> None:
 
 def start_record_tokenization(project_id: str, record_id: str) -> None:
     daemon.run(
-        request_tokenize_record, project_id, record_id,
+        request_tokenize_record,
+        project_id,
+        record_id,
     )
 
 
 def start_project_tokenization(project_id: str, user_id: str) -> None:
     daemon.run(
-        request_tokenize_project, project_id, user_id,
+        request_tokenize_project,
+        project_id,
+        user_id,
     )
 
 
