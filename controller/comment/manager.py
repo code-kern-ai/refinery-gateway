@@ -46,7 +46,7 @@ def create_comment(
     is_private: Optional[bool] = None,
 ) -> Comment:
     try:
-        xftype = enums.UserRoles[xftype.upper()].value
+        xftype = enums.CommentCategory[xftype.upper()].value
     except KeyError:
         raise ValueError(f"Invalid comment type: {xftype}")
     comments.create(

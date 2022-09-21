@@ -1,4 +1,5 @@
-from submodules.model import User
+from typing import Dict
+from submodules.model import User, enums
 from submodules.model.business_objects import user
 from submodules.model.business_objects import general
 from controller.auth import kratos
@@ -22,6 +23,10 @@ def get_or_create_user_by_email(email: str) -> User:
     return get_or_create_user(user_id)
 
 
+def get_user_roles() -> Dict[str, str]:
+    return {str(u.id): u.role for u in user.get_all()}
+
+
 def update_organization_of_user(organization_name: str, user_mail: str) -> None:
     organization = organization_manager.get_organization_by_name(organization_name)
 
@@ -43,6 +48,20 @@ def update_organization_of_user(organization_name: str, user_mail: str) -> None:
             f"User {user_mail} is already part of organization {user_item.organization.name}"
         )
     user.update_organization(user_item.id, organization.id, with_commit=True)
+
+
+def update_user_role(user_id: str, role: str) -> User:
+    user_item = user.get(user_id)
+    if not user_item:
+        raise ValueError("User not found")
+
+    try:
+        role = enums.UserRoles[role.upper()].value
+    except KeyError:
+        raise ValueError(f"Invalid role: {role}")
+    user_item.role = role
+    general.commit()
+    return user_item
 
 
 def remove_organization_from_user(user_mail: str) -> None:

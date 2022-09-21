@@ -33,6 +33,21 @@ class AddUserToOrganization(graphene.Mutation):
         return AddUserToOrganization(ok=True)
 
 
+class ChangeUserRole(graphene.Mutation):
+    class Arguments:
+        user_id = graphene.ID()
+        role = graphene.String()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, user_id: str, role: str):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+
+        user_manager.update_user_role(user_id, role)
+        return ChangeUserRole(ok=True)
+
+
 class RemoveUserFromOrganization(graphene.Mutation):
     class Arguments:
         user_mail = graphene.String()
@@ -92,6 +107,7 @@ class ChangeOrganization(graphene.Mutation):
 class OrganizationMutation(graphene.ObjectType):
     add_user_to_organization = AddUserToOrganization.Field()
     remove_user_from_organization = RemoveUserFromOrganization.Field()
+    change_user_role = ChangeUserRole.Field()
     create_organization = CreateOrganization.Field()
     delete_organization = DeleteOrganization.Field()
     change_organization = ChangeOrganization.Field()
