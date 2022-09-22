@@ -29,11 +29,11 @@ def check_composite_key(project_id: str) -> bool:
 
 
 def create_attribute(project_id: str, name: str) -> Attribute:
-    relative_position: int = attribute.get_relative_position(project_id)
-    if relative_position is None:
+    prev_relative_position: int = attribute.get_relative_position(project_id)
+    if prev_relative_position is None:
         relative_position = 1
     else:
-        relative_position += 1
+        relative_position = prev_relative_position + 1
 
     attribute_item: Attribute = attribute.create(
         project_id,
@@ -45,11 +45,11 @@ def create_attribute(project_id: str, name: str) -> Attribute:
 
 
 def create_user_attribute(project_id: str) -> Attribute:
-    relative_position: int = attribute.get_relative_position(project_id)
-    if relative_position is None:
+    prev_relative_position: int = attribute.get_relative_position(project_id)
+    if prev_relative_position is None:
         relative_position = 1
     else:
-        relative_position += 1
+        relative_position = prev_relative_position + 1
 
     name = util.find_free_name(project_id)
 
