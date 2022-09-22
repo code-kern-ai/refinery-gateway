@@ -9,7 +9,7 @@ from graphql_api.types import DataSlice, LabelingAccessLink
 from controller.labeling_access_link import manager
 from submodules.model import enums
 from submodules.model.business_objects import (
-    information_source as is_manager,
+    information_source as information_source_manager,
     user as user_manager,
 )
 
@@ -77,7 +77,7 @@ class LabelingAccessLinkQuery(graphene.ObjectType):
         auth.check_project_access(info, project_id)
 
         if assumed_heuristic_id:
-            is_item = is_manager.get(project_id, assumed_heuristic_id)
+            is_item = information_source_manager.get(project_id, assumed_heuristic_id)
             if (
                 not is_item
                 or is_item.type != enums.InformationSourceType.CROWD_LABELER.value

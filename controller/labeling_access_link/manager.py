@@ -9,6 +9,8 @@ from submodules.model.business_objects import (
 )
 from util import notification
 
+DUMMY_LINK_ID = "00000000-0000-0000-0000-000000000000"
+
 
 def get(link_id: str) -> LabelingAccessLink:
     return labeling_access_link.get(link_id)
@@ -131,7 +133,7 @@ def __get_type_id(link: LabelingAccessLink) -> str:
 
 def check_link_locked(project_id: str, link_route: str) -> bool:
 
-    if link_route.find("00000000-0000-0000-0000-000000000000") > -1:
+    if link_route.find(DUMMY_LINK_ID) > -1:
         # dummy session
         return False
     item = labeling_access_link.get_by_link(project_id, link_route)
@@ -144,7 +146,7 @@ def check_link_locked(project_id: str, link_route: str) -> bool:
 def check_link_data_outdated(
     project_id: str, link_route: str, last_requested_at: datetime
 ) -> bool:
-    if link_route.find("00000000-0000-0000-0000-000000000000") > -1:
+    if link_route.find(DUMMY_LINK_ID) > -1:
         # dummy session
         return False
     if link_route.find("type=SESSION") > -1:

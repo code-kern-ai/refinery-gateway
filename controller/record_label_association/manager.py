@@ -59,7 +59,6 @@ def get_count_rlas_with_source_id(project_id: str, source_id: str) -> int:
 
 
 def __update_annotator_progress(project_id: str, source_id: str, user_id: str):
-    # {"data_slice_id":"a9e54c5a-2b3d-46ba-902d-f6224dd9d24b","annotator_id":"6de83a5b-8e2c-40c2-9923-2b5ed761381b","access_link_id":"c9fcac10-2ba8-40dc-a5ce-ef575dd4a9bf"}
     information_source = information_source_manager.get_information_source(
         project_id, source_id
     )

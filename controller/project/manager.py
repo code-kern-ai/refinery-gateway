@@ -2,6 +2,7 @@ import json
 from typing import Dict, List, Optional
 
 from controller.transfer import project_transfer_manager as handler
+from controller.labeling_access_link import manager as link_manager
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
     labeling_task,
@@ -13,9 +14,8 @@ from submodules.model.business_objects import (
 from graphql_api.types import HuddleData, ProjectSize
 from util import daemon
 from controller.tokenization.tokenization_service import request_tokenize_project
-from submodules.model.business_objects import general
 from submodules.model.business_objects import data_slice as ds_manager
-from submodules.model.business_objects import information_source as is_manager
+from submodules.model.business_objects import information_source as information_source_manager
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
@@ -153,10 +153,10 @@ def resolve_request_huddle_data(
         if huddle_type == enums.LinkTypes.DATA_SLICE.value:
             slice_id = data_id
         elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-            is_data = __get_crowd_label_is_data(project_id, data_id)
-            slice_id = is_data["data_slice_id"]
-            huddle.allowed_task = is_data["labeling_task_id"]
-            huddle.can_edit = is_data["annotator_id"] == user_id
+            information_source_data = __get_crowd_label_is_data(project_id, data_id)
+            slice_id = information_source_data["data_slice_id"]
+            huddle.allowed_task = information_source_data["labeling_task_id"]
+            huddle.can_edit = information_source_data["annotator_id"] == user_id
             source_type = enums.LabelSource.INFORMATION_SOURCE
             source_id = data_id
         (
@@ -171,11 +171,11 @@ def resolve_request_huddle_data(
 
 
 def __no_huddle_id(data_id: str) -> bool:
-    return data_id == "00000000-0000-0000-0000-000000000000" or not data_id
+    return data_id == link_manager.DUMMY_LINK_ID or not data_id
 
 
 def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
-    information_source_item = is_manager.get(project_id, is_id)
+    information_source_item = information_source_manager.get(project_id, is_id)
     if (
         not information_source_item
         or information_source_item.type
@@ -196,6 +196,6 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         if slices and len(slices) > 0:
             return slices[0].id
     elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-        return is_manager.get_first_crowd_is_for_annotator(project_id, user_id)
+        return information_source_manager.get_first_crowd_is_for_annotator(project_id, user_id)
     else:
         raise ValueError("invalid huddle type")
