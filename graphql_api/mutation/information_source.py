@@ -6,6 +6,7 @@ import graphene
 from graphql_api import types
 from controller.auth.manager import get_user_by_info
 from graphql_api.types import InformationSource
+from submodules.model.enums import InformationSourceType
 from util import notification
 
 
@@ -33,9 +34,21 @@ class CreateInformationSource(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        information_source = manager.create_information_source(
-            project_id, user.id, labeling_task_id, name, source_code, description, type
-        )
+        if type == InformationSourceType.CROWD_LABELER.value:
+            information_source = manager.create_crowd_information_source(
+                str(user.id), project_id, labeling_task_id, name, description
+            )
+
+        else:
+            information_source = manager.create_information_source(
+                project_id,
+                user.id,
+                labeling_task_id,
+                name,
+                source_code,
+                description,
+                type,
+            )
         notification.send_organization_update(project_id, f"information_source_created")
         return CreateInformationSource(information_source=information_source)
 

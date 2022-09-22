@@ -5,11 +5,15 @@ from controller.organization import manager
 from graphql_api.types import Organization, User, UserCountsWrapper
 import graphene
 from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
+from controller.user import manager as user_manager
 
 
 class OrganizationQuery(graphene.ObjectType):
     user_info = graphene.Field(User)
-    all_users = graphene.List(User)
+    all_users = graphene.List(
+        User,
+        user_role=graphene.String(required=False),
+    )
     all_users_with_record_count = graphene.List(
         UserCountsWrapper, project_id=graphene.ID()
     )
@@ -22,14 +26,16 @@ class OrganizationQuery(graphene.ObjectType):
 
     can_create_local_org = graphene.Field(graphene.Boolean)
 
+    user_roles = graphene.Field(graphene.JSONString)
+
     def resolve_user_info(self, info) -> User:
         auth_manager.check_demo_access(info)
         return auth_manager.get_user_by_info(info)
 
-    def resolve_all_users(self, info) -> List[User]:
+    def resolve_all_users(self, info, user_role: str = None) -> List[User]:
         auth_manager.check_demo_access(info)
         organization_id = str(auth_manager.get_user_by_info(info).organization.id)
-        return manager.get_all_users(organization_id)
+        return manager.get_all_users(organization_id, user_role)
 
     def resolve_all_users_with_record_count(
         self, info, project_id: str
@@ -58,3 +64,8 @@ class OrganizationQuery(graphene.ObjectType):
     def resolve_can_create_local_org(self, info) -> bool:
         auth_manager.check_demo_access(info)
         return manager.can_create_local()
+
+    def resolve_user_roles(self, info) -> str:
+        auth_manager.check_demo_access(info)
+        auth_manager.check_admin_access(info)
+        return user_manager.get_user_roles()

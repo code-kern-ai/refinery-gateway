@@ -240,10 +240,6 @@ def __collect_user_session_data_from_db(
     if not user_query:
         session_id = resolve_extended_search(project_id, user_id, [], 1, 0).session_id
         user_query = user_session.get(project_id, session_id)
-    if user_query.created_by != user_id:
-        create_notification(
-            NotificationType.WRONG_USER_FOR_SESSION, user_id, project_id
-        )
 
     return user_query
 

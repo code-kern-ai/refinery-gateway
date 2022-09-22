@@ -1,5 +1,8 @@
-from typing import List, Union, Optional
+from typing import List, Optional
+from submodules.model.exceptions import EntityNotFoundException
 from util import notification
+import json
+
 
 from submodules.model import enums, RecordLabelAssociation, Record
 from submodules.model.business_objects import (
@@ -19,6 +22,9 @@ from submodules.model.business_objects.record_label_association import (
 from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.knowledge_term import manager as term_manager
+from controller.information_source import manager as information_source_manager
+from controller.payload import manager as payload_manager
+from controller.data_slice import manager as data_slice_manager
 
 
 def get_last_annotated_record_id(
@@ -31,6 +37,58 @@ def is_any_record_manually_labeled(project_id: str):
     return record_label_association.is_any_record_manually_labeled(project_id)
 
 
+def __infer_source_type(source_id: str, project_id: str):
+    if source_id is not None:
+        source = information_source_manager.get_information_source(
+            project_id, source_id
+        )
+        if source is None:
+            raise EntityNotFoundException("Information source not found")
+        label_source_type = enums.LabelSource.INFORMATION_SOURCE.value
+    else:
+        label_source_type = enums.LabelSource.MANUAL.value
+    return label_source_type
+
+
+def get_count_rlas_with_source_id(project_id: str, source_id: str) -> int:
+    return len(
+        record_label_association.get_all_classifications_for_information_source(
+            project_id, source_id
+        )
+    )
+
+
+def __update_annotator_progress(project_id: str, source_id: str, user_id: str):
+    information_source = information_source_manager.get_information_source(
+        project_id, source_id
+    )
+
+    if len(information_source.payloads) == 0:
+        payload = payload_manager.create_empty_crowd_payload(
+            project_id, source_id, user_id
+        )
+    else:
+        payload = information_source.payloads[0]
+
+    details = json.loads(information_source.source_code)
+    data_slice_id = details["data_slice_id"]
+
+    count_labeled = get_count_rlas_with_source_id(project_id, source_id)
+    count_slice = data_slice_manager.count_items(project_id, data_slice_id)
+
+    payload_manager.update_payload_progress(
+        project_id, payload.id, count_labeled / count_slice
+    )
+
+    if count_labeled == count_slice:
+        payload_manager.update_payload_status(
+            project_id,
+            payload.id,
+            enums.PayloadState.FINISHED.value,
+        )
+    general.commit()
+
+
 def create_manual_classification_label(
     project_id: str,
     user_id: str,
@@ -38,6 +96,8 @@ def create_manual_classification_label(
     label_id: str,
     labeling_task_id: str,
     as_gold_star: Optional[bool] = None,
+    source_id: str = None,
+    confidence: float = 1.0,
 ) -> Record:
     if not as_gold_star:
         as_gold_star = None
@@ -46,25 +106,39 @@ def create_manual_classification_label(
     if record_item is None:
         return None
 
+    label_source_type = __infer_source_type(source_id, project_id)
+
     label_ids = labeling_task_label.get_all_ids_query(project_id, labeling_task_id)
     record_label_association.delete(
-        project_id, record_id, user_id, label_ids, as_gold_star, with_commit=True
-    )
-    record_label_association.create(
         project_id,
         record_id,
-        label_id,
         user_id,
-        enums.LabelSource.MANUAL.value,
-        enums.InformationSourceReturnType.RETURN.value,
+        label_ids,
         as_gold_star,
+        source_id,
+        label_source_type,
         with_commit=True,
     )
+    record_label_association.create(
+        project_id=project_id,
+        record_id=record_id,
+        labeling_task_label_id=label_id,
+        created_by=user_id,
+        source_type=label_source_type,
+        return_type=enums.InformationSourceReturnType.RETURN.value,
+        is_gold_star=as_gold_star,
+        source_id=source_id,
+        with_commit=True,
+        confidence=confidence,
+    )
+    if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        __update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
         user_id,
+        source_id,
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
@@ -101,6 +175,8 @@ def create_manual_extraction_label(
     token_end_index: int,
     value: str,
     as_gold_star: Optional[bool] = None,
+    source_id: str = None,
+    confidence: float = 1.0,
 ) -> Record:
     if not as_gold_star:
         as_gold_star = None
@@ -110,6 +186,7 @@ def create_manual_extraction_label(
 
     if label_item is None:
         return None
+    label_source_type = __infer_source_type(source_id, project_id)
 
     existing_tokens = record_label_association.get_manual_tokens_by_record_id(
         project_id, record_id
@@ -145,21 +222,28 @@ def create_manual_extraction_label(
         record_id,
         label_id,
         user_id,
-        enums.LabelSource.MANUAL.value,
+        label_source_type,
         enums.InformationSourceReturnType.YIELD.value,
         as_gold_star,
         new_tokens,
         with_commit=True,
+        confidence=confidence,
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
     )
-    term_manager.create_term_in_named_knowledge_base(project_id, label_item.name, value)
+    if label_source_type == enums.LabelSource.MANUAL.value:
+        term_manager.create_term_in_named_knowledge_base(
+            project_id, label_item.name, value
+        )
+    if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        __update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
         user_id,
+        source_id,
     )
     return record_item
 

@@ -10,7 +10,7 @@ from controller.transfer.project_transfer_manager import (
     get_project_export_dump,
 )
 from controller.upload_task import manager as upload_task_manager
-from controller.transfer.record_transfer_manager import import_file, import_record_json
+from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export

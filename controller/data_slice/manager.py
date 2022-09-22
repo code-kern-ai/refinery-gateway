@@ -1,15 +1,25 @@
 from typing import Dict, Any, List, Optional
 
 from submodules.model import DataSlice
+from submodules.model import enums
 from submodules.model.business_objects import general, data_slice, embedding
 import uuid
 from service.search import search
 from controller.data_slice import neural_search_connector
 from submodules.model.enums import SliceTypes
+from controller.labeling_access_link import manager as link_manager
 
 
-def get_all_data_slices(project_id: str) -> List[DataSlice]:
-    return data_slice.get_all(project_id)
+def get_all_data_slices(
+    project_id: str, slice_type: Optional[str] = None
+) -> List[DataSlice]:
+    parsed = None
+    if slice_type:
+        try:
+            parsed = enums.SliceTypes[slice_type.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid SliceTypes: {slice_type}")
+    return data_slice.get_all(project_id, parsed)
 
 
 def count_items(project_id: str, data_slice_id: str) -> int:
@@ -78,6 +88,9 @@ def create_data_slice(
         __create_data_slice_record_associations(
             project_id, data_slice_item.id, filter_data
         )
+        link_manager.generate_data_slice_access_link(
+            project_id, user_id, data_slice_item.id
+        )
     return data_slice_item
 
 
@@ -90,6 +103,9 @@ def update_data_slice(
 ) -> None:
     if static:
         __create_data_slice_record_associations(project_id, data_slice_id, filter_data)
+        link_manager.set_changed_for(
+            project_id, enums.LinkTypes.DATA_SLICE, data_slice_id
+        )
 
     data_slice.update_data_slice(
         project_id,

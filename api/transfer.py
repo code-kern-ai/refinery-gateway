@@ -14,7 +14,7 @@ from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 
-from submodules.model import enums
+from submodules.model import enums, exceptions
 from util.notification import create_notification
 from submodules.model.enums import NotificationType
 from submodules.model.models import UploadTask
@@ -63,7 +63,14 @@ class FileExport(HTTPEndpoint):
         project_id = request.path_params["project_id"]
         user_id = request.query_params["user_id"]
         num_samples = request.query_params.get("num_samples")
-        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        try:
+            auth_manager.check_project_access_from_user_id(
+                user_id, project_id, from_api=True
+            )
+        except exceptions.EntityNotFoundException:
+            return JSONResponse({"error": "Could not find project"}, status_code=404)
+        except exceptions.AccessDeniedException:
+            return JSONResponse({"error": "Access denied"}, status_code=403)
         result = transfer_manager.export_records(project_id, num_samples)
         return JSONResponse(result)
 
@@ -73,7 +80,14 @@ class KnowledgeBaseExport(HTTPEndpoint):
         project_id = request.path_params["project_id"]
         list_id = request.path_params["knowledge_base_id"]
         user_id = request.query_params["user_id"]
-        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        try:
+            auth_manager.check_project_access_from_user_id(
+                user_id, project_id, from_api=True
+            )
+        except exceptions.EntityNotFoundException:
+            return JSONResponse({"error": "Could not find project"}, status_code=404)
+        except exceptions.AccessDeniedException:
+            return JSONResponse({"error": "Access denied"}, status_code=403)
         result = transfer_manager.export_knowledge_base(project_id, list_id)
         return JSONResponse(result)
 
@@ -85,7 +99,14 @@ class PrepareFileImport(HTTPEndpoint):
         request_body = await request.json()
 
         user_id = request_body["user_id"]
-        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        try:
+            auth_manager.check_project_access_from_user_id(
+                user_id, project_id, from_api=True
+            )
+        except exceptions.EntityNotFoundException:
+            return JSONResponse({"error": "Could not find project"}, status_code=404)
+        except exceptions.AccessDeniedException:
+            return JSONResponse({"error": "Access denied"}, status_code=403)
         file_name = request_body["file_name"]
         file_type = request_body["file_type"]
         file_import_options = request_body.get("file_import_options")
@@ -121,7 +142,14 @@ class AssociationsImport(HTTPEndpoint):
         project_id = request.path_params["project_id"]
         request_body = await request.json()
         user_id = request_body["user_id"]
-        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        try:
+            auth_manager.check_project_access_from_user_id(
+                user_id, project_id, from_api=True
+            )
+        except exceptions.EntityNotFoundException:
+            return JSONResponse({"error": "Could not find project"}, status_code=404)
+        except exceptions.AccessDeniedException:
+            return JSONResponse({"error": "Access denied"}, status_code=403)
         new_associations_added = association_transfer_manager.import_associations(
             project_id,
             user_id,
@@ -140,7 +168,14 @@ class UploadTask(HTTPEndpoint):
         project_id = request.path_params["project_id"]
         task_id = request.path_params["task_id"]
         user_id = request.query_params["user_id"]
-        auth_manager.check_project_access_from_user_id(user_id, project_id)
+        try:
+            auth_manager.check_project_access_from_user_id(
+                user_id, project_id, from_api=True
+            )
+        except exceptions.EntityNotFoundException:
+            return JSONResponse({"error": "Could not find project"}, status_code=404)
+        except exceptions.AccessDeniedException:
+            return JSONResponse({"error": "Access denied"}, status_code=403)
         task = upload_task_manager.get_upload_task(project_id, task_id)
         task_dict = {
             "id": str(task.id),

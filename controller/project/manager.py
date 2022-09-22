@@ -1,6 +1,8 @@
-from typing import List, Optional
+import json
+from typing import Dict, List, Optional
 
 from controller.transfer import project_transfer_manager as handler
+from controller.labeling_access_link import manager as link_manager
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
     labeling_task,
@@ -9,11 +11,14 @@ from submodules.model.business_objects import (
     record_label_association,
     data_slice,
 )
-from graphql_api.types import ProjectSize
+from graphql_api.types import HuddleData, ProjectSize
 from util import daemon
 from controller.tokenization.tokenization_service import request_tokenize_project
-from submodules.model.business_objects import general
+from submodules.model.business_objects import data_slice as ds_manager
+from submodules.model.business_objects import information_source as information_source_manager
+from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
+from service.search import search
 
 
 def get_project(project_id: str) -> Project:
@@ -129,3 +134,68 @@ def get_confusion_matrix(
     return project.get_confusion_matrix(
         project_id, labeling_task_id, for_classification, slice_id
     )
+
+
+def resolve_request_huddle_data(
+    project_id: str, user_id: str, data_id: str, huddle_type: str
+) -> HuddleData:
+    huddle = HuddleData(huddle_type=huddle_type, start_pos=-1, can_edit=True)
+    if huddle_type == enums.LinkTypes.SESSION.value:
+        session = search.resolve_labeling_session(project_id, user_id, data_id)
+        huddle.record_ids = session.session_record_ids
+        if __no_huddle_id(data_id):
+            data_id = session.id
+    else:
+        source_type = enums.LabelSource.MANUAL
+        source_id = None
+        if __no_huddle_id(data_id):
+            data_id = __get_first_data_id(project_id, user_id, huddle_type)
+        if huddle_type == enums.LinkTypes.DATA_SLICE.value:
+            slice_id = data_id
+        elif huddle_type == enums.LinkTypes.HEURISTIC.value:
+            information_source_data = __get_crowd_label_is_data(project_id, data_id)
+            slice_id = information_source_data["data_slice_id"]
+            huddle.allowed_task = information_source_data["labeling_task_id"]
+            huddle.can_edit = information_source_data["annotator_id"] == user_id
+            source_type = enums.LabelSource.INFORMATION_SOURCE
+            source_id = data_id
+        (
+            huddle.record_ids,
+            huddle.start_pos,
+        ) = ds_manager.get_record_ids_and_first_unlabeled_pos(
+            project_id, user_id, slice_id, source_type, source_id
+        )
+    huddle.huddle_id = data_id
+    huddle.checked_at = db_util.get_db_now()
+    return huddle
+
+
+def __no_huddle_id(data_id: str) -> bool:
+    return data_id == link_manager.DUMMY_LINK_ID or not data_id
+
+
+def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
+    information_source_item = information_source_manager.get(project_id, is_id)
+    if (
+        not information_source_item
+        or information_source_item.type
+        != enums.InformationSourceType.CROWD_LABELER.value
+    ):
+        raise ValueError(
+            "only crowd labeler information source can be used to get a slice id"
+        )
+
+    values = json.loads(information_source_item.source_code)
+    values["labeling_task_id"] = information_source_item.labeling_task_id
+    return values
+
+
+def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
+    if huddle_type == enums.LinkTypes.DATA_SLICE.value:
+        slices = ds_manager.get_all(project_id, enums.SliceTypes.STATIC_DEFAULT)
+        if slices and len(slices) > 0:
+            return slices[0].id
+    elif huddle_type == enums.LinkTypes.HEURISTIC.value:
+        return information_source_manager.get_first_crowd_is_for_annotator(project_id, user_id)
+    else:
+        raise ValueError("invalid huddle type")

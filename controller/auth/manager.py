@@ -8,8 +8,10 @@ from graphql import GraphQLError
 from controller.project import manager as project_manager
 from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
+from submodules.model import enums, exceptions
 from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
+import sqlalchemy
 
 
 def get_organization_id_by_info(info) -> Organization:
@@ -62,13 +64,22 @@ def check_admin_access(info) -> None:
         raise GraphQLError("Admin access required")
 
 
-def check_project_access_from_user_id(user_id: str, project_id: str) -> bool:
+def check_project_access_from_user_id(
+    user_id: str, project_id: str, from_api: bool = False
+) -> bool:
     organization_id: str = get_organization_by_user_id(user_id).id
-    project: Project = project_manager.get_project_with_orga_id(
-        organization_id, project_id
-    )
+    try:
+        project: Project = project_manager.get_project_with_orga_id(
+            organization_id, project_id
+        )
+    except sqlalchemy.exc.DataError:
+        raise exceptions.EntityNotFoundException("Project not found")
     if project is None:
-        raise GraphQLError("Project not found")
+        raise exceptions.EntityNotFoundException("Project not found")
+    if from_api:
+        user = user_manager.get_user(user_id)
+        if user.role != enums.UserRoles.ENGINEER.value:
+            raise exceptions.AccessDeniedException("Access denied")
     return True
 
 
