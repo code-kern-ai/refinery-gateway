@@ -53,7 +53,7 @@ def generate_heuristic_access_link(
 
 
 def generate_data_slice_access_link(
-    project_id: str, created_by: str, slice_id: str
+    project_id: str, created_by: str, slice_id: str, with_commit: bool = True
 ) -> LabelingAccessLink:
     link = f"/projects/{project_id}/labeling/{slice_id}?pos=1&type={enums.LinkTypes.DATA_SLICE.value}"
     return labeling_access_link.create(
@@ -62,7 +62,7 @@ def generate_data_slice_access_link(
         enums.LinkTypes.DATA_SLICE,
         created_by,
         data_slice_id=slice_id,
-        with_commit=True,
+        with_commit=with_commit,
     )
 
 
