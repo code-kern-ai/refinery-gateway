@@ -187,22 +187,46 @@ def create_manual_extraction_label(
 
     if label_item is None:
         return None
-
     label_source_type = __infer_source_type(source_id, project_id)
 
-    tokens = record_label_association.create_token_objects(
+    existing_tokens = record_label_association.get_manual_tokens_by_record_id(
+        project_id, record_id
+    )
+
+    tokens = []
+    curr_start = None
+    curr_end = None
+    for existing_token in existing_tokens:
+        if existing_token.is_beginning_token:
+            if curr_start is not None:
+                tokens.append([curr_start, curr_end])
+            curr_start = existing_token.token_index
+        curr_end = existing_token.token_index
+    if curr_start is not None:
+        tokens.append([curr_start, curr_end])
+
+    # avoid overlapping tokens
+    for token in tokens:
+        if (
+            token[0] <= token_start_index <= token[1]
+            or token[0] <= token_end_index <= token[1]
+            or token_start_index <= token[0] <= token_end_index
+            or token_start_index <= token[1] <= token_end_index
+        ):
+            return record_item
+
+    new_tokens = record_label_association.create_token_objects(
         project_id, token_start_index, token_end_index + 1
     )
     record_label_association.create(
-        project_id=project_id,
-        record_id=record_id,
-        labeling_task_label_id=label_id,
-        created_by=user_id,
-        source_type=label_source_type,
-        return_type=enums.InformationSourceReturnType.YIELD.value,
-        is_gold_star=as_gold_star,
-        source_id=source_id,
-        tokens=tokens,
+        project_id,
+        record_id,
+        label_id,
+        user_id,
+        label_source_type,
+        enums.InformationSourceReturnType.YIELD.value,
+        as_gold_star,
+        new_tokens,
         with_commit=True,
         confidence=confidence,
     )

@@ -16,6 +16,7 @@ from submodules.model.business_objects import (
     attribute,
     information_source,
     labeling_task,
+    project,
 )
 from submodules.model import models
 from util import notification
@@ -298,6 +299,7 @@ class LabelingTask(SQLAlchemyObjectType):
     # TODO: can these now be removed ?
     confusion_matrix = graphene.Field(graphene.List(ConfusionMatrixElement))
     inter_annotator_matrix = graphene.Field(InterAnnotatorMatrix)
+    confidence_distribution = graphene.JSONString()
 
     @staticmethod
     def _resolve_record_classifications(label_id, label_source, self):
@@ -420,6 +422,12 @@ class LabelingTask(SQLAlchemyObjectType):
             return resolve_inter_annotator_matrix_extraction(self, True, False, None)
 
         raise ValueError(f"Can't match task type {self.task_type}")
+
+    def resolve_confidence_distribution(self, info):
+        confidence_scores = project.get_confidence_distribution(
+            self.project_id, self.id, num_samples=100
+        )
+        return confidence_scores
 
 
 class InformationSource(SQLAlchemyObjectType):
