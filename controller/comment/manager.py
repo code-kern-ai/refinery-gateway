@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 from submodules.model import enums
-from submodules.model.models import Comment, User
+from submodules.model.models import CommentData, User
 
 from submodules.model.business_objects import comments
 
@@ -44,7 +44,7 @@ def create_comment(
     user_id: str,
     project_id: Optional[str] = None,
     is_private: Optional[bool] = None,
-) -> Comment:
+) -> CommentData:
     try:
         xftype = enums.CommentCategory[xftype.upper()].value
     except KeyError:
@@ -67,7 +67,7 @@ def update_comment(
     comment_id: str,
     user: User,
     changes: Dict[str, Any],
-) -> Comment:
+) -> CommentData:
     item = comments.get(comment_id)
 
     if not item:
