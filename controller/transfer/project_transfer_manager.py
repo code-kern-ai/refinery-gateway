@@ -2,6 +2,7 @@ import ast
 import json
 import logging
 import time
+import re
 from typing import Dict, Any, List, Optional
 from zipfile import ZipFile
 
@@ -193,6 +194,15 @@ def import_file(
             ),
             relative_position=attribute_item.get(
                 "relative_position",
+            ),
+            user_created=attribute_item.get(
+                "user_created",
+            ),
+            state=attribute_item.get(
+                "state",
+            ),
+            logs=attribute_item.get(
+                "logs",
             ),
             project_id=project_id,
         )
@@ -584,11 +594,21 @@ def import_file(
         for embedding_item in data.get(
             "embeddings_data",
         ):
+
+            attribute_id = embedding_item.get("attribute_id")
+            embedding_name = embedding_item.get("name")
+            if attribute_id:
+                attribute_id = attribute_ids_by_old_id.get(attribute_id)
+            else:
+                attribute_name = __get_attribute_name_from_embedding_name(
+                    embedding_name
+                )
+                attribute_id = attribute_ids_by_old_name[attribute_name]
+
             embedding_object = embedding.create(
                 project_id=project_id,
-                name=embedding_item.get(
-                    "name",
-                ),
+                attribute_id=attribute_id,
+                name=embedding_name,
                 state="FINISHED",
                 custom=embedding_item.get(
                     "custom",
@@ -812,7 +832,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     # -------------------- READ OF ENTITIES BY SQLALCHEMY --------------------
 
     if "basic project data" in export_options:
-        attributes = attribute.get_all(project_id)
+        attributes = attribute.get_all(project_id, state_filter=[])
         labeling_tasks = labeling_task.get_all(project_id)
         labeling_task_labels = labeling_task_label.get_all(project_id)
         data_slices = data_slice.get_all(project_id)
@@ -879,6 +899,10 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
             "data_type": attribute_item.data_type,
             "is_primary_key": attribute_item.is_primary_key,
             "relative_position": attribute_item.relative_position,
+            "user_created": attribute_item.user_created,
+            "source_code": attribute_item.source_code,
+            "state": attribute_item.state,
+            "logs": attribute_item.logs,
         }
         for attribute_item in attributes
     ]
@@ -968,6 +992,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     embeddings_data = [
         {
             "id": str(embedding_item.id),
+            "attribute_id": str(embedding_item.attribute_id),
             "name": embedding_item.name,
             "custom": embedding_item.custom,
             "type": embedding_item.type,
@@ -1131,3 +1156,8 @@ def __replace_attribute_id_for_zero_shot_config(
             f'"attribute_id":"{attribute_ids[attribute_id]}"',
         )
     return source_code
+
+
+def __get_attribute_name_from_embedding_name(embedding_name: str) -> str:
+    regex = "^(.+)-(?:classification|extraction).*"
+    return re.match(regex, embedding_name).group(1)

@@ -738,3 +738,15 @@ class HuddleData(graphene.ObjectType):
     allowed_task = graphene.String()
     can_edit = graphene.Boolean()
     checked_at = graphene.DateTime()
+
+
+class LastRunAttributesResult(graphene.ObjectType):
+    created_at = graphene.DateTime()
+    state = graphene.String()
+    iteration = graphene.Int()
+    logs = graphene.List(graphene.DateTime)
+
+
+class UserAttributeSampleRecordsResult(graphene.ObjectType):
+    record_ids = graphene.List(graphene.ID)
+    calculated_attributes = graphene.List(graphene.String)

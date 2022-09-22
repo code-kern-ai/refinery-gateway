@@ -5,7 +5,6 @@ from spacy.tokens import DocBin
 from controller.project import manager as project_manager
 from graphql_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
-from graphql_api import types
 from submodules.model.business_objects import tokenization, attribute
 from submodules.model.business_objects.record import __get_tokenized_record
 from util import daemon
@@ -43,6 +42,9 @@ def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
 
     for attribute_name in docs:
         attribute_item = attribute.get_by_name(project_id, attribute_name)
+        if attribute_item is None:
+            # the docs could contain already deleted user created attributes
+            continue
 
         tokenized_attribute = TokenizedAttribute()
         tokenized_attribute.raw = docs[attribute_name].text
