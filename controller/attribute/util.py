@@ -125,7 +125,8 @@ def run_attribute_calculation_exec_env(
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
         calculated_attributes = json.loads(payload)
-    except s3.error.located_error.GraphQLLocatedError:
+    except:
+        print("Could not grab data from s3 -- attribute calculation")
         calculated_attributes = {}
 
     if not doc_bin == "docbin_full":
