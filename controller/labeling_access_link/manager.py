@@ -112,6 +112,8 @@ def set_changed_for(project_id: str, type: enums.LinkTypes, id: str) -> None:
     )
     for link in to_change:
         labeling_access_link.change(link, changes=None, with_commit=False)
+    general.commit()
+    for link in to_change:
         notification.send_organization_update(
             project_id,
             f"access_link_changed:{str(link.id)}:{__get_type_id(link)}:{link.is_locked}",
