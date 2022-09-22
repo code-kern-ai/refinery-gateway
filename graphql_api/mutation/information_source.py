@@ -6,6 +6,7 @@ import graphene
 from graphql_api import types
 from controller.auth.manager import get_user_by_info
 from graphql_api.types import InformationSource
+from submodules.model.enums import InformationSourceType
 from util import notification
 
 
@@ -33,9 +34,21 @@ class CreateInformationSource(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        information_source = manager.create_information_source(
-            project_id, user.id, labeling_task_id, name, source_code, description, type
-        )
+        if type == InformationSourceType.CROWD_LABELER.value:
+            information_source = manager.create_crowd_information_source(
+                str(user.id), project_id, labeling_task_id, name, description
+            )
+
+        else:
+            information_source = manager.create_information_source(
+                project_id,
+                user.id,
+                labeling_task_id,
+                name,
+                source_code,
+                description,
+                type,
+            )
         notification.send_organization_update(project_id, f"information_source_created")
         return CreateInformationSource(information_source=information_source)
 
@@ -91,6 +104,23 @@ class SetAllInformationSourceSelected(graphene.Mutation):
         return ToggleInformationSource(ok=True)
 
 
+class SetAllModelCallbacksSelected(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        value = graphene.Boolean(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, value: bool):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.set_all_model_callbacks_selected(project_id, value)
+        # notification.send_organization_update(
+        #     project_id, f"information_source_updated:all"
+        # )
+        return SetAllModelCallbacksSelected(ok=True)
+
+
 class UpdateInformationSource(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -130,3 +160,4 @@ class InformationSourceMutation(graphene.ObjectType):
     toggle_information_source = ToggleInformationSource.Field()
     update_information_source = UpdateInformationSource.Field()
     set_all_information_source_selected = SetAllInformationSourceSelected.Field()
+    set_all_model_callbacks_selected = SetAllModelCallbacksSelected.Field()

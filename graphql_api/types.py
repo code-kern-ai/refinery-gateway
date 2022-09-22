@@ -8,6 +8,7 @@ from graphene.types.generic import GenericScalar
 from graphene_sqlalchemy.types import SQLAlchemyObjectType
 from submodules.model import enums
 from submodules.model.business_objects import (
+    data_slice,
     knowledge_term,
     record_label_association,
     embedding,
@@ -15,6 +16,7 @@ from submodules.model.business_objects import (
     attribute,
     information_source,
     labeling_task,
+    project,
 )
 from submodules.model import models
 from util import notification
@@ -297,6 +299,7 @@ class LabelingTask(SQLAlchemyObjectType):
     # TODO: can these now be removed ?
     confusion_matrix = graphene.Field(graphene.List(ConfusionMatrixElement))
     inter_annotator_matrix = graphene.Field(InterAnnotatorMatrix)
+    confidence_distribution = graphene.JSONString()
 
     @staticmethod
     def _resolve_record_classifications(label_id, label_source, self):
@@ -420,6 +423,12 @@ class LabelingTask(SQLAlchemyObjectType):
 
         raise ValueError(f"Can't match task type {self.task_type}")
 
+    def resolve_confidence_distribution(self, info):
+        confidence_scores = project.get_confidence_distribution(
+            self.project_id, self.id, num_samples=100
+        )
+        return confidence_scores
+
 
 class InformationSource(SQLAlchemyObjectType):
     class Meta:
@@ -485,6 +494,22 @@ class DataSlice(SQLAlchemyObjectType):
         interfaces = (Node,)
 
     id = graphene.ID(source="id", required=True)
+
+
+class LabelingAccessLink(SQLAlchemyObjectType):
+    class Meta:
+        model = models.LabelingAccessLink
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+    name = graphene.String()
+
+    def resolve_name(self, info):
+        if self.link_type == enums.LinkTypes.HEURISTIC.value:
+            return information_source.get(self.project_id, self.heuristic_id).name
+        elif self.link_type == enums.LinkTypes.DATA_SLICE.value:
+            return data_slice.get(self.project_id, self.data_slice_id).name
+        return "Unknown type"
 
 
 class Notification(SQLAlchemyObjectType):
@@ -701,6 +726,18 @@ class ModelProviderInfoResult(graphene.ObjectType):
     size = graphene.Float()  # int is to small therfore as float
     status = graphene.String()
     zero_shot_pipeline = graphene.Boolean()
+
+
+class HuddleData(graphene.ObjectType):
+    huddle_id = graphene.ID()
+    record_ids = graphene.List(graphene.ID)
+    huddle_type = graphene.String()
+    # usually 0 if first unlabled is requested then the position of that
+    start_pos = graphene.Int()
+    # only filled if nessecary
+    allowed_task = graphene.String()
+    can_edit = graphene.Boolean()
+    checked_at = graphene.DateTime()
 
 
 class LastRunAttributesResult(graphene.ObjectType):

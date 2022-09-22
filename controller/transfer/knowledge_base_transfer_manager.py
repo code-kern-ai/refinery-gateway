@@ -2,13 +2,13 @@ import os
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects import knowledge_term, organization
 from submodules.model.business_objects import general
-from controller.upload_task import manager as task_manager
+from controller.upload_task import manager as upload_task_manager
 from submodules.s3 import controller as s3
 import pandas as pd
 
 
 def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
-    task_manager.update_task(
+    upload_task_manager.update_task(
         project_id, task.id, state=enums.UploadStates.PENDING.value
     )
     general.commit()
@@ -45,7 +45,7 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
             project_id, list_id, to_add, with_commit=True
         )
 
-    task_manager.update_task(
+    upload_task_manager.update_task(
         project_id, task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
     task.state = enums.UploadStates.DONE.value

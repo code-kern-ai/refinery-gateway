@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 
 from graphql_api.types import ExtendedSearch
-from submodules.model import Record
+from submodules.model import Record, Attribute
 from submodules.model.business_objects import general, record, user_session
 from service.search import search
 
@@ -45,6 +45,17 @@ def get_records_by_similarity_search(
     )
 
     return extended_search
+
+
+def get_records_by_composite_keys(
+    project_id: str,
+    records_data: List[Dict[str, Any]],
+    primary_keys: List[Attribute],
+    category: str,
+):
+    return record.get_existing_records_by_composite_key(
+        project_id, records_data, primary_keys, category
+    )
 
 
 def get_all_records(project_id: str) -> List[Record]:

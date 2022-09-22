@@ -1,10 +1,24 @@
-from typing import List, Dict, Union
+from typing import Any, List, Dict, Optional, Union
 from controller.misc import config_service
 
 from graphql_api.types import UserCountsWrapper
+from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
+
+
+def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
+    org = organization.get(org_id)
+    if not org:
+        raise ValueError(f"Organization with id {org_id} does not exist")
+
+    for k in changes:
+        if hasattr(org, k):
+            setattr(org, k, changes[k])
+        else:
+            raise ValueError(f"Organization has no attribute {k}")
+    general.commit()
 
 
 def get_all_organizations() -> List[Organization]:
@@ -15,8 +29,14 @@ def get_organization_by_name(name: str) -> Organization:
     return organization.get_by_name(name)
 
 
-def get_all_users(organization_id: str) -> List[User]:
-    return user.get_all(organization_id)
+def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
+    parsed = None
+    if user_role:
+        try:
+            parsed = enums.UserRoles[user_role.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid UserRoles: {user_role}")
+    return user.get_all(organization_id, parsed)
 
 
 def get_all_users_with_record_count(

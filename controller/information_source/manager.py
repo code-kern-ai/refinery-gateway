@@ -1,19 +1,25 @@
-from typing import List
+import json
+from typing import List, Optional
 from controller.information_source.util import resolve_source_return_type
-from submodules.model import InformationSource, LabelingTask
+from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import general, labeling_task, information_source
+from controller.labeling_access_link import manager as link_manager
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
     return information_source.get(project_id, source_id)
 
 
+def get_information_source_by_name(project_id: str, name: str) -> InformationSource:
+    return information_source.get_by_name(project_id, name)
+
+
 def get_all_information_sources(project_id: str) -> List[InformationSource]:
     return information_source.get_all(project_id)
 
 
-def get_overview_data(project_id: str) -> str:
-    return information_source.get_overview_data(project_id)
+def get_overview_data(project_id: str, is_model_callback: bool = False) -> str:
+    return information_source.get_overview_data(project_id, is_model_callback)
 
 
 def create_information_source(
@@ -41,6 +47,33 @@ def create_information_source(
     return source
 
 
+def create_crowd_information_source(
+    creation_user_id: str,
+    project_id: str,
+    labeling_task_id: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> InformationSource:
+    parameter = {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
+    parameter = json.dumps(parameter)
+    if not description:
+        description = "Heuristic to provide annotators with a link"
+    if not name:
+        name = "Crowd Heuristic"
+
+    crowd = create_information_source(
+        project_id=project_id,
+        user_id=creation_user_id,
+        labeling_task_id=labeling_task_id,
+        name=name,
+        source_code=parameter,
+        description=description,
+        type=enums.InformationSourceType.CROWD_LABELER.value,
+    )
+
+    return crowd
+
+
 def update_information_source(
     project_id: str,
     source_id: str,
@@ -61,6 +94,7 @@ def update_information_source(
         name=name,
         with_commit=True,
     )
+    link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
 def delete_information_source(project_id: str, source_id: str) -> None:
@@ -74,4 +108,10 @@ def toggle_information_source(project_id: str, source_id: str) -> None:
 def set_all_information_source_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True
+    )
+
+
+def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
+    information_source.update_is_selected_for_project(
+        project_id, value, with_commit=True, is_model_callback=True
     )

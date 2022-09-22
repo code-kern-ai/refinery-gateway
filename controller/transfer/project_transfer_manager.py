@@ -25,6 +25,7 @@ from submodules.model.business_objects import (
     weak_supervision,
 )
 from submodules.model.enums import NotificationType
+from controller.labeling_access_link import manager as link_manager
 from util import notification
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
@@ -315,6 +316,13 @@ def import_file(
                     information_source_object.source_code, attribute_ids_by_old_id
                 )
             )
+        if (
+            information_source_object.type
+            == enums.InformationSourceType.CROWD_LABELER.value
+        ):
+            information_source_object.source_code = json.dumps(
+                {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
+            )
         information_source_ids[
             information_source_item.get(
                 "id",
@@ -481,6 +489,9 @@ def import_file(
                     "id",
                 )
             ] = data_slice_object.id
+            link_manager.generate_data_slice_access_link(
+                project_id, user_id, data_slice_object.id, with_commit=False
+            )
 
     for information_source_payload_item in data.get(
         "information_source_payloads_data",

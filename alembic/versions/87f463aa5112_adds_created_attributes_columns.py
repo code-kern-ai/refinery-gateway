@@ -1,7 +1,7 @@
 """Adds created attributes columns
 
 Revision ID: 87f463aa5112
-Revises: 5b3a4deea1c4
+Revises: 9618924f9679
 Create Date: 2022-09-13 08:22:52.181427
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "87f463aa5112"
-down_revision = "5b3a4deea1c4"
+down_revision = "9618924f9679"
 branch_labels = None
 depends_on = None
 

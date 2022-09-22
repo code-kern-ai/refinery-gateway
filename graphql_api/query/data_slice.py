@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import graphene
 
@@ -12,6 +12,7 @@ class DataSliceQuery(graphene.ObjectType):
     data_slices = graphene.Field(
         graphene.List(DataSlice),
         project_id=graphene.ID(required=True),
+        slice_type=graphene.String(required=False),
     )
 
     static_data_slices_current_count = graphene.Field(
@@ -20,10 +21,12 @@ class DataSliceQuery(graphene.ObjectType):
         slice_id=graphene.ID(required=True),
     )
 
-    def resolve_data_slices(self, info, project_id: str) -> List[DataSlice]:
+    def resolve_data_slices(
+        self, info, project_id: str, slice_type: Optional[str] = None
+    ) -> List[DataSlice]:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.get_all_data_slices(project_id)
+        return manager.get_all_data_slices(project_id, slice_type)
 
     def resolve_static_data_slices_current_count(
         self, info, project_id: str, slice_id: str

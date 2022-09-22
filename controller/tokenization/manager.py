@@ -68,8 +68,7 @@ def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
     return tokenized_record
 
 
-def create_rats_entries(project_id: str, user_id: str, attribute_id: str) -> None:
-    attribute_id = attribute_id if attribute_id else ""
+def create_rats_entries(project_id: str, user_id: str, attribute_id: str = "") -> None:
     tokenization_service.request_create_rats_entries(project_id, user_id, attribute_id)
 
 
