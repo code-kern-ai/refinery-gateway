@@ -155,6 +155,20 @@ def calculate_user_attribute_all_records(
         )
         return
 
+    attribute_item = attribute.get(project_id, attribute_id)
+    equally_named_attributes = attribute.get_all_by_names(
+        project_id, [attribute_item.name]
+    )
+    usable_attributes = attribute.get_all(project_id)
+    if len(set(equally_named_attributes) & set(usable_attributes)) > 1:
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Calculation of attribute failed. Another attribute with the same name is already in state usable or uploaded.",
+            append_to_logs=False,
+        )
+        return
+
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -180,6 +194,13 @@ def __calculate_user_attribute_all_records(
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
         )
+        if not calculated_attributes:
+            __notify_attribute_calculation_failed(
+                project_id=project_id,
+                attribute_id=attribute_id,
+                log="Calculation of attribute failed.",
+            )
+            return
     except Exception:
         __notify_attribute_calculation_failed(
             project_id=project_id,
