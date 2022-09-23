@@ -72,10 +72,12 @@ class LabelingAccessLinkQuery(graphene.ObjectType):
         project_id: str,
         assumed_role: Optional[str] = None,
         assumed_heuristic_id: Optional[str] = None,
-    ) -> List[DataSlice]:
+    ) -> List[LabelingAccessLink]:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
 
+        if assumed_heuristic_id == manager.DUMMY_LINK_ID:
+            return []
         if assumed_heuristic_id:
             is_item = information_source_manager.get(project_id, assumed_heuristic_id)
             if (
