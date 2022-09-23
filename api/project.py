@@ -24,7 +24,7 @@ class ProjectDetails(HTTPEndpoint):
         except exceptions.AccessDeniedException:
             return JSONResponse({"error": "Access denied"}, status_code=403)
         project = project_manager.get_project(project_id)
-        attributes = attribute_manager.get_all_attributes(project_id)
+        attributes = attribute_manager.get_all_attributes(project_id, ["ALL"])
         result = {
             "name": project.name,
             "description": project.description,
@@ -34,6 +34,7 @@ class ProjectDetails(HTTPEndpoint):
                     "name": attribute.name,
                     "data_type": attribute.data_type,
                     "is_primary_key": attribute.is_primary_key,
+                    "state": attribute.state,
                 }
                 for attribute in attributes
             ],

@@ -21,6 +21,14 @@ def get_all_attributes_by_names(
 def get_all_attributes(
     project_id: str, state_filter: List[str] = None
 ) -> List[Attribute]:
+    if not state_filter:
+        state_filter = [
+            AttributeState.UPLOADED.value,
+            AttributeState.USABLE.value,
+            AttributeState.AUTOMATICALLY_CREATED.value,
+        ]
+    if len(state_filter) == 1 and state_filter[0].upper() == "ALL":
+        state_filter = [e.value for e in AttributeState]
     return attribute.get_all_ordered(project_id, True, state_filter)
 
 
