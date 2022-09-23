@@ -89,6 +89,7 @@ def update_attribute(
     )
     if attribute.get(project_id, attribute_id).state in [
         AttributeState.UPLOADED.value,
+        AttributeState.AUTOMATICALLY_CREATED.value,
         AttributeState.USABLE.value,
     ]:
         notification.send_organization_update(project_id, "attributes_updated")
