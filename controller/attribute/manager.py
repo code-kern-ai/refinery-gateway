@@ -1,3 +1,4 @@
+import time
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import attribute, record, tokenization
@@ -246,7 +247,10 @@ def __calculate_user_attribute_all_records(
     util.add_log_to_attribute_logs(project_id, attribute_id, "Triggering tokenization.")
     tokenization.delete_docbins(project_id, with_commit=True)
     tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
-    tokenization.delete_tokenization_tasks(project_id, with_commit=True)
+
+    while record.count_tokenized_records(project_id) > 0:
+        time.sleep(2)
+
     request_tokenize_project(project_id, user_id)
 
     attribute.update(
