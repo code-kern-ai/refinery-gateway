@@ -58,7 +58,7 @@ def get_count_rlas_with_source_id(project_id: str, source_id: str) -> int:
     )
 
 
-def __update_annotator_progress(project_id: str, source_id: str, user_id: str):
+def update_annotator_progress(project_id: str, source_id: str, user_id: str):
     information_source = information_source_manager.get_information_source(
         project_id, source_id
     )
@@ -132,7 +132,7 @@ def create_manual_classification_label(
         confidence=confidence,
     )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
-        __update_annotator_progress(project_id, source_id, user_id)
+        update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
@@ -237,7 +237,7 @@ def create_manual_extraction_label(
             project_id, label_item.name, value
         )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
-        __update_annotator_progress(project_id, source_id, user_id)
+        update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,

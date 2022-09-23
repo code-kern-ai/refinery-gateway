@@ -4,6 +4,7 @@ from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import general, labeling_task, information_source
 from controller.labeling_access_link import manager as link_manager
+from controller.record_label_association import manager as rla_manager
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
@@ -84,7 +85,7 @@ def update_information_source(
 ) -> None:
     labeling_task_item: LabelingTask = labeling_task.get(project_id, labeling_task_id)
     return_type: str = resolve_source_return_type(labeling_task_item)
-    information_source.update(
+    item = information_source.update(
         project_id,
         source_id,
         labeling_task_id=labeling_task_id,
@@ -94,6 +95,8 @@ def update_information_source(
         name=name,
         with_commit=True,
     )
+    if item.type == enums.InformationSourceType.CROWD_LABELER.value:
+        rla_manager.update_annotator_progress(project_id, source_id, item.created_by)
     link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
