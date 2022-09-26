@@ -15,7 +15,9 @@ from graphql_api.types import HuddleData, ProjectSize
 from util import daemon
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import data_slice as ds_manager
-from submodules.model.business_objects import information_source as information_source_manager
+from submodules.model.business_objects import (
+    information_source as information_source_manager,
+)
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
@@ -150,21 +152,23 @@ def resolve_request_huddle_data(
         source_id = None
         if __no_huddle_id(data_id):
             data_id = __get_first_data_id(project_id, user_id, huddle_type)
-        if huddle_type == enums.LinkTypes.DATA_SLICE.value:
+
+        if huddle_type == enums.LinkTypes.DATA_SLICE.value and data_id:
             slice_id = data_id
-        elif huddle_type == enums.LinkTypes.HEURISTIC.value:
+        elif huddle_type == enums.LinkTypes.HEURISTIC.value and data_id:
             information_source_data = __get_crowd_label_is_data(project_id, data_id)
             slice_id = information_source_data["data_slice_id"]
             huddle.allowed_task = information_source_data["labeling_task_id"]
             huddle.can_edit = information_source_data["annotator_id"] == user_id
             source_type = enums.LabelSource.INFORMATION_SOURCE
             source_id = data_id
-        (
-            huddle.record_ids,
-            huddle.start_pos,
-        ) = ds_manager.get_record_ids_and_first_unlabeled_pos(
-            project_id, user_id, slice_id, source_type, source_id
-        )
+        if data_id:
+            (
+                huddle.record_ids,
+                huddle.start_pos,
+            ) = ds_manager.get_record_ids_and_first_unlabeled_pos(
+                project_id, user_id, slice_id, source_type, source_id
+            )
     huddle.huddle_id = data_id
     huddle.checked_at = db_util.get_db_now()
     return huddle
@@ -196,6 +200,8 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         if slices and len(slices) > 0:
             return slices[0].id
     elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-        return information_source_manager.get_first_crowd_is_for_annotator(project_id, user_id)
+        return information_source_manager.get_first_crowd_is_for_annotator(
+            project_id, user_id
+        )
     else:
         raise ValueError("invalid huddle type")
