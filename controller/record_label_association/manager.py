@@ -50,14 +50,6 @@ def __infer_source_type(source_id: str, project_id: str):
     return label_source_type
 
 
-def get_count_rlas_with_source_id(project_id: str, source_id: str) -> int:
-    return len(
-        record_label_association.get_all_classifications_for_information_source(
-            project_id, source_id
-        )
-    )
-
-
 def update_annotator_progress(project_id: str, source_id: str, user_id: str):
     information_source = information_source_manager.get_information_source(
         project_id, source_id
@@ -72,21 +64,22 @@ def update_annotator_progress(project_id: str, source_id: str, user_id: str):
 
     details = json.loads(information_source.source_code)
     data_slice_id = details["data_slice_id"]
-
-    count_labeled = get_count_rlas_with_source_id(project_id, source_id)
-    count_slice = data_slice_manager.count_items(project_id, data_slice_id)
-
-    payload_manager.update_payload_progress(
-        project_id, payload.id, count_labeled / count_slice
+    annotator_id = details["annotator_id"]
+    percentage = record_label_association.get_percentage_of_labeled_records_for_slice(
+        project_id, annotator_id, data_slice_id
     )
+    payload_manager.update_payload_progress(project_id, payload.id, percentage)
 
-    if count_labeled == count_slice:
+    if percentage == 1:
         payload_manager.update_payload_status(
             project_id,
             payload.id,
             enums.PayloadState.FINISHED.value,
         )
     general.commit()
+    notification.send_organization_update(
+        project_id, f"information_source_updated:{str(information_source.id)}"
+    )
 
 
 def create_manual_classification_label(
@@ -298,8 +291,11 @@ def update_is_valid_manual_label_for_all() -> None:
 
 
 def delete_record_label_association(
-    project_id: str, record_id: str, association_ids: List[str]
+    project_id: str, record_id: str, association_ids: List[str], user_id: str
 ) -> None:
+    source_ids = record_label_association.check_any_id_is_source_related(
+        project_id, record_id, association_ids
+    )
     task_ids = get_labeling_tasks_from_ids(project_id, association_ids)
     record_label_association.delete_by_ids(
         project_id, record_id, association_ids, with_commit=True
@@ -307,6 +303,9 @@ def delete_record_label_association(
     for task_id in task_ids:
         update_is_relevant_manual_label(project_id, task_id, record_id)
     general.commit()
+    if source_ids:
+        for s_id in source_ids:
+            update_annotator_progress(project_id, s_id, user_id)
 
 
 def delete_gold_star_association(
