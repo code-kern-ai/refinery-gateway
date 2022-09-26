@@ -73,7 +73,7 @@ def create_user_attribute(project_id: str) -> Attribute:
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:created:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:created:{str(attribute_item.id)}"
     )
 
     return attribute_item
@@ -114,7 +114,7 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
         notification.send_organization_update(
-            project_id=project_id, message="calculate_attribute:deleted:{attribute_id}"
+            project_id=project_id, message=f"calculate_attribute:deleted:{attribute_id}"
         )
         if is_usable:
             notification.send_organization_update(
@@ -186,7 +186,7 @@ def calculate_user_attribute_all_records(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:started:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
     )
     daemon.run(
         __calculate_user_attribute_all_records,
@@ -276,7 +276,7 @@ def __notify_attribute_calculation_failed(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:error:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:error:{attribute_id}"
     )
 
 

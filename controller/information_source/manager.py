@@ -95,8 +95,13 @@ def update_information_source(
         name=name,
         with_commit=True,
     )
+
     if item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        rla_manager.update_annotator_progress(project_id, source_id, item.created_by)
+        slice_id = json.loads(item.source_code)["data_slice_id"]
+        if slice_id:
+            rla_manager.update_annotator_progress(
+                project_id, source_id, item.created_by
+            )
     link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
