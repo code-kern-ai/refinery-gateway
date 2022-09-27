@@ -1,3 +1,4 @@
+import time
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import attribute, record, tokenization
@@ -21,6 +22,14 @@ def get_all_attributes_by_names(
 def get_all_attributes(
     project_id: str, state_filter: List[str] = None
 ) -> List[Attribute]:
+    if not state_filter:
+        state_filter = [
+            AttributeState.UPLOADED.value,
+            AttributeState.USABLE.value,
+            AttributeState.AUTOMATICALLY_CREATED.value,
+        ]
+    if len(state_filter) == 1 and state_filter[0].upper() == "ALL":
+        state_filter = [e.value for e in AttributeState]
     return attribute.get_all_ordered(project_id, True, state_filter)
 
 
@@ -64,7 +73,7 @@ def create_user_attribute(project_id: str) -> Attribute:
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:created:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:created:{str(attribute_item.id)}"
     )
 
     return attribute_item
@@ -89,6 +98,7 @@ def update_attribute(
     )
     if attribute.get(project_id, attribute_id).state in [
         AttributeState.UPLOADED.value,
+        AttributeState.AUTOMATICALLY_CREATED.value,
         AttributeState.USABLE.value,
     ]:
         notification.send_organization_update(project_id, "attributes_updated")
@@ -104,7 +114,7 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
         notification.send_organization_update(
-            project_id=project_id, message="calculate_attribute:deleted:{attribute_id}"
+            project_id=project_id, message=f"calculate_attribute:deleted:{attribute_id}"
         )
         if is_usable:
             notification.send_organization_update(
@@ -155,6 +165,20 @@ def calculate_user_attribute_all_records(
         )
         return
 
+    attribute_item = attribute.get(project_id, attribute_id)
+    equally_named_attributes = attribute.get_all_by_names(
+        project_id, [attribute_item.name]
+    )
+    usable_attributes = attribute.get_all(project_id)
+    if len(set(equally_named_attributes) & set(usable_attributes)) > 1:
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Calculation of attribute failed. Another attribute with the same name is already in state usable or uploaded.",
+            append_to_logs=False,
+        )
+        return
+
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -162,7 +186,7 @@ def calculate_user_attribute_all_records(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:started:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
     )
     daemon.run(
         __calculate_user_attribute_all_records,
@@ -180,6 +204,13 @@ def __calculate_user_attribute_all_records(
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
         )
+        if not calculated_attributes:
+            __notify_attribute_calculation_failed(
+                project_id=project_id,
+                attribute_id=attribute_id,
+                log="Calculation of attribute failed.",
+            )
+            return
     except Exception:
         __notify_attribute_calculation_failed(
             project_id=project_id,
@@ -216,7 +247,10 @@ def __calculate_user_attribute_all_records(
     util.add_log_to_attribute_logs(project_id, attribute_id, "Triggering tokenization.")
     tokenization.delete_docbins(project_id, with_commit=True)
     tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
-    tokenization.delete_tokenization_tasks(project_id, with_commit=True)
+
+    while record.count_tokenized_records(project_id) > 0:
+        time.sleep(2)
+
     request_tokenize_project(project_id, user_id)
 
     attribute.update(
@@ -242,7 +276,7 @@ def __notify_attribute_calculation_failed(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message="calculate_attribute:error:{attribute_id}"
+        project_id=project_id, message=f"calculate_attribute:error:{attribute_id}"
     )
 
 

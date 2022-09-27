@@ -163,7 +163,9 @@ class DeleteRecordLabelAssociationByIds(graphene.Mutation):
     def mutate(self, info, project_id: str, record_id: str, association_ids: List[str]):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.delete_record_label_association(project_id, record_id, association_ids)
+        
+        user_id = auth.get_user_id_by_info(info)
+        manager.delete_record_label_association(project_id, record_id, association_ids,user_id)
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
 
         return DeleteRecordLabelAssociationByIds(ok=True)

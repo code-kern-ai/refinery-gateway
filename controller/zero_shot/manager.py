@@ -101,7 +101,7 @@ def create_zero_shot_information_source(
     if current_labels <= 0:
         default_confidence = 0.5
     else:
-        default_confidence = min((1 / current_labels) + 0.2, 0.8)
+        default_confidence = round(min((1 / current_labels) + 0.2, 0.8), 1)
 
     zero_shot_default_parameter = {
         "config": target_config,
@@ -174,7 +174,9 @@ def __start_zero_shot_for_project(
         new_payload.finished_at = datetime.datetime.now()
         general.commit()
     try:
-        weak_supervision.calculate_stats_after_source_run(project_id, information_source_id, user_id)
+        weak_supervision.calculate_stats_after_source_run(
+            project_id, information_source_id, user_id
+        )
     except:
         print(
             f"Can't calculate stats for zero shot project {project_id}, is {information_source_id}",
