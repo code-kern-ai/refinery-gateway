@@ -2,6 +2,7 @@ import ast
 import json
 import logging
 import time
+import re
 from typing import Dict, Any, List, Optional
 from zipfile import ZipFile
 
@@ -24,6 +25,7 @@ from submodules.model.business_objects import (
     weak_supervision,
 )
 from submodules.model.enums import NotificationType
+from controller.labeling_access_link import manager as link_manager
 from util import notification
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
@@ -103,7 +105,11 @@ def import_sample_project(
             "Once the project has been initialized, you'll be redirected into it."
         )
         project_item = project.create(
-            organization_id, project_name, project_description, user_id, status = enums.ProjectStatus.INIT_SAMPLE_PROJECT
+            organization_id,
+            project_name,
+            project_description,
+            user_id,
+            status=enums.ProjectStatus.INIT_SAMPLE_PROJECT,
         )
         create_notification(
             NotificationType.IMPORT_SAMPLE_PROJECT,
@@ -188,6 +194,15 @@ def import_file(
             ),
             relative_position=attribute_item.get(
                 "relative_position",
+            ),
+            user_created=attribute_item.get(
+                "user_created",
+            ),
+            state=attribute_item.get(
+                "state",
+            ),
+            logs=attribute_item.get(
+                "logs",
             ),
             project_id=project_id,
         )
@@ -300,6 +315,13 @@ def import_file(
                 __replace_attribute_id_for_zero_shot_config(
                     information_source_object.source_code, attribute_ids_by_old_id
                 )
+            )
+        if (
+            information_source_object.type
+            == enums.InformationSourceType.CROWD_LABELER.value
+        ):
+            information_source_object.source_code = json.dumps(
+                {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
             )
         information_source_ids[
             information_source_item.get(
@@ -467,6 +489,9 @@ def import_file(
                     "id",
                 )
             ] = data_slice_object.id
+            link_manager.generate_data_slice_access_link(
+                project_id, user_id, data_slice_object.id, with_commit=False
+            )
 
     for information_source_payload_item in data.get(
         "information_source_payloads_data",
@@ -569,11 +594,21 @@ def import_file(
         for embedding_item in data.get(
             "embeddings_data",
         ):
+
+            attribute_id = embedding_item.get("attribute_id")
+            embedding_name = embedding_item.get("name")
+            if attribute_id:
+                attribute_id = attribute_ids_by_old_id.get(attribute_id)
+            else:
+                attribute_name = __get_attribute_name_from_embedding_name(
+                    embedding_name
+                )
+                attribute_id = attribute_ids_by_old_name[attribute_name]
+
             embedding_object = embedding.create(
                 project_id=project_id,
-                name=embedding_item.get(
-                    "name",
-                ),
+                attribute_id=attribute_id,
+                name=embedding_name,
                 state="FINISHED",
                 custom=embedding_item.get(
                     "custom",
@@ -797,7 +832,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     # -------------------- READ OF ENTITIES BY SQLALCHEMY --------------------
 
     if "basic project data" in export_options:
-        attributes = attribute.get_all(project_id)
+        attributes = attribute.get_all(project_id, state_filter=[])
         labeling_tasks = labeling_task.get_all(project_id)
         labeling_task_labels = labeling_task_label.get_all(project_id)
         data_slices = data_slice.get_all(project_id)
@@ -864,6 +899,10 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
             "data_type": attribute_item.data_type,
             "is_primary_key": attribute_item.is_primary_key,
             "relative_position": attribute_item.relative_position,
+            "user_created": attribute_item.user_created,
+            "source_code": attribute_item.source_code,
+            "state": attribute_item.state,
+            "logs": attribute_item.logs,
         }
         for attribute_item in attributes
     ]
@@ -953,6 +992,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     embeddings_data = [
         {
             "id": str(embedding_item.id),
+            "attribute_id": str(embedding_item.attribute_id),
             "name": embedding_item.name,
             "custom": embedding_item.custom,
             "type": embedding_item.type,
@@ -1116,3 +1156,8 @@ def __replace_attribute_id_for_zero_shot_config(
             f'"attribute_id":"{attribute_ids[attribute_id]}"',
         )
     return source_code
+
+
+def __get_attribute_name_from_embedding_name(embedding_name: str) -> str:
+    regex = "^(.+)-(?:classification|extraction).*"
+    return re.match(regex, embedding_name).group(1)

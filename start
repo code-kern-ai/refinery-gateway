@@ -20,6 +20,10 @@ else
 fi
 
 echo -ne 'downloading exec-envs...'
+<<<<<<< HEAD
+docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 > /dev/null 2>&1
+=======
+>>>>>>> origin/release
 docker pull registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 > /dev/null 2>&1
 docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 > /dev/null 2>&1
 docker pull registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 > /dev/null 2>&1
@@ -43,6 +47,7 @@ echo -ne 'starting...'
 docker run -d --rm \
 --name refinery-gateway \
 -p 7051:80 \
+-e AC_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 \
 -e LF_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 \
 -e ML_EXEC_ENV_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 \
 -e RECORD_IDE_IMAGE=registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 \

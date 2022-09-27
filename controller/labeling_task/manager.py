@@ -7,6 +7,10 @@ def get_labeling_task(project_id: str, labeling_task_id: str) -> LabelingTask:
     return labeling_task.get(project_id, labeling_task_id)
 
 
+def get_labeling_task_by_name(project_id: str, name: str) -> LabelingTask:
+    return labeling_task.get_labeling_task_by_name(project_id, name)
+
+
 def create_labeling_task(
     project_id: str, name: str, task_type: str, labeling_task_target_id: str
 ) -> LabelingTask:

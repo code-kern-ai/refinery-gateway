@@ -1,5 +1,8 @@
-from typing import List, Union, Optional
+from typing import List, Optional
+from submodules.model.exceptions import EntityNotFoundException
 from util import notification
+import json
+
 
 from submodules.model import enums, RecordLabelAssociation, Record
 from submodules.model.business_objects import (
@@ -19,6 +22,9 @@ from submodules.model.business_objects.record_label_association import (
 from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.knowledge_term import manager as term_manager
+from controller.information_source import manager as information_source_manager
+from controller.payload import manager as payload_manager
+from controller.data_slice import manager as data_slice_manager
 
 
 def get_last_annotated_record_id(
@@ -31,13 +37,63 @@ def is_any_record_manually_labeled(project_id: str):
     return record_label_association.is_any_record_manually_labeled(project_id)
 
 
-def create_classification_label(
+def __infer_source_type(source_id: str, project_id: str):
+    if source_id is not None:
+        source = information_source_manager.get_information_source(
+            project_id, source_id
+        )
+        if source is None:
+            raise EntityNotFoundException("Information source not found")
+        label_source_type = enums.LabelSource.INFORMATION_SOURCE.value
+    else:
+        label_source_type = enums.LabelSource.MANUAL.value
+    return label_source_type
+
+
+def update_annotator_progress(project_id: str, source_id: str, user_id: str):
+    information_source = information_source_manager.get_information_source(
+        project_id, source_id
+    )
+
+    if len(information_source.payloads) == 0:
+        payload = payload_manager.create_empty_crowd_payload(
+            project_id, source_id, user_id
+        )
+    else:
+        payload = information_source.payloads[0]
+
+    details = json.loads(information_source.source_code)
+    data_slice_id = details["data_slice_id"]
+    annotator_id = details["annotator_id"]
+    percentage = record_label_association.get_percentage_of_labeled_records_for_slice(
+        project_id,
+        annotator_id,
+        data_slice_id,
+        str(information_source.labeling_task_id),
+    )
+    payload_manager.update_payload_progress(project_id, payload.id, percentage)
+
+    if percentage == 1:
+        payload_manager.update_payload_status(
+            project_id,
+            payload.id,
+            enums.PayloadState.FINISHED.value,
+        )
+    general.commit()
+    notification.send_organization_update(
+        project_id, f"information_source_updated:{str(information_source.id)}"
+    )
+
+
+def create_manual_classification_label(
     project_id: str,
     user_id: str,
     record_id: str,
     label_id: str,
     labeling_task_id: str,
     as_gold_star: Optional[bool] = None,
+    source_id: str = None,
+    confidence: float = 1.0,
 ) -> Record:
     if not as_gold_star:
         as_gold_star = None
@@ -46,25 +102,39 @@ def create_classification_label(
     if record_item is None:
         return None
 
+    label_source_type = __infer_source_type(source_id, project_id)
+
     label_ids = labeling_task_label.get_all_ids_query(project_id, labeling_task_id)
     record_label_association.delete(
-        project_id, record_id, user_id, label_ids, as_gold_star, with_commit=True
-    )
-    record_label_association.create(
         project_id,
         record_id,
-        label_id,
         user_id,
-        enums.LabelSource.MANUAL.value,
-        enums.InformationSourceReturnType.RETURN.value,
+        label_ids,
         as_gold_star,
+        source_id,
+        label_source_type,
         with_commit=True,
     )
+    record_label_association.create(
+        project_id=project_id,
+        record_id=record_id,
+        labeling_task_label_id=label_id,
+        created_by=user_id,
+        source_type=label_source_type,
+        return_type=enums.InformationSourceReturnType.RETURN.value,
+        is_gold_star=as_gold_star,
+        source_id=source_id,
+        with_commit=True,
+        confidence=confidence,
+    )
+    if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
         user_id,
+        source_id,
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
@@ -91,7 +161,7 @@ def __check_label_duplication_classification_and_react(
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
 
 
-def create_extraction_label(
+def create_manual_extraction_label(
     project_id: str,
     user_id: str,
     record_id: str,
@@ -101,6 +171,8 @@ def create_extraction_label(
     token_end_index: int,
     value: str,
     as_gold_star: Optional[bool] = None,
+    source_id: str = None,
+    confidence: float = 1.0,
 ) -> Record:
     if not as_gold_star:
         as_gold_star = None
@@ -110,8 +182,34 @@ def create_extraction_label(
 
     if label_item is None:
         return None
+    label_source_type = __infer_source_type(source_id, project_id)
 
-    tokens = record_label_association.create_token_objects(
+    if not source_id:
+        existing_tokens = record_label_association.get_manual_tokens_by_record_id(
+            project_id, record_id
+        )
+        tokens = []
+        curr_start = None
+        curr_end = None
+        for existing_token in existing_tokens:
+            if existing_token.is_beginning_token:
+                if curr_start is not None:
+                    tokens.append([curr_start, curr_end])
+                curr_start = existing_token.token_index
+            curr_end = existing_token.token_index
+        if curr_start is not None:
+            tokens.append([curr_start, curr_end])
+
+        # avoid overlapping tokens
+        for token in tokens:
+            if (
+                token[0] <= token_start_index <= token[1]
+                or token[0] <= token_end_index <= token[1]
+                or token_start_index <= token[0] <= token_end_index
+                or token_start_index <= token[1] <= token_end_index
+            ):
+                return record_item
+    new_tokens = record_label_association.create_token_objects(
         project_id, token_start_index, token_end_index + 1
     )
     record_label_association.create(
@@ -119,21 +217,29 @@ def create_extraction_label(
         record_id,
         label_id,
         user_id,
-        enums.LabelSource.MANUAL.value,
+        label_source_type,
         enums.InformationSourceReturnType.YIELD.value,
         as_gold_star,
-        tokens,
+        new_tokens,
+        source_id=source_id,
         with_commit=True,
+        confidence=confidence,
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
     )
-    term_manager.create_term_in_named_knowledge_base(project_id, label_item.name, value)
+    if label_source_type == enums.LabelSource.MANUAL.value:
+        term_manager.create_term_in_named_knowledge_base(
+            project_id, label_item.name, value
+        )
+    if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        update_annotator_progress(project_id, source_id, user_id)
     daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
         user_id,
+        source_id,
     )
     return record_item
 
@@ -188,8 +294,11 @@ def update_is_valid_manual_label_for_all() -> None:
 
 
 def delete_record_label_association(
-    project_id: str, record_id: str, association_ids: List[str]
+    project_id: str, record_id: str, association_ids: List[str], user_id: str
 ) -> None:
+    source_ids = record_label_association.check_any_id_is_source_related(
+        project_id, record_id, association_ids
+    )
     task_ids = get_labeling_tasks_from_ids(project_id, association_ids)
     record_label_association.delete_by_ids(
         project_id, record_id, association_ids, with_commit=True
@@ -197,6 +306,9 @@ def delete_record_label_association(
     for task_id in task_ids:
         update_is_relevant_manual_label(project_id, task_id, record_id)
     general.commit()
+    if source_ids:
+        for s_id in source_ids:
+            update_annotator_progress(project_id, s_id, user_id)
 
 
 def delete_gold_star_association(

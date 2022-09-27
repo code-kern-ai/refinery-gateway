@@ -1,11 +1,10 @@
-from typing import List
-
 import graphene
+from typing import List
 
 from controller.auth import manager as auth
 from controller.attribute import manager
 from submodules.model.enums import NotificationType
-from graphql_api.types import Attribute
+from graphql_api.types import Attribute, UserAttributeSampleRecordsResult
 from util.notification import create_notification
 
 
@@ -20,11 +19,18 @@ class AttributeQuery(graphene.ObjectType):
     attributes_by_project_id = graphene.Field(
         graphene.List(Attribute),
         project_id=graphene.ID(required=True),
+        state_filter=graphene.List(graphene.String),
     )
 
     check_composite_key = graphene.Field(
         graphene.Boolean,
         project_id=graphene.ID(required=True),
+    )
+
+    calculate_user_attribute_sample_records = graphene.Field(
+        UserAttributeSampleRecordsResult,
+        project_id=graphene.ID(required=True),
+        attribute_id=graphene.ID(required=True),
     )
 
     def resolve_attribute_by_attribute_id(
@@ -35,11 +41,11 @@ class AttributeQuery(graphene.ObjectType):
         return manager.get_attribute(project_id, attribute_id)
 
     def resolve_attributes_by_project_id(
-        self, info, project_id: str
+        self, info, project_id: str, state_filter: List[str] = None
     ) -> List[Attribute]:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.get_all_attributes(project_id)
+        return manager.get_all_attributes(project_id, state_filter)
 
     def resolve_check_composite_key(self, info, project_id: str) -> bool:
         auth.check_demo_access(info)
@@ -53,3 +59,12 @@ class AttributeQuery(graphene.ObjectType):
                 project_id,
             )
         return is_valid
+
+    def resolve_calculate_user_attribute_sample_records(
+        self, info, project_id: str, attribute_id: str
+    ) -> UserAttributeSampleRecordsResult:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return UserAttributeSampleRecordsResult(
+            *manager.calculate_user_attribute_sample_records(project_id, attribute_id)
+        )

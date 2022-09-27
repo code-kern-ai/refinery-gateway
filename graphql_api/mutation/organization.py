@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import graphene
 from graphql import GraphQLError
 
@@ -30,6 +31,21 @@ class AddUserToOrganization(graphene.Mutation):
         doc_ock.register_user(user)
         doc_ock.post_event(user, events.SignUp())
         return AddUserToOrganization(ok=True)
+
+
+class ChangeUserRole(graphene.Mutation):
+    class Arguments:
+        user_id = graphene.ID()
+        role = graphene.String()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, user_id: str, role: str):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+
+        user_manager.update_user_role(user_id, role)
+        return ChangeUserRole(ok=True)
 
 
 class RemoveUserFromOrganization(graphene.Mutation):
@@ -74,8 +90,24 @@ class DeleteOrganization(graphene.Mutation):
         return DeleteOrganization(ok=True)
 
 
+class ChangeOrganization(graphene.Mutation):
+    class Arguments:
+        org_id = graphene.ID()
+        changes = graphene.JSONString()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, org_id: str, changes: Dict[str, Any]):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+        organization_manager.change_organization(org_id, changes)
+        return DeleteOrganization(ok=True)
+
+
 class OrganizationMutation(graphene.ObjectType):
     add_user_to_organization = AddUserToOrganization.Field()
     remove_user_from_organization = RemoveUserFromOrganization.Field()
+    change_user_role = ChangeUserRole.Field()
     create_organization = CreateOrganization.Field()
     delete_organization = DeleteOrganization.Field()
+    change_organization = ChangeOrganization.Field()

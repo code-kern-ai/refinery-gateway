@@ -18,6 +18,7 @@ class CreateClassificationAssociation(graphene.Mutation):
         label_id = graphene.ID()
         labeling_task_id = graphene.ID()
         as_gold_star = graphene.Boolean(required=False)
+        source_id = graphene.ID(required=False)
 
     ok = graphene.Boolean()
     record = graphene.Field(lambda: Record)
@@ -30,12 +31,19 @@ class CreateClassificationAssociation(graphene.Mutation):
         label_id: str,
         labeling_task_id: str,
         as_gold_star: Optional[bool] = None,
+        source_id: str = None,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        record = manager.create_classification_label(
-            project_id, user.id, record_id, label_id, labeling_task_id, as_gold_star
+        record = manager.create_manual_classification_label(
+            project_id,
+            user.id,
+            record_id,
+            label_id,
+            labeling_task_id,
+            as_gold_star,
+            source_id,
         )
 
         # this below seems not optimal positioned here
@@ -62,6 +70,7 @@ class CreateExtractionAssociation(graphene.Mutation):
         token_end_index = graphene.Int()
         value = graphene.String()
         as_gold_star = graphene.Boolean(required=False)
+        source_id = graphene.ID(required=False)
 
     ok = graphene.Boolean()
     record = graphene.Field(lambda: Record)
@@ -77,11 +86,12 @@ class CreateExtractionAssociation(graphene.Mutation):
         token_end_index: int,
         value: str,
         as_gold_star: Optional[bool] = None,
+        source_id: str = None,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        record = manager.create_extraction_label(
+        record = manager.create_manual_extraction_label(
             project_id,
             user.id,
             record_id,
@@ -91,6 +101,7 @@ class CreateExtractionAssociation(graphene.Mutation):
             token_end_index,
             value,
             as_gold_star,
+            source_id,
         )
         project = project_manager.get_project(project_id)
         doc_ock.post_event(
@@ -152,7 +163,9 @@ class DeleteRecordLabelAssociationByIds(graphene.Mutation):
     def mutate(self, info, project_id: str, record_id: str, association_ids: List[str]):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.delete_record_label_association(project_id, record_id, association_ids)
+        
+        user_id = auth.get_user_id_by_info(info)
+        manager.delete_record_label_association(project_id, record_id, association_ids,user_id)
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
 
         return DeleteRecordLabelAssociationByIds(ok=True)

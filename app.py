@@ -2,10 +2,12 @@ import logging
 import graphene
 from api.project import ProjectDetails
 from api.transfer import (
+    AssociationsImport,
     FileExport,
+    JSONImport,
     KnowledgeBaseExport,
     Notify,
-    PrepareImport,
+    PrepareFileImport,
     UploadTask,
 )
 from middleware.database_session import DatabaseSessionHandler
@@ -36,8 +38,10 @@ routes = [
         "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",
         KnowledgeBaseExport,
     ),
+    Route("/project/{project_id:str}/associations", AssociationsImport),
     Route("/project/{project_id:str}/export", FileExport),
-    Route("/project/{project_id:str}/import", PrepareImport),
+    Route("/project/{project_id:str}/import_file", PrepareFileImport),
+    Route("/project/{project_id:str}/import_json", JSONImport),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
 ]
 

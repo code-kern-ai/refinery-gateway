@@ -4,7 +4,13 @@ import graphene
 
 from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 from submodules.model.enums import LabelingTaskType
-from graphql_api.types import InterAnnotatorMatrix, ProjectSize, Project, UserSession
+from graphql_api.types import (
+    HuddleData,
+    InterAnnotatorMatrix,
+    ProjectSize,
+    Project,
+    UserSession,
+)
 from controller.auth import manager as auth
 from controller.project import manager
 from controller.labeling_task import manager as task_manager
@@ -56,6 +62,13 @@ class ProjectQuery(graphene.ObjectType):
         slice_id=graphene.ID(required=False),
     )
 
+    confidence_distribution = graphene.Field(
+        graphene.JSONString,
+        project_id=graphene.ID(required=True),
+        labeling_task_id=graphene.ID(required=False),
+        slice_id=graphene.ID(required=False),
+    )
+
     confusion_matrix = graphene.Field(
         graphene.JSONString,
         project_id=graphene.ID(required=True),
@@ -66,6 +79,13 @@ class ProjectQuery(graphene.ObjectType):
     is_rats_tokenization_still_running = graphene.Field(
         graphene.Boolean,
         project_id=graphene.ID(required=True),
+    )
+
+    request_huddle_data = graphene.Field(
+        HuddleData,
+        project_id=graphene.ID(required=True),
+        huddle_id=graphene.ID(required=True),
+        huddle_type=graphene.String(required=True),
     )
 
     def resolve_project_by_project_id(self, info, project_id: str) -> Project:
@@ -145,6 +165,21 @@ class ProjectQuery(graphene.ObjectType):
         auth.check_project_access(info, project_id)
         return manager.get_label_distribution(project_id, labeling_task_id, slice_id)
 
+    def resolve_confidence_distribution(
+        self,
+        info,
+        project_id: str,
+        labeling_task_id: Optional[str] = None,
+        slice_id: Optional[str] = None,
+        num_samples: int = 100,
+    ) -> List:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        confidence_scores = manager.get_confidence_distribution(
+            project_id, labeling_task_id, slice_id, num_samples
+        )
+        return confidence_scores
+
     def resolve_confusion_matrix(
         self,
         info,
@@ -160,3 +195,13 @@ class ProjectQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.is_rats_tokenization_still_running(project_id)
+
+    def resolve_request_huddle_data(
+        self, info, project_id: str, huddle_id: str, huddle_type: str
+    ) -> HuddleData:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = str(auth.get_user_by_info(info).id)
+        return manager.resolve_request_huddle_data(
+            project_id, user_id, huddle_id, huddle_type
+        )
