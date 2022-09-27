@@ -167,7 +167,12 @@ def resolve_request_huddle_data(
                 huddle.record_ids,
                 huddle.start_pos,
             ) = ds_manager.get_record_ids_and_first_unlabeled_pos(
-                project_id, user_id, slice_id, source_type, source_id
+                project_id,
+                user_id,
+                slice_id,
+                source_type,
+                source_id,
+                huddle.allowed_task,
             )
     huddle.huddle_id = data_id
     huddle.checked_at = db_util.get_db_now()

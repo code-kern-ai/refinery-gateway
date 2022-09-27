@@ -66,7 +66,10 @@ def update_annotator_progress(project_id: str, source_id: str, user_id: str):
     data_slice_id = details["data_slice_id"]
     annotator_id = details["annotator_id"]
     percentage = record_label_association.get_percentage_of_labeled_records_for_slice(
-        project_id, annotator_id, data_slice_id
+        project_id,
+        annotator_id,
+        data_slice_id,
+        str(information_source.labeling_task_id),
     )
     payload_manager.update_payload_progress(project_id, payload.id, percentage)
 
