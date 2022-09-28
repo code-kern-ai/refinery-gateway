@@ -14,5 +14,6 @@ class ModelProviderQuery(graphene.ObjectType):
     def resolve_model_provider_info(self, info) -> List[ModelProviderInfoResult]:
         auth.check_demo_access(info)
         if not misc.check_is_managed:
-            raise GraphQLError("Not allowed in open source version.")
+            print("Not allowed in open source version.")
+            return []
         return manager.get_model_provider_info()
