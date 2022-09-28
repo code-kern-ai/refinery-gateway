@@ -17,14 +17,11 @@ from starlette.middleware import Middleware
 from starlette.routing import Route
 
 from graphql_api import schema
-from submodules.model.models import Base
-from submodules.model.session import engine
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-Base.metadata.create_all(bind=engine)
 routes = [
     Route(
         "/graphql/",
