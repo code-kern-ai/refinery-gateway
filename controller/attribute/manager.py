@@ -87,7 +87,8 @@ def update_attribute(
     name: str,
     source_code: str,
 ) -> None:
-    attribute.update(
+
+    attribute_item: Attribute = attribute.update(
         project_id,
         attribute_id,
         data_type,
@@ -96,12 +97,10 @@ def update_attribute(
         source_code,
         with_commit=True,
     )
-    if attribute.get(project_id, attribute_id).state in [
-        AttributeState.UPLOADED.value,
-        AttributeState.AUTOMATICALLY_CREATED.value,
-        AttributeState.USABLE.value,
-    ]:
-        notification.send_organization_update(project_id, "attributes_updated")
+
+    notification.send_organization_update(
+        project_id=project_id, message=f"calculate_attribute:updated:{str(attribute_item.id)}"
+    )
 
 
 def delete_attribute(project_id: str, attribute_id: str) -> None:
