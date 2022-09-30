@@ -10,7 +10,7 @@ class CreateComment(graphene.Mutation):
     class Arguments:
         comment = graphene.String(required=True)
         xftype = graphene.String(required=True)
-        xfkey = graphene.String(required=True)
+        xfkey = graphene.ID(required=True)
         project_id = graphene.ID(required=False)
         is_private = graphene.Boolean(required=False)
 

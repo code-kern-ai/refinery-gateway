@@ -1,4 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
+from controller import auth
+from controller.auth import kratos
 from submodules.model import enums
 from submodules.model.models import CommentData, User
 
@@ -35,6 +37,25 @@ def get_comments(
     return comments.get_by_all_by_category(
         xftype_parsed, user_id, xfkey, project_id, True
     )
+
+
+def get_add_info(
+    xftype: str,
+    project_id: Optional[str] = None,
+) -> str:
+
+    try:
+        xftype_parsed = enums.CommentCategory[xftype.upper()]
+    except KeyError:
+        raise ValueError(f"Invalid comment category: {xftype}")
+
+    values = comments.get_add_info_category(xftype_parsed, project_id)
+
+    if xftype_parsed == enums.CommentCategory.USER:
+        values = [
+            {"id": r.id, "name": kratos.resolve_user_mail_by_id(r.id)} for r in values
+        ]
+    return values
 
 
 def create_comment(
