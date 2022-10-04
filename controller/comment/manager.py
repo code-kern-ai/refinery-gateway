@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
-from controller import auth
 from controller.auth import kratos
+from controller.auth import manager as user_manager
 from submodules.model import enums
 from submodules.model.models import CommentData, User
 
@@ -97,3 +97,16 @@ def update_comment(
     if user.role != enums.UserRoles.ENGINEER.value and user.id != item.created_by:
         raise ValueError(f"Can't update comment")
     comments.change(item, changes, with_commit=True)
+
+
+def delete_comment(comment_id: str, user_id: str) -> CommentData:
+    item = comments.get(comment_id)
+    if not item:
+        raise ValueError(f"Can't find comment")
+
+    if (
+        item.created_by != user_id
+        and user_manager.get_user_role_by_id(user_id) != enums.UserRoles.ENGINEER.value
+    ):
+        raise ValueError(f"Can't delete comment")
+    comments.remove(comment_id, with_commit=True)

@@ -62,15 +62,24 @@ class UpdateComment(graphene.Mutation):
 
 class DeleteComment(graphene.Mutation):
     class Arguments:
-        link_id = graphene.ID(required=True)
+        comment_id = graphene.ID(required=True)
         project_id = graphene.ID(required=False)
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, attribute_id: str):
+    def mutate(
+        self,
+        info,
+        comment_id: str,
+        project_id: Optional[str] = None,
+    ):
         auth.check_demo_access(info)
-        auth.check_project_access(info, project_id)
-        manager.delete_attribute(project_id, attribute_id)
+        if project_id:
+            auth.check_project_access(info, project_id)
+        else:
+            auth.check_admin_access(info)
+        user_id = auth.get_user_id_by_info(info)
+        manager.delete_comment(comment_id, user_id)
         return DeleteComment(ok=True)
 
 

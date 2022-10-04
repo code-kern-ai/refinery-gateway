@@ -34,6 +34,14 @@ def get_user_id_by_info(info) -> str:
     return get_user_by_info(info).id
 
 
+def get_user_role_by_info(info) -> str:
+    return get_user_by_info(info).role
+
+
+def get_user_role_by_id(user_id: str) -> str:
+    return user_manager.get_user(user_id).role
+
+
 def get_organization_by_user_id(user_id: str) -> Organization:
     organization: Organization = user_manager.get_or_create_user(user_id).organization
     if not organization:

@@ -73,11 +73,12 @@ class CommentQuery(graphene.ObjectType):
                 requested[key].get("xfkey"),
                 project_id,
             )
-            add_info = manager.get_add_info(
-                requested[key]["xftype"],
-                project_id,
-            )
-            print(data)
+            add_info = None
+            if requested[key].get("includeAddInfo"):
+                add_info = manager.get_add_info(
+                    requested[key]["xftype"],
+                    project_id,
+                )
             to_return[key] = {
                 "data": data,
                 "add_info": add_info,
