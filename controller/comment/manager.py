@@ -27,7 +27,7 @@ def get_comments(
     user_id: str,
     xfkey: Optional[str] = None,
     project_id: Optional[str] = None,
-) -> str:
+) -> List[CommentData]:
 
     try:
         xftype_parsed = enums.CommentCategory[xftype.upper()]
@@ -39,9 +39,20 @@ def get_comments(
     )
 
 
+def get_comment(xftype: str, user_id: str, comment_id: str) -> CommentData:
+    # check to have some level of access control
+    try:
+        xftype_parsed = enums.CommentCategory[xftype.upper()]
+    except KeyError:
+        raise ValueError(f"Invalid comment category: {xftype}")
+
+    return comments.get_as_json(comment_id, user_id)
+
+
 def get_add_info(
     xftype: str,
     project_id: Optional[str] = None,
+    xfkey: Optional[str] = None,
 ) -> str:
 
     try:
@@ -49,7 +60,7 @@ def get_add_info(
     except KeyError:
         raise ValueError(f"Invalid comment category: {xftype}")
 
-    values = comments.get_add_info_category(xftype_parsed, project_id)
+    values = comments.get_add_info_category(xftype_parsed, project_id, xfkey)
 
     if xftype_parsed == enums.CommentCategory.USER:
         values = [
@@ -70,7 +81,7 @@ def create_comment(
         xftype = enums.CommentCategory[xftype.upper()].value
     except KeyError:
         raise ValueError(f"Invalid comment type: {xftype}")
-    comments.create(
+    return comments.create(
         xfkey,
         xftype,
         comment,
@@ -97,6 +108,7 @@ def update_comment(
     if user.role != enums.UserRoles.ENGINEER.value and user.id != item.created_by:
         raise ValueError(f"Can't update comment")
     comments.change(item, changes, with_commit=True)
+    return item
 
 
 def delete_comment(comment_id: str, user_id: str) -> CommentData:

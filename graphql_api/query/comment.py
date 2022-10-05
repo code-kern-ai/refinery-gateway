@@ -67,17 +67,22 @@ class CommentQuery(graphene.ObjectType):
                 auth.check_project_access(info, project_id)
             else:
                 auth.check_admin_access(info)
-            data = manager.get_comments(
-                requested[key]["xftype"],
-                user_id,
-                requested[key].get("xfkey"),
-                project_id,
-            )
+            comment_id = requested[key].get("commentId")
+            if comment_id:
+                data = manager.get_comment(
+                    requested[key]["xftype"], user_id, comment_id
+                )
+            else:
+                data = manager.get_comments(
+                    requested[key]["xftype"],
+                    user_id,
+                    requested[key].get("xfkey"),
+                    project_id,
+                )
             add_info = None
             if requested[key].get("includeAddInfo"):
                 add_info = manager.get_add_info(
-                    requested[key]["xftype"],
-                    project_id,
+                    requested[key]["xftype"], project_id, requested[key].get("xfkey")
                 )
             to_return[key] = {
                 "data": data,

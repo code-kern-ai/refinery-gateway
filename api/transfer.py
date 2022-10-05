@@ -54,7 +54,9 @@ class Notify(HTTPEndpoint):
             init_file_import(task, project_id, is_global_update)
         except Exception:
             file_import_error_handling(task, project_id, is_global_update)
-        notification.send_organization_update(project_id, "project_update", True)
+        notification.send_organization_update(
+            project_id, f"project_update:{project_id}", True
+        )
         return PlainTextResponse("OK")
 
 

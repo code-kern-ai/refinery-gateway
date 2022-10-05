@@ -117,7 +117,7 @@ def import_sample_project(
             project_item.id,
         )
         notification.send_organization_update(
-            project_item.id, "project_update", is_global=True
+            project_item.id, f"project_update:{str(project_item.id)}", is_global=True
         )
         data = extract_first_zip_data(file_name)
         import_file(project_item.id, user_id, data)
@@ -129,7 +129,7 @@ def import_sample_project(
         )
 
         notification.send_organization_update(
-            project_item.id, "project_update", is_global=True
+            project_item.id, f"project_update:{str(project_item.id)}", is_global=True
         )
         return project_item
 

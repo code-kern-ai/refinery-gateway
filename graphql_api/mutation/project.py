@@ -25,7 +25,9 @@ class CreateProject(graphene.Mutation):
         project = manager.create_project(
             organization.id, name, description, str(user.id)
         )
-        notification.send_organization_update(project.id, "project_created", True)
+        notification.send_organization_update(
+            project.id, f"project_created:{str(project.id)}", True
+        )
         doc_ock.post_event(
             user,
             events.CreateProject(Name=f"{name}-{project.id}", Description=description),
@@ -111,9 +113,13 @@ class UpdateProjectNameAndDescription(graphene.Mutation):
         auth.check_project_access(info, project_id)
         manager.update_project(project_id, name=name, description=description)
         # one global for e.g notification center
-        notification.send_organization_update(project_id, "project_update", True)
+        notification.send_organization_update(
+            project_id, f"project_update:{project_id}", True
+        )
         # one for the specific project so it's updated
-        notification.send_organization_update(project_id, "project_update")
+        notification.send_organization_update(
+            project_id, f"project_update:{project_id}"
+        )
         return UpdateProjectNameAndDescription(ok=True)
 
 
