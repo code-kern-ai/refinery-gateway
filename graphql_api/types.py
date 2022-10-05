@@ -750,3 +750,8 @@ class LastRunAttributesResult(graphene.ObjectType):
 class UserAttributeSampleRecordsResult(graphene.ObjectType):
     record_ids = graphene.List(graphene.ID)
     calculated_attributes = graphene.List(graphene.String)
+
+class LabelingFunctionSampleRecords(graphene.ObjectType):
+    record_ids = graphene.List(graphene.ID)
+    calculated_labels = graphene.List(graphene.List(graphene.String))
+    container_logs = graphene.List(graphene.String)
