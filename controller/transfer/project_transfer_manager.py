@@ -23,6 +23,7 @@ from submodules.model.business_objects import (
     user,
     knowledge_term,
     weak_supervision,
+    comments as comment,
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
@@ -779,6 +780,41 @@ def import_file(
             ),
         )
 
+    for comment_item in data.get("comments"):
+        old_xfkey = comment_item.get("xfkey")
+        new_xfkey = None
+        xftype = comment_item.get("xftype")
+        if xftype == enums.CommentCategory.RECORD.value:
+            new_xfkey = record_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.LABELING_TASK.value:
+            new_xfkey = labeling_task_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.ATTRIBUTE.value:
+            new_xfkey = attribute_ids_by_old_id.get(old_xfkey)
+        if xftype == enums.CommentCategory.LABEL.value:
+            new_xfkey = labeling_task_labels_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.DATA_SLICE.value:
+            new_xfkey = data_slice_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.EMBEDDING.value:
+            new_xfkey = embedding_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.HEURISTIC.value:
+            new_xfkey = information_source_ids.get(old_xfkey)
+        if xftype == enums.CommentCategory.KNOWLEDGE_BASE.value:
+            new_xfkey = knowledge_base_ids.get(old_xfkey)
+        if not new_xfkey:
+            continue
+
+        comment.create(
+            xfkey=comment_item.get("xfkey"),
+            xftype=comment_item.get("xftype"),
+            comment=comment_item.get("comment"),
+            created_by=user_id,
+            project_id=project_id,
+            order_key=comment_item.get("order_key"),
+            is_markdown=comment_item.get("is_markdown"),
+            created_at=comment_item.get("created_at"),
+            is_private=comment_item.get("is_private"),
+        )
+
     general.commit()
 
     # start thread after everything else is done so the service can access the db data
@@ -802,7 +838,9 @@ def import_file(
     logger.info(f"Finished import of project {project_id}")
 
 
-def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) -> str:
+def get_project_export_dump(
+    project_id: str, user_id: str, export_options: Dict[str, bool]
+) -> str:
     """Exports data of a project in JSON-String format. Queries all useful database entries and
     puts them in a format which again fits for import. For some entities database joins
     are useful, so there are vanilla SQL statements in execute-blocks.
@@ -829,6 +867,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     knowledge_bases = []
     weak_supervision_task = []
     terms = []
+    comments = []
     # -------------------- READ OF ENTITIES BY SQLALCHEMY --------------------
 
     if "basic project data" in export_options:
@@ -873,6 +912,38 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
     if "knowledge bases" in export_options:
         knowledge_bases = knowledge_base.get_all(project_id)
         terms = knowledge_term.get_terms_by_project_id(project_id)
+
+    if "comment data" in export_options:
+        comments = []
+        comments += comment.get_by_all_by_category(
+            enums.CommentCategory.LABELING_TASK, user_id, None, project_id, True
+        )
+        comments += comment.get_by_all_by_category(
+            enums.CommentCategory.ATTRIBUTE, user_id, None, project_id, True
+        )
+        comments += comment.get_by_all_by_category(
+            enums.CommentCategory.LABEL, user_id, None, project_id, True
+        )
+        comments += comment.get_by_all_by_category(
+            enums.CommentCategory.DATA_SLICE, user_id, None, project_id, True
+        )
+        if "records" in export_options:
+            comments += comment.get_by_all_by_category(
+                enums.CommentCategory.RECORD, user_id, None, project_id, True
+            )
+            # only makes sense with records
+            if "embeddings" in export_options:
+                comments += comment.get_by_all_by_category(
+                    enums.CommentCategory.EMBEDDING, user_id, None, project_id, True
+                )
+        if "information sources" in export_options:
+            comments += comment.get_by_all_by_category(
+                enums.CommentCategory.HEURISTIC, user_id, None, project_id, True
+            )
+        if "knowledge bases" in export_options:
+            comments += comment.get_by_all_by_category(
+                enums.CommentCategory.KNOWLEDGE_BASE, user_id, None, project_id, True
+            )
 
     # -------------------- FORMATTING OF ENTITIES --------------------
     project_details_data = {
@@ -1026,6 +1097,9 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
         for association_item in data_slice_record_association
     ]
 
+    # no need to format since db reteurns as json :)
+    comment_data = comments
+
     # -------------------- READ AND FORMATTING OF ENTITIES WITH SQL JOINS --------------------
 
     record_label_association_tokens_data = [
@@ -1116,6 +1190,7 @@ def get_project_export_dump(project_id: str, export_options: Dict[str, bool]) ->
         "terms_data": terms_data,
         "data_slice_data": data_slice_data,
         "data_slice_record_association_data": data_slice_record_association_data,
+        "comments": comment_data,
     }
 
     logger.info(f"Finished export of project {project_id}")
