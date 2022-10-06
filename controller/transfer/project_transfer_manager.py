@@ -137,7 +137,7 @@ def import_sample_project(
 
 def import_file(
     project_id: str,
-    user_id: str,
+    import_user_id: str,
     data: Dict[str, Dict[str, Any]],
     task_id: Optional[str] = None,
 ) -> None:
@@ -779,41 +779,42 @@ def import_file(
                 "blacklisted",
             ),
         )
+    comment_data = data.get("comments")
+    if comment_data:
+        for comment_item in comment_data:
+            old_xfkey = comment_item.get("xfkey")
+            new_xfkey = None
+            xftype = comment_item.get("xftype")
+            if xftype == enums.CommentCategory.RECORD.value:
+                new_xfkey = record_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.LABELING_TASK.value:
+                new_xfkey = labeling_task_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.ATTRIBUTE.value:
+                new_xfkey = attribute_ids_by_old_id.get(old_xfkey)
+            if xftype == enums.CommentCategory.LABEL.value:
+                new_xfkey = labeling_task_labels_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.DATA_SLICE.value:
+                new_xfkey = data_slice_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.EMBEDDING.value:
+                new_xfkey = embedding_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.HEURISTIC.value:
+                new_xfkey = information_source_ids.get(old_xfkey)
+            if xftype == enums.CommentCategory.KNOWLEDGE_BASE.value:
+                new_xfkey = knowledge_base_ids.get(old_xfkey)
+            if not new_xfkey:
+                continue
 
-    for comment_item in data.get("comments"):
-        old_xfkey = comment_item.get("xfkey")
-        new_xfkey = None
-        xftype = comment_item.get("xftype")
-        if xftype == enums.CommentCategory.RECORD.value:
-            new_xfkey = record_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.LABELING_TASK.value:
-            new_xfkey = labeling_task_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.ATTRIBUTE.value:
-            new_xfkey = attribute_ids_by_old_id.get(old_xfkey)
-        if xftype == enums.CommentCategory.LABEL.value:
-            new_xfkey = labeling_task_labels_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.DATA_SLICE.value:
-            new_xfkey = data_slice_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.EMBEDDING.value:
-            new_xfkey = embedding_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.HEURISTIC.value:
-            new_xfkey = information_source_ids.get(old_xfkey)
-        if xftype == enums.CommentCategory.KNOWLEDGE_BASE.value:
-            new_xfkey = knowledge_base_ids.get(old_xfkey)
-        if not new_xfkey:
-            continue
-
-        comment.create(
-            xfkey=comment_item.get("xfkey"),
-            xftype=comment_item.get("xftype"),
-            comment=comment_item.get("comment"),
-            created_by=user_id,
-            project_id=project_id,
-            order_key=comment_item.get("order_key"),
-            is_markdown=comment_item.get("is_markdown"),
-            created_at=comment_item.get("created_at"),
-            is_private=comment_item.get("is_private"),
-        )
+            comment.create(
+                xfkey=new_xfkey,
+                xftype=comment_item.get("xftype"),
+                comment=comment_item.get("comment"),
+                created_by=import_user_id,
+                project_id=project_id,
+                order_key=comment_item.get("order_key"),
+                is_markdown=comment_item.get("is_markdown"),
+                created_at=comment_item.get("created_at"),
+                is_private=comment_item.get("is_private"),
+            )
 
     general.commit()
 
