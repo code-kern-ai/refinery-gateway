@@ -66,7 +66,7 @@ class UpdateKnowledgeBase(graphene.Mutation):
             project_id, user.id, knowledge_base_id, name, description
         )
         prj_notification.send_organization_update(
-            str(project_id), f"knowledge_base_updated:{str(project_id)}"
+            str(project_id), f"knowledge_base_updated:{str(knowledge_base_id)}"
         )
         return UpdateKnowledgeBase(ok=True)
 

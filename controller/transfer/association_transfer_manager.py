@@ -54,7 +54,9 @@ def import_associations(
             description,
             type,
         )
-        notification.send_organization_update(project_id, f"information_source_created")
+        notification.send_organization_update(
+            project_id, f"information_source_created:{str(information_source.id)}"
+        )
 
     attribute_names = list(indices[0].keys())
     attribute_list = attribute_manager.get_all_attributes_by_names(

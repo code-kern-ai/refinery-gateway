@@ -50,7 +50,9 @@ class CreateZeroShotInformationSource(graphene.Mutation):
         zero_shot_id = manager.create_zero_shot_information_source(
             user_id, project_id, target_config, labeling_task_id, attribute_id
         )
-        notification.send_organization_update(project_id, f"information_source_created")
+        notification.send_organization_update(
+            project_id, f"information_source_created:{zero_shot_id}"
+        )
 
         return CreateZeroShotInformationSource(id=zero_shot_id)
 

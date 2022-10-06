@@ -37,7 +37,9 @@ class CreateDataSlice(graphene.Mutation):
             data_slice_item = manager.create_data_slice(
                 project_id, user.id, name, filter_raw, filter_data, static
             )
-            notification.send_organization_update(project_id, f"data_slice_created")
+            notification.send_organization_update(
+                project_id, f"data_slice_created:{str(data_slice_item.id)}"
+            )
             return CreateDataSlice(id=data_slice_item.id)
         except Exception as e:
             handle_error(e, user.id, project_id)
@@ -70,7 +72,9 @@ class UpdateDataSlice(graphene.Mutation):
             manager.update_data_slice(
                 project_id, data_slice_id, filter_data, filter_raw, static
             )
-            notification.send_organization_update(project_id, f"data_slice_updated")
+            notification.send_organization_update(
+                project_id, f"data_slice_updated:{data_slice_id}"
+            )
             return UpdateDataSlice(ok=True)
         except Exception as e:
             handle_error(e, user.id, project_id)
@@ -88,7 +92,9 @@ class DeleteDataSlice(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_data_slice(project_id, data_slice_id)
-        notification.send_organization_update(project_id, f"data_slice_deleted")
+        notification.send_organization_update(
+            project_id, f"data_slice_deleted:{data_slice_id}"
+        )
         return DeleteDataSlice(ok=True)
 
 

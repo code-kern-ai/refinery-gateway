@@ -49,7 +49,9 @@ class CreateInformationSource(graphene.Mutation):
                 description,
                 type,
             )
-        notification.send_organization_update(project_id, f"information_source_created")
+        notification.send_organization_update(
+            project_id, f"information_source_created:{str(information_source.id)}"
+        )
         return CreateInformationSource(information_source=information_source)
 
 
