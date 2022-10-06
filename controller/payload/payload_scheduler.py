@@ -1,6 +1,7 @@
 import os
 import re
-from typing import Any, Tuple, Union, Dict, List
+from sqlalchemy.orm.attributes import flag_modified
+from typing import Any, Tuple, Dict, List
 
 import pytz
 import json
@@ -16,6 +17,7 @@ from submodules.model.business_objects import (
     embedding,
     labeling_task,
     labeling_task_label,
+    record,
     record_label_association,
     general,
     project,
@@ -35,12 +37,10 @@ from submodules.model.business_objects.tokenization import get_doc_bin_progress,
 from submodules.model.models import (
     InformationSource,
     InformationSourceStatisticsExclusion,
-    RecordLabelAssociationToken,
     RecordLabelAssociation,
     InformationSourcePayload,
     User,
 )
-from submodules.model.business_objects import record
 from controller.auth.manager import get_user_by_info
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
@@ -231,6 +231,20 @@ def create_payload(
             )
             has_error = update_records(payload_item, project_id)
             if has_error:
+                payload_item = information_source.get_payload(project_id, payload_id)
+                tmp_log_store = payload_item.logs
+                berlin_now = datetime.now(__tz)
+                tmp_log_store.append(
+                    " ".join(
+                        [
+                            berlin_now.strftime("%Y-%m-%dT%H:%M:%S"),
+                            "If existing, results of previous run are kept.",
+                        ]
+                    )
+                )
+                payload_item.logs = tmp_log_store
+                flag_modified(payload_item, "logs")
+                general.commit()
                 raise ValueError(
                     "update_records resulted in errors -- see log for details"
                 )
@@ -247,9 +261,10 @@ def create_payload(
                 project_id,
                 f"payload_finished:{information_source_item.id}:{payload.id}",
             )
-        except:
+        except Exception as e:
             general.rollback()
-            print(traceback.format_exc())
+            if not type(e) == ValueError:
+                print(traceback.format_exc())
             payload_item.state = enums.PayloadState.FAILED.value
             general.commit()
             create_notification(
@@ -383,15 +398,32 @@ def update_records(
 ) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     tmp_log_store = information_source_payload.logs
+    try:
+        output_data = json.loads(
+            s3.get_object(
+                org_id, str(project_id) + "/" + str(information_source_payload.id)
+            )
+        )
+    except Exception:
+        berlin_now = datetime.now(__tz)
+        tmp_log_store.append(
+            " ".join(
+                [
+                    berlin_now.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "Code execution exited with errors. Please check the logs.",
+                ]
+            )
+        )
+        information_source_payload.logs = tmp_log_store
+        flag_modified(information_source_payload, "logs")
+        general.commit()
+        return True
+
     berlin_now = datetime.now(__tz)
     tmp_log_store.append(
         berlin_now.strftime("%Y-%m-%dT%H:%M:%S") + " Writing results to the database."
     )
-    output_data = json.loads(
-        s3.get_object(
-            org_id, str(project_id) + "/" + str(information_source_payload.id)
-        )
-    )
+
     information_source: InformationSource = (
         information_source_payload.informationSource  # backref resolves in camelCase
     )
@@ -412,10 +444,17 @@ def update_records(
             output_data,
         )
     berlin_now = datetime.now(__tz)
-    tmp_log_store.append(
-        berlin_now.strftime("%Y-%m-%dT%H:%M:%S") + " Finished writing."
-    )
+    if has_errors:
+        tmp_log_store.append(
+            berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
+            + " Writing to the database failed."
+        )
+    else:
+        tmp_log_store.append(
+            berlin_now.strftime("%Y-%m-%dT%H:%M:%S") + " Finished writing."
+        )
     information_source_payload.logs = tmp_log_store
+    flag_modified(information_source_payload, "logs")
     general.commit()
     return has_errors
 
