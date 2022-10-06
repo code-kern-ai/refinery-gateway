@@ -491,7 +491,7 @@ def import_file(
                 )
             ] = data_slice_object.id
             link_manager.generate_data_slice_access_link(
-                project_id, user_id, data_slice_object.id, with_commit=False
+                project_id, import_user_id, data_slice_object.id, with_commit=False
             )
 
     for information_source_payload_item in data.get(
@@ -824,7 +824,7 @@ def import_file(
     ):
         embedding_manager.create_embeddings_one_by_one(
             project_id,
-            user_id,
+            import_user_id,
             data.get(
                 "embeddings_data",
             ),

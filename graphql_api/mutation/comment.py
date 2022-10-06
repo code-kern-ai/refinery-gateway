@@ -6,10 +6,6 @@ import graphene
 from controller.comment import manager
 
 
-def send_notification():
-    pass
-
-
 class CreateComment(graphene.Mutation):
     class Arguments:
         comment = graphene.String(required=True)
