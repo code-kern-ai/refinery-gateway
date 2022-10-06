@@ -120,8 +120,10 @@ def export_records(
         return sql_df.to_json(orient="records")
 
 
-def export_project(project_id: str, export_options: Dict[str, bool]) -> str:
-    return get_project_export_dump(project_id, export_options)
+def export_project(
+    project_id: str, user_id: str, export_options: Dict[str, bool]
+) -> str:
+    return get_project_export_dump(project_id, user_id, export_options)
 
 
 def export_knowledge_base(project_id: str, base_id: str) -> str:
@@ -145,13 +147,15 @@ def export_knowledge_base(project_id: str, base_id: str) -> str:
     )
 
 
-def prepare_project_export(project_id: str, export_options: Dict[str, bool]) -> bool:
+def prepare_project_export(
+    project_id: str, user_id: str, export_options: Dict[str, bool]
+) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     objects = s3.get_bucket_objects(org_id, project_id + "/download/project_export_")
     for o in objects:
         s3.delete_object(org_id, o)
 
-    data = get_project_export_dump(project_id, export_options)
+    data = get_project_export_dump(project_id, user_id, export_options)
     file_name_base = "project_export_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     file_name_local = file_name_base + ".zip"
     file_name_download = project_id + "/download/" + file_name_local

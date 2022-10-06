@@ -24,6 +24,7 @@ from graphql_api.query.model_provider import ModelProviderQuery
 
 from graphql_api.mutation.attribute import AttributeMutation
 from graphql_api.mutation.misc import MiscMutation
+from graphql_api.mutation.comment import CommentMutation
 from graphql_api.mutation.data_slice import DataSliceMutation
 from graphql_api.mutation.labeling_access_link import LabelingAccessLinkMutation
 from graphql_api.mutation.embedding import EmbeddingMutation
@@ -74,6 +75,7 @@ class Query(
 
 class Mutation(
     AttributeMutation,
+    CommentMutation,
     DataSliceMutation,
     LabelingAccessLinkMutation,
     EmbeddingMutation,

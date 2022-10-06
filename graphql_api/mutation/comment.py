@@ -10,7 +10,7 @@ class CreateComment(graphene.Mutation):
     class Arguments:
         comment = graphene.String(required=True)
         xftype = graphene.String(required=True)
-        xfkey = graphene.String(required=True)
+        xfkey = graphene.ID(required=True)
         project_id = graphene.ID(required=False)
         is_private = graphene.Boolean(required=False)
 
@@ -31,7 +31,17 @@ class CreateComment(graphene.Mutation):
         else:
             auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
-        manager.create_comment(xfkey, xftype, comment, user_id, project_id, is_private)
+        item = manager.create_comment(
+            xfkey, xftype, comment, user_id, project_id, is_private
+        )
+        if item and project_id:
+            # without project_id its a admin dashboard comment -> no websocket integration planned atm
+            # global notification since the data is collected globally -> further handling in frontend
+            notification.send_organization_update(
+                project_id,
+                f"comment_created:{project_id}:{xftype}:{xfkey}:{str(item.id)}",
+                True,
+            )
         return CreateComment(ok=True)
 
 
@@ -56,21 +66,44 @@ class UpdateComment(graphene.Mutation):
         else:
             auth.check_admin_access(info)
         user = auth.get_user_by_info(info)
-        manager.update_comment(comment_id, user, changes)
+        item = manager.update_comment(comment_id, user, changes)
+        if item and project_id:
+            # without project_id its a admin dashboard comment -> no websocket integration planned atm
+            # global notification since the data is collected globally -> further handling in frontend
+            notification.send_organization_update(
+                project_id,
+                f"comment_updated:{project_id}:{comment_id}:{item.xftype}:{item.xfkey}",
+                True,
+            )
         return UpdateComment(ok=True)
 
 
 class DeleteComment(graphene.Mutation):
     class Arguments:
-        link_id = graphene.ID(required=True)
+        comment_id = graphene.ID(required=True)
         project_id = graphene.ID(required=False)
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, attribute_id: str):
+    def mutate(
+        self,
+        info,
+        comment_id: str,
+        project_id: Optional[str] = None,
+    ):
         auth.check_demo_access(info)
-        auth.check_project_access(info, project_id)
-        manager.delete_attribute(project_id, attribute_id)
+        if project_id:
+            auth.check_project_access(info, project_id)
+        else:
+            auth.check_admin_access(info)
+        user_id = auth.get_user_id_by_info(info)
+        manager.delete_comment(comment_id, user_id)
+        if project_id:
+            # without project_id its a admin dashboard comment -> no websocket integration planned atm
+            # global notification since the data is collected globally -> further handling in frontend
+            notification.send_organization_update(
+                project_id, f"comment_deleted:{project_id}:{comment_id}", True
+            )
         return DeleteComment(ok=True)
 
 
