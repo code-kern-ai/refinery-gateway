@@ -32,7 +32,5 @@ class PayloadQuery(graphene.ObjectType):
     ) -> LabelingFunctionSampleRecords:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return LabelingFunctionSampleRecords(
-            *manager.get_labeling_function_on_10_records(project_id, information_source_id)
-        )
+        return manager.get_labeling_function_on_10_records(project_id, information_source_id)
 

@@ -751,7 +751,12 @@ class UserAttributeSampleRecordsResult(graphene.ObjectType):
     record_ids = graphene.List(graphene.ID)
     calculated_attributes = graphene.List(graphene.String)
 
+class LabelingFunctionSampleRecordWrapper(graphene.ObjectType):
+    record_id = graphene.ID()
+    calculated_labels = graphene.List(graphene.String)
+    full_record_data = graphene.JSONString()
+
 class LabelingFunctionSampleRecords(graphene.ObjectType):
-    record_ids = graphene.List(graphene.ID)
-    calculated_labels = graphene.List(graphene.List(graphene.String))
+    records = graphene.List(LabelingFunctionSampleRecordWrapper)
     container_logs = graphene.List(graphene.String)
+    code_has_errors = graphene.Boolean()

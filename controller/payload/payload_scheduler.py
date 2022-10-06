@@ -658,15 +658,12 @@ def add_information_source_statistics_exclusion(
 
 
 def prepare_sample_records_doc_bin(project_id: str, information_source_id: str) -> Tuple[str, List[str]]:
-    sample_record_ids = [
-        record_item
-        for record_item, in record.get_attribute_calculation_sample_records(project_id)
-    ]
+    sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = get_doc_bin_table_to_json(
         project_id=project_id,
         missing_columns='',
-        record_ids=sample_record_ids,
+        record_ids=[r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
@@ -677,12 +674,12 @@ def prepare_sample_records_doc_bin(project_id: str, information_source_id: str) 
         sample_records_doc_bin,
     )
 
-    return prefixed_doc_bin, sample_record_ids
+    return prefixed_doc_bin, sample_records
 
 
 def run_labeling_function_exec_env(
     project_id: str, information_source_id: str, prefixed_doc_bin: str
-) -> Tuple[List[str], List[List[str]]]:
+) -> Tuple[List[str], List[List[str]], bool]:
 
     information_source_item = information_source.get(project_id, information_source_id)
 
@@ -730,11 +727,18 @@ def run_labeling_function_exec_env(
         )
     ]
 
+    code_has_errors = False
+
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
         calculated_labels = json.loads(payload)
+        notification.send_organization_update(
+            project_id,
+            f"payload_sample_records:{str(information_source_item.id)}",
+        )
     except Exception:
         print("Could not grab data from s3 -- labeling function")
+        code_has_errors = True
         calculated_labels = {}
 
     if not prefixed_doc_bin == "docbin_full":
@@ -744,4 +748,4 @@ def run_labeling_function_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
 
-    return calculated_labels, container_logs
+    return calculated_labels, container_logs,code_has_errors
