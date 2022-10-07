@@ -13,6 +13,7 @@ from datetime import datetime
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
+    attribute,
     information_source,
     embedding,
     labeling_task,
@@ -33,7 +34,10 @@ from submodules.model.business_objects.labeling_task_label import (
     get_label_ids_by_names,
 )
 from submodules.model.business_objects.payload import get_max_token, get
-from submodules.model.business_objects.tokenization import get_doc_bin_progress
+from submodules.model.business_objects.tokenization import (
+    get_doc_bin_progress,
+    get_doc_bin_table_to_json,
+)
 from submodules.model.models import (
     InformationSource,
     InformationSourceStatisticsExclusion,
@@ -694,3 +698,108 @@ def add_information_source_statistics_exclusion(
         if idx % 2 == 0
     ]
     general.add_all(exclusions, with_commit=True)
+
+
+def prepare_sample_records_doc_bin(
+    project_id: str, information_source_id: str
+) -> Tuple[str, List[str]]:
+    sample_records = record.get_attribute_calculation_sample_records(project_id)
+
+    sample_records_doc_bin = get_doc_bin_table_to_json(
+        project_id=project_id,
+        missing_columns=get_missing_columns_tokenization(project_id),
+        record_ids=[r[0] for r in sample_records],
+    )
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+    prefixed_doc_bin = f"{information_source_id}_doc_bin.json"
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_doc_bin,
+        sample_records_doc_bin,
+    )
+
+    return prefixed_doc_bin, sample_records
+
+
+def run_labeling_function_exec_env(
+    project_id: str, information_source_id: str, prefixed_doc_bin: str
+) -> Tuple[List[str], List[List[str]], bool]:
+
+    information_source_item = information_source.get(project_id, information_source_id)
+
+    prefixed_function_name = f"{information_source_id}_fn"
+    prefixed_payload = f"{information_source_id}_payload.json"
+    prefixed_knowledge_base = f"{information_source_id}_knowledge"
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_function_name,
+        information_source_item.source_code,
+    )
+
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_knowledge_base,
+        knowledge_base.build_knowledge_base_from_project(project_id),
+    )
+
+    tokenization_progress = get_doc_bin_progress(project_id)
+
+    command = [
+        s3.create_access_link(org_id, project_id + "/" + prefixed_doc_bin),
+        s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
+        s3.create_access_link(org_id, project_id + "/" + prefixed_knowledge_base),
+        tokenization_progress,
+        project_item.tokenizer_blank,
+        s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
+    ]
+
+    container = client.containers.run(
+        image=lf_exec_env_image,
+        command=command,
+        remove=True,
+        detach=True,
+        network=exec_env_network,
+    )
+
+    container_logs = [
+        line.decode("utf-8").strip("\n")
+        for line in container.logs(
+            stream=True, stdout=True, stderr=True, timestamps=True
+        )
+    ]
+
+    code_has_errors = False
+
+    try:
+        payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
+        calculated_labels = json.loads(payload)
+    except Exception:
+        print("Could not grab data from s3 -- labeling function")
+        code_has_errors = True
+        calculated_labels = {}
+
+    if not prefixed_doc_bin == "docbin_full":
+        # sample records docbin should be deleted after calculation
+        s3.delete_object(org_id, project_id + "/" + prefixed_doc_bin)
+    s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
+    s3.delete_object(org_id, project_id + "/" + prefixed_payload)
+    s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
+
+    return calculated_labels, container_logs, code_has_errors
+
+
+def get_missing_columns_tokenization(project_id: str) -> str:
+    missing_columns = [
+        attribute_item.name
+        for attribute_item in attribute.get_all(project_id)
+        if attribute_item.data_type != enums.DataTypes.TEXT.value
+    ]
+    missing_columns_str = ",\n".join(
+        ["'" + k + "',r.data->'" + k + "'" for k in missing_columns]
+    )
+
+    return missing_columns_str
