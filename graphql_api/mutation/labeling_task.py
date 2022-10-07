@@ -29,7 +29,7 @@ class CreateLabelingTask(graphene.Mutation):
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         project = project_manager.get_project(project_id)
-        manager.create_labeling_task(
+        item = manager.create_labeling_task(
             project_id, labeling_task_name, labeling_task_type, labeling_task_target_id
         )
         doc_ock.post_event(
@@ -40,7 +40,9 @@ class CreateLabelingTask(graphene.Mutation):
                 Type=labeling_task_type,
             ),
         )
-        notification.send_organization_update(project_id, f"labeling_task_created")
+        notification.send_organization_update(
+            project_id, f"labeling_task_created:{str(item.id)}"
+        )
         return CreateLabelingTask(ok=True)
 
 
@@ -90,7 +92,9 @@ class DeleteLabelingTask(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.delete_labeling_task(project_id, labeling_task_id)
-        notification.send_organization_update(project_id, f"labeling_task_deleted")
+        notification.send_organization_update(
+            project_id, f"labeling_task_deleted:{labeling_task_id}"
+        )
 
         return DeleteLabelingTask(ok=True)
 

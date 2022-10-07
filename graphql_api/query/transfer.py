@@ -50,7 +50,8 @@ class TransferQuery(graphene.ObjectType):
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return upload_manager.export_project(project_id, export_options)
+        user_id = auth.get_user_id_by_info(info)
+        return upload_manager.export_project(project_id, user_id, export_options)
 
     def resolve_upload_credentials_and_id(
         self,
@@ -84,7 +85,10 @@ class TransferQuery(graphene.ObjectType):
     ) -> bool:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return upload_manager.prepare_project_export(project_id, export_options)
+        user_id = auth.get_user_id_by_info(info)
+        return upload_manager.prepare_project_export(
+            project_id, user_id, export_options
+        )
 
     def resolve_last_project_export_credentials(self, info, project_id: str) -> str:
         auth.check_demo_access(info)
