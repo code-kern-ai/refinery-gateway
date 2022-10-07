@@ -13,6 +13,7 @@ from datetime import datetime
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
+    attribute,
     information_source,
     embedding,
     labeling_task,
@@ -706,7 +707,7 @@ def prepare_sample_records_doc_bin(
 
     sample_records_doc_bin = get_doc_bin_table_to_json(
         project_id=project_id,
-        missing_columns="",
+        missing_columns=get_missing_columns_tokenization(project_id),
         record_ids=[r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
@@ -776,10 +777,6 @@ def run_labeling_function_exec_env(
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
         calculated_labels = json.loads(payload)
-        notification.send_organization_update(
-            project_id,
-            f"payload_sample_records:{str(information_source_item.id)}",
-        )
     except Exception:
         print("Could not grab data from s3 -- labeling function")
         code_has_errors = True
@@ -793,3 +790,16 @@ def run_labeling_function_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
 
     return calculated_labels, container_logs, code_has_errors
+
+
+def get_missing_columns_tokenization(project_id: str) -> str:
+    missing_columns = [
+        attribute_item.name
+        for attribute_item in attribute.get_all(project_id)
+        if attribute_item.data_type != enums.DataTypes.TEXT.value
+    ]
+    missing_columns_str = ",\n".join(
+        ["'" + k + "',r.data->'" + k + "'" for k in missing_columns]
+    )
+
+    return missing_columns_str

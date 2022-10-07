@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from controller.payload import payload_scheduler
 from graphql_api.types import (
     LabelingFunctionSampleRecordWrapper,
@@ -75,10 +75,10 @@ def get_labeling_function_on_10_records(
     )
 
 
-def fill_missing_record_ids(sample_records: List[str], calculated_labels) -> List[str]:
+def fill_missing_record_ids(sample_records: List[str], calculated_labels: Dict[str, List[Any]]) -> List[str]:
     for record_item in sample_records:
         record_id = record_item[0]
-        if record_id not in calculated_labels.keys():
+        if record_id not in calculated_labels:
             calculated_labels[record_id] = []
 
     return calculated_labels
