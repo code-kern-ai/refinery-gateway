@@ -33,7 +33,10 @@ from submodules.model.business_objects.labeling_task_label import (
     get_label_ids_by_names,
 )
 from submodules.model.business_objects.payload import get_max_token, get
-from submodules.model.business_objects.tokenization import get_doc_bin_progress, get_doc_bin_table_to_json
+from submodules.model.business_objects.tokenization import (
+    get_doc_bin_progress,
+    get_doc_bin_table_to_json,
+)
 from submodules.model.models import (
     InformationSource,
     InformationSourceStatisticsExclusion,
@@ -696,12 +699,14 @@ def add_information_source_statistics_exclusion(
     general.add_all(exclusions, with_commit=True)
 
 
-def prepare_sample_records_doc_bin(project_id: str, information_source_id: str) -> Tuple[str, List[str]]:
+def prepare_sample_records_doc_bin(
+    project_id: str, information_source_id: str
+) -> Tuple[str, List[str]]:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = get_doc_bin_table_to_json(
         project_id=project_id,
-        missing_columns='',
+        missing_columns="",
         record_ids=[r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
@@ -748,7 +753,7 @@ def run_labeling_function_exec_env(
         s3.create_access_link(org_id, project_id + "/" + prefixed_knowledge_base),
         tokenization_progress,
         project_item.tokenizer_blank,
-        s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload)
+        s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
     ]
 
     container = client.containers.run(
@@ -787,4 +792,4 @@ def run_labeling_function_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
 
-    return calculated_labels, container_logs,code_has_errors
+    return calculated_labels, container_logs, code_has_errors
