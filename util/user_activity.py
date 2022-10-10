@@ -5,28 +5,16 @@ from submodules.model.business_objects import user_activity
 from util import daemon
 import os
 from datetime import datetime
-import inspect
 import json
 
 BACKUP_FILE_PATH = "user_activity_backup.tmp"
 __thread_running = False
 
 
-def get_caller_data() -> Dict[str, Union[str, int]]:
-    # not this, not the parent (add_user_actvity) but the one before
-    parent = inspect.stack()[2]
-    if parent.function == "post_event" and parent.filename == "./util/doc_ock.py":
-        # one step higher
-        parent = inspect.stack()[3]
-    return {
-        "caller_function": parent.function,
-        "caller_file": parent.filename,
-        "caller_lineno": parent.lineno,
-    }
-
-
-def add_user_activity_entry(user_id: str, activity: Any) -> None:
-    caller_dict = get_caller_data()
+def add_user_activity_entry(
+    user_id: str, activity: Any, caller_dict: Dict[str, Union[str, int]]
+) -> None:
+    # caller_dict = get_caller_data()
     if isinstance(activity, str):
         activity = {**caller_dict, "activity": activity}
     else:
