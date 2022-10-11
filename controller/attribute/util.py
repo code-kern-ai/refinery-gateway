@@ -50,10 +50,7 @@ def add_log_to_attribute_logs(
 
 def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
 
-    sample_record_ids = [
-        record_item
-        for record_item, in record.get_attribute_calculation_sample_records(project_id)
-    ]
+    sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     missing_columns = [
         attribute_item.name
@@ -67,7 +64,7 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
         project_id=project_id,
         missing_columns=missing_columns_str,
-        record_ids=sample_record_ids,
+        record_ids=[r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
