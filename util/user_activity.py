@@ -14,7 +14,6 @@ __thread_running = False
 def add_user_activity_entry(
     user_id: str, activity: Any, caller_dict: Dict[str, Union[str, int]]
 ) -> None:
-    # caller_dict = get_caller_data()
     if isinstance(activity, str):
         activity = {**caller_dict, "activity": activity}
     else:

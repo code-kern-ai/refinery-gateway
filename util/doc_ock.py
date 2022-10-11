@@ -45,8 +45,8 @@ def __post_thread(
 
 
 def __get_caller_data() -> Dict[str, Union[str, int]]:
-    # not this, not the parent (post_event) but the one before
     parent = inspect.stack()[2]
+    # not this function (index 0), not the parent (post_event - index 1) but the one before (index 2)
     return {
         "caller_function": parent.function,
         "caller_file": parent.filename,
