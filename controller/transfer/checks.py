@@ -193,7 +193,7 @@ def build_df_sql(project_id: str) -> Tuple[str, List[str]]:
     sql = "SELECT id record_id"
     keys = []
     for att in primary_keys:
-        sql += f", r.data->>'{att.name}' {att.name}"
+        sql += f", r.data->>'{att.name}' \"{att.name}\""
         keys.append(att.name)
     sql += f"\nFROM record r WHERE project_id = '{project_id}'"
     return sql, keys
