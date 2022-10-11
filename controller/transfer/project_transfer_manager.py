@@ -205,6 +205,9 @@ def import_file(
             logs=attribute_item.get(
                 "logs",
             ),
+            source_code=attribute_item.get(
+                "source_code",
+            ),
             project_id=project_id,
         )
         attribute_ids_by_old_id[
