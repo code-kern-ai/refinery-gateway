@@ -73,10 +73,10 @@ class DeleteProject(graphene.Mutation):
         notification.create_notification(
             enums.NotificationType.PROJECT_DELETED, user.id, None, project_item.name
         )
+        manager.delete_project(project_id)
         notification.send_organization_update(
             project_id, f"project_deleted:{project_id}", True, organization_id
         )
-        manager.delete_project(project_id)
         return DeleteProject(ok=True)
 
 

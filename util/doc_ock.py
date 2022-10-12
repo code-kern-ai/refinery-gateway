@@ -1,5 +1,7 @@
+import inspect
 import os
 import traceback
+from typing import Dict, Union
 from controller.misc import config_service
 from submodules.model import models, events
 from util import daemon, service_requests
@@ -22,15 +24,31 @@ def register_user(user: models.User):
 
 
 def post_event(user: models.User, event: events.Event):
-    daemon.run(__post_thread, user, event)
+    caller_dict = __get_caller_data()
+    daemon.run(__post_thread, user, event, caller_dict)
 
-def __post_thread(user: models.User, event: events.Event):
+
+def __post_thread(
+    user: models.User, event: events.Event, caller_dict: Dict[str, Union[str, int]]
+):
     try:
         url = f"{BASE_URI}/track/{user.id}/{event.event_name()}"
         event.IsManaged = config_service.get_config_value("is_managed")
         add_user_activity_entry(
-            str(user.id), {"eventName": event.event_name(), **event.__dict__}
+            str(user.id),
+            {"eventName": event.event_name(), **event.__dict__},
+            caller_dict,
         )
         service_requests.post_call_or_raise(url, event.__dict__)
     except Exception:
         print(traceback.format_exc(), flush=True)
+
+
+def __get_caller_data() -> Dict[str, Union[str, int]]:
+    parent = inspect.stack()[2]
+    # not this function (index 0), not the parent (post_event - index 1) but the one before (index 2)
+    return {
+        "caller_function": parent.function,
+        "caller_file": parent.filename,
+        "caller_lineno": parent.lineno,
+    }

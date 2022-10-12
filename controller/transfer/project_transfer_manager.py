@@ -205,6 +205,9 @@ def import_file(
             logs=attribute_item.get(
                 "logs",
             ),
+            source_code=attribute_item.get(
+                "source_code",
+            ),
             project_id=project_id,
         )
         attribute_ids_by_old_id[
@@ -396,6 +399,12 @@ def import_file(
     if data.get("weak_supervision_task_data"):
         for weak_supervision_item in data.get("weak_supervision_task_data"):
             created_by = weak_supervision_item.get("created_by")
+            if created_by not in used_user_ids:
+                used_user_ids.append(created_by)
+
+    if "comments" in data:
+        for comment_item in data.get("comments"):
+            created_by = comment_item.get("created_by")
             if created_by not in used_user_ids:
                 used_user_ids.append(created_by)
 
@@ -787,19 +796,19 @@ def import_file(
             xftype = comment_item.get("xftype")
             if xftype == enums.CommentCategory.RECORD.value:
                 new_xfkey = record_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.LABELING_TASK.value:
+            elif xftype == enums.CommentCategory.LABELING_TASK.value:
                 new_xfkey = labeling_task_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.ATTRIBUTE.value:
+            elif xftype == enums.CommentCategory.ATTRIBUTE.value:
                 new_xfkey = attribute_ids_by_old_id.get(old_xfkey)
-            if xftype == enums.CommentCategory.LABEL.value:
+            elif xftype == enums.CommentCategory.LABEL.value:
                 new_xfkey = labeling_task_labels_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.DATA_SLICE.value:
+            elif xftype == enums.CommentCategory.DATA_SLICE.value:
                 new_xfkey = data_slice_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.EMBEDDING.value:
+            elif xftype == enums.CommentCategory.EMBEDDING.value:
                 new_xfkey = embedding_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.HEURISTIC.value:
+            elif xftype == enums.CommentCategory.HEURISTIC.value:
                 new_xfkey = information_source_ids.get(old_xfkey)
-            if xftype == enums.CommentCategory.KNOWLEDGE_BASE.value:
+            elif xftype == enums.CommentCategory.KNOWLEDGE_BASE.value:
                 new_xfkey = knowledge_base_ids.get(old_xfkey)
             if not new_xfkey:
                 continue
@@ -808,7 +817,7 @@ def import_file(
                 xfkey=new_xfkey,
                 xftype=comment_item.get("xftype"),
                 comment=comment_item.get("comment"),
-                created_by=import_user_id,
+                created_by=comment_item.get("created_by"),
                 project_id=project_id,
                 order_key=comment_item.get("order_key"),
                 is_markdown=comment_item.get("is_markdown"),
