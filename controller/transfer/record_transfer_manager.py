@@ -66,7 +66,7 @@ def import_records_and_rlas(
         
         if idx == 0:
             create_attributes_and_get_text_attributes(project_id, records_data)
-        primary_keys = attribute.get_primary_keys(project_id)
+            primary_keys = attribute.get_primary_keys(project_id)
 
         import_labeling_tasks_and_labels_pipeline(
             project_id=project_id, tasks_data=tasks_data
