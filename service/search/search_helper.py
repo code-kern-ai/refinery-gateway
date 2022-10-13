@@ -274,13 +274,15 @@ SELECT rla.project_id pID, rla.record_id rID
 FROM record_label_association rla
 WHERE rla.project_id = '@@PROJECT_ID@@'
     AND rla.source_type = 'WEAK_SUPERVISION'
-    AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ """,
+    AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ 
+GROUP BY rla.project_id, rla.record_id """,
     SearchQueryTemplate.SUBQUERY_CALLBACK_CONFIDENCE: """
 SELECT rla.project_id pID, rla.record_id rID
 FROM record_label_association rla
 WHERE rla.project_id = '@@PROJECT_ID@@'
     AND rla.source_type = 'MODEL_CALLBACK'
-    AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ """,
+    AND rla.confidence BETWEEN @@VALUE1@@ AND @@VALUE2@@ 
+GROUP BY rla.project_id, rla.record_id """,
     SearchQueryTemplate.ORDER_RLA: """
 LEFT JOIN (
     SELECT rla.project_id pID, rla.record_id rID, @@ORDER_COLUMNS@@
