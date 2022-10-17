@@ -73,7 +73,8 @@ def create_user_attribute(project_id: str) -> Attribute:
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message=f"calculate_attribute:created:{str(attribute_item.id)}"
+        project_id=project_id,
+        message=f"calculate_attribute:created:{str(attribute_item.id)}",
     )
 
     return attribute_item
@@ -241,16 +242,23 @@ def __calculate_user_attribute_all_records(
             log="Writing to the database failed.",
         )
         return
+
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
-    util.add_log_to_attribute_logs(project_id, attribute_id, "Triggering tokenization.")
-    tokenization.delete_docbins(project_id, with_commit=True)
-    tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
+    if attribute.get_data_type(project_id, attribute_id) in [
+        DataTypes.TEXT.value,
+        DataTypes.CATEGORY,
+    ]:
+        util.add_log_to_attribute_logs(
+            project_id, attribute_id, "Triggering tokenization."
+        )
+        tokenization.delete_docbins(project_id, with_commit=True)
+        tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
 
-    while record.count_tokenized_records(project_id) > 0:
-        time.sleep(2)
+        while record.count_tokenized_records(project_id) > 0:
+            time.sleep(2)
 
-    request_tokenize_project(project_id, user_id)
+        request_tokenize_project(project_id, user_id)
 
     attribute.update(
         project_id=project_id,
