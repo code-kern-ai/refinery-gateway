@@ -40,6 +40,14 @@ class TransferQuery(graphene.ObjectType):
         export_options=graphene.JSONString(required=False),
     )
 
+
+    prepare_record_export = graphene.Field(
+        graphene.Boolean,
+        project_id=graphene.ID(required=True),
+        export_options=graphene.JSONString(required=False),
+    )
+
+
     last_project_export_credentials = graphene.Field(
         graphene.String,
         project_id=graphene.ID(required=True),
@@ -94,3 +102,11 @@ class TransferQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return upload_manager.last_project_export_credentials(project_id)
+
+    def resolve_prepare_record_export(
+        self, info, project_id: str, export_options: Optional[str] = None
+    ) -> bool:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        print(export_options)
+        return True
