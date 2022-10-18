@@ -89,6 +89,7 @@ def run_attribute_calculation_exec_env(
         s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
         project_item.tokenizer_blank,
         s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
+        attribute_item.data_type,
     ]
 
     container = client.containers.run(

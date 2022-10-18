@@ -245,10 +245,7 @@ def __calculate_user_attribute_all_records(
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
-    if attribute.get(project_id, attribute_id).data_type in [
-        DataTypes.TEXT.value,
-        DataTypes.CATEGORY.value,
-    ]:
+    if attribute.get(project_id, attribute_id).data_type == DataTypes.TEXT.value:
         util.add_log_to_attribute_logs(
             project_id, attribute_id, "Triggering tokenization."
         )
