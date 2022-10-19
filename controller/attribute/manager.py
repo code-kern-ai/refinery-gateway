@@ -53,20 +53,20 @@ def create_attribute(project_id: str, name: str) -> Attribute:
     return attribute_item
 
 
-def create_user_attribute(project_id: str) -> Attribute:
+def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribute:
     prev_relative_position: int = attribute.get_relative_position(project_id)
     if prev_relative_position is None:
         relative_position = 1
     else:
         relative_position = prev_relative_position + 1
 
-    name = util.find_free_name(project_id)
+    # name = util.find_free_name(project_id)
 
     attribute_item: Attribute = attribute.create(
         project_id,
         name,
         relative_position,
-        data_type=DataTypes.TEXT.value,
+        data_type=data_type,
         is_primary_key=False,
         user_created=True,
         state=AttributeState.INITIAL.value,
