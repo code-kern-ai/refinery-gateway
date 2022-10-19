@@ -79,6 +79,7 @@ def create_data_slice(
         created_by=user_id,
         name=name,
         filter_raw=filter_raw,
+        filter_data=filter_data,
         static=static,
         slice_type=slice_type,
         info=info,

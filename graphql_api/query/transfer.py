@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Dict, Optional, Any
 
 import graphene
 
 from controller.auth import manager as auth
-from controller.transfer import manager as upload_manager
+from controller.transfer import manager as upload_manager, record_export_manager
 
 
 class TransferQuery(graphene.ObjectType):
@@ -104,9 +104,10 @@ class TransferQuery(graphene.ObjectType):
         return upload_manager.last_project_export_credentials(project_id)
 
     def resolve_prepare_record_export(
-        self, info, project_id: str, export_options: Optional[str] = None
+        self, info, project_id: str, export_options: Optional[Dict[str, Any]] = None
     ) -> bool:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        print(export_options)
+        user_id = auth.get_user_id_by_info(info)
+        record_export_manager.export_records(project_id, user_id, export_options)
         return True
