@@ -1,12 +1,14 @@
 from typing import Optional, Dict, Any
 
 from service.search.search import generate_select_sql
-from submodules.model.business_objects import data_slice, user_session
+from submodules.model.business_objects import data_slice, general, user_session
 
 
 def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
     query = build_row_query(project_id, row_options=export_options.get("rows"))
     print(query)
+    x = general.execute_all(query)
+    print(len(x))
 
 
 def build_row_query(project_id: str, row_options: Dict[str, Any]):
@@ -30,7 +32,7 @@ def __build_rows_by_type(project_id: str, row_options: Dict[str, Any]):
 def __build_rows_by_slice(project_id, slice_id: str):
     slice = data_slice.get(project_id, slice_id)
     slice_type = slice.slice_type
-    if slice_type == "STATIC":
+    if slice_type == "STATIC_DEFAULT":
         return __build_rows_by_static_slice(slice_id)
     elif slice_type == "DYNAMIC_DEFAULT":
         return __build_rows_by_dynamic_slice(project_id, slice)
