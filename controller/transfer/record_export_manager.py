@@ -20,8 +20,15 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
     if attributes_select_query:
         query += f", {attributes_select_query}"
 
+    tasks_select_query = __labeling_tasks_select_query(column_options.get("labeling_tasks"), labeling_task_names)
+    if tasks_select_query:
+        query += f", {tasks_select_query}"
+
     record_data_query = __get_record_data_query(project_id, export_options.get("rows"))
     query += record_data_query
+
+    labeling_task_data_query = build_column_query(project_id, column_options)
+    query += labeling_task_data_query
     print(query)
 
     result_set = general.execute_all(query)
@@ -32,29 +39,20 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
     
     #tasks = labeling_task.get_all(project_id)
     #column_query = build_column_query(project_id, query, export_options.get("columns"))
-
-
-def build_top_select_query(column_options, tasks, attributes):
-    labeling_task_ids = column_options.get("labeling_tasks")
-    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in labeling_task_ids}
-    task_fields = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
-
-    attribute_ids =  column_options.get("attributes")
-    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
-    attribute_fields = [f"{attribute_names.get(id)}.{attribute_names.get(id)}" for id in attribute_ids]
-
-
-    complete_fields = attribute_fields  # TODO insert here + task_fields
-    field_concatination = ", ".join(complete_fields)
-    return f"SELECT basic_record.id"
     
 
 def __attributes_select_query(selected_attribute_ids, attribute_names):
     attribute_json_selections = []
     for id in selected_attribute_ids:
         attribute_json_selections.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
-
     return ", ".join(attribute_json_selections)
+
+def __labeling_tasks_select_query(selected_task_ids, task_names):
+    task_selections = []
+    for id in selected_task_ids:
+        task_selections.append(f"{task_names.get(id)}.name as {task_names.get(id)}")
+    return ", ".join(task_selections)
+
 
 def __get_record_data_query(project_id: str, row_options: Dict[str, Any]):
     return __record_data_by_type(project_id, row_options)
@@ -124,47 +122,51 @@ def __record_data_by_session(project_id, session_id: str):
         ON r.id = user_session.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
-def __get_base_id_query(project_id: str, join_query: str, attributes_query_select_part):
-    query = f"""
-    SELECT r.id, {attributes_query_select_part}
-    FROM record r"""
-    if join_query:
-        query += f"""
-        {join_query}"""
 
-    query += f"""
-    WHERE r.project_id = '{project_id}'"""  
-    return query
-
-
-def build_column_query(project_id, record_ids_query, column_options):
+def build_column_query(project_id, column_options):
     labeling_task_ids = column_options.get("labeling_tasks")
     projects_tasks = labeling_task.get_all(project_id)
     labeling_task_names = {str(lt.id): lt.name for lt in projects_tasks if str(lt.id) in labeling_task_ids}
     header = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
     headers = ", ".join(header)
-    query = f"""SELECT basic_record.id, {headers}
-    FROM ({record_ids_query}) basic_record
-    """
+
+    query = ""
     for id in labeling_task_ids:
-        query += build_labeling_task_column_query(id, labeling_task_names.get(id))
+        query += build_labeling_task_column_query(project_id, id, labeling_task_names.get(id))
     print(20*"-")
     print(query)
     print(20*"-")
     return query
 
 
-def build_labeling_task_column_query(labeling_task_id, name):
+def build_labeling_task_column_query(project_id, labeling_task_id, name):
     return f"""
     LEFT JOIN (
-        SELECT rla.record_id , x.name as {name}
+        SELECT rla.record_id , ltl.name
     	FROM record_label_association rla 
     	INNER JOIN (
-	        select id, name
-	        from labeling_task_label  
-	        where labeling_task_id = '{labeling_task_id}'
-	    ) x
-   		ON rla.labeling_task_label_id  = x.id
+	        SELECT ltl.id, ltl.name
+	        FROM labeling_task_label ltl
+	        WHERE labeling_task_id = '{labeling_task_id}'
+            AND ltl.project_id = '{project_id}'
+	    ) ltl
+   		ON rla.labeling_task_label_id  = ltl.id
+        AND rla.project_id = '{project_id}'
    		WHERE rla.source_type = 'MANUAL'
     ) {name}
     ON {name}.record_id = basic_record.id"""
+
+
+def build_top_select_query(column_options, tasks, attributes):
+    labeling_task_ids = column_options.get("labeling_tasks")
+    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in labeling_task_ids}
+    task_fields = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
+
+    attribute_ids =  column_options.get("attributes")
+    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
+    attribute_fields = [f"{attribute_names.get(id)}.{attribute_names.get(id)}" for id in attribute_ids]
+
+
+    complete_fields = attribute_fields  # TODO insert here + task_fields
+    field_concatination = ", ".join(complete_fields)
+    return f"SELECT basic_record.id"
