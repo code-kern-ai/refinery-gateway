@@ -5,43 +5,53 @@ from submodules.model.business_objects import attribute, data_slice, general, la
 
 
 def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
-    column_options =export_options.get("columns")
+    column_options = export_options.get("columns")
     row_options = export_options.get("rows")
 
+    attributes_options = column_options.get("attributes")
+    task_options = column_options.get("labeling_tasks")
+    sources_options = column_options.get("sources")
+
+    if not attributes_options and not attributes_options and not sources_options:
+        raise Exception("Empty export options")
+
     tasks = labeling_task.get_all(project_id)
-    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in column_options.get("labeling_tasks")}
+    labeling_task_names = {str(lt.id): lt.name for lt in tasks}
     labeling_tasks_by_id = {str(lt.id): lt for lt in tasks}
 
     attributes = attribute.get_all(project_id)
-    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
+    attribute_names = {str(lt.id): lt.name for lt in attributes}
 
-    tables_meta_data = __extract_table_meta_data(project_id, column_options.get("labeling_tasks"), labeling_tasks_by_id, attribute_names, labeling_task_names, column_options.get("sources"))
+    tables_meta_data = __extract_table_meta_data(project_id, task_options, labeling_tasks_by_id, attribute_names, labeling_task_names, sources_options, attributes_options)
     query = f"SELECT basic_record.id"
 
-    attributes_select_query = __attributes_select_query(column_options.get("attributes"), attribute_names)
-    if attributes_select_query:
+    if attributes_options:
+        attributes_select_query = __attributes_select_query(attributes_options, attribute_names)
         query += f", {attributes_select_query}"
 
-    tasks_select_query = __labeling_tasks_select_query(tables_meta_data.keys())
-    if tasks_select_query:
+    if task_options and sources_options:
+        tasks_select_query = __labeling_tasks_select_query(tables_meta_data.keys())
         query += f", {tasks_select_query}"
 
     record_data_query = __get_record_data_query(project_id, row_options)
     query += record_data_query
 
-    labeling_task_data_query = build_columns_by_table_meta_data(project_id, tables_meta_data)
-    query += labeling_task_data_query
-    print(tables_meta_data)
+    if task_options and sources_options:
+        labeling_task_data_query = __columns_by_table_meta_data_query(project_id, tables_meta_data)
+        query += labeling_task_data_query
+
     print(query)
     result_set = general.execute_all(query)
     print(len(result_set))
 
-def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute_names, task_names, sources):
+def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute_names, task_names, sources, attributes_options):
     tables_meta_data = {}
     for task_id in selected_tasks:
         task = tasks_by_id.get(task_id)
         attribute_task_name = ""
         if task.attribute_id:
+            """             if not task.attribute_id in attributes_options:
+                            continue """
             attribute_task_name = attribute_names.get(str(task.attribute_id))
 
         attribute_task_name += f"__{task_names.get(task_id)}"
@@ -51,8 +61,6 @@ def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute
             tablename_dict = {}
             if source.get("type") == "INFORMATION_SOURCE": # TODO add enum here
                 source_entity = information_source.get(project_id, source.get("id"))
-                print(source_entity.name)
-
                 if str(source_entity.labeling_task_id) == task_id:
                     full_table_name = f"{attribute_task_name}__{source_entity.name}"
                     tablename_dict["type"] = source.get("type") 
@@ -148,26 +156,26 @@ def __record_data_by_session(project_id, session_id: str):
         ON r.id = user_session.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
-def build_columns_by_table_meta_data(project_id, tables_meta_data):
+def __columns_by_table_meta_data_query(project_id, tables_meta_data):
     query = ""
     for table_name in tables_meta_data:
             table_meta_data = tables_meta_data.get(table_name)
-            query += build_labeling_task_column_query(project_id, table_meta_data.get("task_id"), table_name, table_meta_data.get("type"), table_meta_data.get("source_id"))
+            query += __column_by_table_meta_data_query(project_id, table_meta_data.get("task_id"), table_name, table_meta_data.get("type"), table_meta_data.get("source_id"))
     return query
 
 
-def build_labeling_task_column_query(project_id, labeling_task_id, table_name, type, source_id):
+def __column_by_table_meta_data_query(project_id, labeling_task_id, table_name, type, source_id):
     return f"""
     LEFT JOIN (
-        SELECT rla.record_id , ltl.name
+        SELECT rla.record_id , {table_name}_ltl_outer.name
     	FROM record_label_association rla 
     	INNER JOIN (
-	        SELECT ltl.id, ltl.name
-	        FROM labeling_task_label ltl
+	        SELECT {table_name}_ltl_inner.id, {table_name}_ltl_inner.name
+	        FROM labeling_task_label {table_name}_ltl_inner
 	        WHERE labeling_task_id = '{labeling_task_id}'
-            AND ltl.project_id = '{project_id}'
-	    ) ltl
-   		ON rla.labeling_task_label_id  = ltl.id
+            AND {table_name}_ltl_inner.project_id = '{project_id}'
+	    ) {table_name}_ltl_outer
+   		ON rla.labeling_task_label_id  = {table_name}_ltl_outer.id
         AND rla.project_id = '{project_id}'
    		{__source_constraint(type, source_id)}
     ) {table_name}
