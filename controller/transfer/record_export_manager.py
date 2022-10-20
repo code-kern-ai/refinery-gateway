@@ -24,6 +24,9 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
     query += record_data_query
     print(query)
 
+    result_set = general.execute_all(query)
+    print("result", len(result_set))
+
     #inner_row_query = build_row_query(project_id, export_options.get("rows"), attributes_query_select_part)
     #query = __get_base_id_query(project_id, inner_row_query, attributes_query_select_part)
     
