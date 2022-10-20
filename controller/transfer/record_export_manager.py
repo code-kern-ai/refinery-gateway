@@ -5,19 +5,25 @@ from submodules.model.business_objects import attribute, data_slice, general, la
 
 
 def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
+    column_options =export_options.get("columns")
+    row_options = export_options.get("rows")
+
     tasks = labeling_task.get_all(project_id)
+    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in column_options.get("labeling_tasks")}
+
     attributes = attribute.get_all(project_id)
+    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
 
     query = f"SELECT basic_record.id"
-    attributes_query_select_part = build_attribute_queries(project_id, export_options.get("columns"))
-    if attributes_query_select_part:
-        query += f", {attributes_query_select_part}"
-    record_id_query = build_row_query(project_id, export_options.get("rows"))
-    query += record_id_query
+
+    attributes_select_query = __attributes_select_query(column_options.get("attributes"), attribute_names)
+    if attributes_select_query:
+        query += f", {attributes_select_query}"
+
+    record_data_query = __get_record_data_query(project_id, export_options.get("rows"))
+    query += record_data_query
     print(query)
 
-
-    attributes_query_select_part = build_attribute_queries(project_id, export_options.get("columns"))
     #inner_row_query = build_row_query(project_id, export_options.get("rows"), attributes_query_select_part)
     #query = __get_base_id_query(project_id, inner_row_query, attributes_query_select_part)
     
@@ -40,33 +46,47 @@ def build_top_select_query(column_options, tasks, attributes):
     return f"SELECT basic_record.id"
     
 
-def build_row_query(project_id: str, row_options: Dict[str, Any]):
-    return __build_rows_by_type(project_id, row_options)
+def __attributes_select_query(selected_attribute_ids, attribute_names):
+    attribute_json_selections = []
+    for id in selected_attribute_ids:
+        attribute_json_selections.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
 
-def __build_rows_by_type(project_id: str, row_options: Dict[str, Any]):
+    return ", ".join(attribute_json_selections)
+
+def __get_record_data_query(project_id: str, row_options: Dict[str, Any]):
+    return __record_data_by_type(project_id, row_options)
+
+def __record_data_by_type(project_id: str, row_options: Dict[str, Any]):
     if row_options.get("type") == "SLICE":
-        return __build_rows_by_slice(project_id, row_options.get("id"))
+        return ___record_data_by_slice(project_id, row_options.get("id"))
     elif row_options.get("type") == "SESSION":
-        return __build_rows_by_session(project_id, row_options.get("id"))
+        return __record_data_by_session(project_id, row_options.get("id"))
     elif row_options.get("type") == "ALL":
-        return ""
+        return __record_data_of_all(project_id)
     else:
         message = f"Type of filter {row_options.get('type')} for rows not allowed."
         raise Exception(message)
 
 
-def __build_rows_by_slice(project_id, slice_id: str):
+def ___record_data_by_slice(project_id, slice_id: str):
     slice = data_slice.get(project_id, slice_id)
     slice_type = slice.slice_type
     if slice_type == "STATIC_DEFAULT":
-        return __record_ids_by_static_slice_query(project_id, slice_id)
+        return __record_data_by_static_slice_query(project_id, slice_id)
     elif slice_type == "DYNAMIC_DEFAULT":
-        return __build_rows_by_dynamic_slice(project_id, slice)
+        return __record_data_by_dynamic_slice(project_id, slice)
     else:
         message = f"Type of slice {slice_type} not allowed."
         raise Exception(message)
 
-def __record_ids_by_static_slice_query(project_id: str, slice_id: str):
+def __record_data_of_all(project_id: str):
+    return f"""
+    FROM (
+        SELECT r.id, r.data
+        FROM record r
+        WHERE r.project_id = '{project_id}') basic_record"""
+
+def __record_data_by_static_slice_query(project_id: str, slice_id: str):
     return f"""
     FROM (
         SELECT r.id, r.data
@@ -77,7 +97,7 @@ def __record_ids_by_static_slice_query(project_id: str, slice_id: str):
         AND dsra.project_id = '{project_id}'
         WHERE dsra.data_slice_id = '{slice_id}') basic_record"""
 
-def __build_rows_by_dynamic_slice(project_id, slice):
+def __record_data_by_dynamic_slice(project_id, slice):
     dynamic_slice_select_query = generate_select_sql(project_id, slice.filter_data, 0, 0)
     return f"""
     FROM (
@@ -89,7 +109,7 @@ def __build_rows_by_dynamic_slice(project_id, slice):
         ON r.id = dsra.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
-def __build_rows_by_session(project_id, session_id: str):
+def __record_data_by_session(project_id, session_id: str):
     session = user_session.get(project_id, session_id)
     return f"""
     FROM (
@@ -112,16 +132,6 @@ def __get_base_id_query(project_id: str, join_query: str, attributes_query_selec
     query += f"""
     WHERE r.project_id = '{project_id}'"""  
     return query
-
-
-def build_attribute_queries(project_id, column_options):
-    attributes = attribute.get_all(project_id)
-    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
-    new = []
-    for id in column_options.get("attributes"):
-        new.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
-
-    return ", ".join(new)
 
 
 def build_column_query(project_id, record_ids_query, column_options):
