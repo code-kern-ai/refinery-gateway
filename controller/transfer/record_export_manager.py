@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any
 
 from service.search.search import generate_select_sql
-from submodules.model.business_objects import attribute, data_slice, general, labeling_task, user_session
+from submodules.model.business_objects import attribute, data_slice, general, labeling_task, user_session, information_source
 
 
 def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
@@ -10,36 +10,62 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
 
     tasks = labeling_task.get_all(project_id)
     labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in column_options.get("labeling_tasks")}
+    labeling_tasks_by_id = {str(lt.id): lt for lt in tasks}
 
     attributes = attribute.get_all(project_id)
     attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
 
+    tables_meta_data = __extract_table_meta_data(project_id, column_options.get("labeling_tasks"), labeling_tasks_by_id, attribute_names, labeling_task_names, column_options.get("sources"))
     query = f"SELECT basic_record.id"
 
     attributes_select_query = __attributes_select_query(column_options.get("attributes"), attribute_names)
     if attributes_select_query:
         query += f", {attributes_select_query}"
 
-    tasks_select_query = __labeling_tasks_select_query(column_options.get("labeling_tasks"), labeling_task_names)
+    tasks_select_query = __labeling_tasks_select_query(tables_meta_data.keys())
     if tasks_select_query:
         query += f", {tasks_select_query}"
 
-    record_data_query = __get_record_data_query(project_id, export_options.get("rows"))
+    record_data_query = __get_record_data_query(project_id, row_options)
     query += record_data_query
 
-    labeling_task_data_query = build_column_query(project_id, column_options)
+    labeling_task_data_query = build_columns_by_table_meta_data(project_id, tables_meta_data)
     query += labeling_task_data_query
+    print(tables_meta_data)
     print(query)
-
     result_set = general.execute_all(query)
-    print("result", len(result_set))
+    print(len(result_set))
 
-    #inner_row_query = build_row_query(project_id, export_options.get("rows"), attributes_query_select_part)
-    #query = __get_base_id_query(project_id, inner_row_query, attributes_query_select_part)
-    
-    #tasks = labeling_task.get_all(project_id)
-    #column_query = build_column_query(project_id, query, export_options.get("columns"))
-    
+def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute_names, task_names, sources):
+    tables_meta_data = {}
+    for task_id in selected_tasks:
+        task = tasks_by_id.get(task_id)
+        attribute_task_name = ""
+        if task.attribute_id:
+            attribute_task_name = attribute_names.get(str(task.attribute_id))
+
+        attribute_task_name += f"__{task_names.get(task_id)}"
+
+        for source in sources:
+            full_table_name = ""
+            tablename_dict = {}
+            if source.get("type") == "INFORMATION_SOURCE": # TODO add enum here
+                source_entity = information_source.get(project_id, source.get("id"))
+                print(source_entity.name)
+
+                if str(source_entity.labeling_task_id) == task_id:
+                    full_table_name = f"{attribute_task_name}__{source_entity.name}"
+                    tablename_dict["type"] = source.get("type") 
+                    tablename_dict["task_id"] = task_id
+                    tablename_dict["source_id"] = source.get("id") 
+            else:
+                full_table_name = f"{attribute_task_name}__{source.get('type')}"
+                tablename_dict["type"] = source.get("type") 
+                tablename_dict["task_id"] = task_id
+
+            if tablename_dict and full_table_name:
+                tables_meta_data[full_table_name] = tablename_dict
+    return tables_meta_data
 
 def __attributes_select_query(selected_attribute_ids, attribute_names):
     attribute_json_selections = []
@@ -47,10 +73,10 @@ def __attributes_select_query(selected_attribute_ids, attribute_names):
         attribute_json_selections.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
     return ", ".join(attribute_json_selections)
 
-def __labeling_tasks_select_query(selected_task_ids, task_names):
+def __labeling_tasks_select_query(tablenames):
     task_selections = []
-    for id in selected_task_ids:
-        task_selections.append(f"{task_names.get(id)}.name as {task_names.get(id)}")
+    for tablename in tablenames:
+        task_selections.append(f"{tablename}.name as {tablename}")
     return ", ".join(task_selections)
 
 
@@ -122,24 +148,15 @@ def __record_data_by_session(project_id, session_id: str):
         ON r.id = user_session.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
-
-def build_column_query(project_id, column_options):
-    labeling_task_ids = column_options.get("labeling_tasks")
-    projects_tasks = labeling_task.get_all(project_id)
-    labeling_task_names = {str(lt.id): lt.name for lt in projects_tasks if str(lt.id) in labeling_task_ids}
-    header = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
-    headers = ", ".join(header)
-
+def build_columns_by_table_meta_data(project_id, tables_meta_data):
     query = ""
-    for id in labeling_task_ids:
-        query += build_labeling_task_column_query(project_id, id, labeling_task_names.get(id))
-    print(20*"-")
-    print(query)
-    print(20*"-")
+    for table_name in tables_meta_data:
+            table_meta_data = tables_meta_data.get(table_name)
+            query += build_labeling_task_column_query(project_id, table_meta_data.get("task_id"), table_name, table_meta_data.get("type"), table_meta_data.get("source_id"))
     return query
 
 
-def build_labeling_task_column_query(project_id, labeling_task_id, name):
+def build_labeling_task_column_query(project_id, labeling_task_id, table_name, type, source_id):
     return f"""
     LEFT JOIN (
         SELECT rla.record_id , ltl.name
@@ -152,21 +169,35 @@ def build_labeling_task_column_query(project_id, labeling_task_id, name):
 	    ) ltl
    		ON rla.labeling_task_label_id  = ltl.id
         AND rla.project_id = '{project_id}'
-   		WHERE rla.source_type = 'MANUAL'
-    ) {name}
-    ON {name}.record_id = basic_record.id"""
+   		{__source_constraint(type, source_id)}
+    ) {table_name}
+    ON {table_name}.record_id = basic_record.id"""
 
 
-def build_top_select_query(column_options, tasks, attributes):
-    labeling_task_ids = column_options.get("labeling_tasks")
-    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in labeling_task_ids}
-    task_fields = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
+def __source_constraint(type, source_id): #TODO enums here
+        if type == "MANUAL":
+            return __manual_source()
+        elif type == "INFORMATION_SOURCE":
+            return __information_source_source(source_id)
+        elif type == "MODEL_CALLBACK":
+            return __model_source()
+        elif type == "WEAK_SUPERVISION":
+            return __weak_supervision_source()
+        else:
+            message = f"Type {type} not allowed for label sources."
+            raise Exception(message)
 
-    attribute_ids =  column_options.get("attributes")
-    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
-    attribute_fields = [f"{attribute_names.get(id)}.{attribute_names.get(id)}" for id in attribute_ids]
 
 
-    complete_fields = attribute_fields  # TODO insert here + task_fields
-    field_concatination = ", ".join(complete_fields)
-    return f"SELECT basic_record.id"
+def __manual_source():
+    return "WHERE rla.source_type = 'MANUAL'"
+
+def __weak_supervision_source():
+    return "WHERE rla.source_type = 'WEAK_SUPERVISION'"
+
+def __model_source():
+    return "WHERE rla.source_type = 'MODEL_CALLBACK'"
+
+def __information_source_source(source_id):
+    return f"""WHERE rla.source_type = 'INFORMATION_SOURCE'
+                AND rla.source_id = '{source_id}'"""
