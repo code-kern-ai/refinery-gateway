@@ -1,21 +1,47 @@
 from typing import Optional, Dict, Any
 
 from service.search.search import generate_select_sql
-from submodules.model.business_objects import data_slice, general, user_session
+from submodules.model.business_objects import attribute, data_slice, general, labeling_task, user_session
 
 
 def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
-    query = build_row_query(project_id, row_options=export_options.get("rows"))
-    print(query)
-    x = general.execute_all(query)
-    print(len(x))
+    tasks = labeling_task.get_all(project_id)
+    attributes = attribute.get_all(project_id)
 
+    query = f"SELECT basic_record.id"
+    attributes_query_select_part = build_attribute_queries(project_id, export_options.get("columns"))
+    if attributes_query_select_part:
+        query += f", {attributes_query_select_part}"
+    record_id_query = build_row_query(project_id, export_options.get("rows"))
+    query += record_id_query
+    print(query)
+
+
+    attributes_query_select_part = build_attribute_queries(project_id, export_options.get("columns"))
+    #inner_row_query = build_row_query(project_id, export_options.get("rows"), attributes_query_select_part)
+    #query = __get_base_id_query(project_id, inner_row_query, attributes_query_select_part)
+    
+    #tasks = labeling_task.get_all(project_id)
+    #column_query = build_column_query(project_id, query, export_options.get("columns"))
+
+
+def build_top_select_query(column_options, tasks, attributes):
+    labeling_task_ids = column_options.get("labeling_tasks")
+    labeling_task_names = {str(lt.id): lt.name for lt in tasks if str(lt.id) in labeling_task_ids}
+    task_fields = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
+
+    attribute_ids =  column_options.get("attributes")
+    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
+    attribute_fields = [f"{attribute_names.get(id)}.{attribute_names.get(id)}" for id in attribute_ids]
+
+
+    complete_fields = attribute_fields  # TODO insert here + task_fields
+    field_concatination = ", ".join(complete_fields)
+    return f"SELECT basic_record.id"
+    
 
 def build_row_query(project_id: str, row_options: Dict[str, Any]):
-    join_query = __build_rows_by_type(project_id, row_options)
-    query = __get_base_query(project_id, join_query)
-    return query
-
+    return __build_rows_by_type(project_id, row_options)
 
 def __build_rows_by_type(project_id: str, row_options: Dict[str, Any]):
     if row_options.get("type") == "SLICE":
@@ -33,32 +59,51 @@ def __build_rows_by_slice(project_id, slice_id: str):
     slice = data_slice.get(project_id, slice_id)
     slice_type = slice.slice_type
     if slice_type == "STATIC_DEFAULT":
-        return __build_rows_by_static_slice(slice_id)
+        return __record_ids_by_static_slice_query(project_id, slice_id)
     elif slice_type == "DYNAMIC_DEFAULT":
         return __build_rows_by_dynamic_slice(project_id, slice)
     else:
         message = f"Type of slice {slice_type} not allowed."
         raise Exception(message)
 
-def __build_rows_by_static_slice(slice_id: str):
-    return f"""INNER JOIN (SELECT dsra.record_id
-    FROM data_slice_record_association dsra
-    WHERE dsra.data_slice_id = '{slice_id}') dsra
-    ON r.id = dsra.record_id"""
+def __record_ids_by_static_slice_query(project_id: str, slice_id: str):
+    return f"""
+    FROM (
+        SELECT r.id, r.data
+        FROM data_slice_record_association dsra
+        JOIN record r
+        ON r.id = dsra.record_id
+        AND r.project_id = '{project_id}'
+        AND dsra.project_id = '{project_id}'
+        WHERE dsra.data_slice_id = '{slice_id}') basic_record"""
 
 def __build_rows_by_dynamic_slice(project_id, slice):
     dynamic_slice_select_query = generate_select_sql(project_id, slice.filter_data, 0, 0)
-    return f"""INNER JOIN ({dynamic_slice_select_query}) dsra
-    ON r.id = dsra.record_id"""
+    return f"""
+    FROM (
+        SELECT r.id, r.data
+        FROM record r
+        JOIN (
+           {dynamic_slice_select_query} 
+        ) dsra
+        ON r.id = dsra.record_id
+        AND r.project_id = '{project_id}') basic_record"""
 
 def __build_rows_by_session(project_id, session_id: str):
     session = user_session.get(project_id, session_id)
-    return f"""INNER JOIN ({session.id_sql_statement}) session
-    ON r.id = session.record_id"""
+    return f"""
+    FROM (
+        SELECT r.id, r.data
+        FROM record r
+        JOIN (
+            {session.id_sql_statement}
+        ) user_session
+        ON r.id = user_session.record_id
+        AND r.project_id = '{project_id}') basic_record"""
 
-def __get_base_query(project_id: str, join_query: str):
+def __get_base_id_query(project_id: str, join_query: str, attributes_query_select_part):
     query = f"""
-    SELECT r.id
+    SELECT r.id, {attributes_query_select_part}
     FROM record r"""
     if join_query:
         query += f"""
@@ -67,3 +112,46 @@ def __get_base_query(project_id: str, join_query: str):
     query += f"""
     WHERE r.project_id = '{project_id}'"""  
     return query
+
+
+def build_attribute_queries(project_id, column_options):
+    attributes = attribute.get_all(project_id)
+    attribute_names = {str(lt.id): lt.name for lt in attributes if str(lt.id) in column_options.get("attributes")}
+    new = []
+    for id in column_options.get("attributes"):
+        new.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
+
+    return ", ".join(new)
+
+
+def build_column_query(project_id, record_ids_query, column_options):
+    labeling_task_ids = column_options.get("labeling_tasks")
+    projects_tasks = labeling_task.get_all(project_id)
+    labeling_task_names = {str(lt.id): lt.name for lt in projects_tasks if str(lt.id) in labeling_task_ids}
+    header = [f"{labeling_task_names.get(id)}.{labeling_task_names.get(id)}" for id in labeling_task_ids]
+    headers = ", ".join(header)
+    query = f"""SELECT basic_record.id, {headers}
+    FROM ({record_ids_query}) basic_record
+    """
+    for id in labeling_task_ids:
+        query += build_labeling_task_column_query(id, labeling_task_names.get(id))
+    print(20*"-")
+    print(query)
+    print(20*"-")
+    return query
+
+
+def build_labeling_task_column_query(labeling_task_id, name):
+    return f"""
+    LEFT JOIN (
+        SELECT rla.record_id , x.name as {name}
+    	FROM record_label_association rla 
+    	INNER JOIN (
+	        select id, name
+	        from labeling_task_label  
+	        where labeling_task_id = '{labeling_task_id}'
+	    ) x
+   		ON rla.labeling_task_label_id  = x.id
+   		WHERE rla.source_type = 'MANUAL'
+    ) {name}
+    ON {name}.record_id = basic_record.id"""
