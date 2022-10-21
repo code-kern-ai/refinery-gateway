@@ -60,8 +60,6 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
     else:
         relative_position = prev_relative_position + 1
 
-    # name = util.find_free_name(project_id)
-
     attribute_item: Attribute = attribute.create(
         project_id,
         name,

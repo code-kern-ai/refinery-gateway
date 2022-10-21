@@ -13,23 +13,6 @@ image = os.getenv("AC_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
 
 
-def find_free_name(project_id: str) -> str:
-    attribute_items = attribute.get_all(project_id, state_filter=[])
-    reg_ex = "^attribute_([0-9]+)$"
-    counter_list = []
-    for item in attribute_items:
-        match = re.match(reg_ex, item.name)
-        if match:
-            counter_list.append(int(match.group(1)))
-
-    if counter_list:
-        counter = max(max(counter_list), len(attribute_items)) + 1
-    else:
-        counter = len(attribute_items) + 1
-
-    return "attribute_" + str(counter)
-
-
 def add_log_to_attribute_logs(
     project_id: str, attribute_id: str, log: str, append_to_logs: bool = True
 ) -> None:
