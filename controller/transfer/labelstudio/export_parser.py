@@ -63,6 +63,7 @@ def parse_row_current_confidence(row: pd.Series, data_col_name: str):
 def __get_record_data_dummy(
     project_id: str, data_column_name: str
 ) -> pd.DataFrame:  # List[Dict[str,Any]]:
+    # TODO: filter / group for task id to prevent multiple answers for same record
     query = f"""
     SELECT 
         extract_data_grabber.record_id::TEXT,
