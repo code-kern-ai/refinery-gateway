@@ -25,31 +25,25 @@ def query_builder_dummy():
         {
             "type": enums.LabelSource.INFORMATION_SOURCE.value,
             "source_id": "bad0c224-0e27-4555-aed6-efb1eb8da4fb",
+            "name": "extract",
         },
         {"type": enums.LabelSource.MANUAL.value, "source_id": None},
     ]
-    # can be build dynamically
-    BASE_QUERY = f"""@@WITH_PLACEHOLDER@@
-SELECT 
-    r.id::TEXT record_id@@SELECT_PLACEHOLDER@@
-FROM RECORD r
-@@FROM_PLACEHOLDER@@
-WHERE r.project_id = '{PROJECT_ID}'
-    """
 
     extraction_appends = get_extraction_task_appends(
         PROJECT_ID, LABELING_TASKS_BY_ID, LABEL_SOURCES
     )
-    final_query = BASE_QUERY
-    final_query = final_query.replace(
-        "@@WITH_PLACEHOLDER@@", extraction_appends["WITH"]
-    )
-    final_query = final_query.replace(
-        "@@SELECT_PLACEHOLDER@@", extraction_appends["SELECT"]
-    )
-    final_query = final_query.replace(
-        "@@FROM_PLACEHOLDER@@", extraction_appends["FROM"]
-    )
+
+    # can be build dynamically
+    final_query = f"""
+{extraction_appends["WITH"]}
+SELECT 
+    r.id::TEXT record_id
+    {extraction_appends["SELECT"]}
+FROM RECORD r
+{extraction_appends["FROM"]}
+WHERE r.project_id = '{PROJECT_ID}'
+    """
 
     df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
     df = parse_dataframe_data(PROJECT_ID, df, extraction_appends)
@@ -57,6 +51,7 @@ WHERE r.project_id = '{PROJECT_ID}'
     # only for testing purposes
     df.to_csv("tmp/myfile.csv", index=False)
     df.to_json("tmp/myfile.json", orient="records")
+    print(final_query)
     print(df)
 
 
@@ -124,8 +119,7 @@ def get_extraction_task_appends(
             ed_part = __get_extraction_data_query_and_select(
                 counter,
                 labeling_tasks_by_id[key],
-                source["type"],
-                source["source_id"],
+                source,
             )
             extraction_queries |= ed_part
             x = first_item(ed_part)
@@ -145,11 +139,9 @@ def get_extraction_task_appends(
 
 
 def __get_extraction_data_query_and_select(
-    query_counter: int,
-    task: LabelingTask,
-    source_type: str,
-    add_id: Optional[str] = None,
+    query_counter: int, task: LabelingTask, source: Dict[str, str]
 ) -> Dict[str, Tuple[str, str]]:
+    source_type = source["type"]
     try:
         source_type_parsed = enums.LabelSource[source_type.upper()]
     except KeyError:
@@ -159,7 +151,7 @@ def __get_extraction_data_query_and_select(
     if source_type_parsed == enums.LabelSource.MANUAL:
         on_add += f" AND ed.is_valid_manual_label = TRUE "
     elif source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
-        on_add += f" AND ed.source_id = '{add_id}' "
+        on_add += f" AND ed.source_id = '{source['source_id']}' "
     else:
         # WEAK_SUPERVISION & MODEL_CALLBACK -> nothing to do
         pass
@@ -175,6 +167,8 @@ def __get_extraction_data_query_and_select(
         ON {query_alias}.record_id = r.id AND {query_alias}.project_id = r.project_id
     """
     base_name = f"{task.name}__{source_type}"
+    if source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
+        base_name += f"__{source['name']}"
     select = f""",\n    {query_alias}.task_data \"{base_name}__task_data\",\n    {query_alias}.token_info \"{base_name}__token_info\""""
 
     return {
