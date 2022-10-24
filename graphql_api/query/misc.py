@@ -60,7 +60,7 @@ class MiscQuery(graphene.ObjectType):
         return manager.has_updates()
 
     def resolve_helper(self, info) -> bool:
-        import controller.transfer.labelstudio.export_parser as export_parser
+        import controller.transfer.export_parser as export_parser
 
-        export_parser.dummy()
+        export_parser.query_builder_dummy()
         return True
