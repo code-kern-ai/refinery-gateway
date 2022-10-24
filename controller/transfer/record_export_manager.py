@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 from service.search.search import generate_select_sql
 from submodules.model.business_objects import (
@@ -10,18 +10,19 @@ from submodules.model.business_objects import (
     information_source,
 )
 from submodules.model import enums
+from submodules.model.models import LabelingTask
 
 
-def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = None):
+def export_records(
+    project_id: str, export_options: Optional[Dict[str, Any]] = None
+) -> Any:  # returns complex record and rla combination
+    # collecting data for database query creation
     column_options = export_options.get("columns")
     row_options = export_options.get("rows")
 
     attributes_options = column_options.get("attributes")
     task_options = column_options.get("labeling_tasks")
     sources_options = column_options.get("sources")
-
-    if not attributes_options and not attributes_options and not sources_options:
-        raise Exception("Empty export options")
 
     tasks = labeling_task.get_all(project_id)
     labeling_task_names = {str(lt.id): lt.name for lt in tasks}
@@ -30,6 +31,10 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
     attributes = attribute.get_all(project_id)
     attribute_names = {str(lt.id): lt.name for lt in attributes}
 
+    if not attributes_options and not attributes_options and not sources_options:
+        raise Exception("No export options found.")
+
+    # prepare table names and build dictionaries for query creation
     tables_meta_data = __extract_table_meta_data(
         project_id,
         task_options,
@@ -37,10 +42,10 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
         attribute_names,
         labeling_task_names,
         sources_options,
-        attributes_options,
     )
+
+    # root select part
     query = f"SELECT basic_record.id"
-    print("----")
     if attributes_options:
         attributes_select_query = __attributes_select_query(
             attributes_options, attribute_names
@@ -51,9 +56,11 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
         tasks_select_query = __labeling_tasks_select_query(tables_meta_data)
         query += f", {tasks_select_query}"
 
+    # row part and record data part
     record_data_query = __get_record_data_query(project_id, row_options)
     query += record_data_query
 
+    # task columns part
     if task_options and sources_options:
         labeling_task_data_query = __columns_by_table_meta_data_query(
             project_id, tables_meta_data
@@ -61,51 +68,55 @@ def export_records(project_id: str, export_options: Optional[Dict[str, Any]] = N
         query += labeling_task_data_query
 
     print(query)
-    result_set = general.execute_all(query)
-    print(len(result_set))
+    return general.execute_all(query)
 
 
 def __extract_table_meta_data(
-    project_id,
-    selected_tasks,
-    tasks_by_id,
-    attribute_names,
-    task_names,
-    sources,
-    attributes_options,
-):
+    project_id: str,
+    selected_tasks: List[str],
+    tasks_by_id: Dict[str, LabelingTask],
+    attribute_names: Dict[str, str],
+    task_names: Dict[str, str],
+    sources: Dict[str, Any],
+) -> Dict[str, Dict[str, Any]]:
+    # Is used for combining table names according to convention and data for further creation of queries into a complex dict
+
     tables_meta_data = {}
     for task_id in selected_tasks:
         task = tasks_by_id.get(task_id)
-        attribute_task_name = ""
-        if task.attribute_id:
-            attribute_task_name = attribute_names.get(str(task.attribute_id))
-
-        attribute_task_name += f"__{task_names.get(task_id)}"
+        attribute_name = attribute_names.get(str(task.attribute_id))
+        attribute_and_task_name_part = (
+            f"{attribute_name}__{task.name}" if attribute_name else f"__{task.name}"
+        )
 
         for source in sources:
             full_table_name = ""
             addtional_confidence_table_name = ""
             tablename_dict = {}
             additional_confidence_table = {}
-            if source.get("type") == "INFORMATION_SOURCE":  # TODO add enum here
+
+            if source.get("type") == enums.LabelSource.INFORMATION_SOURCE.value:
                 source_entity = information_source.get(project_id, source.get("id"))
                 if str(source_entity.labeling_task_id) == task_id:
-                    full_table_name = f"{attribute_task_name}__{source_entity.name}"
+                    full_table_name = (
+                        f"{attribute_and_task_name_part}__{source_entity.name}"
+                    )
                     tablename_dict["task_id"] = task_id
                     tablename_dict["task_type"] = task.task_type
                     tablename_dict["source_id"] = source.get("id")
                     tablename_dict["source_type"] = source.get("type")
                     tablename_dict["confidence_table"] = False
             else:
-                full_table_name = f"{attribute_task_name}__{source.get('type')}"
+                full_table_name = (
+                    f"{attribute_and_task_name_part}__{source.get('type')}"
+                )
                 tablename_dict["source_type"] = source.get("type")
                 tablename_dict["task_id"] = task_id
                 tablename_dict["task_type"] = task.task_type
                 tablename_dict["confidence_table"] = False
 
                 if (
-                    source.get("type") == "WEAK_SUPERVISION"
+                    source.get("type") == enums.LabelSource.WEAK_SUPERVISION.value
                     and task.task_type == enums.LabelingTaskType.CLASSIFICATION.value
                 ):
                     addtional_confidence_table_name = f"{full_table_name}_CONFIDENCE"
@@ -124,7 +135,9 @@ def __extract_table_meta_data(
     return tables_meta_data
 
 
-def __attributes_select_query(selected_attribute_ids, attribute_names):
+def __attributes_select_query(
+    selected_attribute_ids: List[str], attribute_names: Dict[str, str]
+) -> str:
     attribute_json_selections = []
     for id in selected_attribute_ids:
         attribute_json_selections.append(
@@ -133,7 +146,7 @@ def __attributes_select_query(selected_attribute_ids, attribute_names):
     return ",\n".join(attribute_json_selections)
 
 
-def __labeling_tasks_select_query(tables_meta_data):
+def __labeling_tasks_select_query(tables_meta_data: Dict[str, Any]) -> str:
     task_selections = []
     for table_name, table_data in tables_meta_data.items():
 
@@ -151,17 +164,17 @@ def __labeling_tasks_select_query(tables_meta_data):
     return ",\n".join(task_selections)
 
 
-def __get_record_data_query(project_id: str, row_options: Dict[str, Any]):
+def __get_record_data_query(project_id: str, row_options: Dict[str, Any]) -> str:
     return __record_data_by_type(project_id, row_options)
 
 
-def __record_data_by_type(project_id: str, row_options: Dict[str, Any]):
+def __record_data_by_type(project_id: str, row_options: Dict[str, Any]) -> str:
     if row_options.get("type") == "SLICE":
         return ___record_data_by_slice(project_id, row_options.get("id"))
     elif row_options.get("type") == "SESSION":
         return __record_data_by_session(project_id, row_options.get("id"))
     elif row_options.get("type") == "ALL":
-        return __record_data_of_all(project_id)
+        return __record_data_without_reducing(project_id)
     else:
         message = (
             f"Type of filter {row_options.get('source_type')} for rows not allowed."
@@ -169,27 +182,19 @@ def __record_data_by_type(project_id: str, row_options: Dict[str, Any]):
         raise Exception(message)
 
 
-def ___record_data_by_slice(project_id, slice_id: str):
+def ___record_data_by_slice(project_id: str, slice_id: str) -> str:
     slice = data_slice.get(project_id, slice_id)
     slice_type = slice.slice_type
-    if slice_type == "STATIC_DEFAULT":
+    if slice_type == enums.SliceTypes.STATIC_DEFAULT.value:
         return __record_data_by_static_slice_query(project_id, slice_id)
-    elif slice_type == "DYNAMIC_DEFAULT":
+    elif slice_type == enums.SliceTypes.DYNAMIC_DEFAULT.value:
         return __record_data_by_dynamic_slice(project_id, slice)
     else:
         message = f"Type of slice {slice_type} not allowed."
         raise Exception(message)
 
 
-def __record_data_of_all(project_id: str):
-    return f"""
-    FROM (
-        SELECT r.id, r.data
-        FROM record r
-        WHERE r.project_id = '{project_id}') basic_record"""
-
-
-def __record_data_by_static_slice_query(project_id: str, slice_id: str):
+def __record_data_by_static_slice_query(project_id: str, slice_id: str) -> str:
     return f"""
     FROM (
         SELECT r.id, r.data
@@ -201,7 +206,7 @@ def __record_data_by_static_slice_query(project_id: str, slice_id: str):
         WHERE dsra.data_slice_id = '{slice_id}') basic_record"""
 
 
-def __record_data_by_dynamic_slice(project_id, slice):
+def __record_data_by_dynamic_slice(project_id: str, slice: str) -> str:
     dynamic_slice_select_query = generate_select_sql(
         project_id, slice.filter_data, 0, 0
     )
@@ -216,7 +221,7 @@ def __record_data_by_dynamic_slice(project_id, slice):
         AND r.project_id = '{project_id}') basic_record"""
 
 
-def __record_data_by_session(project_id, session_id: str):
+def __record_data_by_session(project_id: str, session_id: str) -> str:
     session = user_session.get(project_id, session_id)
     return f"""
     FROM (
@@ -229,7 +234,17 @@ def __record_data_by_session(project_id, session_id: str):
         AND r.project_id = '{project_id}') basic_record"""
 
 
-def __columns_by_table_meta_data_query(project_id, tables_meta_data):
+def __record_data_without_reducing(project_id: str) -> str:
+    return f"""
+    FROM (
+        SELECT r.id, r.data
+        FROM record r
+        WHERE r.project_id = '{project_id}') basic_record"""
+
+
+def __columns_by_table_meta_data_query(
+    project_id: str, tables_meta_data: Dict[str, Any]
+) -> str:
     query = ""
     for table_name in tables_meta_data:
         table_meta_data = tables_meta_data.get(table_name)
@@ -264,8 +279,12 @@ def __columns_by_table_meta_data_query(project_id, tables_meta_data):
 
 
 def __classification_column_by_table_meta_data_query(
-    project_id, labeling_task_id, table_name, source_id, source_type
-):
+    project_id: str,
+    labeling_task_id: str,
+    table_name: str,
+    source_id: str,
+    source_type: str,
+) -> str:
     return f"""
     LEFT JOIN (
         SELECT rla.record_id, {table_name}_ltl_outer.name, rla.confidence
@@ -279,14 +298,14 @@ def __classification_column_by_table_meta_data_query(
    		ON rla.labeling_task_label_id  = {table_name}_ltl_outer.id
         AND rla.project_id = '{project_id}'
    		WHERE {__source_constraint(source_id, source_type)}
-        AND rla.return_type = 'RETURN'
+        AND rla.return_type = '{enums.InformationSourceReturnType.RETURN.value}'
     ) {table_name}
     ON {table_name}.record_id = basic_record.id"""
 
 
 def __extraction_column_by_table_meta_data_query(
-    project_id, table_name, source_id, source_type
-):
+    project_id: str, table_name: str, source_id: str, source_type: str
+) -> str:
     return f"""
     LEFT JOIN(
         SELECT 
@@ -331,7 +350,7 @@ def __extraction_column_by_table_meta_data_query(
                 WHERE a.project_id = '{project_id}' 
             ) token_info
                 ON rla.record_id = token_info.record_id AND lt.attribute_id = token_info.attribute_id AND rla.project_id = token_info.project_id
-            WHERE rla.return_type = 'YIELD' --ensure extraction
+            WHERE rla.return_type = '{enums.InformationSourceReturnType.YIELD.value}' --ensure extraction
             AND rla.project_id ='{project_id}'
             AND  {__source_constraint(source_id, source_type)}
         ) extract_data_grabber
@@ -340,33 +359,33 @@ def __extraction_column_by_table_meta_data_query(
     ON {table_name}.record_id = basic_record.id"""
 
 
-def __source_constraint(source_id, source_type):  # TODO enums here
-    if source_type == "MANUAL":
-        return __manual_source()
-    elif source_type == "INFORMATION_SOURCE":
-        return __information_source_source(source_id)
-    elif source_type == "MODEL_CALLBACK":
-        return __model_source()
-    elif source_type == "WEAK_SUPERVISION":
-        return __weak_supervision_source()
+def __source_constraint(source_id: str, source_type: str) -> str:  # TODO enums here
+    if source_type == enums.LabelSource.MANUAL.value:
+        return __manual_source_filtering()
+    elif source_type == enums.LabelSource.INFORMATION_SOURCE.value:
+        return __information_source_source_filtering(source_id)
+    elif source_type == enums.LabelSource.MODEL_CALLBACK.value:
+        return __model_source_filtering()
+    elif source_type == enums.LabelSource.WEAK_SUPERVISION.value:
+        return __weak_supervision_source_filtering()
     else:
         message = f"Type {source_type} not allowed for label sources."
         raise Exception(message)
 
 
-def __manual_source():
-    return """rla.source_type = 'MANUAL'
+def __manual_source_filtering() -> str:
+    return f"""rla.source_type = '{enums.LabelSource.MANUAL.value}'
     AND rla.is_valid_manual_label"""
 
 
-def __weak_supervision_source():
-    return "rla.source_type = 'WEAK_SUPERVISION'"
-
-
-def __model_source():
-    return "rla.source_type = 'MODEL_CALLBACK'"
-
-
-def __information_source_source(source_id):
-    return f"""rla.source_type = 'INFORMATION_SOURCE'
+def __information_source_source_filtering(source_id: str) -> str:
+    return f"""rla.source_type = '{enums.LabelSource.INFORMATION_SOURCE.value}'
                 AND rla.source_id = '{source_id}'"""
+
+
+def __model_source_filtering() -> str:
+    return f"rla.source_type = '{enums.LabelSource.MODEL_CALLBACK.value}'"
+
+
+def __weak_supervision_source_filtering() -> str:
+    return f"rla.source_type = '{enums.LabelSource.WEAK_SUPERVISION.value}'"
