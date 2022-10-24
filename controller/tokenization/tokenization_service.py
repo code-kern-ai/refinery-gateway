@@ -36,3 +36,13 @@ def request_create_rats_entries(
         "attribute_id": str(attribute_id),
     }
     service_requests.post_call_or_raise(url, data)
+
+
+def request_reupload_docbins(
+    project_id: str,
+) -> None:
+    url = f"{BASE_URI}/reupload_docbins"
+    data = {
+        "project_id": str(project_id),
+    }
+    service_requests.post_call_or_raise(url, data)

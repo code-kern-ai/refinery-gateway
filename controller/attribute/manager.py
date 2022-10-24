@@ -1,6 +1,9 @@
 import time
 from typing import List, Tuple
-from controller.tokenization.tokenization_service import request_tokenize_project
+from controller.tokenization.tokenization_service import (
+    request_tokenize_project,
+    request_reupload_docbins,
+)
 from submodules.model.business_objects import attribute, record, tokenization
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
@@ -254,6 +257,11 @@ def __calculate_user_attribute_all_records(
             time.sleep(2)
 
         request_tokenize_project(project_id, user_id)
+    else:
+        util.add_log_to_attribute_logs(
+            project_id, attribute_id, "Adding attribute to docbins."
+        )
+        request_reupload_docbins(project_id)
 
     attribute.update(
         project_id=project_id,
