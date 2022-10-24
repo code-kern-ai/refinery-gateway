@@ -50,15 +50,15 @@ def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute
         task = tasks_by_id.get(task_id)
         attribute_task_name = ""
         if task.attribute_id:
-            """             if not task.attribute_id in attributes_options:
-                            continue """
             attribute_task_name = attribute_names.get(str(task.attribute_id))
 
         attribute_task_name += f"__{task_names.get(task_id)}"
 
         for source in sources:
             full_table_name = ""
+            addtional_confidence_table_name = ""
             tablename_dict = {}
+            additional_confidence_table = {}
             if source.get("type") == "INFORMATION_SOURCE": # TODO add enum here
                 source_entity = information_source.get(project_id, source.get("id"))
                 if str(source_entity.labeling_task_id) == task_id:
@@ -71,21 +71,29 @@ def __extract_table_meta_data(project_id, selected_tasks, tasks_by_id, attribute
                 tablename_dict["type"] = source.get("type") 
                 tablename_dict["task_id"] = task_id
 
+                if source.get("type") == "WEAK_SUPERVISION":
+                    addtional_confidence_table_name=f"{full_table_name}_CONFIDENCE"
+                    additional_confidence_table["type"] = source.get("type") 
+                    additional_confidence_table["task_id"] = task_id
+
             if tablename_dict and full_table_name:
                 tables_meta_data[full_table_name] = tablename_dict
+                if additional_confidence_table:
+                    tables_meta_data[addtional_confidence_table_name] = additional_confidence_table
+
     return tables_meta_data
 
 def __attributes_select_query(selected_attribute_ids, attribute_names):
     attribute_json_selections = []
     for id in selected_attribute_ids:
         attribute_json_selections.append(f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}")
-    return ", ".join(attribute_json_selections)
+    return ",\n".join(attribute_json_selections)
 
 def __labeling_tasks_select_query(tablenames):
     task_selections = []
     for tablename in tablenames:
         task_selections.append(f"{tablename}.name as {tablename}")
-    return ", ".join(task_selections)
+    return ",\n".join(task_selections)
 
 
 def __get_record_data_query(project_id: str, row_options: Dict[str, Any]):
@@ -137,10 +145,10 @@ def __record_data_by_dynamic_slice(project_id, slice):
     return f"""
     FROM (
         SELECT r.id, r.data
-        FROM record r
-        JOIN (
+        FROM (
            {dynamic_slice_select_query} 
         ) dsra
+        INNER JOIN record r
         ON r.id = dsra.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
@@ -149,10 +157,10 @@ def __record_data_by_session(project_id, session_id: str):
     return f"""
     FROM (
         SELECT r.id, r.data
-        FROM record r
-        JOIN (
+        FROM (
             {session.id_sql_statement}
         ) user_session
+        INNER JOIN record r
         ON r.id = user_session.record_id
         AND r.project_id = '{project_id}') basic_record"""
 
