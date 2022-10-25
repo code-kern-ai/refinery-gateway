@@ -6,7 +6,10 @@ from controller.project import manager as project_manager
 from graphql_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
 from submodules.model.business_objects import tokenization, attribute
-from submodules.model.business_objects.record import __get_tokenized_record
+from submodules.model.business_objects.record import (
+    get_tokenized_record_from_db,
+    get_tokenized_records_from_db,
+)
 from util import daemon
 from controller.tokenization import tokenization_service
 from controller.tokenization.tokenization_service import (
@@ -99,10 +102,10 @@ def start_project_tokenization(project_id: str, user_id: str) -> None:
 def __get_docs_from_db(project_id: str, record_id: str) -> Dict[str, Any]:
     vocab = get_blank_tokenizer_vocab(project_id)
 
-    table_entry = __get_tokenized_record(project_id, record_id)
+    table_entry = get_tokenized_record_from_db(project_id, record_id)
     if not table_entry:
         tokenization_service.request_tokenize_record(project_id, record_id)
-        table_entry = __get_tokenized_record(project_id, record_id)
+        table_entry = get_tokenized_record_from_db(project_id, record_id)
 
     doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
     docs = list(doc_bin_loaded.get_docs(vocab))
@@ -110,6 +113,41 @@ def __get_docs_from_db(project_id: str, record_id: str) -> Dict[str, Any]:
     for (col, doc) in zip(table_entry.columns, docs):
         doc_dict[col] = doc
     return doc_dict
+
+
+def get_all_docs_from_db(
+    project_id: str, record_ids: List[str]
+) -> Dict[str, Dict[str, Any]]:
+    vocab = get_blank_tokenizer_vocab(project_id)
+    table_entries = get_tokenized_records_from_db(project_id, record_ids)
+    doc_dict = {}
+    for table_entry in table_entries:
+        record_id = str(table_entry.record_id)
+        doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
+        docs = list(doc_bin_loaded.get_docs(vocab))
+        for (col, doc) in zip(table_entry.columns, docs):
+            doc_dict[record_id] = {}
+            if not doc_dict.get(record_id):
+                doc_dict[record_id] = {}
+            doc_dict[record_id][col] = doc
+    return doc_dict
+
+
+def get_token_dict_for_records(
+    project_id: str, record_ids: List[str]
+) -> Dict[str, Dict[str, List[int]]]:
+    # record_id -> attribute_name -> [ {start:token.idx, end:token.idx + len(token)}]
+    doc_dict = get_all_docs_from_db(project_id, record_ids)
+    return {
+        record_id: {
+            attribute_name: [
+                {"start": token.idx, "end": token.idx + len(token)}
+                for token in doc_dict[record_id][attribute_name]
+            ]
+            for attribute_name in doc_dict[record_id]
+        }
+        for record_id in doc_dict
+    }
 
 
 def __init_blank_tokenizer_vocab(language: str) -> None:

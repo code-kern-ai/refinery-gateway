@@ -10,49 +10,58 @@ from submodules.model.business_objects.export import OUTSIDE_CONSTANT
 from submodules.model import enums
 from submodules.model.business_objects import labeling_task
 from submodules.model.models import LabelingTask
-from util.miscellaneous_functions import first_item
+from util.miscellaneous_functions import first_item, get_max_length_of_task_labels
 
 from util.sql_helper import parse_sql_text
 
 
 def query_builder_dummy():
     # unsure about the format so im guessing here
-    PROJECT_ID = "372b4aac-679d-4d1b-9097-e85b53728a70"
+    PROJECT_ID = "9aa46111-500a-4db3-b7f8-03d7071da82e"
     tasks = labeling_task.get_all(PROJECT_ID)
     LABELING_TASKS_BY_ID = {str(task.id): task for task in tasks}
     LABEL_SOURCES = [
         {"type": enums.LabelSource.WEAK_SUPERVISION.value, "source_id": None},
         {
             "type": enums.LabelSource.INFORMATION_SOURCE.value,
-            "source_id": "bad0c224-0e27-4555-aed6-efb1eb8da4fb",
-            "name": "extract",
+            "source_id": "78bb3ad4-1d35-4a1a-bfa9-ad33b9a5b931",
+            "name": "tmp_func",
         },
         {"type": enums.LabelSource.MANUAL.value, "source_id": None},
     ]
 
     extraction_appends = get_extraction_task_appends(
-        PROJECT_ID, LABELING_TASKS_BY_ID, LABEL_SOURCES
+        PROJECT_ID, LABELING_TASKS_BY_ID, LABEL_SOURCES, True
     )
 
     # can be build dynamically
     final_query = f"""
 {extraction_appends["WITH"]}
 SELECT 
-    r.id::TEXT record_id
+    r.id::TEXT record_id,
+    r.data::json->'running_id' as "running_id",
+    r.data::json->'headline' as "headline"
     {extraction_appends["SELECT"]}
 FROM RECORD r
 {extraction_appends["FROM"]}
 WHERE r.project_id = '{PROJECT_ID}'
+LIMIT 10
     """
 
+    # print(final_query)
     df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
-    df = parse_dataframe_data(PROJECT_ID, df, extraction_appends)
-
     # only for testing purposes
+
+    if False:
+        df = parse_dataframe_data(PROJECT_ID, df, extraction_appends)
+    else:
+        from .labelstudio import export_parser as ls_export_parser
+
+        df = ls_export_parser.parse_dataframe_data(PROJECT_ID, df)
+
     df.to_csv("tmp/myfile.csv", index=False)
     df.to_json("tmp/myfile.json", orient="records")
-    print(final_query)
-    print(df)
+    # print(df)
 
 
 def parse_dataframe_data(
@@ -66,7 +75,7 @@ def parse_dataframe_data(
         if task.id not in task_add_info:
             task_add_info[task.id] = {
                 "ATT_NAME": attribute.get(project_id, task.attribute_id).name,
-                "MAX_LEN": str(__get_max_length_of_task_labels(task)),
+                "MAX_LEN": str(get_max_length_of_task_labels(task)),
             }
         base_name = extraction_appends["EX_QUERIES"][key]["base_name"]
 
@@ -89,17 +98,11 @@ def parse_dataframe_data(
     return df
 
 
-def __get_max_length_of_task_labels(task: LabelingTask) -> int:
-    max_len = len(max([l.name for l in task.labels], key=len)) + 2
-    if max_len < len(OUTSIDE_CONSTANT):
-        return len(OUTSIDE_CONSTANT)
-    return max_len
-
-
 def get_extraction_task_appends(
     project_id: str,
     labeling_tasks_by_id: Dict[str, LabelingTask],
     label_sources: List[Dict[str, str]],
+    with_user_id: bool = False,
 ) -> Dict[str, Union[str, Dict[str, str]]]:
     return_values = {"WITH": "", "SELECT": "", "FROM": "", "EX_QUERIES": None}
 
@@ -130,7 +133,9 @@ def get_extraction_task_appends(
         has_extraction = True
 
     if has_extraction:
-        return_values["WITH"] = __get_with_query_extraction_tasks(project_id)
+        return_values["WITH"] = __get_with_query_extraction_tasks(
+            project_id, with_user_id
+        )
         return_values["EX_QUERIES"] = extraction_queries
     return return_values
 
@@ -166,7 +171,8 @@ def __get_extraction_data_query_and_select(
     ) {query_alias}
         ON {query_alias}.record_id = r.id AND {query_alias}.project_id = r.project_id
     """
-    base_name = f"{task.name}__{source_type}"
+    attribute_name = __get_attribute_name_from_task(task)
+    base_name = f"{attribute_name}__{task.name}__{source_type}"
     if source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
         base_name += f"__{source['name']}"
     select = f""",\n    {query_alias}.task_data \"{base_name}__task_data\",\n    {query_alias}.token_info \"{base_name}__token_info\""""
@@ -181,7 +187,16 @@ def __get_extraction_data_query_and_select(
     }
 
 
-def __get_with_query_extraction_tasks(project_id: str) -> str:
+def __get_attribute_name_from_task(task: LabelingTask) -> str:
+    return attribute.get(task.project_id, task.attribute_id).name
+
+
+def __get_with_query_extraction_tasks(
+    project_id: str, with_user_id: bool = False
+) -> str:
+    created_by_add = ""
+    if with_user_id:
+        created_by_add = ",\n   	         'created_by', rla.created_by"
     return f"""WITH token_info AS (
 	SELECT 
 		record_id, 
@@ -229,7 +244,7 @@ extraction_data AS (
 		         'confidence', CASE WHEN source_type='{enums.LabelSource.MANUAL.value}' THEN NULL ELSE ROUND(rla.confidence::numeric,4) END,
 		         'source_type', rla.source_type,
 		         'token', token.token,
-		         'label_name', ltl.name )rla_data
+		         'label_name', ltl.name{created_by_add})rla_data
 	     FROM record_label_association rla
 	     INNER JOIN (
 	         SELECT rlat.project_id, rlat.record_label_association_id rla_id, array_agg(rlat.token_index ORDER BY token_index) token
