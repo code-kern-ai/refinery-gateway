@@ -1,6 +1,9 @@
 import time
 from typing import List, Tuple
-from controller.tokenization.tokenization_service import request_tokenize_project
+from controller.tokenization.tokenization_service import (
+    request_tokenize_project,
+    request_reupload_docbins,
+)
 from submodules.model.business_objects import attribute, record, tokenization
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
@@ -53,27 +56,26 @@ def create_attribute(project_id: str, name: str) -> Attribute:
     return attribute_item
 
 
-def create_user_attribute(project_id: str) -> Attribute:
+def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribute:
     prev_relative_position: int = attribute.get_relative_position(project_id)
     if prev_relative_position is None:
         relative_position = 1
     else:
         relative_position = prev_relative_position + 1
 
-    name = util.find_free_name(project_id)
-
     attribute_item: Attribute = attribute.create(
         project_id,
         name,
         relative_position,
-        data_type=DataTypes.TEXT.value,
+        data_type=data_type,
         is_primary_key=False,
         user_created=True,
         state=AttributeState.INITIAL.value,
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id=project_id, message=f"calculate_attribute:created:{str(attribute_item.id)}"
+        project_id=project_id,
+        message=f"calculate_attribute:created:{str(attribute_item.id)}",
     )
 
     return attribute_item
@@ -99,7 +101,8 @@ def update_attribute(
     )
 
     notification.send_organization_update(
-        project_id=project_id, message=f"calculate_attribute:updated:{str(attribute_item.id)}"
+        project_id=project_id,
+        message=f"calculate_attribute:updated:{str(attribute_item.id)}",
     )
 
 
@@ -243,14 +246,22 @@ def __calculate_user_attribute_all_records(
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
-    util.add_log_to_attribute_logs(project_id, attribute_id, "Triggering tokenization.")
-    tokenization.delete_docbins(project_id, with_commit=True)
-    tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
+    if attribute.get(project_id, attribute_id).data_type == DataTypes.TEXT.value:
+        util.add_log_to_attribute_logs(
+            project_id, attribute_id, "Triggering tokenization."
+        )
+        tokenization.delete_docbins(project_id, with_commit=True)
+        tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
 
-    while record.count_tokenized_records(project_id) > 0:
-        time.sleep(2)
+        while record.count_tokenized_records(project_id) > 0:
+            time.sleep(2)
 
-    request_tokenize_project(project_id, user_id)
+        request_tokenize_project(project_id, user_id)
+    else:
+        util.add_log_to_attribute_logs(
+            project_id, attribute_id, "Adding attribute to docbins."
+        )
+        request_reupload_docbins(project_id)
 
     attribute.update(
         project_id=project_id,

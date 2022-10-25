@@ -7,14 +7,16 @@ from controller.attribute import manager
 class CreateUserAttribute(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
+        name = graphene.String(required=True)
+        data_type = graphene.String(required=True)
 
     ok = graphene.Boolean()
     attribute_id = graphene.ID()
 
-    def mutate(self, info, project_id: str):
+    def mutate(self, info, project_id: str, name: str, data_type: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        attribute = manager.create_user_attribute(project_id)
+        attribute = manager.create_user_attribute(project_id, name, data_type)
         return CreateUserAttribute(ok=True, attribute_id=attribute.id)
 
 
