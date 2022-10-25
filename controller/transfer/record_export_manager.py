@@ -39,7 +39,7 @@ def export_records(
         raise Exception("No export options found.")
 
     # prepare table names and build dictionaries for query creation
-    tables_meta_data = __extract_table_meta_classification_data(
+    tables_meta_data, tables_mapping = __extract_table_meta_classification_data(
         project_id,
         task_options,
         labeling_tasks_by_id,
@@ -88,9 +88,7 @@ def export_records(
     print("----- FINAL QUERY IS ------")
     final_query_cleaned = final_query.replace("\n\n", "\n")
     print(final_query_cleaned)
-    x = general.execute_all(final_query_cleaned)
-    print("Len is", len(x))
-    return x
+    return general.execute_all(final_query_cleaned), tables_mapping
 
 
 def create_alias() -> str:
@@ -178,7 +176,7 @@ def __extract_table_meta_classification_data(
                     tables_meta_data[
                         tables_mapping.get(addtional_created_by_name)
                     ] = additional_created_by_table
-    return tables_meta_data
+    return tables_meta_data, tables_mapping
 
 
 def __attributes_select_query(
