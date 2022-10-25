@@ -143,8 +143,10 @@ def __build_annotations_list(
             head = __build_annotation_head(
                 row, user_email_lookup, id_add, user_id, column_info[c]["name"]
             )
-            head["result"] = __build_annotation_result_classification(
-                row, column_info[c]["name"], attribute_fallback
+            head["result"].append(
+                __build_annotation_result_classification(
+                    row, column_info[c]["name"], attribute_fallback
+                )
             )
             return_value.append(head)
             id_add += 1
@@ -158,8 +160,10 @@ def __build_annotations_list(
                 head = __build_annotation_head(
                     row, user_email_lookup, id_add, user_id, column_info[c]["name"]
                 )
-                head["result"] = __build_annotation_result_extraction(
-                    row, column_info[c]["name"], token_lookup, rla
+                head["result"].append(
+                    __build_annotation_result_extraction(
+                        row, column_info[c]["name"], token_lookup, rla
+                    )
                 )
                 return_value.append(head)
                 id_add += 1
