@@ -114,6 +114,7 @@ class TransferQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
+        export_options["columns"]["with_user_id"] = True
         record_export_manager.export_records(project_id, export_options)
         return True
 
