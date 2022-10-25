@@ -1,3 +1,4 @@
+import random
 import string
 from typing import List, Optional, Dict, Any, Tuple, Union
 
@@ -38,7 +39,7 @@ def export_records(
         raise Exception("No export options found.")
 
     # prepare table names and build dictionaries for query creation
-    tables_meta_data = __extract_table_meta_for_record_data_and_classification_data(
+    tables_meta_data = __extract_table_meta_classification_data(
         project_id,
         task_options,
         labeling_tasks_by_id,
@@ -84,7 +85,6 @@ def export_records(
     {extraction_appends["FROM"]}
     WHERE basic_record.project_id = '{project_id}'
     """
-    print(tables_meta_data)
     print("----- FINAL QUERY IS ------")
     final_query_cleaned = final_query.replace("\n\n", "\n")
     print(final_query_cleaned)
@@ -93,7 +93,11 @@ def export_records(
     return x
 
 
-def __extract_table_meta_for_record_data_and_classification_data(
+def create_alias() -> str:
+    return f"{''.join(random.choice(string.ascii_uppercase) for _ in range(10))}"
+
+
+def __extract_table_meta_classification_data(
     project_id: str,
     selected_tasks: List[str],
     tasks_by_id: Dict[str, LabelingTask],
@@ -104,6 +108,7 @@ def __extract_table_meta_for_record_data_and_classification_data(
 ) -> Dict[str, Dict[str, Any]]:
     # Is used for combining table names according to convention and data for further creation of queries into a complex dict
 
+    tables_mapping = {}
     tables_meta_data = {}
     for task_id in selected_tasks:
         task = tasks_by_id.get(task_id)
@@ -128,6 +133,7 @@ def __extract_table_meta_for_record_data_and_classification_data(
                     full_table_name = (
                         f"{attribute_and_task_name_part}__{source_entity.name}"
                     )
+                    tables_mapping[full_table_name] = create_alias()
                     tablename_dict["task_id"] = task_id
                     tablename_dict["task_type"] = task.task_type
                     tablename_dict["source_id"] = source.get("id")
@@ -137,6 +143,7 @@ def __extract_table_meta_for_record_data_and_classification_data(
                 full_table_name = (
                     f"{attribute_and_task_name_part}__{source.get('type')}"
                 )
+                tables_mapping[full_table_name] = create_alias()
                 tablename_dict["source_type"] = source.get("type")
                 tablename_dict["task_id"] = task_id
                 tablename_dict["task_type"] = task.task_type
@@ -144,23 +151,32 @@ def __extract_table_meta_for_record_data_and_classification_data(
 
                 if source.get("type") == enums.LabelSource.WEAK_SUPERVISION.value:
                     addtional_confidence_table_name = f"{full_table_name}_CONFIDENCE"
-                    additional_confidence_table["original_table"] = full_table_name
+                    tables_mapping[addtional_confidence_table_name] = create_alias()
+                    additional_confidence_table["original_table"] = tables_mapping.get(
+                        full_table_name
+                    )
                     additional_confidence_table["table_type"] = "confidence_data"
                     additional_confidence_table["source_type"] = source.get("type")
                     additional_confidence_table["task_id"] = task_id
 
             if tablename_dict and full_table_name:
-                tables_meta_data[full_table_name] = tablename_dict
+                alias = tables_mapping.get(full_table_name)
+                tables_meta_data[alias] = tablename_dict
                 if additional_confidence_table:
+                    tables_mapping[addtional_confidence_table_name] = create_alias()
                     tables_meta_data[
-                        addtional_confidence_table_name
+                        tables_mapping.get(addtional_confidence_table_name)
                     ] = additional_confidence_table
                 if with_user_id:
                     additional_created_by_table = {}
                     additional_created_by_table["table_type"] = "user_data"
-                    additional_created_by_table["original_table"] = full_table_name
+                    additional_created_by_table["original_table"] = tables_mapping.get(
+                        full_table_name
+                    )
+                    addtional_created_by_name = full_table_name + "__created_by"
+                    tables_mapping[addtional_created_by_name] = create_alias()
                     tables_meta_data[
-                        full_table_name + "__created_by"
+                        tables_mapping.get(addtional_created_by_name)
                     ] = additional_created_by_table
     return tables_meta_data
 
@@ -171,7 +187,7 @@ def __attributes_select_query(
     attribute_json_selections = []
     for id in selected_attribute_ids:
         attribute_json_selections.append(
-            f"basic_record.data::json->'{attribute_names.get(id)}' as {attribute_names.get(id)}"
+            f"basic_record.data::json->'{attribute_names.get(id)}' as \"{attribute_names.get(id)}\""
         )
     return ",\n".join(attribute_json_selections)
 
