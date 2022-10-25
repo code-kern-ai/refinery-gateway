@@ -54,7 +54,7 @@ def export_records(
     )
 
     # root select part
-    select_part = f"SELECT basic_record.id"
+    select_part = f"SELECT basic_record.id::TEXT as record_id"
     if attributes_options:
         attributes_select_query = __attributes_select_query(
             attributes_options, attribute_names
@@ -76,7 +76,7 @@ def export_records(
         )
 
     extraction_appends = get_extraction_task_appends(
-        project_id, labeling_tasks_by_id, sources_options
+        project_id, labeling_tasks_by_id, sources_options, True
     )
 
     # can be build dynamically
