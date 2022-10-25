@@ -1,6 +1,7 @@
 import random
 import string
 from typing import List, Optional, Dict, Any, Tuple, Union
+from controller.transfer import export_parser
 
 from service.search.search import generate_select_sql
 from submodules.model.business_objects import (
@@ -39,7 +40,10 @@ def export_records(
         raise Exception("No export options found.")
 
     # prepare table names and build dictionaries for query creation
-    tables_meta_data, tables_mapping = __extract_table_meta_classification_data(
+    (
+        tables_meta_data,
+        tables_mapping_classification,
+    ) = __extract_table_meta_classification_data(
         project_id,
         task_options,
         labeling_tasks_by_id,
@@ -88,7 +92,10 @@ def export_records(
     print("----- FINAL QUERY IS ------")
     final_query_cleaned = final_query.replace("\n\n", "\n")
     print(final_query_cleaned)
-    return general.execute_all(final_query_cleaned), tables_mapping
+
+    mapping_dict = {**tables_mapping_classification, **extraction_appends["MAPPING"]}
+    export_parser.parse(project_id, final_query_cleaned, mapping_dict)
+    return general.execute_all(final_query_cleaned), tables_mapping_classification
 
 
 def create_alias() -> str:
@@ -372,9 +379,15 @@ def get_extraction_task_appends(
     project_id: str,
     labeling_tasks_by_id: Dict[str, LabelingTask],
     label_sources: List[Dict[str, str]],
+    with_user_id: bool = False,
 ) -> Dict[str, Union[str, Dict[str, str]]]:
-    return_values = {"WITH": "", "SELECT": "", "FROM": "", "EX_QUERIES": None}
-
+    return_values = {
+        "WITH": "",
+        "SELECT": "",
+        "FROM": "",
+        "EX_QUERIES": None,
+        "MAPPING": {},
+    }
     if len(labeling_tasks_by_id) == 0:
         return return_values
 
@@ -398,18 +411,21 @@ def get_extraction_task_appends(
             x = first_item(ed_part)
             return_values["SELECT"] += x["SELECT"]
             return_values["FROM"] += x["FROM"]
+            return_values["MAPPING"] |= x["MAPPING"]
             counter += 1
 
         has_extraction = True
 
     if has_extraction:
-        return_values["WITH"] = __get_with_query_extraction_tasks(project_id)
+        return_values["WITH"] = __get_with_query_extraction_tasks(
+            project_id, with_user_id
+        )
         return_values["EX_QUERIES"] = extraction_queries
     return return_values
 
 
 def __get_extraction_data_query_and_select(
-    project_id: str, query_counter: int, task: LabelingTask, source: Dict[str, str]
+    project_id, query_counter: int, task: LabelingTask, source: Dict[str, str]
 ) -> Dict[str, Tuple[str, str]]:
     source_type = source["type"]
     try:
@@ -436,33 +452,51 @@ def __get_extraction_data_query_and_select(
     ) {query_alias}
         ON {query_alias}.record_id = basic_record.id AND {query_alias}.project_id = '{project_id}'
     """
-    base_name = f"{task.name}__{source_type}"
+    attribute_name = __get_attribute_name_from_task(task)
+    base_name = f"{attribute_name}__{task.name}__{source_type}"
     if source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
         base_name += f"__{source['name']}"
-    select = f""",\n    {query_alias}.task_data \"{base_name}__task_data\",\n    {query_alias}.token_info \"{base_name}__token_info\""""
+
+    td_mapping = f"{query_alias}_td"
+    ti_mapping = f"{query_alias}_ti"
+    mapping = {
+        td_mapping: f"{base_name}__task_data",
+        ti_mapping: f"{base_name}__token_info",
+    }
+
+    select = f""",\n    {query_alias}.task_data \"{td_mapping}\",\n    {query_alias}.token_info \"{ti_mapping}\""""
 
     return {
         query_alias: {
             "SELECT": select,
             "FROM": query,
+            "MAPPING": mapping,
             "base_name": base_name,
             "task": task,
         }
     }
 
 
-def __get_with_query_extraction_tasks(project_id: str) -> str:
+def __get_attribute_name_from_task(task: LabelingTask) -> str:
+    return attribute.get(task.project_id, task.attribute_id).name
+
+
+def __get_with_query_extraction_tasks(
+    project_id: str, with_user_id: bool = False
+) -> str:
+    created_by_add = ""
+    if with_user_id:
+        created_by_add = ",\n   	         'created_by', rla.created_by"
     return f"""WITH token_info AS (
 	SELECT 
 		record_id, 
 		project_id,
 		attribute_id,
-		attribute_name, 
 		jsonb_build_object(
 			'token_count',num_token,
 			'char_count',num_char) token_info
 	FROM(
-		SELECT r.id record_id, r.project_id, a.name attribute_name, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
+		SELECT r.id record_id, r.project_id, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
 		FROM attribute a
 		INNER JOIN record r
 		    ON a.project_id = r.project_id
@@ -499,7 +533,7 @@ extraction_data AS (
 		         'confidence', CASE WHEN source_type='{enums.LabelSource.MANUAL.value}' THEN NULL ELSE ROUND(rla.confidence::numeric,4) END,
 		         'source_type', rla.source_type,
 		         'token', token.token,
-		         'label_name', ltl.name )rla_data
+		         'label_name', ltl.name{created_by_add})rla_data
 	     FROM record_label_association rla
 	     INNER JOIN (
 	         SELECT rlat.project_id, rlat.record_label_association_id rla_id, array_agg(rlat.token_index ORDER BY token_index) token
