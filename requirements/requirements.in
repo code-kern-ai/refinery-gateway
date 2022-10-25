@@ -1,0 +1,9 @@
+-r common-requirements.txt
+alembic==1.7.1
+docker==5.0.0
+graphene==2.1.9
+graphene_sqlalchemy==2.3.0
+graphql-core==2.3.2
+pyjwt==2.4.0
+spacy==3.4.2
+starlette==0.20.4
