@@ -40,12 +40,13 @@ def query_builder_dummy():
 SELECT 
     r.id::TEXT record_id,
     r.data::json->'running_id' as "running_id",
-    r.data::json->'headline' as "headline"
+    r.data::json->'headline' as "headline",
+    r.data::json->'communication_style' as "communication_style"
     {extraction_appends["SELECT"]}
 FROM RECORD r
 {extraction_appends["FROM"]}
 WHERE r.project_id = '{PROJECT_ID}'
-LIMIT 10
+LIMIT 100
     """
 
     # print(final_query)

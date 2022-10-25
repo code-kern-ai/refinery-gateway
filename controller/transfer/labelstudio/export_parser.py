@@ -72,7 +72,7 @@ def __get_attribute_fallback_name(project_id: str) -> str:
 def __get_user_email_lookup(project_id: str) -> Dict[str, Dict[str, str]]:
     org_id = project.get(project_id).organization_id
     users = user.get_all(org_id)
-    return {str(u.id): kratos.resolve_user_mail_by_id(u.id) for u in users}
+    return {str(u.id): kratos.resolve_user_mail_by_id(u.id).lower() for u in users}
 
 
 def __get_column_info(column: Any) -> Dict[Str, Any]:
@@ -119,6 +119,7 @@ def __build_data_set(
     for c in column_info:
         if column_info[c]["type"] == ls_enums.LabelStudioTypes.DATA_COLUMN:
             return_value[column_info[c]["name"]] = row[column_info[c]["name"]]
+    return_value["kern_refinery_record_id"] = row["record_id"]
     return return_value
 
 
@@ -154,19 +155,25 @@ def __build_annotations_list(
             column_info[c]["type"]
             == ls_enums.LabelStudioTypes.ANNOTATION_COLUMN_EXTRACTION
         ):
-
-            for rla in row[column_info[c]["name"]]:
-                user_id = rla["rla_data"]["created_by"]
+            user_ids = {
+                rla["rla_data"]["created_by"] for rla in row[column_info[c]["name"]]
+            }
+            for user_id in user_ids:
                 head = __build_annotation_head(
                     row, user_email_lookup, id_add, user_id, column_info[c]["name"]
                 )
-                head["result"].append(
-                    __build_annotation_result_extraction(
-                        row, column_info[c]["name"], token_lookup, rla
-                    )
-                )
-                return_value.append(head)
                 id_add += 1
+                for rla in row[column_info[c]["name"]]:
+                    c_user_id = rla["rla_data"]["created_by"]
+                    if c_user_id != user_id:
+                        continue
+
+                    head["result"].append(
+                        __build_annotation_result_extraction(
+                            row, column_info[c]["name"], token_lookup, rla
+                        )
+                    )
+                return_value.append(head)
 
     return return_value
 
@@ -182,7 +189,8 @@ def __build_annotation_head(
     if user_id in user_email_lookup:
         mail = user_email_lookup[user_id]
     return_value = {
-        "id": row[ID_HELPER_IDX] + id_add,
+        # "id": row[ID_HELPER_IDX] + id_add,
+        # "id": row["record_id"],
         "created_username": mail,
         "completed_by": {
             "id": user_id,
@@ -228,9 +236,10 @@ def __build_annotation_result_extraction(
             "end": token_lookup[row["record_id"]][parts[0]][end_token]["end"],
             "labels": [rla["rla_data"]["label_name"]],
         },
-        "id": rla["rla_id"],
+        # "id": rla["rla_id"],
         "from_name": parts[1],
         "to_name": parts[0],
         "type": ls_enums.LabelStudioTypes.LABELS.value,
         "origin": ls_enums.LabelStudioTypes.MANUAL.value,
+        # "task": row["record_id"],
     }
