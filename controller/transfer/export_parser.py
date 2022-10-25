@@ -16,7 +16,7 @@ from util.sql_helper import parse_sql_text
 
 
 def query_builder_dummy():
-    # unsure about the format so im guessing here
+    # only for testing purposes
     PROJECT_ID = "9aa46111-500a-4db3-b7f8-03d7071da82e"
     tasks = labeling_task.get_all(PROJECT_ID)
     LABELING_TASKS_BY_ID = {str(task.id): task for task in tasks}
@@ -25,7 +25,7 @@ def query_builder_dummy():
         {
             "type": enums.LabelSource.INFORMATION_SOURCE.value,
             "source_id": "78bb3ad4-1d35-4a1a-bfa9-ad33b9a5b931",
-            "name": "tmp_func",
+            "name": "tmp_func_asdf_sadf_asdf_asdfA_fdadsF_adfADS_FadsF_adfAS_DF",
         },
         {"type": enums.LabelSource.MANUAL.value, "source_id": None},
     ]
@@ -34,7 +34,6 @@ def query_builder_dummy():
         PROJECT_ID, LABELING_TASKS_BY_ID, LABEL_SOURCES, True
     )
 
-    # can be build dynamically
     final_query = f"""
 {extraction_appends["WITH"]}
 SELECT 
@@ -49,12 +48,10 @@ WHERE r.project_id = '{PROJECT_ID}'
 LIMIT 100
     """
 
-    # print(final_query)
     df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
-    # only for testing purposes
-
+    df.rename(columns=extraction_appends["MAPPING"], inplace=True)
     if False:
-        df = parse_dataframe_data(PROJECT_ID, df, extraction_appends)
+        df = parse_dataframe_data(df, extraction_appends)
     else:
         from .labelstudio import export_parser as ls_export_parser
 
@@ -66,7 +63,6 @@ LIMIT 100
 
 
 def parse_dataframe_data(
-    project_id: str,
     df: pd.DataFrame,
     extraction_appends: Dict[str, Union[str, Dict[str, str]]],
 ) -> pd.DataFrame:
@@ -75,12 +71,11 @@ def parse_dataframe_data(
         task: LabelingTask = extraction_appends["EX_QUERIES"][key]["task"]
         if task.id not in task_add_info:
             task_add_info[task.id] = {
-                "ATT_NAME": attribute.get(project_id, task.attribute_id).name,
                 "MAX_LEN": str(get_max_length_of_task_labels(task)),
             }
         base_name = extraction_appends["EX_QUERIES"][key]["base_name"]
 
-        final_name = task_add_info[task.id]["ATT_NAME"] + "__" + base_name
+        final_name = base_name
         df[final_name] = df.apply(
             lambda row: __parse_pandas_row_current(
                 row, base_name, task_add_info[task.id]["MAX_LEN"]
@@ -105,8 +100,13 @@ def get_extraction_task_appends(
     label_sources: List[Dict[str, str]],
     with_user_id: bool = False,
 ) -> Dict[str, Union[str, Dict[str, str]]]:
-    return_values = {"WITH": "", "SELECT": "", "FROM": "", "EX_QUERIES": None}
-
+    return_values = {
+        "WITH": "",
+        "SELECT": "",
+        "FROM": "",
+        "EX_QUERIES": None,
+        "MAPPING": {},
+    }
     if len(labeling_tasks_by_id) == 0:
         return return_values
 
@@ -129,6 +129,7 @@ def get_extraction_task_appends(
             x = first_item(ed_part)
             return_values["SELECT"] += x["SELECT"]
             return_values["FROM"] += x["FROM"]
+            return_values["MAPPING"] |= x["MAPPING"]
             counter += 1
 
         has_extraction = True
@@ -176,12 +177,21 @@ def __get_extraction_data_query_and_select(
     base_name = f"{attribute_name}__{task.name}__{source_type}"
     if source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
         base_name += f"__{source['name']}"
-    select = f""",\n    {query_alias}.task_data \"{base_name}__task_data\",\n    {query_alias}.token_info \"{base_name}__token_info\""""
+
+    td_mapping = f"{query_alias}_td"
+    ti_mapping = f"{query_alias}_ti"
+    mapping = {
+        td_mapping: f"{base_name}__task_data",
+        ti_mapping: f"{base_name}__token_info",
+    }
+
+    select = f""",\n    {query_alias}.task_data \"{td_mapping}\",\n    {query_alias}.token_info \"{ti_mapping}\""""
 
     return {
         query_alias: {
             "SELECT": select,
             "FROM": query,
+            "MAPPING": mapping,
             "base_name": base_name,
             "task": task,
         }
@@ -203,12 +213,11 @@ def __get_with_query_extraction_tasks(
 		record_id, 
 		project_id,
 		attribute_id,
-		attribute_name, 
 		jsonb_build_object(
 			'token_count',num_token,
 			'char_count',num_char) token_info
 	FROM(
-		SELECT r.id record_id, r.project_id, a.name attribute_name, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
+		SELECT r.id record_id, r.project_id, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
 		FROM attribute a
 		INNER JOIN record r
 		    ON a.project_id = r.project_id

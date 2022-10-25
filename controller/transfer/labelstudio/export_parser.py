@@ -100,14 +100,12 @@ def __parse_pandas_row(
     attribute_fallback: str,
     token_lookup: Dict[str, Dict[str, List[int]]],
 ):
-    # row.columns
     return_value = {
         "data": __build_data_set(row, column_info),
         "annotations": __build_annotations_list(
             row, user_email_lookup, column_info, attribute_fallback, token_lookup
         ),
     }
-    # print(return_value)
 
     return return_value
 
@@ -131,7 +129,6 @@ def __build_annotations_list(
     token_lookup: Dict[str, Dict[str, List[int]]],
 ) -> List[Dict[str, Any]]:
     return_value = []
-    id_add = 0
     for c in column_info:
         if not row[c]:
             continue
@@ -142,7 +139,7 @@ def __build_annotations_list(
             # build annotation head
             user_id = row[column_info[c]["name"] + "__created_by"]
             head = __build_annotation_head(
-                row, user_email_lookup, id_add, user_id, column_info[c]["name"]
+                user_email_lookup, user_id, column_info[c]["name"]
             )
             head["result"].append(
                 __build_annotation_result_classification(
@@ -150,7 +147,6 @@ def __build_annotations_list(
                 )
             )
             return_value.append(head)
-            id_add += 1
         elif (
             column_info[c]["type"]
             == ls_enums.LabelStudioTypes.ANNOTATION_COLUMN_EXTRACTION
@@ -160,9 +156,8 @@ def __build_annotations_list(
             }
             for user_id in user_ids:
                 head = __build_annotation_head(
-                    row, user_email_lookup, id_add, user_id, column_info[c]["name"]
+                    user_email_lookup, user_id, column_info[c]["name"]
                 )
-                id_add += 1
                 for rla in row[column_info[c]["name"]]:
                     c_user_id = rla["rla_data"]["created_by"]
                     if c_user_id != user_id:
@@ -179,9 +174,7 @@ def __build_annotations_list(
 
 
 def __build_annotation_head(
-    row: pd.Series,
     user_email_lookup: Dict[str, Dict[str, str]],
-    id_add: int,
     user_id: str,
     col_name: str,
 ) -> Dict[str, Any]:
@@ -189,8 +182,6 @@ def __build_annotation_head(
     if user_id in user_email_lookup:
         mail = user_email_lookup[user_id]
     return_value = {
-        # "id": row[ID_HELPER_IDX] + id_add,
-        # "id": row["record_id"],
         "created_username": mail,
         "completed_by": {
             "id": user_id,
@@ -236,10 +227,8 @@ def __build_annotation_result_extraction(
             "end": token_lookup[row["record_id"]][parts[0]][end_token]["end"],
             "labels": [rla["rla_data"]["label_name"]],
         },
-        # "id": rla["rla_id"],
         "from_name": parts[1],
         "to_name": parts[0],
         "type": ls_enums.LabelStudioTypes.LABELS.value,
         "origin": ls_enums.LabelStudioTypes.MANUAL.value,
-        # "task": row["record_id"],
     }
