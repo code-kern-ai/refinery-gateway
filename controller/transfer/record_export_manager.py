@@ -99,7 +99,7 @@ def export_records(
 
 
 def create_alias() -> str:
-    return f"{''.join(random.choice(string.ascii_uppercase) for _ in range(10))}"
+    return f"cd_{''.join(random.choice(string.ascii_lowercase) for _ in range(8))}"
 
 
 def __extract_table_meta_classification_data(
