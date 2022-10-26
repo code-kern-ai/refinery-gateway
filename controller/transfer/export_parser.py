@@ -15,16 +15,23 @@ from util.miscellaneous_functions import first_item, get_max_length_of_task_labe
 from util.sql_helper import parse_sql_text
 
 
-def parse(project_id, final_query, mapping_dict):
+def parse(
+    project_id: str,
+    final_query: str,
+    mapping_dict: Dict[str, str],
+    extraction_appends: Dict[str, Union[str, Dict[str, str]]],
+):
     df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
     df.rename(columns=mapping_dict, inplace=True)
     if False:
         df = parse_dataframe_data(df, extraction_appends)
+        for col in df.columns:
+            if str(col).endswith("__created_by"):
+                df.drop(col, axis="columns", inplace=True)
     else:
         from .labelstudio import export_parser as ls_export_parser
 
         df = ls_export_parser.parse_dataframe_data(project_id, df)
-
     df.to_csv("tmp/myfile.csv", index=False)
     df.to_json("tmp/myfile.json", orient="records")
     # print(df)

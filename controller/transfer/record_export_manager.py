@@ -97,8 +97,14 @@ def export_records(
     final_query_cleaned = final_query.replace("\n\n", "\n")
     print(final_query_cleaned)
 
-    mapping_dict = {**tables_mapping_classification, **extraction_appends["MAPPING"]}
-    export_parser.parse(project_id, final_query_cleaned, mapping_dict)
+    mapping_dict = {
+        v: k for k, v in tables_mapping_classification.items()
+    } | extraction_appends["MAPPING"]
+    # mapping_dict = {**tables_mapping_classification, **extraction_appends["MAPPING"]}
+
+    export_parser.parse(
+        project_id, final_query_cleaned, mapping_dict, extraction_appends
+    )
     return general.execute_all(final_query_cleaned), tables_mapping_classification
 
 
@@ -211,7 +217,7 @@ def __labeling_tasks_select_query(tables_meta_data: Dict[str, Any]) -> str:
             )
         elif table_data.get("table_type") == "user_data":
             task_selections.append(
-                f"{table_data.get('original_table')}.created_by as {table_name}"
+                f"{table_data.get('original_table')}.created_by::TEXT as {table_name}"
             )
         elif table_data.get("task_type") == enums.LabelingTaskType.CLASSIFICATION.value:
             task_selections.append(f"{table_name}.name as {table_name}")

@@ -82,7 +82,11 @@ def __get_column_info(column: Any) -> Dict[Str, Any]:
 def __assume_column_type(column_name: str) -> ls_enums.LabelStudioTypes:
     if column_name in ["record_id", ID_HELPER_IDX]:
         return ls_enums.LabelStudioTypes.PROTECTED_COLUMN
-    elif column_name.endswith("__created_by") or column_name.endswith("__token_info"):
+    elif (
+        column_name.endswith("__created_by")
+        or column_name.endswith("__token_info")
+        or column_name.endswith("_CONFIDENCE")
+    ):
         # classification label columns only needed for label studio parse
         return ls_enums.LabelStudioTypes.PROTECTED_COLUMN
     elif column_name.endswith("__task_data"):
