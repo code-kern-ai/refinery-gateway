@@ -141,3 +141,4 @@ db.sqlite-journal
 user_activity_backup.tmp
 project_export*
 tmp/*
+!tmp/.gitkeep
