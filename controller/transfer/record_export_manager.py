@@ -248,10 +248,13 @@ def ___record_data_by_slice(project_id: str, slice_id: str) -> str:
     if slice_type == enums.SliceTypes.STATIC_DEFAULT.value:
         return __record_data_by_static_slice_query(project_id, slice_id)
     elif slice_type == enums.SliceTypes.DYNAMIC_DEFAULT.value:
+        if not slice.filter_data:
+            raise Exception(
+                'Filter data empty. Use button "Update filter" to fix the issue.'
+            )
         return __record_data_by_dynamic_slice(project_id, slice)
     else:
-        message = f"Type of slice {slice_type} not allowed."
-        raise Exception(message)
+        raise Exception(f"Type of slice {slice_type} not allowed.")
 
 
 def __record_data_by_static_slice_query(project_id: str, slice_id: str) -> str:
