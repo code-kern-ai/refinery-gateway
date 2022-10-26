@@ -1,13 +1,11 @@
 import random
 import string
 from typing import List, Optional, Dict, Any, Tuple, Union
-from controller.transfer import export_parser
 
 from service.search.search import generate_select_sql
 from submodules.model.business_objects import (
     attribute,
     data_slice,
-    general,
     labeling_task,
     user_session,
     information_source,
@@ -28,6 +26,12 @@ def get_records_by_options_query_data(
     task_options = column_options.get("labeling_tasks")
     sources_options = column_options.get("sources")
     with_user_id = column_options.get("with_user_id")
+
+    with_user_id = (
+        True
+        if export_options.get("format") == enums.RecordExportFormats.LABEL_STUDIO.value
+        else False
+    )
 
     tasks = labeling_task.get_all(project_id)
     labeling_task_names = {
@@ -104,10 +108,6 @@ def get_records_by_options_query_data(
     return records_by_options_query_data
 
 
-def create_alias() -> str:
-    return f"cd_{''.join(random.choice(string.ascii_lowercase) for _ in range(8))}"
-
-
 def __extract_table_meta_classification_data(
     project_id: str,
     selected_tasks: List[str],
@@ -144,7 +144,7 @@ def __extract_table_meta_classification_data(
                     full_table_name = (
                         f"{attribute_and_task_name_part}__{source_entity.name}"
                     )
-                    tables_mapping[full_table_name] = create_alias()
+                    tables_mapping[full_table_name] = __create_alias()
                     tablename_dict["task_id"] = task_id
                     tablename_dict["task_type"] = task.task_type
                     tablename_dict["source_id"] = source.get("id")
@@ -154,7 +154,7 @@ def __extract_table_meta_classification_data(
                 full_table_name = (
                     f"{attribute_and_task_name_part}__{source.get('type')}"
                 )
-                tables_mapping[full_table_name] = create_alias()
+                tables_mapping[full_table_name] = __create_alias()
                 tablename_dict["source_type"] = source.get("type")
                 tablename_dict["task_id"] = task_id
                 tablename_dict["task_type"] = task.task_type
@@ -162,7 +162,7 @@ def __extract_table_meta_classification_data(
 
                 if source.get("type") == enums.LabelSource.WEAK_SUPERVISION.value:
                     addtional_confidence_table_name = f"{full_table_name}_CONFIDENCE"
-                    tables_mapping[addtional_confidence_table_name] = create_alias()
+                    tables_mapping[addtional_confidence_table_name] = __create_alias()
                     additional_confidence_table["original_table"] = tables_mapping.get(
                         full_table_name
                     )
@@ -174,7 +174,7 @@ def __extract_table_meta_classification_data(
                 alias = tables_mapping.get(full_table_name)
                 tables_meta_data[alias] = tablename_dict
                 if additional_confidence_table:
-                    tables_mapping[addtional_confidence_table_name] = create_alias()
+                    tables_mapping[addtional_confidence_table_name] = __create_alias()
                     tables_meta_data[
                         tables_mapping.get(addtional_confidence_table_name)
                     ] = additional_confidence_table
@@ -185,7 +185,7 @@ def __extract_table_meta_classification_data(
                         full_table_name
                     )
                     addtional_created_by_name = full_table_name + "__created_by"
-                    tables_mapping[addtional_created_by_name] = create_alias()
+                    tables_mapping[addtional_created_by_name] = __create_alias()
                     tables_meta_data[
                         tables_mapping.get(addtional_created_by_name)
                     ] = additional_created_by_table
@@ -557,3 +557,7 @@ extraction_data AS (
 	 GROUP BY record_id, project_id,source_type,is_valid_manual_label,source_id,task_id,attribute_id
 )
     """
+
+
+def __create_alias() -> str:
+    return f"cd_{''.join(random.choice(string.ascii_lowercase) for _ in range(8))}"

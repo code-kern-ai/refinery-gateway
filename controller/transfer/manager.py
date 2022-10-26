@@ -128,12 +128,6 @@ def export_records(
 def prepare_record_export(
     project_id: str, export_options: Optional[Dict[str, Any]] = None
 ) -> None:
-    export_options["with_user_id"] = (
-        True
-        if export_options.get("format")
-        in [enums.RecordExportFormats.LABEL_STUDIO.value]
-        else False
-    )
     records_by_options_query_data = get_records_by_options_query_data(
         project_id, export_options
     )
