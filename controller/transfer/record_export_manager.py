@@ -17,7 +17,7 @@ from submodules.model.models import LabelingTask
 from util.miscellaneous_functions import first_item
 
 
-def export_records(
+def get_records_by_options_query_data(
     project_id: str, export_options: Optional[Dict[str, Any]] = None
 ) -> Any:
 
@@ -91,19 +91,17 @@ def export_records(
     {extraction_appends["FROM"]}
     WHERE basic_record.project_id = '{project_id}'
     """
-    print("----- FINAL QUERY IS ------")
-    final_query_cleaned = final_query.replace("\n\n", "\n")
-    print(final_query_cleaned)
 
     mapping_dict = {
         v: k for k, v in tables_mapping_classification.items()
     } | extraction_appends["MAPPING"]
-    # mapping_dict = {**tables_mapping_classification, **extraction_appends["MAPPING"]}
 
-    export_parser.parse(
-        project_id, final_query_cleaned, mapping_dict, extraction_appends
-    )
-    return general.execute_all(final_query_cleaned), tables_mapping_classification
+    records_by_options_query_data = {
+        "final_query": final_query,
+        "mapping_dict": mapping_dict,
+        "extraction_appends": extraction_appends,
+    }
+    return records_by_options_query_data
 
 
 def create_alias() -> str:

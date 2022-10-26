@@ -2,6 +2,7 @@ import os
 import json
 from typing import Any, List, Optional, Dict
 import zipfile
+from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
     import_knowledge_base_file,
 )
@@ -9,6 +10,7 @@ from controller.transfer.project_transfer_manager import (
     import_file_by_task,
     get_project_export_dump,
 )
+from controller.transfer.record_export_manager import get_records_by_options_query_data
 from controller.upload_task import manager as upload_task_manager
 from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
@@ -121,6 +123,28 @@ def export_records(
         return sql_df.to_csv(index=False)
     else:
         return sql_df.to_json(orient="records")
+
+
+def prepare_record_export(
+    project_id: str, export_options: Optional[Dict[str, Any]] = None
+) -> None:
+    export_options["with_user_id"] = (
+        True
+        if export_options.get("format")
+        in [enums.RecordExportFormats.LABEL_STUDIO.value]
+        else False
+    )
+    records_by_options_query_data = get_records_by_options_query_data(
+        project_id, export_options
+    )
+
+    final_query = records_by_options_query_data.get("final_query")
+    mapping_dict = records_by_options_query_data.get("mapping_dict")
+    extraction_appends = records_by_options_query_data.get("extraction_appends")
+
+    export_parser.parse(
+        project_id, final_query, mapping_dict, extraction_appends, export_options
+    )
 
 
 def export_project(

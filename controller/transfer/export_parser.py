@@ -1,14 +1,13 @@
 # function to be delted after full merge
 
 
-from typing import Dict, List, Optional, Tuple, Union
-from submodules.model.business_objects import attribute, general
+from typing import Any, Dict, List, Optional, Tuple, Union
+from submodules.model.business_objects import attribute, general, project, data_slice
 
 import pandas as pd
 import numpy as np
 from submodules.model.business_objects.export import OUTSIDE_CONSTANT
 from submodules.model import enums
-from submodules.model.business_objects import labeling_task
 from submodules.model.models import LabelingTask
 from util.miscellaneous_functions import first_item, get_max_length_of_task_labels
 
@@ -20,68 +19,51 @@ def parse(
     final_query: str,
     mapping_dict: Dict[str, str],
     extraction_appends: Dict[str, Union[str, Dict[str, str]]],
+    export_options: Optional[Dict[str, Any]],
 ):
     df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
     df.rename(columns=mapping_dict, inplace=True)
-    if False:
+
+    export_format = export_options.get("format")
+    if export_format == enums.RecordExportFormats.CURRENT.value:
         df = parse_dataframe_data(df, extraction_appends)
         for col in df.columns:
             if str(col).endswith("__created_by"):
                 df.drop(col, axis="columns", inplace=True)
-    else:
+    elif export_format == enums.RecordExportFormats.LABEL_STUDIO.value:
         from .labelstudio import export_parser as ls_export_parser
 
         df = ls_export_parser.parse_dataframe_data(project_id, df)
-    df.to_csv("tmp/myfile.csv", index=False)
-    df.to_json("tmp/myfile.json", orient="records")
-    # print(df)
-
-
-def query_builder_dummy():
-    # only for testing purposes
-    PROJECT_ID = "9aa46111-500a-4db3-b7f8-03d7071da82e"
-    tasks = labeling_task.get_all(PROJECT_ID)
-    LABELING_TASKS_BY_ID = {str(task.id): task for task in tasks}
-    LABEL_SOURCES = [
-        {"type": enums.LabelSource.WEAK_SUPERVISION.value, "source_id": None},
-        {
-            "type": enums.LabelSource.INFORMATION_SOURCE.value,
-            "source_id": "78bb3ad4-1d35-4a1a-bfa9-ad33b9a5b931",
-            "name": "tmp_func_asdf_sadf_asdf_asdfA_fdadsF_adfADS_FadsF_adfAS_DF",
-        },
-        {"type": enums.LabelSource.MANUAL.value, "source_id": None},
-    ]
-
-    extraction_appends = get_extraction_task_appends(
-        PROJECT_ID, LABELING_TASKS_BY_ID, LABEL_SOURCES, True
-    )
-
-    final_query = f"""
-{extraction_appends["WITH"]}
-SELECT 
-    r.id::TEXT record_id,
-    r.data::json->'running_id' as "running_id",
-    r.data::json->'headline' as "headline",
-    r.data::json->'communication_style' as "communication_style"
-    {extraction_appends["SELECT"]}
-FROM RECORD r
-{extraction_appends["FROM"]}
-WHERE r.project_id = '{PROJECT_ID}'
-LIMIT 100
-    """
-
-    df = pd.read_sql(parse_sql_text(final_query), con=general.get_bind())
-    df.rename(columns=extraction_appends["MAPPING"], inplace=True)
-    if False:
-        df = parse_dataframe_data(df, extraction_appends)
     else:
-        from .labelstudio import export_parser as ls_export_parser
+        message = f"Format {export_format} not supported."
+        raise Exception(message)
 
-        df = ls_export_parser.parse_dataframe_data(PROJECT_ID, df)
+    file_name = infer_file_name(project_id, export_options, export_format)
+    file_type = export_options.get("file_type")
+    file_path = "tmp/"
+    if file_type == enums.RecordExportFileTypes.JSON.value:
+        file_path = f"{file_path}{file_name}.json"
+        df.to_json(file_path, orient="records")
+    elif file_type == enums.RecordExportFileTypes.CSV.value:
+        file_path = f"{file_path}{file_name}).csv"
+        df.to_csv(file_path, index=False)
+    else:
+        message = f"File type {file_type} not supported."
+        raise Exception(message)
+    return file_path
 
-    df.to_csv("tmp/myfile.csv", index=False)
-    df.to_json("tmp/myfile.json", orient="records")
-    # print(df)
+
+def infer_file_name(project_id, export_option, export_format):
+    project_item = project.get(project_id)
+    row_option = export_option.get("rows")
+    if row_option.get("type") == enums.RecordExportAmountTypes.SLICE.value:
+        slice_item = data_slice.get(project_id, row_option.get("id"))
+        amount_type_addition = slice_item.name
+    else:
+        amount_type_addition = row_option.get("type")
+
+    file_name = f"{project_item.name}_{export_format}_{amount_type_addition}".lower()
+    return file_name
 
 
 def parse_dataframe_data(
