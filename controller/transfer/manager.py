@@ -126,7 +126,7 @@ def export_records(
 
 
 def prepare_record_export(
-    project_id: str, export_options: Optional[Dict[str, Any]] = None
+    project_id: str, user_id: str, export_options: Optional[Dict[str, Any]] = None
 ) -> None:
     records_by_options_query_data = get_records_by_options_query_data(
         project_id, export_options
@@ -136,9 +136,24 @@ def prepare_record_export(
     mapping_dict = records_by_options_query_data.get("mapping_dict")
     extraction_appends = records_by_options_query_data.get("extraction_appends")
 
-    export_parser.parse(
+    file_path, file_name = export_parser.parse(
         project_id, final_query, mapping_dict, extraction_appends, export_options
     )
+
+    org_id = organization.get_id_by_project_id(project_id)
+    file_name_download = project_id + "/download/" + file_name
+
+    old_export_files = s3.get_bucket_objects(org_id, file_name_download)
+    for old_export_file in old_export_files:
+        s3.delete_object(org_id, old_export_file)
+
+    s3.upload_object(org_id, file_name_download, file_path)
+    notification.send_organization_update(project_id, "record_export")
+
+    if os.path.exists(file_path):
+        pass
+        os.remove(file_path)
+    return True
 
 
 def export_project(

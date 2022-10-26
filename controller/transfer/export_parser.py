@@ -38,24 +38,22 @@ def parse(
         message = f"Format {export_format} not supported."
         raise Exception(message)
 
-    file_name = infer_file_name(project_id, export_options, export_format)
     file_type = export_options.get("file_type")
-    file_path = "tmp/"
+    file_name = infer_file_name(project_id, export_options, export_format)
+    file_path = f"tmp/{file_name}"
     if file_type == enums.RecordExportFileTypes.JSON.value:
-        file_path = f"{file_path}{file_name}.json"
         df.to_json(file_path, orient="records")
     elif file_type == enums.RecordExportFileTypes.CSV.value:
-        file_path = f"{file_path}{file_name}).csv"
         df.to_csv(file_path, index=False)
     else:
         message = f"File type {file_type} not supported."
         raise Exception(message)
-    return file_path
+    return file_path, file_name
 
 
-def infer_file_name(project_id, export_option, export_format):
+def infer_file_name(project_id, export_options, export_format):
     project_item = project.get(project_id)
-    row_option = export_option.get("rows")
+    row_option = export_options.get("rows")
     if row_option.get("type") == enums.RecordExportAmountTypes.SLICE.value:
         slice_item = data_slice.get(project_id, row_option.get("id"))
         amount_type_addition = slice_item.name
@@ -63,6 +61,15 @@ def infer_file_name(project_id, export_option, export_format):
         amount_type_addition = row_option.get("type")
 
     file_name = f"{project_item.name}_{export_format}_{amount_type_addition}".lower()
+
+    if export_options.get("file_type") == enums.RecordExportFileTypes.JSON.value:
+        file_name = f"{file_name}.json"
+    elif export_options.get("file_type") == enums.RecordExportFileTypes.CSV.value:
+        file_name = f"{file_name}).csv"
+    else:
+        message = f"File type {export_options.get('file_type')} not supported."
+        raise Exception(message)
+
     return file_name
 
 

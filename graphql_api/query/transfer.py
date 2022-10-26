@@ -113,7 +113,8 @@ class TransferQuery(graphene.ObjectType):
     ) -> bool:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        transfer_manager.prepare_record_export(project_id, export_options)
+        user_id = auth.get_user_id_by_info(info)
+        transfer_manager.prepare_record_export(project_id, user_id, export_options)
         return True
 
     def resolve_labelstudio_template(
