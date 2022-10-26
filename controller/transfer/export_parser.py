@@ -25,7 +25,7 @@ def parse(
     df.rename(columns=mapping_dict, inplace=True)
 
     export_format = export_options.get("format")
-    if export_format == enums.RecordExportFormats.CURRENT.value:
+    if export_format == enums.RecordExportFormats.DEFAULT.value:
         df = parse_dataframe_data(df, extraction_appends)
         for col in df.columns:
             if str(col).endswith("__created_by"):
@@ -45,6 +45,8 @@ def parse(
         df.to_json(file_path, orient="records")
     elif file_type == enums.RecordExportFileTypes.CSV.value:
         df.to_csv(file_path, index=False)
+    elif file_type == enums.RecordExportFileTypes.XSLX.value:
+        df.to_excel(file_path)
     else:
         message = f"File type {file_type} not supported."
         raise Exception(message)
@@ -65,7 +67,9 @@ def infer_file_name(project_id, export_options, export_format):
     if export_options.get("file_type") == enums.RecordExportFileTypes.JSON.value:
         file_name = f"{file_name}.json"
     elif export_options.get("file_type") == enums.RecordExportFileTypes.CSV.value:
-        file_name = f"{file_name}).csv"
+        file_name = f"{file_name}.csv"
+    elif export_options.get("file_type") == enums.RecordExportFileTypes.XSLX.value:
+        file_name = f"{file_name}.xlsx"
     else:
         message = f"File type {export_options.get('file_type')} not supported."
         raise Exception(message)

@@ -139,20 +139,23 @@ def prepare_record_export(
     file_path, file_name = export_parser.parse(
         project_id, final_query, mapping_dict, extraction_appends, export_options
     )
-
+    zip_path, file_name = __write_file_to_zip(file_path)
+    print(file_path, file_name, zip_path)
     org_id = organization.get_id_by_project_id(project_id)
-    file_name_download = project_id + "/download/" + file_name
+    prefixed_path = f"{project_id}/download/{user_id}/record_export_"
+    file_name_download = prefixed_path + file_name
 
-    old_export_files = s3.get_bucket_objects(org_id, file_name_download)
+    old_export_files = s3.get_bucket_objects(org_id, prefixed_path)
     for old_export_file in old_export_files:
         s3.delete_object(org_id, old_export_file)
 
-    s3.upload_object(org_id, file_name_download, file_path)
-    notification.send_organization_update(project_id, "record_export")
+    s3.upload_object(org_id, file_name_download, zip_path)
+    notification.send_organization_update(project_id, f"record_export:{user_id}")
 
     if os.path.exists(file_path):
-        pass
         os.remove(file_path)
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
     return True
 
 
@@ -195,7 +198,7 @@ def prepare_project_export(
     file_name_base = "project_export_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     file_name_local = file_name_base + ".zip"
     file_name_download = project_id + "/download/" + file_name_local
-    __write_to_zip(data, file_name_base)
+    __write_json_data_to_zip(data, file_name_base)
     s3.upload_object(org_id, file_name_download, file_name_local)
     notification.send_organization_update(project_id, "project_export")
 
@@ -204,7 +207,14 @@ def prepare_project_export(
     return True
 
 
-def __write_to_zip(dumped_json: str, base_file_name: str) -> None:
+def __write_file_to_zip(file_path: str) -> str:
+    file_name = os.path.basename(file_path) + ".zip"
+    zip_path = f"{file_path}.zip"
+    zipfile.ZipFile(zip_path, mode="w").write(file_path)
+    return zip_path, file_name
+
+
+def __write_json_data_to_zip(dumped_json: str, base_file_name: str) -> None:
     with zipfile.ZipFile(
         base_file_name + ".zip",
         mode="w",
@@ -216,8 +226,18 @@ def __write_to_zip(dumped_json: str, base_file_name: str) -> None:
 
 
 def last_project_export_credentials(project_id: str) -> str:
+    return __get_last_export_credentials(project_id, "/download/project_export_")
+
+
+def last_record_export_credentials(project_id: str, user_id: str) -> str:
+    return __get_last_export_credentials(
+        project_id, f"/download/{user_id}/record_export_"
+    )
+
+
+def __get_last_export_credentials(project_id: str, path_prefix: str) -> str:
     org_id = organization.get_id_by_project_id(project_id)
-    objects = s3.get_bucket_objects(org_id, project_id + "/download/project_export_")
+    objects = s3.get_bucket_objects(org_id, project_id + path_prefix)
     if not objects:
         return None
     ordered_objects = sorted(
