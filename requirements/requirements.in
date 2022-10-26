@@ -1,3 +1,6 @@
+# REMARK: in common-requirements.txt the dependencies for fastapi and starlette are
+# commented out because a specific version of starlette is needed and this version would
+# lead to conflicts with the specified fastapi version.
 -r common-requirements.txt
 alembic==1.7.1
 docker==5.0.0
