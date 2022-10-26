@@ -7,6 +7,7 @@ docker==5.0.0
 graphene==2.1.9
 graphene_sqlalchemy==2.3.0
 graphql-core==2.3.2
+openpyxl==3.0.10
 pyjwt==2.4.0
 spacy==3.4.2
 starlette==0.14.1
