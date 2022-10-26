@@ -140,7 +140,6 @@ def prepare_record_export(
         project_id, final_query, mapping_dict, extraction_appends, export_options
     )
     zip_path, file_name = __write_file_to_zip(file_path)
-    print(file_path, file_name, zip_path)
     org_id = organization.get_id_by_project_id(project_id)
     prefixed_path = f"{project_id}/download/{user_id}/record_export_"
     file_name_download = prefixed_path + file_name

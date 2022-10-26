@@ -411,7 +411,10 @@ def get_extraction_task_appends(
         ):
             continue
         for source in label_sources:
-            if source["task_id"] != key:
+            if (
+                source["type"] == enums.LabelSource.INFORMATION_SOURCE.value
+                and source["task_id"] != key
+            ):
                 continue
             ed_part = __get_extraction_data_query_and_select(
                 project_id,
