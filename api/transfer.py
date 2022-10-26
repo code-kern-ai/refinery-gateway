@@ -7,7 +7,7 @@ from starlette.responses import PlainTextResponse, JSONResponse
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import organization
 
-from controller.transfer import manager as upload_manager
+from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
@@ -192,11 +192,11 @@ class UploadTask(HTTPEndpoint):
 
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     if "records" in task.file_type:
-        upload_manager.import_records_from_file(project_id, task)
+        transfer_manager.import_records_from_file(project_id, task)
     elif "project" in task.file_type:
-        upload_manager.import_project(project_id, task)
+        transfer_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
-        upload_manager.import_knowledge_base(project_id, task)
+        transfer_manager.import_knowledge_base(project_id, task)
 
     notification.send_organization_update(
         project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update

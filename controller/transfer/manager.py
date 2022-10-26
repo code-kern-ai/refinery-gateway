@@ -1,7 +1,8 @@
 import os
 import json
-from typing import Any, Optional, Dict
+from typing import Any, List, Optional, Dict
 import zipfile
+from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
     import_knowledge_base_file,
 )
@@ -9,9 +10,13 @@ from controller.transfer.project_transfer_manager import (
     import_file_by_task,
     get_project_export_dump,
 )
+from controller.transfer.record_export_manager import get_records_by_options_query_data
 from controller.upload_task import manager as upload_task_manager
 from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
+from controller.transfer.labelstudio import (
+    template_generator as labelstudio_template_generator,
+)
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export
 from submodules.model.business_objects import (
@@ -120,6 +125,38 @@ def export_records(
         return sql_df.to_json(orient="records")
 
 
+def prepare_record_export(
+    project_id: str, user_id: str, export_options: Optional[Dict[str, Any]] = None
+) -> None:
+    records_by_options_query_data = get_records_by_options_query_data(
+        project_id, export_options
+    )
+
+    final_query = records_by_options_query_data.get("final_query")
+    mapping_dict = records_by_options_query_data.get("mapping_dict")
+    extraction_appends = records_by_options_query_data.get("extraction_appends")
+
+    file_path, file_name = export_parser.parse(
+        project_id, final_query, mapping_dict, extraction_appends, export_options
+    )
+    zip_path, file_name = __write_file_to_zip(file_path)
+    org_id = organization.get_id_by_project_id(project_id)
+    prefixed_path = f"{project_id}/download/{user_id}/record_export_"
+    file_name_download = prefixed_path + file_name
+
+    old_export_files = s3.get_bucket_objects(org_id, prefixed_path)
+    for old_export_file in old_export_files:
+        s3.delete_object(org_id, old_export_file)
+
+    s3.upload_object(org_id, file_name_download, zip_path)
+    notification.send_organization_update(project_id, f"record_export:{user_id}")
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+
+
 def export_project(
     project_id: str, user_id: str, export_options: Dict[str, bool]
 ) -> str:
@@ -159,7 +196,7 @@ def prepare_project_export(
     file_name_base = "project_export_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     file_name_local = file_name_base + ".zip"
     file_name_download = project_id + "/download/" + file_name_local
-    __write_to_zip(data, file_name_base)
+    __write_json_data_to_zip(data, file_name_base)
     s3.upload_object(org_id, file_name_download, file_name_local)
     notification.send_organization_update(project_id, "project_export")
 
@@ -168,7 +205,15 @@ def prepare_project_export(
     return True
 
 
-def __write_to_zip(dumped_json: str, base_file_name: str) -> None:
+def __write_file_to_zip(file_path: str) -> str:
+    base_name = os.path.basename(file_path)
+    file_name = base_name + ".zip"
+    zip_path = f"{file_path}.zip"
+    zipfile.ZipFile(zip_path, mode="w").write(file_path, base_name)
+    return zip_path, file_name
+
+
+def __write_json_data_to_zip(dumped_json: str, base_file_name: str) -> None:
     with zipfile.ZipFile(
         base_file_name + ".zip",
         mode="w",
@@ -180,8 +225,18 @@ def __write_to_zip(dumped_json: str, base_file_name: str) -> None:
 
 
 def last_project_export_credentials(project_id: str) -> str:
+    return __get_last_export_credentials(project_id, "/download/project_export_")
+
+
+def last_record_export_credentials(project_id: str, user_id: str) -> str:
+    return __get_last_export_credentials(
+        project_id, f"/download/{user_id}/record_export_"
+    )
+
+
+def __get_last_export_credentials(project_id: str, path_prefix: str) -> str:
     org_id = organization.get_id_by_project_id(project_id)
-    objects = s3.get_bucket_objects(org_id, project_id + "/download/project_export_")
+    objects = s3.get_bucket_objects(org_id, project_id + path_prefix)
     if not objects:
         return None
     ordered_objects = sorted(
@@ -192,3 +247,11 @@ def last_project_export_credentials(project_id: str) -> str:
             org_id,
             o,
         )
+
+
+def generate_labelstudio_template(
+    project_id: str, labeling_task_ids: List[str], attribute_ids: List[str]
+) -> str:
+    return labelstudio_template_generator.generate_template(
+        project_id, labeling_task_ids, attribute_ids
+    )

@@ -8,7 +8,7 @@ import pickle
 import tarfile
 from submodules.model.business_objects import attribute, tokenization
 from submodules.model.business_objects import record
-from submodules.model.business_objects.record import __get_tokenized_record
+from submodules.model.business_objects.record import get_tokenized_record_from_db
 import time
 import uuid
 
@@ -120,7 +120,7 @@ def container_exists(containers: Any, name: str) -> bool:
 
 
 def pack_record_data(project_id: str, record_id: str) -> str:
-    tokenized_record = __get_tokenized_record(project_id, record_id)
+    tokenized_record = get_tokenized_record_from_db(project_id, record_id)
     if not tokenized_record:
         return None
     used_columns = {value for value in tokenized_record.columns}

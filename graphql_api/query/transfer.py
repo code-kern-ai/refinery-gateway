@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import Dict, List, Optional, Any
 
 import graphene
 
 from controller.auth import manager as auth
-from controller.transfer import manager as upload_manager
+from controller.transfer import manager as transfer_manager, record_export_manager
+import traceback
 
 
 class TransferQuery(graphene.ObjectType):
@@ -40,6 +41,24 @@ class TransferQuery(graphene.ObjectType):
         export_options=graphene.JSONString(required=False),
     )
 
+    last_record_export_credentials = graphene.Field(
+        graphene.String,
+        project_id=graphene.ID(required=True),
+    )
+
+    prepare_record_export = graphene.Field(
+        graphene.String,
+        project_id=graphene.ID(required=True),
+        export_options=graphene.JSONString(required=False),
+    )
+
+    labelstudio_template = graphene.Field(
+        graphene.String,
+        project_id=graphene.ID(required=True),
+        labeling_task_ids=graphene.List(graphene.ID, required=True),
+        attribute_ids=graphene.List(graphene.ID, required=True),
+    )
+
     last_project_export_credentials = graphene.Field(
         graphene.String,
         project_id=graphene.ID(required=True),
@@ -51,7 +70,7 @@ class TransferQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        return upload_manager.export_project(project_id, user_id, export_options)
+        return transfer_manager.export_project(project_id, user_id, export_options)
 
     def resolve_upload_credentials_and_id(
         self,
@@ -64,7 +83,7 @@ class TransferQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        return upload_manager.get_upload_credentials_and_id(
+        return transfer_manager.get_upload_credentials_and_id(
             project_id, user.id, file_name, file_type, file_import_options
         )
 
@@ -73,12 +92,12 @@ class TransferQuery(graphene.ObjectType):
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return upload_manager.export_records(project_id, None, session_id)
+        return transfer_manager.export_records(project_id, None, session_id)
 
     def resolve_export_knowledge_base(self, info, project_id: str, list_id: str) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return upload_manager.export_knowledge_base(project_id, list_id)
+        return transfer_manager.export_knowledge_base(project_id, list_id)
 
     def resolve_prepare_project_export(
         self, info, project_id: str, export_options: Optional[str] = None
@@ -86,11 +105,43 @@ class TransferQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        return upload_manager.prepare_project_export(
+        return transfer_manager.prepare_project_export(
             project_id, user_id, export_options
         )
 
     def resolve_last_project_export_credentials(self, info, project_id: str) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return upload_manager.last_project_export_credentials(project_id)
+        return transfer_manager.last_project_export_credentials(project_id)
+
+    def resolve_prepare_record_export(
+        self, info, project_id: str, export_options: Optional[Dict[str, Any]] = None
+    ) -> str:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_id_by_info(info)
+        try:
+            transfer_manager.prepare_record_export(project_id, user_id, export_options)
+        except Exception as e:
+            print(traceback.format_exc(), flush=True)
+            return str(e)
+        return ""
+
+    def resolve_last_record_export_credentials(self, info, project_id: str) -> str:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_id_by_info(info)
+        return transfer_manager.last_record_export_credentials(project_id, user_id)
+
+    def resolve_labelstudio_template(
+        self,
+        info,
+        project_id: str,
+        labeling_task_ids: List[str],
+        attribute_ids: List[str],
+    ) -> str:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return transfer_manager.generate_labelstudio_template(
+            project_id, labeling_task_ids, attribute_ids
+        )

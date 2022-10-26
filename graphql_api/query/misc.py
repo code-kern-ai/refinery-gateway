@@ -31,6 +31,8 @@ class MiscQuery(graphene.ObjectType):
 
     has_updates = graphene.Field(graphene.Boolean)
 
+    helper = graphene.Field(graphene.Boolean)
+
     def resolve_tooltip(self, info, key: str) -> ToolTip:
         return tooltip.resolve_tooltip(key)
 
@@ -56,3 +58,9 @@ class MiscQuery(graphene.ObjectType):
 
     def resolve_has_updates(self, info) -> bool:
         return manager.has_updates()
+
+    def resolve_helper(self, info) -> bool:
+        import controller.transfer.export_parser as export_parser
+
+        export_parser.query_builder_dummy()
+        return True
