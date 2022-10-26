@@ -48,6 +48,7 @@ def get_records_by_options_query_data(
         for target_source in sources_options:
             if str(source_item.id) == target_source.get("id"):
                 target_source["name"] = source_item.name
+                target_source["task_id"] = source_item.labeling_task_id
 
     if not attributes_options and not attributes_options and not sources_options:
         raise Exception("No export options found.")
@@ -413,6 +414,8 @@ def get_extraction_task_appends(
         ):
             continue
         for source in label_sources:
+            if source["task_id"] != key:
+                continue
             ed_part = __get_extraction_data_query_and_select(
                 project_id,
                 counter,
