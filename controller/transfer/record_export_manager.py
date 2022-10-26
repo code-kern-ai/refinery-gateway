@@ -37,9 +37,7 @@ def export_records(
         str(lt.id): lt for lt in tasks if str(lt.id) in task_options
     }
     attributes = attribute.get_all(project_id)
-    attribute_names = {
-        str(att.id): att.name for att in attributes if str(att.id) in attributes_options
-    }
+    attribute_names = {str(att.id): att.name for att in attributes}
 
     if not attributes_options and not attributes_options and not sources_options:
         raise Exception("No export options found.")
