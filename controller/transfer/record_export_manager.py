@@ -48,7 +48,7 @@ def get_records_by_options_query_data(
         for target_source in sources_options:
             if str(source_item.id) == target_source.get("id"):
                 target_source["name"] = source_item.name
-                target_source["task_id"] = source_item.labeling_task_id
+                target_source["task_id"] = str(source_item.labeling_task_id)
 
     if not attributes_options and not attributes_options and not sources_options:
         raise Exception("No export options found.")
@@ -146,11 +146,8 @@ def __extract_table_meta_classification_data(
             additional_confidence_table = {}
 
             if source.get("type") == enums.LabelSource.INFORMATION_SOURCE.value:
-                source_entity = information_source.get(project_id, source.get("id"))
-                if str(source_entity.labeling_task_id) == task_id:
-                    full_table_name = (
-                        f"{attribute_and_task_name_part}__{source_entity.name}"
-                    )
+                if source.get("task_id") == task_id:
+                    full_table_name = f"{attribute_and_task_name_part}__{source.get('type')}__{source.get('name')}"
                     tables_mapping[full_table_name] = __create_alias()
                     tablename_dict["task_id"] = task_id
                     tablename_dict["task_type"] = task.task_type
