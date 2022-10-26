@@ -208,9 +208,10 @@ def prepare_project_export(
 
 
 def __write_file_to_zip(file_path: str) -> str:
-    file_name = os.path.basename(file_path) + ".zip"
+    base_name = os.path.basename(file_path)
+    file_name = base_name + ".zip"
     zip_path = f"{file_path}.zip"
-    zipfile.ZipFile(zip_path, mode="w").write(file_path)
+    zipfile.ZipFile(zip_path, mode="w").write(file_path, base_name)
     return zip_path, file_name
 
 

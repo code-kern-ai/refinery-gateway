@@ -83,7 +83,7 @@ def get_records_by_options_query_data(
         )
 
     extraction_appends = get_extraction_task_appends(
-        project_id, labeling_tasks_by_id, sources_options, True
+        project_id, labeling_tasks_by_id, sources_options, with_user_id
     )
     # can be build dynamically
     final_query = f"""
@@ -270,7 +270,7 @@ def __record_data_by_dynamic_slice(project_id: str, slice: str) -> str:
     FROM (
         SELECT r.id, r.data, r.project_id
         FROM (
-           {dynamic_slice_select_query} 
+        {dynamic_slice_select_query} 
         ) dsra
         INNER JOIN record r
         ON r.id = dsra.record_id
@@ -334,16 +334,16 @@ def __classification_column_by_table_meta_data_query(
     return f"""
     LEFT JOIN (
         SELECT rla.record_id, {table_name}_ltl_outer.name, rla.confidence, rla.created_by
-    	FROM record_label_association rla 
-    	INNER JOIN (
-	        SELECT {table_name}_ltl_inner.id, {table_name}_ltl_inner.name
-	        FROM labeling_task_label {table_name}_ltl_inner
-	        WHERE labeling_task_id = '{labeling_task_id}'
+        FROM record_label_association rla 
+        INNER JOIN (
+            SELECT {table_name}_ltl_inner.id, {table_name}_ltl_inner.name
+            FROM labeling_task_label {table_name}_ltl_inner
+            WHERE labeling_task_id = '{labeling_task_id}'
             AND {table_name}_ltl_inner.project_id = '{project_id}'
-	    ) {table_name}_ltl_outer
-   		ON rla.labeling_task_label_id  = {table_name}_ltl_outer.id
+        ) {table_name}_ltl_outer
+        ON rla.labeling_task_label_id  = {table_name}_ltl_outer.id
         AND rla.project_id = '{project_id}'
-   		WHERE {__source_constraint(source_id, source_type)}
+        WHERE {__source_constraint(source_id, source_type)}
         AND rla.return_type = '{enums.InformationSourceReturnType.RETURN.value}'
     ) {table_name}
     ON {table_name}.record_id = basic_record.id"""
@@ -494,67 +494,67 @@ def __get_with_query_extraction_tasks(
     if with_user_id:
         created_by_add = ",\n   	         'created_by', rla.created_by"
     return f"""WITH token_info AS (
-	SELECT 
-		record_id, 
-		project_id,
-		attribute_id,
-		jsonb_build_object(
-			'token_count',num_token,
-			'char_count',num_char) token_info
-	FROM(
-		SELECT r.id record_id, r.project_id, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
-		FROM attribute a
-		INNER JOIN record r
-		    ON a.project_id = r.project_id
-		INNER JOIN record_attribute_token_statistics rats
-		    ON a.project_id = rats.project_id AND a.id = rats.attribute_id AND r.id = rats.record_id
-		WHERE a.data_type = '{enums.DataTypes.TEXT.value}'
-		AND a.project_id = '{project_id}'
-	) i
+    SELECT 
+        record_id, 
+        project_id,
+        attribute_id,
+        jsonb_build_object(
+            'token_count',num_token,
+            'char_count',num_char) token_info
+    FROM(
+        SELECT r.id record_id, r.project_id, a.id attribute_id, rats.num_token, LENGTH(r.data->>a.name) num_char
+        FROM attribute a
+        INNER JOIN record r
+            ON a.project_id = r.project_id
+        INNER JOIN record_attribute_token_statistics rats
+            ON a.project_id = rats.project_id AND a.id = rats.attribute_id AND r.id = rats.record_id
+        WHERE a.data_type = '{enums.DataTypes.TEXT.value}'
+        AND a.project_id = '{project_id}'
+    ) i
 ),
 extraction_data AS (
-	 SELECT
-	     record_id,
-	     project_id,
-	     source_type,
-	     is_valid_manual_label,
-	     source_id,
-	     task_id,
-	     attribute_id,	     
-	     array_agg(
-	         jsonb_build_object(
-	         'rla_id',rla_id,
-	         'rla_data',rla_data)) task_data
-	 FROM (
-	     SELECT
-	         rla.record_id,
-	         rla.project_id,
-	         rla.source_type,
-	         rla.is_valid_manual_label,
-	         rla.source_id,
-	         lt.id task_id,
-	         lt.attribute_id,
-	         rla.id rla_id,
-	         jsonb_build_object(
-		         'confidence', CASE WHEN source_type='{enums.LabelSource.MANUAL.value}' THEN NULL ELSE ROUND(rla.confidence::numeric,4) END,
-		         'source_type', rla.source_type,
-		         'token', token.token,
-		         'label_name', ltl.name{created_by_add})rla_data
-	     FROM record_label_association rla
-	     INNER JOIN (
-	         SELECT rlat.project_id, rlat.record_label_association_id rla_id, array_agg(rlat.token_index ORDER BY token_index) token
-	         FROM record_label_association_token rlat
-	         GROUP BY rlat.project_id, rlat.record_label_association_id
-	     ) token
-	     	ON rla.project_id = token.project_id AND rla.id = token.rla_id
-	     INNER JOIN labeling_task_label ltl
-	     	ON rla.project_id = ltl.project_id AND rla.labeling_task_label_id = ltl.id
-	     INNER JOIN labeling_task lt
-	     	ON ltl.project_id = lt.project_id AND lt.id = ltl.labeling_task_id	     
-	     WHERE rla.return_type = '{enums.InformationSourceReturnType.YIELD.value}' --ensure extraction
-	     AND rla.project_id ='{project_id}'
-	 ) extract_data_grabber
-	 GROUP BY record_id, project_id,source_type,is_valid_manual_label,source_id,task_id,attribute_id
+    SELECT
+        record_id,
+        project_id,
+        source_type,
+        is_valid_manual_label,
+        source_id,
+        task_id,
+        attribute_id,	     
+        array_agg(
+            jsonb_build_object(
+            'rla_id',rla_id,
+            'rla_data',rla_data)) task_data
+    FROM (
+        SELECT
+            rla.record_id,
+            rla.project_id,
+            rla.source_type,
+            rla.is_valid_manual_label,
+            rla.source_id,
+            lt.id task_id,
+            lt.attribute_id,
+            rla.id rla_id,
+            jsonb_build_object(
+                'confidence', CASE WHEN source_type='{enums.LabelSource.MANUAL.value}' THEN NULL ELSE ROUND(rla.confidence::numeric,4) END,
+                'source_type', rla.source_type,
+                'token', token.token,
+                'label_name', ltl.name{created_by_add})rla_data
+        FROM record_label_association rla
+        INNER JOIN (
+            SELECT rlat.project_id, rlat.record_label_association_id rla_id, array_agg(rlat.token_index ORDER BY token_index) token
+            FROM record_label_association_token rlat
+            GROUP BY rlat.project_id, rlat.record_label_association_id
+        ) token
+            ON rla.project_id = token.project_id AND rla.id = token.rla_id
+        INNER JOIN labeling_task_label ltl
+            ON rla.project_id = ltl.project_id AND rla.labeling_task_label_id = ltl.id
+        INNER JOIN labeling_task lt
+            ON ltl.project_id = lt.project_id AND lt.id = ltl.labeling_task_id	     
+        WHERE rla.return_type = '{enums.InformationSourceReturnType.YIELD.value}' --ensure extraction
+        AND rla.project_id ='{project_id}'
+    ) extract_data_grabber
+    GROUP BY record_id, project_id,source_type,is_valid_manual_label,source_id,task_id,attribute_id
 )
     """
 
