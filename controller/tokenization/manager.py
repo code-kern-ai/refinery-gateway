@@ -126,7 +126,8 @@ def get_all_docs_from_db(
         doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
         docs = list(doc_bin_loaded.get_docs(vocab))
         for (col, doc) in zip(table_entry.columns, docs):
-            doc_dict[record_id] = {}
+            if record_id not in doc_dict:
+                doc_dict[record_id] = {}
             if not doc_dict.get(record_id):
                 doc_dict[record_id] = {}
             doc_dict[record_id][col] = doc
