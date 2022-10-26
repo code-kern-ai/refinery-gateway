@@ -30,11 +30,16 @@ def export_records(
     with_user_id = column_options.get("with_user_id")
 
     tasks = labeling_task.get_all(project_id)
-    labeling_task_names = {str(lt.id): lt.name for lt in tasks}
-    labeling_tasks_by_id = {str(lt.id): lt for lt in tasks}
-
+    labeling_task_names = {
+        str(lt.id): lt.name for lt in tasks if str(lt.id) in task_options
+    }
+    labeling_tasks_by_id = {
+        str(lt.id): lt for lt in tasks if str(lt.id) in task_options
+    }
     attributes = attribute.get_all(project_id)
-    attribute_names = {str(lt.id): lt.name for lt in attributes}
+    attribute_names = {
+        str(att.id): att.name for att in attributes if str(att.id) in attributes_options
+    }
 
     if not attributes_options and not attributes_options and not sources_options:
         raise Exception("No export options found.")
@@ -63,8 +68,8 @@ def export_records(
 
     if task_options and sources_options:
         tasks_select_query = __labeling_tasks_select_query(tables_meta_data)
-        select_part += f", {tasks_select_query}"
-
+        if tasks_select_query:
+            select_part += f", {tasks_select_query}"
     # row part and record data part
     record_data_query = __get_record_data_query(project_id, row_options)
 
@@ -78,7 +83,6 @@ def export_records(
     extraction_appends = get_extraction_task_appends(
         project_id, labeling_tasks_by_id, sources_options, True
     )
-
     # can be build dynamically
     final_query = f"""
     {extraction_appends["WITH"]}
@@ -192,7 +196,7 @@ def __attributes_select_query(
     attribute_json_selections = []
     for id in selected_attribute_ids:
         attribute_json_selections.append(
-            f"basic_record.data::json->'{attribute_names.get(id)}' as \"{attribute_names.get(id)}\""
+            f"basic_record.data->'{attribute_names.get(id)}' as \"{attribute_names.get(id)}\""
         )
     return ",\n".join(attribute_json_selections)
 
