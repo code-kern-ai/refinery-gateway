@@ -43,6 +43,12 @@ def get_records_by_options_query_data(
     attributes = attribute.get_all(project_id)
     attribute_names = {str(att.id): att.name for att in attributes}
 
+    source_items = information_source.get_all(project_id)
+    for source_item in source_items:
+        for target_source in sources_options:
+            if str(source_item.id) == target_source.get("id"):
+                target_source["name"] = source_item.name
+
     if not attributes_options and not attributes_options and not sources_options:
         raise Exception("No export options found.")
 
@@ -114,7 +120,7 @@ def __extract_table_meta_classification_data(
     tasks_by_id: Dict[str, LabelingTask],
     attribute_names: Dict[str, str],
     task_names: Dict[str, str],
-    sources: Dict[str, Any],
+    sources_options: Dict[str, Any],
     with_user_id: bool = False,
 ) -> Dict[str, Dict[str, Any]]:
     # Is used for combining table names according to convention and data for further creation of queries into a complex dict
@@ -132,7 +138,7 @@ def __extract_table_meta_classification_data(
             f"{attribute_name}__{task.name}" if attribute_name else f"__{task.name}"
         )
 
-        for source in sources:
+        for source in sources_options:
             full_table_name = ""
             addtional_confidence_table_name = ""
             tablename_dict = {}
@@ -443,7 +449,7 @@ def __get_extraction_data_query_and_select(
     if source_type_parsed == enums.LabelSource.MANUAL:
         on_add += f" AND ed.is_valid_manual_label = TRUE "
     elif source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
-        on_add += f" AND ed.source_id = '{source['source_id']}' "
+        on_add += f" AND ed.source_id = '{source['id']}' "
     else:
         # WEAK_SUPERVISION & MODEL_CALLBACK -> nothing to do
         pass
