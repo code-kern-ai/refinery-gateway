@@ -4,6 +4,7 @@ import graphene
 
 from controller.auth import manager as auth
 from controller.transfer import manager as transfer_manager, record_export_manager
+import traceback
 
 
 class TransferQuery(graphene.ObjectType):
@@ -46,7 +47,7 @@ class TransferQuery(graphene.ObjectType):
     )
 
     prepare_record_export = graphene.Field(
-        graphene.Boolean,
+        graphene.String,
         project_id=graphene.ID(required=True),
         export_options=graphene.JSONString(required=False),
     )
@@ -115,12 +116,16 @@ class TransferQuery(graphene.ObjectType):
 
     def resolve_prepare_record_export(
         self, info, project_id: str, export_options: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        transfer_manager.prepare_record_export(project_id, user_id, export_options)
-        return True
+        try:
+            transfer_manager.prepare_record_export(project_id, user_id, export_options)
+        except Exception as e:
+            print(traceback.format_exc(), flush=True)
+            return str(e)
+        return ""
 
     def resolve_last_record_export_credentials(self, info, project_id: str) -> str:
         auth.check_demo_access(info)

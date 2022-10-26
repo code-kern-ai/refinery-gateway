@@ -155,7 +155,6 @@ def prepare_record_export(
         os.remove(file_path)
     if os.path.exists(zip_path):
         os.remove(zip_path)
-    return True
 
 
 def export_project(
