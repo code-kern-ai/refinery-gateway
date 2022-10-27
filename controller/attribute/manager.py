@@ -109,12 +109,15 @@ def update_attribute(
 def delete_attribute(project_id: str, attribute_id: str) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     if attribute_item.user_created:
+        is_text_attribute = attribute_item.data_type == DataTypes.TEXT.value
         is_usable = attribute_item.state == AttributeState.USABLE.value
         if is_usable:
             record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
+        if is_usable and not is_text_attribute:
+            request_reupload_docbins(project_id)
         notification.send_organization_update(
             project_id=project_id, message=f"calculate_attribute:deleted:{attribute_id}"
         )
