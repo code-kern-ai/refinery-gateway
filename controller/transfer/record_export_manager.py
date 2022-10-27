@@ -28,9 +28,7 @@ def get_records_by_options_query_data(
     with_user_id = column_options.get("with_user_id")
 
     with_user_id = (
-        True
-        if export_options.get("format") == enums.RecordExportFormats.LABEL_STUDIO.value
-        else False
+        export_options.get("format") == enums.RecordExportFormats.LABEL_STUDIO.value
     )
 
     tasks = labeling_task.get_all(project_id)
