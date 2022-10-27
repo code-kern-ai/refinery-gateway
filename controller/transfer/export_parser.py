@@ -43,7 +43,7 @@ def parse(
     file_path = f"tmp/{file_name}"
     if file_type == enums.RecordExportFileTypes.JSON.value:
         with open(file_path, "w", encoding="utf-8") as file:
-            df.to_json(file, force_ascii=False)
+            df.to_json(file, orient="records", force_ascii=False)
     elif file_type == enums.RecordExportFileTypes.CSV.value:
         df.to_csv(file_path, index=False)
     elif file_type == enums.RecordExportFileTypes.XLSX.value:
