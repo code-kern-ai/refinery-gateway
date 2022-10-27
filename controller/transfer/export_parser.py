@@ -3,6 +3,7 @@
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 from submodules.model.business_objects import attribute, general, project, data_slice
+from .labelstudio import export_parser as ls_export_parser
 
 import pandas as pd
 import numpy as np
@@ -31,7 +32,6 @@ def parse(
             if str(col).endswith("__created_by"):
                 df.drop(col, axis="columns", inplace=True)
     elif export_format == enums.RecordExportFormats.LABEL_STUDIO.value:
-        from .labelstudio import export_parser as ls_export_parser
 
         df = ls_export_parser.parse_dataframe_data(project_id, df)
     else:
