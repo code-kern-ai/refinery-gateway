@@ -115,6 +115,8 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
+        if is_usable:
+            request_reupload_docbins(project_id)
         notification.send_organization_update(
             project_id=project_id, message=f"calculate_attribute:deleted:{attribute_id}"
         )
