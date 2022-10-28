@@ -61,7 +61,10 @@ def infer_file_name(
     row_option = export_options.get("rows")
     if row_option.get("type") == enums.RecordExportAmountTypes.SLICE.value:
         slice_item = data_slice.get(project_id, row_option.get("id"))
-        amount_type_addition = slice_item.name
+        if slice_item.slice_type == enums.SliceTypes.STATIC_OUTLIER.value:
+            amount_type_addition = "outlier"
+        else:
+            amount_type_addition = slice_item.name
     else:
         amount_type_addition = row_option.get("type")
 
