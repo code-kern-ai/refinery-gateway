@@ -1,7 +1,7 @@
 import os
 import re
 from sqlalchemy.orm.attributes import flag_modified
-from typing import Any, Tuple, Dict, List
+from typing import Any, Optional, Tuple, Dict, List
 
 import pytz
 import json
@@ -150,7 +150,7 @@ def create_payload(
 
             # now, collect the data
             embedding_id = __get_embedding_id_from_function(
-                user_id, project_id, information_source_item
+                project_id, information_source_item, user_id
             )
             embedding_file_name = f"embedding_tensors_{embedding_id}.csv.bz2"
             embedding_item = embedding.get(project_id, embedding_id)
@@ -185,6 +185,7 @@ def create_payload(
             training_record_ids = get_exclusion_record_ids(information_source_id)
             input_data = json.dumps(
                 {
+                    "call_context": "active_learning",
                     "embedding_type": embedding_item.type,
                     "embedding_name": embedding_item.name,
                     "labels": {"manual": labels_manual},
@@ -326,11 +327,11 @@ def create_payload(
             ),
         )
 
-        if (
-            information_source_item.type
-            == enums.InformationSourceType.ACTIVE_LEARNING.value
-        ):
-            s3.delete_object(org_id, project_id + "/" + model_file_name)
+        # if (
+        #     information_source_item.type
+        #     == enums.InformationSourceType.ACTIVE_LEARNING.value
+        # ):
+        #     s3.delete_object(org_id, project_id + "/" + model_file_name)
 
     user = get_user_by_info(info)
     if asynchronous:
@@ -664,7 +665,7 @@ def __check_label_errors(
 
 
 def __get_embedding_id_from_function(
-    user_id: str, project_id: str, source_item: InformationSource
+    project_id: str, source_item: InformationSource, user_id: Optional[str] = None
 ) -> str:
     embedding_name = re.search(
         r'embedding_name\s*=\s*"([\w\W]+?)"',
@@ -689,7 +690,7 @@ def __get_embedding_id_from_function(
             embedding_item.type == enums.EmbeddingType.ON_TOKEN.value
             and task_item.task_type == enums.LabelingTaskType.CLASSIFICATION.value
         )
-    ):
+    ) and user_id is not None:
         notification_item = create_notification(
             enums.NotificationType.INFORMATION_SOURCE_CANT_FIND_EMBEDDING,
             user_id,
@@ -742,6 +743,81 @@ def prepare_sample_records_doc_bin(
     )
 
     return prefixed_doc_bin, sample_records
+
+
+def get_active_learning_on_1_record(
+    project_id: str, information_source_id: str, record_id: str
+) -> Tuple[List[str], List[List[str]], bool]:
+
+    information_source_item = information_source.get(project_id, information_source_id)
+
+    embedding_id = __get_embedding_id_from_function(project_id, information_source_item)
+    embedding_item = embedding.get(project_id, embedding_id)
+
+    input_data = json.dumps(
+        {
+            "call_context": "single_record",
+            "embedding_type": embedding_item.type,
+            "embedding_name": embedding_item.name,
+            "labels": {"manual": []},
+            "ids": [record_id],
+            "active_learning_ids": [],
+        }
+    )
+
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+
+    prefixed_input_name = f"{information_source_id}_input"
+    prefixed_function_name = f"{information_source_id}_fn"
+    add_file_name = f"single_embedding_tensor_{record_id}.csv.bz2"
+    prefixed_payload = f"{information_source_id}_payload.json"
+    model_file_name = f"{information_source_id}.zip"
+
+    s3.put_object(org_id, project_id + "/" + prefixed_input_name, input_data)
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_function_name,
+        information_source_item.source_code,
+    )
+    command = [
+        s3.create_access_link(org_id, project_id + "/" + prefixed_input_name),
+        s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
+        s3.create_access_link(org_id, project_id + "/" + add_file_name),
+        s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
+        s3.create_access_link(org_id, project_id + "/" + model_file_name),
+    ]
+
+    container = client.containers.run(
+        image=ml_exec_env_image,
+        command=command,
+        remove=True,
+        detach=True,
+        network=exec_env_network,
+    )
+
+    container_logs = [
+        line.decode("utf-8").strip("\n")
+        for line in container.logs(
+            stream=True, stdout=True, stderr=True, timestamps=True
+        )
+    ]
+
+    code_has_errors = False
+
+    try:
+        payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
+        calculated_labels = json.loads(payload)
+    except Exception:
+        print("Could not grab data from s3 -- active learning")
+        code_has_errors = True
+        calculated_labels = {}
+
+    s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
+    s3.delete_object(org_id, project_id + "/" + prefixed_payload)
+    s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
+
+    return calculated_labels, container_logs, code_has_errors
 
 
 def run_labeling_function_exec_env(

@@ -44,6 +44,20 @@ def update_payload_status(
     return payload.update_status(project_id, payload_id, status)
 
 
+def get_active_learning_on_1_record(
+    project_id: str, information_source_id: str, record_id: str
+):
+    (
+        calculated_labels,
+        container_logs,
+        code_has_errors,
+    ) = payload_scheduler.get_active_learning_on_1_record(
+        project_id=project_id,
+        information_source_id=information_source_id,
+        record_id=record_id,
+    )
+
+
 def get_labeling_function_on_10_records(
     project_id: str, information_source_id: str
 ) -> LabelingFunctionSampleRecords:
@@ -75,7 +89,9 @@ def get_labeling_function_on_10_records(
     )
 
 
-def fill_missing_record_ids(sample_records: List[str], calculated_labels: Dict[str, List[Any]]) -> List[str]:
+def fill_missing_record_ids(
+    sample_records: List[str], calculated_labels: Dict[str, List[Any]]
+) -> List[str]:
     for record_item in sample_records:
         record_id = record_item[0]
         if record_id not in calculated_labels:

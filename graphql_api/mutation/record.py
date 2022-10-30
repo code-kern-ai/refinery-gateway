@@ -1,10 +1,12 @@
 import graphene
 
 from controller.auth import manager as auth
+from submodules.model.enums import InformationSourceType
 from util import notification
 from controller.record import manager as record_manager
 from controller.embedding import manager as embedding_manager
 from controller.project import manager as project_manager
+from controller.payload import manager as payload_manager
 
 
 class DeleteRecord(graphene.Mutation):
@@ -46,6 +48,12 @@ class FullWorkflowRecord(graphene.Mutation):
             embedding_dict[embedding.name] = embedding_vector
 
         # TODO 2: call all heuristics in a single container
+        for information_source in project.information_sources:
+            if information_source.type == InformationSourceType.ACTIVE_LEARNING.value:
+                print(information_source.name)
+                payload_manager.get_active_learning_on_1_record(
+                    project_id, information_source.id, record_id
+                )
 
         # TODO 3: call weak supervision for this one record
 
