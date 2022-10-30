@@ -1,7 +1,7 @@
 import time
 from typing import Any, Dict, List
 
-from submodules.model import enums
+from submodules.model import enums, EmbeddingTensor
 from util import daemon
 from . import util
 from . import connector
@@ -9,6 +9,14 @@ from . import connector
 
 def get_recommended_encoders() -> List[Any]:
     return connector.request_listing_recommended_encoders()
+
+
+def create_single_embeddings(
+    project_id: str, embedding_id: str, record_id: str
+) -> EmbeddingTensor:
+    return connector.request_creating_single_embeddings(
+        project_id, embedding_id, record_id
+    )
 
 
 def create_attribute_level_embedding(

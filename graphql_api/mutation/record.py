@@ -2,7 +2,9 @@ import graphene
 
 from controller.auth import manager as auth
 from util import notification
-from controller.record import manager
+from controller.record import manager as record_manager
+from controller.embedding import manager as embedding_manager
+from controller.project import manager as project_manager
 
 
 class DeleteRecord(graphene.Mutation):
@@ -20,5 +22,36 @@ class DeleteRecord(graphene.Mutation):
         return DeleteRecord(ok=True)
 
 
+class FullWorkflowRecord(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID()
+        record_id = graphene.ID()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, record_id: str):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        record = record_manager.get_record(project_id, record_id)
+        project = project_manager.get_project(project_id)
+
+        # TODO 4: enrich attributes
+
+        # TODO 1: enrich embedding
+        embedding_dict = {}
+        for embedding in project.embeddings:
+            embedding_vector = embedding_manager.create_single_embeddings(
+                project_id, embedding.id, record_id
+            )
+            embedding_dict[embedding.name] = embedding_vector
+
+        # TODO 2: call all heuristics in a single container
+
+        # TODO 3: call weak supervision for this one record
+
+        return FullWorkflowRecord(ok=True)
+
+
 class RecordMutation(graphene.ObjectType):
     delete_record = DeleteRecord.Field()
+    full_workflow_record = FullWorkflowRecord.Field()

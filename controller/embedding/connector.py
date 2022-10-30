@@ -11,6 +11,11 @@ def request_listing_recommended_encoders() -> Any:
     return service_requests.get_call_or_raise(url)
 
 
+def request_creating_single_embeddings(project_id, embedding_id, record_id):
+    url = f"{BASE_URI}/encode/{project_id}/{embedding_id}/{record_id}"
+    return service_requests.post_call_or_raise(url, {})
+
+
 def request_creating_attribute_level_embedding(
     project_id: str, attribute_id: str, user_id: str, config_string: str
 ) -> Any:
