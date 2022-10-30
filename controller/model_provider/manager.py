@@ -26,6 +26,14 @@ def model_provider_download_external_model(model_name: str) -> Any:
     return service_requests.post_call_or_raise(url, data=data)
 
 
+def model_provider_download_internal_model(
+    org_id: str, project_id: str, model_id: str
+) -> Any:
+    url = f"{BASE_URI}/download_internal_model"
+    data = {"org_id": org_id, "project_id": project_id, "model_id": model_id}
+    return service_requests.post_call_or_raise(url, data=data)
+
+
 def model_provider_delete_model(name: str) -> Any:
     url = f"{BASE_URI}/delete_model"
     params = {"model_name": name}

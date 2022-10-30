@@ -13,7 +13,6 @@ from datetime import datetime
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
-    attribute,
     information_source,
     embedding,
     labeling_task,
@@ -52,6 +51,8 @@ from controller.knowledge_base import util as knowledge_base
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+from controller.model_provider import manager as model_provider_manager
+
 
 # lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
@@ -191,7 +192,7 @@ def create_payload(
                     "active_learning_ids": training_record_ids,
                 }
             )
-            model_file_name = "model"
+            model_file_name = f"{information_source_item.id}.zip"
             return model_file_name, embedding_file_name, input_data
 
     def execution_pipeline(
@@ -220,6 +221,7 @@ def create_payload(
             )
 
         payload_item = information_source.get_payload(project_id, payload_id)
+        project_item = project.get(project_id)
         try:
             create_notification(
                 enums.NotificationType.INFORMATION_SOURCE_STARTED,
@@ -257,8 +259,14 @@ def create_payload(
                     "update_records resulted in errors -- see log for details"
                 )
 
-            # if it is active learning, tell model provider to load the model from truss
-            # TODO
+            if (
+                information_source_item.type
+                == enums.InformationSourceType.ACTIVE_LEARNING.value
+            ):
+                organization_id = str(project_item.organization_id)
+                model_provider_manager.model_provider_download_internal_model(
+                    organization_id, str(project_id), str(information_source_item.id)
+                )
 
             payload_item.state = enums.PayloadState.FINISHED.value
             general.commit()
@@ -307,7 +315,6 @@ def create_payload(
             except:
                 print(traceback.format_exc())
 
-        project_item = project.get(project_id)
         doc_ock.post_event(
             user,
             events.AddInformationSourceRun(
@@ -318,6 +325,12 @@ def create_payload(
                 RunTime=stop - start,
             ),
         )
+
+        if (
+            information_source_item.type
+            == enums.InformationSourceType.ACTIVE_LEARNING.value
+        ):
+            s3.delete_object(org_id, project_id + "/" + model_file_name)
 
     user = get_user_by_info(info)
     if asynchronous:
