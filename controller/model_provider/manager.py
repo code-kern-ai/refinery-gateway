@@ -20,8 +20,8 @@ def get_model_provider_info() -> List[ModelProviderInfoResult]:
     return model_info
 
 
-def model_provider_download_model(model_name: str) -> Any:
-    url = f"{BASE_URI}/download_model"
+def model_provider_download_external_model(model_name: str) -> Any:
+    url = f"{BASE_URI}/download_external_model"
     data = {"model_name": model_name}
     return service_requests.post_call_or_raise(url, data=data)
 

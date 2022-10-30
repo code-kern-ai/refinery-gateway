@@ -18,7 +18,7 @@ class ModelProviderDownloadModel(graphene.Mutation):
                 auth.check_admin_access(info)
         else:
             raise GraphQLError("Not allowed in open source version.")
-        manager.model_provider_download_model(model_name)
+        manager.model_provider_download_external_model(model_name)
         return ModelProviderDownloadModel(ok=True)
 
 

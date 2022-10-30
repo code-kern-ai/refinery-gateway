@@ -97,7 +97,7 @@ def create_payload(
     ) -> None:
         ctx_token = general.get_ctx_token()
         try:
-            add_file_name, input_data = prepare_input_data_for_payload(
+            model_file_name, add_file_name, input_data = prepare_input_data_for_payload(
                 information_source_item
             )
             execution_pipeline(
@@ -105,6 +105,7 @@ def create_payload(
                 payload_id,
                 project_id,
                 information_source_item,
+                model_file_name,
                 add_file_name,
                 input_data,
             )
@@ -131,7 +132,7 @@ def create_payload(
             == enums.InformationSourceType.LABELING_FUNCTION.value
         ):
             # isn't collected every time but rather whenever tokenization needs to run again --> accesslink to the docbin file on s3
-            return None, None
+            return None, None, None
 
         elif (
             information_source_item.type
@@ -190,13 +191,15 @@ def create_payload(
                     "active_learning_ids": training_record_ids,
                 }
             )
-            return embedding_file_name, input_data
+            model_file_name = "model"
+            return model_file_name, embedding_file_name, input_data
 
     def execution_pipeline(
         user: User,
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
+        model_file_name: str,
         add_file_name: str,
         input_data: Dict[str, Any],
     ) -> None:
@@ -232,6 +235,7 @@ def create_payload(
                 information_source_item.type,
                 add_file_name,
                 input_data,
+                model_file_name,
             )
             has_error = update_records(payload_item, project_id)
             if has_error:
@@ -252,6 +256,9 @@ def create_payload(
                 raise ValueError(
                     "update_records resulted in errors -- see log for details"
                 )
+
+            # if it is active learning, tell model provider to load the model from truss
+            # TODO
 
             payload_item.state = enums.PayloadState.FINISHED.value
             general.commit()
@@ -338,6 +345,7 @@ def run_container(
     information_source_type: str,
     add_file_name: str,
     input_data: Dict[str, Any],
+    model_file_name: str,
 ) -> None:
     project_item = project.get(project_id)
     payload_id = str(information_source_payload.id)
@@ -358,6 +366,7 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
+            s3.create_file_upload_link(org_id, project_id + "/" + model_file_name),
         ]
     else:
         s3.put_object(
