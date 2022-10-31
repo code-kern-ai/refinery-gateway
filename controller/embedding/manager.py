@@ -11,12 +11,16 @@ def get_recommended_encoders() -> List[Any]:
     return connector.request_listing_recommended_encoders()
 
 
-def create_single_embeddings(
+def create_single_embedding(
     project_id: str, embedding_id: str, record_id: str
 ) -> EmbeddingTensor:
-    return connector.request_creating_single_embeddings(
+    return connector.request_creating_single_embedding(
         project_id, embedding_id, record_id
     )
+
+
+def delete_single_embedding(project_id: str, embedding_id: str, record_id: str) -> None:
+    connector.request_delete_single_embedding(project_id, embedding_id, record_id)
 
 
 def create_attribute_level_embedding(

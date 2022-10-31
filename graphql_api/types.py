@@ -709,6 +709,20 @@ class ZeroShotNRecordsWrapper(graphene.ObjectType):
     records = graphene.List(ZeroShotNRecords)
 
 
+class InferencePredictionItem(graphene.ObjectType):
+    label = graphene.String()
+    confidence = graphene.Float()
+
+
+class InferenceItem(graphene.ObjectType):
+    labeling_task = graphene.String()
+    prediction = graphene.Field(InferencePredictionItem)
+
+
+class InferenceResult(graphene.ObjectType):
+    results = graphene.List(InferenceItem)
+
+
 class ServiceVersionResult(graphene.ObjectType):
     service = graphene.String()
     installed_version = graphene.String()

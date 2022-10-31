@@ -53,6 +53,9 @@ from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.model_provider import manager as model_provider_manager
 
+import shutil
+
+MODEL_FOLDER = "/models"
 
 # lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
@@ -745,26 +748,6 @@ def prepare_sample_records_doc_bin(
     return prefixed_doc_bin, sample_records
 
 
-def prepare_single_record_doc_bin(
-    project_id: str, information_source_id: str, record_id: str
-) -> Tuple[str, List[str]]:
-    record_doc_bin = get_doc_bin_table_to_json(
-        project_id=project_id,
-        missing_columns=record.get_missing_columns_str(project_id),
-        record_ids=[record_id],
-    )
-    project_item = project.get(project_id)
-    org_id = str(project_item.organization_id)
-    prefixed_doc_bin = f"{information_source_id}_doc_bin.json"
-    s3.put_object(
-        org_id,
-        project_id + "/" + prefixed_doc_bin,
-        record_doc_bin,
-    )
-
-    return prefixed_doc_bin, record_doc_bin
-
-
 def get_active_learning_on_1_record(
     project_id: str, information_source_id: str, record_id: str
 ) -> Tuple[List[str], List[List[str]], bool]:
@@ -790,9 +773,14 @@ def get_active_learning_on_1_record(
 
     prefixed_input_name = f"{information_source_id}_input"
     prefixed_function_name = f"{information_source_id}_fn"
-    add_file_name = f"single_embedding_tensor_{record_id}.csv.bz2"
+    add_file_name = f"single_embedding_tensor_{record_id}_{embedding_id}.csv.bz2"
     prefixed_payload = f"{information_source_id}_payload.json"
+
+    dir_path = os.path.join(MODEL_FOLDER, f"learner--{information_source_id}")
+    shutil.make_archive(str(information_source_id), "zip", dir_path)
     model_file_name = f"{information_source_id}.zip"
+    s3.upload_object(org_id, project_id + "/" + model_file_name, model_file_name, True)
+    os.remove(model_file_name)
 
     s3.put_object(org_id, project_id + "/" + prefixed_input_name, input_data)
     s3.put_object(
@@ -800,6 +788,7 @@ def get_active_learning_on_1_record(
         project_id + "/" + prefixed_function_name,
         information_source_item.source_code,
     )
+
     command = [
         s3.create_access_link(org_id, project_id + "/" + prefixed_input_name),
         s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
@@ -832,10 +821,11 @@ def get_active_learning_on_1_record(
         print("Could not grab data from s3 -- active learning")
         code_has_errors = True
         calculated_labels = {}
-
-    s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
-    s3.delete_object(org_id, project_id + "/" + prefixed_payload)
-    s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
+    finally:
+        s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
+        s3.delete_object(org_id, project_id + "/" + prefixed_payload)
+        s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
+        s3.delete_object(org_id, project_id + "/" + model_file_name)
 
     return calculated_labels, container_logs, code_has_errors
 
