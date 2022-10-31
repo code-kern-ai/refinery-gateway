@@ -745,6 +745,26 @@ def prepare_sample_records_doc_bin(
     return prefixed_doc_bin, sample_records
 
 
+def prepare_single_record_doc_bin(
+    project_id: str, information_source_id: str, record_id: str
+) -> Tuple[str, List[str]]:
+    record_doc_bin = get_doc_bin_table_to_json(
+        project_id=project_id,
+        missing_columns=record.get_missing_columns_str(project_id),
+        record_ids=[record_id],
+    )
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+    prefixed_doc_bin = f"{information_source_id}_doc_bin.json"
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_doc_bin,
+        record_doc_bin,
+    )
+
+    return prefixed_doc_bin, record_doc_bin
+
+
 def get_active_learning_on_1_record(
     project_id: str, information_source_id: str, record_id: str
 ) -> Tuple[List[str], List[List[str]], bool]:

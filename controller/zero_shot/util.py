@@ -42,6 +42,24 @@ def get_zero_shot_text(
     return service_requests.post_call_or_raise(url, data)
 
 
+def get_zero_shot_on_1_record(
+    project_id: str,
+    information_source_id: str,
+    record_id: str,
+    label_names: List[str],
+) -> Any:
+    if label_names == None:
+        label_names = []
+    url = f"{BASE_URI}/zero-shot/single-record"
+    data = {
+        "project_id": project_id,
+        "information_source_id": information_source_id,
+        "record_id": record_id,
+        "label_names": label_names,
+    }
+    return service_requests.post_call_or_raise(url, data)
+
+
 def get_zero_shot_sample_records(
     project_id: str,
     information_source_id,

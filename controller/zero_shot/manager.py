@@ -56,6 +56,17 @@ def get_zero_shot_recommendations(
     return recommendations
 
 
+def get_zero_shot_1_record(
+    project_id: str,
+    information_source_id: str,
+    record_id: str,
+    label_names: Optional[List[str]] = None,
+) -> ZeroShotNRecordsWrapper:
+    result = zs_service.get_zero_shot_on_1_record(
+        project_id, information_source_id, record_id, label_names
+    )
+
+
 def get_zero_shot_10_records(
     project_id: str, information_source_id: str, label_names: Optional[List[str]] = None
 ) -> ZeroShotNRecordsWrapper:

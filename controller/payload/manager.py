@@ -56,6 +56,27 @@ def get_active_learning_on_1_record(
         information_source_id=information_source_id,
         record_id=record_id,
     )
+    return calculated_labels
+
+
+def get_labeling_function_on_1_record(
+    project_id: str, information_source_id: str, record_id: str
+):
+    doc_bin, record = payload_scheduler.prepare_single_record_doc_bin(
+        project_id=project_id,
+        information_source_id=information_source_id,
+        record_id=record_id,
+    )
+    (
+        calculated_labels,
+        container_logs,
+        code_has_errors,
+    ) = payload_scheduler.run_labeling_function_exec_env(
+        project_id=project_id,
+        information_source_id=information_source_id,
+        prefixed_doc_bin=doc_bin,
+    )
+    return calculated_labels
 
 
 def get_labeling_function_on_10_records(
