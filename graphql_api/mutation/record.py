@@ -1,4 +1,7 @@
+from typing import Any, Dict
 import graphene
+import json
+import uuid
 
 from controller.auth import manager as auth
 from submodules.model.enums import InformationSourceType
@@ -28,9 +31,9 @@ class DeleteRecord(graphene.Mutation):
 class FullWorkflowRecord(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID()
-        record_id = graphene.ID()
         embedding_name = graphene.String()
         active_learner_name = graphene.String()
+        record_data = graphene.JSONString()
 
     response = graphene.Field(types.InferenceResult)
 
@@ -38,23 +41,22 @@ class FullWorkflowRecord(graphene.Mutation):
         self,
         info,
         project_id: str,
-        record_id: str,
         embedding_name: str,
         active_learner_name: str,
+        record_data: Dict[str, Any],
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
 
-        record = record_manager.get_record(project_id, record_id)
-        if record is None:
-            raise Exception("Record not found")
         project = project_manager.get_project(project_id)
+
+        record = record_manager.create_record(project_id, record_data)
 
         found_embedding = False  # only for the beta version
         for embedding in project.embeddings:
             if embedding.name == embedding_name:  # only for the beta version
                 embedding_manager.create_single_embedding(
-                    project_id, embedding.id, record_id
+                    project_id, embedding.id, record.id
                 )
                 found_embedding = True
 
@@ -73,10 +75,10 @@ class FullWorkflowRecord(graphene.Mutation):
                         == InformationSourceType.ACTIVE_LEARNING.value
                     ):
                         labels = payload_manager.get_active_learning_on_1_record(
-                            project_id, information_source.id, record_id
+                            project_id, str(information_source.id), str(record.id)
                         )
                         if len(labels) > 0:
-                            labels = labels[record_id]
+                            labels = labels[str(record.id)]
                             prediction_task = types.InferencePredictionItem(
                                 label=labels[1],
                                 confidence=labels[0],
@@ -103,8 +105,10 @@ class FullWorkflowRecord(graphene.Mutation):
 
         if found_embedding:
             embedding_manager.delete_single_embedding(
-                project_id, embedding.id, record_id
+                project_id, embedding.id, record.id
             )
+
+        record_manager.delete_record(project_id, record.id)
 
         return FullWorkflowRecord(response=response)
 

@@ -3,9 +3,16 @@ from typing import List, Dict, Any
 from graphql_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
 from submodules.model.business_objects import general, record, user_session
+from submodules.model.enums import RecordCategory
 from service.search import search
 
 from controller.record import neural_search_connector
+
+
+def create_record(project_id: str, record_data: Dict[str, Any]) -> Record:
+    return record.create(
+        project_id, record_data, RecordCategory.SCALE.value, with_commit=True
+    )
 
 
 def get_record(project_id: str, record_id: str) -> Record:
