@@ -3,6 +3,7 @@
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 from submodules.model.business_objects import attribute, general, project, data_slice
+from .labelstudio import export_parser as ls_export_parser
 
 import pandas as pd
 import numpy as np
@@ -31,7 +32,6 @@ def parse(
             if str(col).endswith("__created_by"):
                 df.drop(col, axis="columns", inplace=True)
     elif export_format == enums.RecordExportFormats.LABEL_STUDIO.value:
-        from .labelstudio import export_parser as ls_export_parser
 
         df = ls_export_parser.parse_dataframe_data(project_id, df)
     else:
@@ -61,7 +61,10 @@ def infer_file_name(
     row_option = export_options.get("rows")
     if row_option.get("type") == enums.RecordExportAmountTypes.SLICE.value:
         slice_item = data_slice.get(project_id, row_option.get("id"))
-        amount_type_addition = slice_item.name
+        if slice_item.slice_type == enums.SliceTypes.STATIC_OUTLIER.value:
+            amount_type_addition = "outlier"
+        else:
+            amount_type_addition = slice_item.name
     else:
         amount_type_addition = row_option.get("type")
 

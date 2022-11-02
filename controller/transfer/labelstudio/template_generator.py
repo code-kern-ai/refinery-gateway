@@ -4,6 +4,27 @@ from submodules.model.business_objects import labeling_task, attribute, record
 
 INDENT_SIZE = "    "
 
+# tested a bit and text-color-400 seems to be the best case -> can be adjusted if necessary
+COLOR_LOOKUP = {
+    "rose": "#fb7185",
+    "pink": "#f472b6",
+    "fuchsia": "#e879f9",
+    "purple": "#c084fc",
+    "violet": "#a78bfa",
+    "indigo": "#818cf8",
+    "blue": "#60a5fa",
+    "sky": "#38bdf8",
+    "cyan": "#22d3ee",
+    "teal": "#2dd4bf",
+    "emerald": "#34d399",
+    "green": "#4ade80",
+    "lime": "#a3e635",
+    "yellow": "#facc15",
+    "amber": "#fbbf24",
+    "orange": "#fb923c",
+    "red": "#f87171",
+}
+
 
 def generate_template(
     project_id: str, labeling_task_ids: List[str], attribute_ids: List[str]
@@ -48,7 +69,7 @@ def __generate_extraction_task(
         f'{INDENT_SIZE}<Labels name="{task_data["name"]}" toName="{task_data["attribute_name"]}">'
     )
     values += [
-        f'{INDENT_SIZE*2}<Label value="{label["name"]}" background="{label["color"]}"/>'
+        f'{INDENT_SIZE*2}<Label value="{label["name"]}" background="{COLOR_LOOKUP[label["color"]]}" kern-color="{label["color"]}"/>'
         for label in task_data["labels"]
     ]
     values.append(f"{INDENT_SIZE}</Labels>")
@@ -59,9 +80,9 @@ def __generate_extraction_task(
 #   <View style="box-shadow: 2px 2px 5px #999; padding: 20px; margin-top: 2em; border-radius: 5px;">
 #     <Header value="Choose text sentiment"/>
 #     <Choices name="sentiment" toName="text" choice="single" showInLine="true">
-#       <Choice value="Positive"/>
-#       <Choice value="Negative"/>
-#       <Choice value="Neutral"/>
+#       <Choice value="Positive" style="background:#blue"/>
+#       <Choice value="Negative" style="background:#blue"/>
+#       <Choice value="Neutral" style="background:#blue"/>
 #     </Choices>
 #   </View>
 def __generate_classification_task(
@@ -84,7 +105,7 @@ def __generate_classification_task(
         f'{INDENT_SIZE*2}<Choices name="{task_data["name"]}" toName="{task_data["attribute_name"]}" choice="single" showInLine="true">'
     )
     values += [
-        f'{INDENT_SIZE*3}<Choice value="{label["name"]}"/>'
+        f'{INDENT_SIZE*3}<Choice value="{label["name"]}" style="background:{COLOR_LOOKUP[label["color"]]}50;margin:2px;outline: 2px solid {COLOR_LOOKUP[label["color"]]};outline-offset:-2px;" kern-color="{label["color"]}"/>'
         for label in task_data["labels"]
     ]
     values.append(f"{INDENT_SIZE*2}</Choices>")

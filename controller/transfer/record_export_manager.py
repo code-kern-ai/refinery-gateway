@@ -81,9 +81,9 @@ def get_records_by_options_query_data(
     record_data_query = __get_record_data_query(project_id, row_options)
 
     # task columns part
-    classficiation_task_query = ""
+    classification_task_query = ""
     if task_options and sources_options:
-        classficiation_task_query += __columns_by_table_meta_data_query(
+        classification_task_query += __columns_by_table_meta_data_query(
             project_id, tables_meta_data
         )
 
@@ -96,7 +96,7 @@ def get_records_by_options_query_data(
     {select_part}
         {extraction_appends["SELECT"]}
     {record_data_query}
-    {classficiation_task_query}
+    {classification_task_query}
     {extraction_appends["FROM"]}
     WHERE basic_record.project_id = '{project_id}'
     """
@@ -139,7 +139,7 @@ def __extract_table_meta_classification_data(
 
         for source in sources_options:
             full_table_name = ""
-            addtional_confidence_table_name = ""
+            additional_confidence_table_name = ""
             tablename_dict = {}
             additional_confidence_table = {}
 
@@ -163,8 +163,8 @@ def __extract_table_meta_classification_data(
                 tablename_dict["table_type"] = "task_data"
 
                 if source.get("type") == enums.LabelSource.WEAK_SUPERVISION.value:
-                    addtional_confidence_table_name = f"{full_table_name}_CONFIDENCE"
-                    tables_mapping[addtional_confidence_table_name] = __create_alias()
+                    additional_confidence_table_name = f"{full_table_name}_CONFIDENCE"
+                    tables_mapping[additional_confidence_table_name] = __create_alias()
                     additional_confidence_table["original_table"] = tables_mapping.get(
                         full_table_name
                     )
@@ -176,9 +176,9 @@ def __extract_table_meta_classification_data(
                 alias = tables_mapping.get(full_table_name)
                 tables_meta_data[alias] = tablename_dict
                 if additional_confidence_table:
-                    tables_mapping[addtional_confidence_table_name] = __create_alias()
+                    tables_mapping[additional_confidence_table_name] = __create_alias()
                     tables_meta_data[
-                        tables_mapping.get(addtional_confidence_table_name)
+                        tables_mapping.get(additional_confidence_table_name)
                     ] = additional_confidence_table
                 if with_user_id:
                     additional_created_by_table = {}
@@ -186,10 +186,10 @@ def __extract_table_meta_classification_data(
                     additional_created_by_table["original_table"] = tables_mapping.get(
                         full_table_name
                     )
-                    addtional_created_by_name = full_table_name + "__created_by"
-                    tables_mapping[addtional_created_by_name] = __create_alias()
+                    additional_created_by_name = full_table_name + "__created_by"
+                    tables_mapping[additional_created_by_name] = __create_alias()
                     tables_meta_data[
-                        tables_mapping.get(addtional_created_by_name)
+                        tables_mapping.get(additional_created_by_name)
                     ] = additional_created_by_table
     return tables_meta_data, tables_mapping
 
@@ -243,7 +243,10 @@ def __record_data_by_type(project_id: str, row_options: Dict[str, Any]) -> str:
 def ___record_data_by_slice(project_id: str, slice_id: str) -> str:
     slice = data_slice.get(project_id, slice_id)
     slice_type = slice.slice_type
-    if slice_type == enums.SliceTypes.STATIC_DEFAULT.value:
+    if (
+        slice_type == enums.SliceTypes.STATIC_DEFAULT.value
+        or slice_type == enums.SliceTypes.STATIC_OUTLIER.value
+    ):
         return __record_data_by_static_slice_query(project_id, slice_id)
     elif slice_type == enums.SliceTypes.DYNAMIC_DEFAULT.value:
         if not slice.filter_data:
