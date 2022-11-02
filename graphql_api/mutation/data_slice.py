@@ -109,7 +109,12 @@ class CreateOutlierSlice(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        manager.create_outlier_slice(project_id, user_id, embedding_id)
+        data_slice_item = manager.create_outlier_slice(
+            project_id, user_id, embedding_id
+        )
+        notification.send_organization_update(
+            project_id, f"data_slice_created:{str(data_slice_item.id)}"
+        )
         return CreateOutlierSlice(ok=True)
 
 
