@@ -257,19 +257,3 @@ def generate_labelstudio_template(
     return labelstudio_template_generator.generate_template(
         project_id, labeling_task_ids, attribute_ids
     )
-
-
-def prepare_label_studio_import(project_id: str, task: str) -> None:
-    file_additional_info = {
-        "user_ids": [1, 3, 4],
-        "errors": ["string", "string", "string"],
-        "warning": ["string", "string", "string"],
-        "info": ["string", "string", "string"],
-        "file_info": {"records": 12, "annotations": {"1": 12, "3": 1, "4": 5}},
-    }
-    upload_task.update(
-        project_id,
-        task.id,
-        state=enums.UploadStates.PREPARED.value,
-        file_additional_info=json.dumps(file_additional_info),
-    )
