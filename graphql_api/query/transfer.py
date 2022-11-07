@@ -82,7 +82,7 @@ class TransferQuery(graphene.ObjectType):
         file_name: str,
         file_type: str,
         file_import_options: Optional[str] = "",
-        upload_type: str = enums.UploadTypes.LABEL_STUDIO.value,  # TODO ENUMS
+        upload_type: str = enums.UploadTypes.DEFAULT.value,
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)

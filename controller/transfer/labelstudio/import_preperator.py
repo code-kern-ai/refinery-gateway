@@ -2,7 +2,8 @@ import json
 
 from controller.transfer.record_transfer_manager import download_file
 from submodules.model import UploadTask, enums
-from submodules.model.business_objects import upload_task
+from controller.upload_task import manager as task_manager
+
 
 
 def prepare_label_studio_import(project_id: str, task: UploadTask) -> None:
@@ -11,13 +12,11 @@ def prepare_label_studio_import(project_id: str, task: UploadTask) -> None:
         data = json.load(file)
         file_additional_info = analyze_file(data)
         dumped_info = json.dumps(file_additional_info)
-        print(dumped_info)
-        upload_task.update(
+        task_manager.update_task(
             project_id,
             task.id,
             state=enums.UploadStates.PREPARED.value,
             file_additional_info=dumped_info,
-            with_commit=True
         )
 
 

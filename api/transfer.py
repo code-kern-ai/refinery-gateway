@@ -5,6 +5,8 @@ import controller.transfer.labelstudio.import_preperator
 from controller import organization
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
+
+from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import organization
 
@@ -194,7 +196,7 @@ class UploadTask(HTTPEndpoint):
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     if "records" in task.file_type:
         if task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
-            controller.transfer.labelstudio.import_preperator.prepare_label_studio_import(project_id, task)
+            import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
     elif "project" in task.file_type:

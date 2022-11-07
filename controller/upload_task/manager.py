@@ -61,13 +61,23 @@ def update_task(
     task_id: str,
     state: Optional[str] = None,
     progress: Optional[float] = None,
+    file_additional_info=None,
+    mappings=None,
 ) -> None:
 
     if progress is not None:
         if progress < 0 or progress > 100:
             raise Exception(f"Progress out of bounds. Progress is {progress}")
 
-    upload_task.update(project_id, task_id, state=state, progress=progress, with_commit=True)
+    upload_task.update(
+        project_id,
+        task_id,
+        state=state,
+        progress=progress,
+        file_additional_info=file_additional_info,
+        mappings=mappings,
+        with_commit=True,
+    )
     if state:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task_id)}:state:{state}"
