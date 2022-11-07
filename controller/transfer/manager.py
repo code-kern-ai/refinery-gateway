@@ -25,6 +25,7 @@ from submodules.model.business_objects import (
     record_label_association,
     data_slice,
     knowledge_base,
+    upload_task,
 )
 from submodules.model.business_objects import general, project
 from controller.upload_task import manager as upload_task_manager
@@ -41,9 +42,10 @@ def get_upload_credentials_and_id(
     file_name: str,
     file_type: str,
     file_import_options: str,
+    upload_type: str,
 ):
     task = upload_task_manager.create_upload_task(
-        str(user_id), project_id, file_name, file_type, file_import_options
+        str(user_id), project_id, file_name, file_type, file_import_options, upload_type
     )
     org_id = organization.get_id_by_project_id(project_id)
     return s3.get_upload_credentials_and_id(org_id, project_id + "/" + str(task.id))
@@ -254,4 +256,20 @@ def generate_labelstudio_template(
 ) -> str:
     return labelstudio_template_generator.generate_template(
         project_id, labeling_task_ids, attribute_ids
+    )
+
+
+def prepare_label_studio_import(project_id: str, task: str) -> None:
+    file_additional_info = {
+        "user_ids": [1, 3, 4],
+        "errors": ["string", "string", "string"],
+        "warning": ["string", "string", "string"],
+        "info": ["string", "string", "string"],
+        "file_info": {"records": 12, "annotations": {"1": 12, "3": 1, "4": 5}},
+    }
+    upload_task.update(
+        project_id,
+        task.id,
+        state=enums.UploadStates.PREPARED.value,
+        file_additional_info=json.dumps(file_additional_info),
     )

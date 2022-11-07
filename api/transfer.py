@@ -192,7 +192,10 @@ class UploadTask(HTTPEndpoint):
 
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     if "records" in task.file_type:
-        transfer_manager.import_records_from_file(project_id, task)
+        if task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:  # TODO ENUM HERE
+            transfer_manager.prepare_label_studio_import(project_id, task)
+        else:
+            transfer_manager.import_records_from_file(project_id, task)
     elif "project" in task.file_type:
         transfer_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
