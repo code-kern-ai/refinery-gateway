@@ -25,6 +25,11 @@ class SearchOperators(Enum):
     ENDS_WITH = "ENDS_WITH"
     CONTAINS = "CONTAINS"
     IN = "IN"
+    BETWEEN = "BETWEEN"
+    GREATER = "GREATER"
+    GREATER_EQUAL = "GREATER_EQUAL"
+    LESS = "LESS"
+    LESS_EQUAL = "LESS_EQUAL"
 
 
 class FilterDataDictKeys(Enum):

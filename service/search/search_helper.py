@@ -9,6 +9,8 @@ from .search_enum import (
     SearchTargetTables,
 )
 from submodules.model.enums import LabelSource
+from submodules.model.business_objects import attribute
+from submodules.model.enums import DataTypes
 
 
 def build_search_condition_value(target: SearchOperators, value) -> str:
@@ -16,52 +18,55 @@ def build_search_condition_value(target: SearchOperators, value) -> str:
         operator = __lookup_operator[target]
         if target == SearchOperators.IN:
             all_in_values = ""
-            for v in value:
-                part = v
-                if isinstance(v, str):
-                    part = "'" + part + "'"
-                if all_in_values != "":
-                    all_in_values += ", " + part
-                else:
-                    all_in_values = part
+            if value:
+                all_in_values = ", ".join(
+                    [f"'{v}'" if isinstance(v, str) else str(v) for v in value]
+                )
             return operator.replace("@@VALUES@@", all_in_values)
+        elif target == SearchOperators.BETWEEN:
+            value1 = f"'{value[0]}'" if isinstance(value[0], str) else str(value[0])
+            value2 = f"'{value[1]}'" if isinstance(value[1], str) else str(value[1])
+            return operator.replace("@@VALUE1@@", value1).replace("@@VALUE2@@", value2)
         else:
             if target not in __lookup_operator_has_quotes and isinstance(value, str):
                 value = "'" + value + "'"
-            return operator.replace("@@VALUE@@", value)
+            return operator.replace("@@VALUE@@", str(value))
     else:
         raise ValueError(target.value + " no operator info")
 
 
-def build_search_condition(filter_element: Dict[str, str]) -> str:
+def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> str:
     table = SearchTargetTables[filter_element[FilterDataDictKeys.TARGET_TABLE.value]]
     column = SearchColumn[filter_element[FilterDataDictKeys.TARGET_COLUMN.value]]
-    column_text = build_search_column_text(filter_element)
+    search_column = build_search_column(project_id, filter_element)
     operator = SearchOperators[filter_element[FilterDataDictKeys.OPERATOR.value]]
 
-    if operator == SearchOperators.IN:
+    if operator in [SearchOperators.IN, SearchOperators.BETWEEN]:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_values = filter_element[FilterDataDictKeys.VALUES.value][1:]
         else:
             filter_values = filter_element[FilterDataDictKeys.VALUES.value]
-        return column_text + build_search_condition_value(operator, filter_values)
+        return search_column + build_search_condition_value(operator, filter_values)
     else:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_value = filter_element[FilterDataDictKeys.VALUES.value][1]
         else:
             filter_value = filter_element[FilterDataDictKeys.VALUES.value][0]
 
-        return column_text + build_search_condition_value(operator, filter_value)
+        return search_column + build_search_condition_value(operator, filter_value)
 
 
-def build_search_column_text(filter_element: Dict[str, str]) -> str:
+def build_search_column(project_id: str, filter_element: Dict[str, str]) -> str:
 
     table = SearchTargetTables[filter_element[FilterDataDictKeys.TARGET_TABLE.value]]
     table_alias = __lookup_table_alias[table]
     column = SearchColumn[filter_element[FilterDataDictKeys.TARGET_COLUMN.value]]
 
     if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
-        col_str = f"{table_alias}.\"data\" ->> '{filter_element[FilterDataDictKeys.VALUES.value][0]}'::TEXT"
+        attr_name = filter_element[FilterDataDictKeys.VALUES.value][0]
+        attr_data_type = attribute.get_data_type(project_id, attr_name)
+        sql_cast = __lookup_sql_cast_data_type[attr_data_type]
+        col_str = f"({table_alias}.\"data\" ->> '{attr_name}')::{sql_cast}"
     else:
         col_str = f"{table_alias}.{column.value}"
     return col_str
@@ -201,12 +206,25 @@ __lookup_operator = {
     SearchOperators.BEGINS_WITH: " ILIKE '@@VALUE@@%'",
     SearchOperators.ENDS_WITH: " ILIKE '%@@VALUE@@'",
     SearchOperators.IN: " IN (@@VALUES@@)",
+    SearchOperators.BETWEEN: " BETWEEN @@VALUE1@@ AND @@VALUE2@@",
+    SearchOperators.GREATER: " > @@VALUE@@",
+    SearchOperators.GREATER_EQUAL: " >= @@VALUE@@",
+    SearchOperators.LESS: " < @@VALUE@@",
+    SearchOperators.LESS_EQUAL: " <= @@VALUE@@",
 }
 
 __lookup_operator_has_quotes = {
     SearchOperators.CONTAINS: True,
     SearchOperators.BEGINS_WITH: True,
     SearchOperators.ENDS_WITH: True,
+}
+
+__lookup_sql_cast_data_type = {
+    DataTypes.INTEGER.value: "INTEGER",
+    DataTypes.FLOAT.value: "FLOAT",
+    DataTypes.BOOLEAN.value: "BOOLEAN",
+    DataTypes.CATEGORY.value: "TEXT",
+    DataTypes.TEXT.value: "TEXT",
 }
 
 
