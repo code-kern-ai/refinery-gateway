@@ -194,6 +194,7 @@ class UploadTask(HTTPEndpoint):
 
 
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
+    task_state = task.state
     if "records" in task.file_type:
         if task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
             import_preperator.prepare_label_studio_import(project_id, task)
@@ -204,10 +205,17 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
     elif "knowledge_base" in task.file_type:
         transfer_manager.import_knowledge_base(project_id, task)
 
-    notification.send_organization_update(
-        project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update
-    )
-    if task.file_type != "knowledge_base":
+    if task.state == task_state:
+        # update is sent in update task if it was updated (e.g. with labeling studio)
+        notification.send_organization_update(
+            project_id,
+            f"file_upload:{str(task.id)}:state:{task.state}",
+            is_global_update,
+        )
+    if (
+        task.file_type != "knowledge_base"
+        and task.upload_type != enums.UploadTypes.LABEL_STUDIO.value
+    ):
         tokenization_service.request_tokenize_project(project_id, str(task.user_id))
 
 
