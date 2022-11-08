@@ -38,33 +38,40 @@ def build_search_condition_value(target: SearchOperators, value) -> str:
 def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> str:
     table = SearchTargetTables[filter_element[FilterDataDictKeys.TARGET_TABLE.value]]
     column = SearchColumn[filter_element[FilterDataDictKeys.TARGET_COLUMN.value]]
-    search_column = build_search_column(project_id, filter_element)
     operator = SearchOperators[filter_element[FilterDataDictKeys.OPERATOR.value]]
+    attr_name = filter_element[FilterDataDictKeys.VALUES.value][0]
+    filter_values = filter_element[FilterDataDictKeys.VALUES.value]
+    search_column = build_search_column(project_id, table, column, operator, attr_name)
 
-    if operator in [SearchOperators.IN, SearchOperators.BETWEEN]:
+    if operator == SearchOperators.IN_WC:
+        ilike_conditions = []
+        for value in filter_values[1:]:
+            ilike_conditions.append(
+                search_column
+                + build_search_condition_value(SearchOperators.ILIKE, value)
+            )
+        return " OR ".join(ilike_conditions)
+    elif operator in [SearchOperators.IN, SearchOperators.BETWEEN]:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
-            filter_values = filter_element[FilterDataDictKeys.VALUES.value][1:]
-        else:
-            filter_values = filter_element[FilterDataDictKeys.VALUES.value]
+            filter_values = filter_values[1:]
         return search_column + build_search_condition_value(operator, filter_values)
     else:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
-            filter_value = filter_element[FilterDataDictKeys.VALUES.value][1]
+            filter_value = filter_values[1]
         else:
-            filter_value = filter_element[FilterDataDictKeys.VALUES.value][0]
+            filter_value = filter_values[0]
 
         return search_column + build_search_condition_value(operator, filter_value)
 
 
-def build_search_column(project_id: str, filter_element: Dict[str, str]) -> str:
-
-    table = SearchTargetTables[filter_element[FilterDataDictKeys.TARGET_TABLE.value]]
+def build_search_column(
+    project_id: str, table: str, column: str, operator: str, attr_name: str
+) -> str:
     table_alias = __lookup_table_alias[table]
-    column = SearchColumn[filter_element[FilterDataDictKeys.TARGET_COLUMN.value]]
-
     if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
-        attr_name = filter_element[FilterDataDictKeys.VALUES.value][0]
-        attr_data_type = attribute.get_data_type(project_id, attr_name)
+        attr_data_type = "TEXT"
+        if operator not in __lookup_operator_has_quotes:
+            attr_data_type = attribute.get_data_type(project_id, attr_name)
         sql_cast = __lookup_sql_cast_data_type[attr_data_type]
         col_str = f"({table_alias}.\"data\" ->> '{attr_name}')::{sql_cast}"
     else:
@@ -211,12 +218,17 @@ __lookup_operator = {
     SearchOperators.GREATER_EQUAL: " >= @@VALUE@@",
     SearchOperators.LESS: " < @@VALUE@@",
     SearchOperators.LESS_EQUAL: " <= @@VALUE@@",
+    SearchOperators.LIKE: " LIKE '@@VALUE@@'",
+    SearchOperators.ILIKE: " ILIKE '@@VALUE@@'",
 }
 
 __lookup_operator_has_quotes = {
     SearchOperators.CONTAINS: True,
     SearchOperators.BEGINS_WITH: True,
     SearchOperators.ENDS_WITH: True,
+    SearchOperators.LIKE: True,
+    SearchOperators.ILIKE: True,
+    SearchOperators.IN_WC: True,
 }
 
 __lookup_sql_cast_data_type = {
