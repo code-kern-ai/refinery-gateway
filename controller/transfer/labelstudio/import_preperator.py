@@ -3,6 +3,7 @@ import json
 from controller.transfer.record_transfer_manager import download_file
 from submodules.model import UploadTask, enums
 from controller.upload_task import manager as task_manager
+from typing import Set, Dict, Any
 
 
 def prepare_label_studio_import(project_id: str, task: UploadTask) -> None:
@@ -30,7 +31,8 @@ def analyze_file(data):
         record_count += 1
         for annotation in record.get("annotations"):
             user_id = annotation.get("completed_by")
-            tasks.add(annotation.get("from_name"))
+            # tasks.add(annotation.get("from_name"))
+            __add_annotation_target(annotation, tasks)
 
             if user_id in user_id_counts:
                 user_id_counts[user_id] += 1
@@ -45,3 +47,11 @@ def analyze_file(data):
         "info": info,
         "file_info": {"records": record_count, "annotations": user_id_counts},
     }
+
+
+def __add_annotation_target(annotation: Dict[str, Any], tasks: Set[str]) -> None:
+    target = annotation.get("result")
+    if target and len(target) > 0:
+        target = target[0].get("from_name")
+    if target:
+        tasks.add(target)
