@@ -46,7 +46,7 @@ def __extract_and_compose_data(data, user_mapping, attribute_task_mapping):
                     continue
 
                 task_name = result.get("from_name")
-                table_name_label = f"__{task_name}__MANUAL"
+                table_name_label = f"__{task_name}"
 
                 if (
                     attribute_task_mapping.get(task_name)
