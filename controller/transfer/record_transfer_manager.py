@@ -113,21 +113,25 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.PENDING.value)
     org_id = organization.get_id_by_project_id(project_id)
 
-    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
-    download_file_name = s3.download_object(
-        org_id,
-        project_id + "/" + f"{upload_task.id}/{upload_task.file_name}",
-        file_type,
-    )
-    is_zip = file_type == "zip"
-    if is_zip:
-        tmp_file_name = extract_first_zip_file(download_file_name)
-        file_type = tmp_file_name.rsplit(".", 1)[1]
+    if upload_task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
+        tmp_file_name = f"tmp/{upload_task.id}_converted_file.json"
+        file_type = "json"
     else:
-        tmp_file_name = download_file_name
+        file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
+        download_file_name = s3.download_object(
+            org_id,
+            project_id + "/" + f"{upload_task.id}/{upload_task.file_name}",
+            file_type,
+        )
+        is_zip = file_type == "zip"
+        if is_zip:
+            tmp_file_name = extract_first_zip_file(download_file_name)
+            file_type = tmp_file_name.rsplit(".", 1)[1]
+        else:
+            tmp_file_name = download_file_name
 
-    if is_zip and os.path.exists(download_file_name):
-        os.remove(download_file_name)
+        if is_zip and os.path.exists(download_file_name):
+            os.remove(download_file_name)
 
     upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value)
     record_category = category.infer_category(upload_task.file_name)
@@ -328,5 +332,3 @@ def create_attributes_and_get_text_attributes(
         notification.send_organization_update(project_id, f"attributes_updated")
 
     return text_attributes
-
-

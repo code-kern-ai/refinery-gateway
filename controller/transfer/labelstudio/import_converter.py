@@ -18,7 +18,7 @@ def manage_converting_data(project_id: str, task_id: str) -> None:
             data, user_mapping, attribute_task_mapping
         )
 
-    with open(f"{task.id}_converted_file.json", "w") as file:
+    with open(f"tmp/{task.id}_converted_file.json", "w") as file:
         file.write(json.dumps(converted_data))
 
 

@@ -2,7 +2,7 @@ import os
 import json
 from typing import Any, List, Optional, Dict
 import zipfile
-from controller.transfer import export_parser
+from controller.transfer import export_parser, record_transfer_manager
 from controller.transfer.knowledge_base_transfer_manager import (
     import_knowledge_base_file,
 )
@@ -16,6 +16,7 @@ from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
 from controller.transfer.labelstudio import (
     template_generator as labelstudio_template_generator,
+    import_converter,
 )
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export
@@ -257,3 +258,9 @@ def generate_labelstudio_template(
     return labelstudio_template_generator.generate_template(
         project_id, labeling_task_ids, attribute_ids
     )
+
+
+def import_label_studio_file(project_id, upload_task_id):
+    import_converter.manage_converting_data(project_id, upload_task_id)
+    upload_task_item = upload_task.get(project_id, upload_task_id)
+    record_transfer_manager.import_file(project_id, upload_task_item)
