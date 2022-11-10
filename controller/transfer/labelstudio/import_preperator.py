@@ -88,13 +88,14 @@ def analyze_file(data: Dict[str, Any], file_additional_info: Dict[str, Any]) -> 
         )
 
     if ex_extraction:
-        file_additional_info["errors"].append(
-            "Named Entity Recognition / extraction labels are not supported."
+        file_additional_info["warnings"].append(
+            "Named Entity Recognition / extraction labels are not supported.\nThese annotations will be ignored if you proceed."
             + ex_extraction
         )
     if ex_multiple_choices:
-        file_additional_info["errors"].append(
-            "Multiple choices for a result set are not supported." + ex_multiple_choices
+        file_additional_info["warnings"].append(
+            "Multiple choices for a result set are not supported.\nThese annotations will be ignored if you proceed."
+            + ex_multiple_choices
         )
     if ex_multiple_annotations:
         file_additional_info["errors"].append(
