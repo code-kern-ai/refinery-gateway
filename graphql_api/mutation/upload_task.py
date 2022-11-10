@@ -1,5 +1,6 @@
 from controller.auth import manager as auth
 from controller.upload_task import manager as task_manager
+from controller.transfer.labelstudio import import_converter
 import graphene
 
 
@@ -15,6 +16,7 @@ class SetUploadMappings(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         task_manager.update_task(project_id, upload_task_id, mappings=mappings)
+        import_converter.manage_converting_data(project_id, upload_task_id)
         return SetUploadMappings(ok=True)
 
 
