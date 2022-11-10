@@ -8,6 +8,7 @@ from graphql_api.types import Project
 from submodules.model import enums, events
 from controller.project import manager
 from util import doc_ock, notification
+from submodules.model.business_objects import notification as notification_model
 
 
 class CreateProject(graphene.Mutation):
@@ -73,6 +74,7 @@ class DeleteProject(graphene.Mutation):
         notification.create_notification(
             enums.NotificationType.PROJECT_DELETED, user.id, None, project_item.name
         )
+        notification_model.remove_project_connection_for_last_x(project_id)
         manager.delete_project(project_id)
         notification.send_organization_update(
             project_id, f"project_deleted:{project_id}", True, organization_id
