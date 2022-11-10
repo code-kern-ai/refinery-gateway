@@ -1,18 +1,27 @@
 from typing import List, Dict, Any
+from graphql_api import types
 
 from graphql_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
+from submodules.model import enums
 from submodules.model.business_objects import general, record, user_session
 from submodules.model.enums import RecordCategory
 from service.search import search
 
 from controller.record import neural_search_connector
+from controller.project import manager as project_manager
+from controller.embedding import manager as embedding_manager
+from controller.payload import manager as payload_manager
 
 
 def create_record(project_id: str, record_data: Dict[str, Any]) -> Record:
     return record.create(
         project_id, record_data, RecordCategory.SCALE.value, with_commit=True
     )
+
+
+def get_record_example(project_id: str) -> Record:
+    return record.get_one(project_id)
 
 
 def get_record(project_id: str, record_id: str) -> Record:
@@ -100,3 +109,67 @@ def delete_record(project_id: str, record_id: str) -> None:
 
 def delete_all_records(project_id: str) -> None:
     record.delete_all(project_id, with_commit=True)
+
+
+def predict_one(
+    project_id,
+    record_data: Dict[str, Any],
+):
+
+    project = project_manager.get_project(project_id)
+    record = create_record(project_id, record_data)
+    found_embedding = False  # only for the beta version
+    for embedding in project.embeddings:
+        if embedding.is_selected_for_inference:  # only for the beta version
+            embedding_manager.create_single_embedding(
+                project_id, embedding.id, record.id
+            )
+            found_embedding = True
+
+    if not found_embedding:
+        raise Exception("Embedding not found")
+
+    results = []
+    for labeling_task in project.labeling_tasks:
+        prediction_task = None
+        for information_source in labeling_task.information_sources:
+            if (
+                information_source.is_selected_for_inference
+            ):  # only for the beta version
+                if (
+                    information_source.type
+                    == enums.InformationSourceType.ACTIVE_LEARNING.value
+                ):
+                    labels = payload_manager.get_active_learning_on_1_record(
+                        project_id, str(information_source.id), str(record.id)
+                    )
+                    if len(labels) > 0:
+                        labels = labels[str(record.id)]
+                        prediction_task = {
+                            "label": labels[1],
+                            "confidence": labels[0],
+                        }
+
+                elif (
+                    information_source.type
+                    == enums.InformationSourceType.LABELING_FUNCTION.value
+                ):
+                    pass
+                elif (
+                    information_source.type
+                    == enums.InformationSourceType.ZERO_SHOT.value
+                ):
+                    pass
+        if prediction_task is not None:
+            results.append(
+                {
+                    "labeling_task": labeling_task.name,
+                    "prediction": prediction_task,
+                }
+            )
+
+    if found_embedding:
+        embedding_manager.delete_single_embedding(project_id, embedding.id, record.id)
+
+    delete_record(project_id, record.id)
+    return {"record": record_data, "predictions": results}

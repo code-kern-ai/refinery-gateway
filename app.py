@@ -1,4 +1,5 @@
 import logging
+from api.record import Inference
 import graphene
 from api.project import ProjectSettings
 from api.transfer import (
@@ -31,6 +32,8 @@ routes = [
     ),
     Route("/notify/{path:path}", Notify),
     Route("/project/{project_id:str}", ProjectSettings),
+    Route("/project/{project_id:str}/predict", Inference),
+    Route("/project/{project_id:str}/example", Inference),
     Route(
         "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",
         KnowledgeBaseExport,
