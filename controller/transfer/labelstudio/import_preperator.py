@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from controller.transfer.record_transfer_manager import download_file
 from submodules.model import UploadTask, enums
@@ -27,17 +28,32 @@ def analyze_file(data):
     warnings = []
     info = []
     record_count = 0
-    for record in data:
-        record_count += 1
-        for annotation in record.get("annotations"):
-            user_id = annotation.get("completed_by")
-            # tasks.add(annotation.get("from_name"))
-            __add_annotation_target(annotation, tasks)
+    has_drafts = False
+    has_predictions = False
+    try:
+        for record in data:
+            record_count += 1
+            if not has_drafts:
+                has_drafts = __check_record_has_values_for(record, "drafts")
+            if not has_predictions:
+                has_predictions = __check_record_has_values_for(record, "predictions")
+            for annotation in record.get("annotations"):
+                user_id = annotation.get("completed_by")
+                __add_annotation_target(annotation, tasks)
 
-            if user_id in user_id_counts:
-                user_id_counts[user_id] += 1
-            else:
-                user_id_counts[user_id] = 1
+                if user_id in user_id_counts:
+                    user_id_counts[user_id] += 1
+                else:
+                    user_id_counts[user_id] = 1
+    except Exception as e:
+        errors.append("Error while analyzing file: {}".format(e))
+        print(traceback.format_exc(), flush=True)
+
+    if has_drafts:
+        warnings.append("Label Studio drafts are not supported.")
+
+    if has_predictions:
+        warnings.append("Label Studio predictions are not supported.")
 
     return {
         "user_ids": [str(user_id) for user_id in user_id_counts],
@@ -52,6 +68,15 @@ def analyze_file(data):
 def __add_annotation_target(annotation: Dict[str, Any], tasks: Set[str]) -> None:
     target = annotation.get("result")
     if target and len(target) > 0:
-        target = target[0].get("from_name")
-    if target:
-        tasks.add(target)
+        for t in target:
+            from_name = t.get("from_name")
+            if from_name and from_name not in tasks:
+                tasks.add(from_name)
+
+
+def __check_record_has_values_for(record: Dict[str, Any], key: str) -> bool:
+    value = record.get(key)
+    if value:
+        return True
+    return False
+    # return key in record and record[key] is not None and len(record[key]) > 0
