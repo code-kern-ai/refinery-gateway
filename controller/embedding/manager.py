@@ -2,6 +2,7 @@ import time
 from typing import Any, Dict, List
 
 from submodules.model import enums, EmbeddingTensor
+from submodules.model.business_objects import embedding
 from util import daemon
 from . import util
 from . import connector
@@ -9,6 +10,10 @@ from . import connector
 
 def get_recommended_encoders() -> List[Any]:
     return connector.request_listing_recommended_encoders()
+
+
+def get_embedding_by_name(project_id: str, embedding_name: str):
+    return embedding.get_by_name(project_id, embedding_name)
 
 
 def create_single_embedding(

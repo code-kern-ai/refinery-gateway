@@ -17,6 +17,7 @@ from controller.tokenization.tokenization_service import request_tokenize_projec
 from submodules.model.business_objects import data_slice as ds_manager
 from submodules.model.business_objects import (
     information_source as information_source_manager,
+    project as project_manager,
 )
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
@@ -210,3 +211,17 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         )
     else:
         raise ValueError("invalid huddle type")
+
+
+def update_inference_settings(
+    project_id,
+    attribute_ids_selected,
+    embedding_ids_selected,
+    heuristics_selected,
+):
+    project_manager.update_is_selected_for_inference(
+        project_id,
+        attribute_ids_selected,
+        embedding_ids_selected,
+        heuristics_selected,
+    )
