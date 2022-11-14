@@ -4,20 +4,25 @@ import os
 
 from controller.transfer.record_transfer_manager import download_file
 from submodules.model import UploadTask, enums
+from submodules.model.business_objects import project, record
 from controller.upload_task import manager as task_manager
-from typing import Set, Dict, Any
+from typing import Set, Dict, Any, Optional
 
 
 def prepare_label_studio_import(project_id: str, task: UploadTask) -> None:
     # pre init to ensure we can always append an error
     file_additional_info = __get_blank_file_additional_info()
+    project_item = project.get(project_id)
+    if not project_item:
+        file_additional_info["errors"].append("Can't find project".format(e))
     try:
+        is_project_update = record.count(project_id) != 0
         file_path = download_file(project_id, task)
         _, extension = os.path.splitext(file_path)
         if extension == ".json":
             with open(file_path) as file:
                 data = json.load(file)
-            analyze_file(data, file_additional_info)
+            analyze_file(data, file_additional_info, is_project_update)
         else:
             file_additional_info["errors"].append(f"Unsupported file type {extension}")
     except Exception as e:
@@ -34,10 +39,13 @@ def prepare_label_studio_import(project_id: str, task: UploadTask) -> None:
     )
 
 
-def analyze_file(data: Dict[str, Any], file_additional_info: Dict[str, Any]) -> None:
+def analyze_file(
+    data: Dict[str, Any], file_additional_info: Dict[str, Any], is_project_update: bool
+) -> None:
     user_id_counts = {}
     tasks = set()
     record_count = 0
+    ex_no_kern_id = None
     ex_drafts = None
     ex_predictions = None
     ex_extraction = None
@@ -57,6 +65,14 @@ def analyze_file(data: Dict[str, Any], file_additional_info: Dict[str, Any]) -> 
             ex_predictions = f"\n\tExample: record {record_id}"
         if not ex_multiple_annotations and __check_record_has_multi_annotation(record):
             ex_multiple_annotations = f"\n\tExample: record {record_id}"
+        if (
+            is_project_update
+            and not ex_no_kern_id
+            and not __check_record_has_values_for(
+                record, "data", "kern_refinery_record_id"
+            )
+        ):
+            ex_no_kern_id = f"\n\tExample: record {record_id}"
         for annotation in record["annotations"]:
             annotation_id = annotation["id"]
             if not ex_extraction and __check_annotation_has_extraction(annotation):
@@ -102,6 +118,11 @@ def analyze_file(data: Dict[str, Any], file_additional_info: Dict[str, Any]) -> 
             "Multiple annotations for the same user within the same record\ntargeting the same task are not supported."
             + ex_multiple_annotations
         )
+    if ex_no_kern_id:
+        file_additional_info["errors"].append(
+            "Project update without kern record id. Can't update project (see restrictions)."
+            + ex_multiple_annotations
+        )
 
     file_additional_info["user_ids"] = list(user_id_counts.keys())
     file_additional_info["tasks"] = list(tasks)
@@ -120,10 +141,15 @@ def __get_annotation_targets(annotation: Dict[str, Any]) -> Set[str]:
     return {}
 
 
-def __check_record_has_values_for(record: Dict[str, Any], key: str) -> bool:
+def __check_record_has_values_for(
+    record: Dict[str, Any], key: str, sub_key: Optional[str] = None
+) -> bool:
     value = record.get(key)
     if value:
-        return True
+        if not sub_key:
+            return True
+        else:
+            return __check_record_has_values_for(value, sub_key)
     return False
 
 
