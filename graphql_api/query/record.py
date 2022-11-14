@@ -9,6 +9,7 @@ from submodules.model.business_objects import record
 from controller.record import manager
 from controller.auth import manager as auth
 from controller.tokenization import manager as tokenization_manager
+from controller.comment import manager as comment_manager
 
 
 class RecordQuery(graphene.ObjectType):
@@ -50,6 +51,12 @@ class RecordQuery(graphene.ObjectType):
         TokenizedRecord,
         # TODO check if project id should be added
         record_id=graphene.ID(required=True),
+    )
+
+    record_comments = graphene.Field(
+        graphene.JSONString,
+        project_id=graphene.ID(required=True),
+        record_ids=graphene.List(graphene.ID, required=True),
     )
 
     def resolve_all_records(self, info, project_id: str) -> List[Record]:
@@ -112,3 +119,11 @@ class RecordQuery(graphene.ObjectType):
         return tokenization_manager.get_tokenized_record(
             record_item.project_id, record_id
         )
+
+    def resolve_record_comments(
+        self, info, project_id: str, record_ids: List[str]
+    ) -> str:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_id_by_info(info)
+        return comment_manager.get_record_comments(project_id, user_id, record_ids)

@@ -122,3 +122,7 @@ def delete_comment(comment_id: str, user_id: str) -> CommentData:
     ):
         raise ValueError(f"Can't delete comment")
     comments.remove(comment_id, with_commit=True)
+
+
+def get_record_comments(project_id: str, user_id: str, record_ids: List[str]):
+    return comments.get_record_comments(project_id, user_id, record_ids)

@@ -158,6 +158,9 @@ def build_query_template(
             upper = str(upper)
         template = template.replace("@@VALUE1@@", lower)
         template = template.replace("@@VALUE2@@", upper)
+    elif target == SearchQueryTemplate.SUBQUERY_HAS_COMMENTS:
+        template = template.replace("@@USER_ID@@", filter_values[0])
+
     template = template.replace("@@PROJECT_ID@@", project_id)
     return template
 
@@ -360,4 +363,12 @@ GROUP BY record_id, project_id
 HAVING COUNT(*) >1
 
 """,
+    SearchQueryTemplate.SUBQUERY_HAS_COMMENTS: """
+    SELECT cd.project_id pID, cd.xfkey rID
+    FROM comment_data cd
+    WHERE cd.project_id = '@@PROJECT_ID@@'
+        AND cd.xftype = 'RECORD' 
+        AND (cd.is_private = false OR cd.created_by = '@@USER_ID@@')
+    GROUP BY cd.project_id, cd.xfkey
+    """,
 }
