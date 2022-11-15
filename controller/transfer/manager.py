@@ -16,7 +16,7 @@ from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
 from controller.transfer.labelstudio import (
     template_generator as labelstudio_template_generator,
-    import_converter,
+    import_manager,
 )
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export

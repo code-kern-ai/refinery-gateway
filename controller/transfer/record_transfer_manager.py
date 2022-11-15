@@ -332,3 +332,4 @@ def create_attributes_and_get_text_attributes(
         notification.send_organization_update(project_id, f"attributes_updated")
 
     return text_attributes
+

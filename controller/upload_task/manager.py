@@ -78,6 +78,7 @@ def update_task(
         mappings=mappings,
         with_commit=True,
     )
+
     if state:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task_id)}:state:{state}"
