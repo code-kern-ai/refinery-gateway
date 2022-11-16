@@ -3,6 +3,8 @@ from controller.upload_task import manager as task_manager
 from controller.transfer import manager as transfer_manager
 import graphene
 
+from util import daemon
+
 
 class SetUploadMappings(graphene.Mutation):
     class Arguments:
@@ -16,7 +18,7 @@ class SetUploadMappings(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         task_manager.update_task(project_id, upload_task_id, mappings=mappings)
-        transfer_manager.import_label_studio_file(project_id, upload_task_id)
+        daemon.run(transfer_manager.import_label_studio_file, project_id, upload_task_id)
         return SetUploadMappings(ok=True)
 
 

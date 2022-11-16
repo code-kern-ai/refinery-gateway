@@ -15,7 +15,8 @@ from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
 from controller.transfer.labelstudio import (
     template_generator as labelstudio_template_generator,
-    project_creation_manager, project_update_manager,
+    project_creation_manager,
+    project_update_manager,
 )
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export
@@ -259,7 +260,7 @@ def generate_labelstudio_template(
     )
 
 
-def import_label_studio_file(project_id, upload_task_id):
+def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
     if attribute.get_all(project_id):
         project_update_manager.manage_data_import(project_id, upload_task_id)
     else:

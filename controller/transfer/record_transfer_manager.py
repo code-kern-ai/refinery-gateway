@@ -110,28 +110,8 @@ def download_file(project_id: str, upload_task: UploadTask) -> str:
 
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
-    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.PENDING.value)
-    org_id = organization.get_id_by_project_id(project_id)
-
-    if upload_task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
-        tmp_file_name = f"tmp/{upload_task.id}_converted_file.json"
-        file_type = "json"
-    else:
-        file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
-        download_file_name = s3.download_object(
-            org_id,
-            project_id + "/" + f"{upload_task.id}/{upload_task.file_name}",
-            file_type,
-        )
-        is_zip = file_type == "zip"
-        if is_zip:
-            tmp_file_name = extract_first_zip_file(download_file_name)
-            file_type = tmp_file_name.rsplit(".", 1)[1]
-        else:
-            tmp_file_name = download_file_name
-
-        if is_zip and os.path.exists(download_file_name):
-            os.remove(download_file_name)
+    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
+    tmp_file_name = download_file(project_id, upload_task)
 
     upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value)
     record_category = category.infer_category(upload_task.file_name)
@@ -149,7 +129,6 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     )
 
     upload_task_manager.update_upload_task_to_finished(upload_task)
-    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.DONE.value, progress=100.0)
 
     user = user_manager.get_or_create_user(upload_task.user_id)
     project_item = project.get(project_id)

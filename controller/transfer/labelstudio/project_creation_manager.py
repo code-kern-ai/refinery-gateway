@@ -29,23 +29,24 @@ def manage_data_import(project_id: str, task_id: str) -> None:
     with open(file_path) as file:
         data = json.load(file)
 
-        first_record_item = data[0]
-        for attribute_name, attribute_value in first_record_item.get("data").items():
-            __create_attribute(project_id, attribute_name, attribute_value)
+    first_record_item = data[0]
+    for attribute_name, attribute_value in first_record_item.get("data").items():
+        __create_attribute(project_id, attribute_name, attribute_value)
 
-        labeling_tasks, records, record_label_associations = __extract_data(
-            data, user_mapping, attribute_task_mapping
-        )
-        label_id_lookup = __create_labeling_tasks(project_id, labeling_tasks)
+    labeling_tasks, records, record_label_associations = __extract_data(
+        data, user_mapping, attribute_task_mapping
+    )
+    label_id_lookup = __create_labeling_tasks(project_id, labeling_tasks)
+
+    CHUNK_SIZE = 500
+    chunks = [records[x: x + CHUNK_SIZE] for x in range(0, len(records), CHUNK_SIZE)]
+    for idx, chunk in enumerate(chunks):
         __create_records(
-            project_id, records, record_label_associations, label_id_lookup
+            project_id, chunk, record_label_associations, label_id_lookup
         )
-        number_records = len(records)
+    number_records = len(records)
 
     upload_task_manager.update_upload_task_to_finished(task)
-    upload_task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
-    )
 
     user = user_manager.get_or_create_user(task.user_id)
     project_item = project.get(project_id)
@@ -60,9 +61,9 @@ def manage_data_import(project_id: str, task_id: str) -> None:
 
 def __create_records(
     project_id: str,
-    records: List[Dict],
-    record_label_associations: List[Dict],
-    label_id_lookup: Dict,
+    records: List[Dict[str, Any]],
+    record_label_associations: List[Dict[str, Any]],
+    label_id_lookup: Dict[str, Any],
 ) -> None:
     record_mapping_dict = {}
 
@@ -86,7 +87,7 @@ def __create_records(
             )
 
 
-def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]) -> Dict:
+def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]) -> Dict[str, Any]:
     label_id_lookup = {}
 
     attribute_ids_by_names = {
@@ -119,7 +120,7 @@ def __infer_target(target_attribute: str) -> str:
     )
 
 
-def __extract_data(data: Any, user_mapping: Dict, attribute_task_mapping: Dict) -> Tuple[Dict, List, Dict]:
+def __extract_data(data: Any, user_mapping: Dict[str, Any], attribute_task_mapping: Dict[str, Any]) -> Tuple[Dict[str, Any], List, Dict[str, Any]]:
     labeling_tasks = {}
     records = []
     record_label_associations = {}

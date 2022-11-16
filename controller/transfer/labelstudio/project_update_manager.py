@@ -28,15 +28,21 @@ def manage_data_import(project_id: str, task_id: str) -> None:
 
     with open(file_path) as file:
         data = json.load(file)
-        association_data = __extract_association_data(
-            data, user_mapping, user_ids, label_id_lookup
-        )
-        record_ids = association_data.keys()
+    association_data = __extract_association_data(
+        data, user_mapping, user_ids, label_id_lookup
+    )
+    record_ids = list(association_data.keys())
+
+    CHUNK_SIZE = 250
+    chunks = [
+        record_ids[x : x + CHUNK_SIZE] for x in range(0, len(record_ids), CHUNK_SIZE)
+    ]
+    for idx, chunk in enumerate(chunks):
         record_label_associations, remove_list = __check_existing_associations(
             project_id,
             association_data,
             prioritize_existing,
-            record_ids,
+            chunk,
             user_ids,
             label_ids,
             tasks_by_labels,
@@ -49,9 +55,6 @@ def manage_data_import(project_id: str, task_id: str) -> None:
         )
 
     upload_task_manager.update_upload_task_to_finished(task)
-    upload_task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
-    )
     general.commit()
 
 
@@ -100,8 +103,14 @@ def __check_existing_associations(
     label_ids: List[str],
     tasks_by_labels: Dict[str, Any],
 ) -> Tuple[Dict[str, Any], List[str]]:
+
+    user_ids = [
+        user_id
+        for user_id in user_ids
+        if user_id != enums.RecordImportMappingValues.IGNORE.value
+    ]
     existing_associations = (
-        record_label_association.get_existing_record_label_associations(
+        record_label_association.get_existing_manual_record_label_associations(
             project_id, record_ids, user_ids, label_ids
         )
     )

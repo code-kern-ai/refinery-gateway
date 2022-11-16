@@ -54,6 +54,10 @@ def create_upload_task(
 
 def update_upload_task_to_finished(task: UploadTask) -> None:
     upload_task.finish(task.project_id, task.id, with_commit=True)
+    update_task(
+        task.project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
+    )
+
 
 
 def update_task(
