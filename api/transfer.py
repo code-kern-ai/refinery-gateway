@@ -214,7 +214,6 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         )
     if (
         task.file_type != "knowledge_base"
-        and task.upload_type != enums.UploadTypes.LABEL_STUDIO.value
     ):
         tokenization_service.request_tokenize_project(project_id, str(task.user_id))
 
