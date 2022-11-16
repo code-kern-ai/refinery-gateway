@@ -51,13 +51,31 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
                 + build_search_condition_value(SearchOperators.ILIKE, value)
             )
         return " OR ".join(ilike_conditions)
-    elif operator in [SearchOperators.IN, SearchOperators.BETWEEN]:
+    elif operator == SearchOperators.IN:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_values = filter_values[1:]
+            if not filter_values:
+                return ""
+        return search_column + build_search_condition_value(operator, filter_values)
+    elif operator == SearchOperators.BETWEEN:
+        if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
+            filter_values = filter_values[1:]
+            if not filter_values[0] and not filter_values[1]:
+                return ""
+            elif not filter_values[0]:
+                return search_column + build_search_condition_value(
+                    SearchOperators.LESS_EQUAL, filter_values[1]
+                )
+            elif not filter_values[1]:
+                return search_column + build_search_condition_value(
+                    SearchOperators.GREATER_EQUAL, filter_values[0]
+                )
         return search_column + build_search_condition_value(operator, filter_values)
     else:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_value = filter_values[1]
+            if not filter_value:
+                return ""
         else:
             filter_value = filter_values[0]
 
