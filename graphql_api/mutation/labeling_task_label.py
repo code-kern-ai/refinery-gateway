@@ -99,7 +99,7 @@ class UpdateLabelingTaskLabelName(graphene.Mutation):
         return UpdateLabelingTaskLabelColor(ok=True)
 
 
-class HandleLabelReNameWarnings(graphene.Mutation):
+class HandleLabelRenameWarnings(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
         warning_data = graphene.JSONString(required=True)
@@ -138,4 +138,4 @@ class LabelingTaskLabelMutation(graphene.ObjectType):
     update_label_color = UpdateLabelingTaskLabelColor.Field()
     update_label_hotkey = UpdateLabelingTaskLabelHotkey.Field()
     update_label_name = UpdateLabelingTaskLabelName.Field()
-    handle_label_rename_warnings = HandleLabelReNameWarnings.Field()
+    handle_label_rename_warnings = HandleLabelRenameWarnings.Field()

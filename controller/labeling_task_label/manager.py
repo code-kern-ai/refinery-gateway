@@ -89,7 +89,7 @@ def __get_change_dict(
 ) -> Dict[str, str]:
     return_values = {
         "errors": __check_errors_label_rename(project_id, label, new_name),
-        "warnings": __check_warning_label_rename(project_id, label, new_name),
+        "warnings": __check_warnings_label_rename(project_id, label, new_name),
         "infos": [],
     }
     __check_label_rename_knowledge_base(project_id, label, new_name, return_values)
@@ -114,7 +114,7 @@ def __check_errors_label_rename(
     return append_me
 
 
-def __check_warning_label_rename(
+def __check_warnings_label_rename(
     project_id: str, label: LabelingTaskLabel, new_name: str
 ) -> List[Dict[str, Any]]:
     append_me = []
