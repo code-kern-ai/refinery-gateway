@@ -1,5 +1,7 @@
 import os
+import logging
 import json
+import traceback
 from typing import Any, List, Optional, Dict
 import zipfile
 from controller.transfer import export_parser
@@ -36,6 +38,10 @@ from datetime import datetime
 from util import notification
 from sqlalchemy.sql import text as sql_text
 
+from util.notification import create_notification
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_upload_credentials_and_id(
     project_id: str,
@@ -261,8 +267,30 @@ def generate_labelstudio_template(
 
 
 def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
-    if attribute.get_all(project_id):
-        project_update_manager.manage_data_import(project_id, upload_task_id)
-    else:
-        project_creation_manager.manage_data_import(project_id, upload_task_id)
-    upload_task.update(project_id, upload_task_id, state=enums.UploadStates.DONE.value)
+    try:
+        if attribute.get_all(project_id):
+            project_update_manager.manage_data_import(project_id, upload_task_id)
+        else:
+            project_creation_manager.manage_data_import(project_id, upload_task_id)
+        upload_task.update(project_id, upload_task_id, state=enums.UploadStates.DONE.value)
+    except Exception:
+        general.rollback()
+        task = upload_task.get(project_id, upload_task_id)
+        task.state = enums.UploadStates.ERROR.value
+        general.commit()
+        create_notification(
+            enums.NotificationType.IMPORT_FAILED,
+            task.user_id,
+            task.project_id,
+            task.file_type,
+        )
+        logger.error(
+            upload_task_manager.get_upload_task_message(
+                task,
+            )
+        )
+        print(traceback.format_exc(), flush=True)
+        notification.send_organization_update(
+            project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
+        )
+
