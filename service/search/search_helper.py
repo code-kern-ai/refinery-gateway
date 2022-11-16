@@ -43,12 +43,15 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
     filter_values = filter_element[FilterDataDictKeys.VALUES.value]
     search_column = build_search_column(project_id, table, column, operator, attr_name)
 
-    if operator == SearchOperators.IN_WC:
+    if operator in [SearchOperators.IN_WC, SearchOperators.IN_WC_CS]:
         ilike_conditions = []
+        if operator == SearchOperators.IN_WC:
+            used_operator = SearchOperators.ILIKE
+        else:
+            used_operator = SearchOperators.LIKE
         for value in filter_values[1:]:
             ilike_conditions.append(
-                search_column
-                + build_search_condition_value(SearchOperators.ILIKE, value)
+                search_column + build_search_condition_value(used_operator, value)
             )
         return " OR ".join(ilike_conditions)
     elif operator == SearchOperators.IN:
@@ -232,8 +235,11 @@ def build_order_by_table_select(
 __lookup_operator = {
     SearchOperators.EQUAL: " = @@VALUE@@",
     SearchOperators.CONTAINS: " ILIKE '%@@VALUE@@%'",
+    SearchOperators.CONTAINS_CS: " LIKE '%@@VALUE@@%'",
     SearchOperators.BEGINS_WITH: " ILIKE '@@VALUE@@%'",
+    SearchOperators.BEGINS_WITH_CS: " LIKE '@@VALUE@@%'",
     SearchOperators.ENDS_WITH: " ILIKE '%@@VALUE@@'",
+    SearchOperators.ENDS_WITH_CS: " LIKE '%@@VALUE@@'",
     SearchOperators.IN: " IN (@@VALUES@@)",
     SearchOperators.BETWEEN: " BETWEEN @@VALUE1@@ AND @@VALUE2@@",
     SearchOperators.GREATER: " > @@VALUE@@",
