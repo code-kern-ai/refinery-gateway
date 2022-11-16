@@ -1,25 +1,31 @@
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
+from controller.transfer.labelstudio.util import create_unknown_users
 from controller.transfer.record_transfer_manager import download_file
-from submodules.model import enums
+from submodules.model import enums, events
 from submodules.model.business_objects import (
     upload_task,
     attribute,
     labeling_task,
     record,
     record_label_association,
-    labeling_task_label, general,
+    labeling_task_label,
+    general,
+    project,
 )
+from controller.upload_task import manager as upload_task_manager
+from util import doc_ock
+from controller.user import manager as user_manager
 
 
-def manage_converting_data(project_id: str, task_id: str) -> None:
+def manage_data_import(project_id: str, task_id: str) -> None:
     task = upload_task.get(project_id, task_id)
     file_path = download_file(project_id, task)
     mappings = json.loads(task.mappings)
     user_mapping = mappings.get("users")
+    user_mapping = create_unknown_users(user_mapping)
     attribute_task_mapping = mappings.get("tasks")
-
     with open(file_path) as file:
         data = json.load(file)
 
@@ -31,23 +37,48 @@ def manage_converting_data(project_id: str, task_id: str) -> None:
             data, user_mapping, attribute_task_mapping
         )
         label_id_lookup = __create_labeling_tasks(project_id, labeling_tasks)
-        __create_records(project_id, records, record_label_associations, label_id_lookup)
-        general.commit()
+        __create_records(
+            project_id, records, record_label_associations, label_id_lookup
+        )
+        number_records = len(records)
+
+    upload_task_manager.update_upload_task_to_finished(task)
+    upload_task_manager.update_task(
+        project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
+    )
+
+    user = user_manager.get_or_create_user(task.user_id)
+    project_item = project.get(project_id)
+    doc_ock.post_event(
+        user,
+        events.UploadRecords(
+            ProjectName=f"{project_item.name}-{project_item.id}", Records=number_records
+        ),
+    )
+    general.commit()
 
 
-def __create_records(project_id, records, record_label_associations, label_id_lookup):
+def __create_records(
+    project_id: str,
+    records: List[Dict],
+    record_label_associations: List[Dict],
+    label_id_lookup: Dict,
+) -> None:
     record_mapping_dict = {}
 
     for record_item in records:
-        record.create_records(project_id, records, "SCALE")
         created_record = record.create(project_id, record_item.get("data"), "SCALE")
         record_mapping_dict[record_item.get("label_studio_id")] = str(created_record.id)
 
-        for association_item in record_label_associations.get("label_studio_id"):
+        for association_item in record_label_associations.get(
+            record_item.get("label_studio_id")
+        ):
             record_label_association.create(
                 project_id,
                 created_record.id,
-                labeling_task_label_id=label_id_lookup[record_item["labeling_task"]["label"]],
+                labeling_task_label_id=label_id_lookup.get(
+                    association_item.get("labeling_task")
+                ).get(association_item.get("label")),
                 created_by=association_item.get("created_by"),
                 source_type=enums.LabelSource.MANUAL.value,
                 return_type=enums.InformationSourceReturnType.RETURN.value,
@@ -55,7 +86,7 @@ def __create_records(project_id, records, record_label_associations, label_id_lo
             )
 
 
-def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]):
+def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]) -> Dict:
     label_id_lookup = {}
 
     attribute_ids_by_names = {
@@ -69,7 +100,7 @@ def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]):
                 task_data.get("attribute"),
             ),
             task_name,
-            task_target=infer_target(task_data.get("attribute")),
+            task_target=__infer_target(task_data.get("attribute")),
             task_type=enums.LabelingTaskType.CLASSIFICATION.value,
         )
         label_id_lookup[task.name] = {}
@@ -80,7 +111,7 @@ def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]):
     return label_id_lookup
 
 
-def infer_target(target_attribute):
+def __infer_target(target_attribute: str) -> str:
     return (
         enums.LabelingTaskTarget.ON_ATTRIBUTE.value
         if target_attribute
@@ -88,7 +119,7 @@ def infer_target(target_attribute):
     )
 
 
-def __extract_data(data, user_mapping, attribute_task_mapping):
+def __extract_data(data: Any, user_mapping: Dict, attribute_task_mapping: Dict) -> Tuple[Dict, List, Dict]:
     labeling_tasks = {}
     records = []
     record_label_associations = {}
@@ -138,7 +169,7 @@ def __extract_data(data, user_mapping, attribute_task_mapping):
                 record_label_association["created_by"] = created_by
                 record_label_association["label"] = label
                 record_label_association["labeling_task"] = task_name
-                record_label_associations["label_studio_id"].append(
+                record_label_associations[record_item.get("id")].append(
                     record_label_association
                 )
 
@@ -164,7 +195,7 @@ def create_attribute(
     )
 
 
-def infer_category_enum(attribute_value):
+def infer_category_enum(attribute_value: Any) -> str:
     if isinstance(attribute_value, int):
         return enums.DataTypes.INTEGER.value
     elif isinstance(attribute_value, float):
