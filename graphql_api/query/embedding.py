@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import graphene
 
@@ -13,7 +13,7 @@ from controller.embedding import manager
 class EmbeddingQuery(graphene.ObjectType):
     recommended_encoders = graphene.Field(
         graphene.List(Encoder),
-        project_id=graphene.ID(required=True),
+        project_id=graphene.ID(required=False),
     )
 
     language_models = graphene.Field(graphene.List(LanguageModel))
@@ -22,9 +22,12 @@ class EmbeddingQuery(graphene.ObjectType):
         RecordTokenizationTask, project_id=graphene.ID(required=True)
     )
 
-    def resolve_recommended_encoders(self, info, project_id: str) -> List[Encoder]:
+    def resolve_recommended_encoders(
+        self, info, project_id: Optional[str] = None
+    ) -> List[Encoder]:
         auth.check_demo_access(info)
-        auth.check_project_access(info, project_id)
+        if project_id:
+            auth.check_project_access(info, project_id)
         return manager.get_recommended_encoders()
 
     def resolve_language_models(self, info) -> List[LanguageModel]:

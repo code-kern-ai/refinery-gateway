@@ -22,7 +22,7 @@ class ZeroShotQuery(graphene.ObjectType):
 
     zero_shot_recommendations = graphene.Field(
         graphene.JSONString,
-        project_id=graphene.ID(),
+        project_id=graphene.ID(required=False),
     )
 
     zero_shot_10_records = graphene.Field(
@@ -58,7 +58,8 @@ class ZeroShotQuery(graphene.ObjectType):
         self, info, project_id: Optional[str] = None
     ) -> List[Dict[str, str]]:
         auth_manager.check_demo_access(info)
-        auth_manager.check_project_access(info, project_id)
+        if project_id:
+            auth_manager.check_project_access(info, project_id)
         return manager.get_zero_shot_recommendations(project_id)
 
     def resolve_zero_shot_10_records(
