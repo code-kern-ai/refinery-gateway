@@ -31,7 +31,7 @@ def manage_data_import(project_id: str, task_id: str) -> None:
 
         first_record_item = data[0]
         for attribute_name, attribute_value in first_record_item.get("data").items():
-            create_attribute(project_id, attribute_name, attribute_value)
+            __create_attribute(project_id, attribute_name, attribute_value)
 
         labeling_tasks, records, record_label_associations = __extract_data(
             data, user_mapping, attribute_task_mapping
@@ -178,7 +178,7 @@ def __extract_data(data: Any, user_mapping: Dict, attribute_task_mapping: Dict) 
     return labeling_tasks, records, record_label_associations
 
 
-def create_attribute(
+def __create_attribute(
     project_id: str, attribute_name: str, attribute_value: Any
 ) -> None:
 
@@ -191,11 +191,11 @@ def create_attribute(
         project_id,
         attribute_name,
         relative_position,
-        infer_category_enum(attribute_value),
+        __infer_category_enum(attribute_value),
     )
 
 
-def infer_category_enum(attribute_value: Any) -> str:
+def __infer_category_enum(attribute_value: Any) -> str:
     if isinstance(attribute_value, int):
         return enums.DataTypes.INTEGER.value
     elif isinstance(attribute_value, float):
