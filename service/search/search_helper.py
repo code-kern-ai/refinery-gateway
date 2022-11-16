@@ -74,7 +74,8 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
     else:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_value = filter_values[1]
-            if not filter_value:
+            attribute_item = attribute.get_by_name(project_id, attr_name)
+            if not filter_value and attribute_item.data_type != DataTypes.BOOLEAN.value:
                 return ""
         else:
             filter_value = filter_values[0]
