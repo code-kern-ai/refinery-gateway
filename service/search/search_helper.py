@@ -44,17 +44,17 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
     search_column = build_search_column(project_id, table, column, operator, attr_name)
 
     if operator in [SearchOperators.IN_WC, SearchOperators.IN_WC_CS]:
-        ilike_conditions = []
+        conditions = []
         if operator == SearchOperators.IN_WC:
             used_operator = SearchOperators.ILIKE
         else:
             used_operator = SearchOperators.LIKE
         for value in filter_values[1:]:
             used_value = value.replace("*", "%").replace("?", "_")
-            ilike_conditions.append(
+            conditions.append(
                 search_column + build_search_condition_value(used_operator, used_value)
             )
-        return " OR ".join(ilike_conditions)
+        return " OR ".join(conditions)
     elif operator == SearchOperators.IN:
         if table == SearchTargetTables.RECORD and column == SearchColumn.DATA:
             filter_values = filter_values[1:]
@@ -261,6 +261,7 @@ __lookup_operator_has_quotes = {
     SearchOperators.LIKE: True,
     SearchOperators.ILIKE: True,
     SearchOperators.IN_WC: True,
+    SearchOperators.IN_WC_CS: True,
 }
 
 __lookup_sql_cast_data_type = {
