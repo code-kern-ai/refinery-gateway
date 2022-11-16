@@ -50,8 +50,9 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
         else:
             used_operator = SearchOperators.LIKE
         for value in filter_values[1:]:
+            used_value = value.replace("*", "%").replace("?", "_")
             ilike_conditions.append(
-                search_column + build_search_condition_value(used_operator, value)
+                search_column + build_search_condition_value(used_operator, used_value)
             )
         return " OR ".join(ilike_conditions)
     elif operator == SearchOperators.IN:
