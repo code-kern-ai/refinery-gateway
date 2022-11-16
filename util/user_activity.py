@@ -17,7 +17,7 @@ def add_user_activity_entry(
     if isinstance(activity, str):
         activity = {**caller_dict, "activity": activity}
     else:
-        activity.update(caller_dict)
+        activity.update(caller_dict, )
 
     global __thread_running
     if not __thread_running:
