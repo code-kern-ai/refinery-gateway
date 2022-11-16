@@ -252,8 +252,11 @@ __lookup_operator = {
 
 __lookup_operator_has_quotes = {
     SearchOperators.CONTAINS: True,
+    SearchOperators.CONTAINS_CS: True,
     SearchOperators.BEGINS_WITH: True,
+    SearchOperators.BEGINS_WITH_CS: True,
     SearchOperators.ENDS_WITH: True,
+    SearchOperators.ENDS_WITH_CS: True,
     SearchOperators.LIKE: True,
     SearchOperators.ILIKE: True,
     SearchOperators.IN_WC: True,
