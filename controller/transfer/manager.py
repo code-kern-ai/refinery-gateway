@@ -4,6 +4,8 @@ import json
 import traceback
 from typing import Any, List, Optional, Dict
 import zipfile
+
+from controller.tokenization import tokenization_service
 from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
     import_knowledge_base_file,
@@ -272,6 +274,8 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
             project_update_manager.manage_data_import(project_id, upload_task_id)
         else:
             project_creation_manager.manage_data_import(project_id, upload_task_id)
+            task = upload_task.get(project_id, upload_task_id)
+            tokenization_service.request_tokenize_project(project_id, str(task.user_id))
         upload_task.update(project_id, upload_task_id, state=enums.UploadStates.DONE.value)
     except Exception:
         general.rollback()
