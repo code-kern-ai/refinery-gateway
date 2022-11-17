@@ -2,8 +2,6 @@ from dataclasses import dataclass
 import zlib
 from typing import Tuple, Dict, List, Any, Optional, Union
 
-from exceptions.exceptions import TooManyRecordsForStaticSliceException
-from graphql_api import types
 from graphql_api.types import ExtendedSearch
 from submodules.model import UserSessions
 from util.notification import create_notification
@@ -259,10 +257,10 @@ def __create_default_user_session_object(
     else:
         inner_sql = __build_inner_query(filter_data, project_id, 0, 0, False)
         id_sql_statement = __build_final_query(inner_sql, project_id, False, True)
-        order_extention = __get_order_by(filter_data, project_id)
+        order_extension = __get_order_by(filter_data, project_id)
 
-        if order_extention != "":
-            id_sql_statement += order_extention
+        if order_extension != "":
+            id_sql_statement += order_extension
         else:
             id_sql_statement += "ORDER BY db_order"
     return UserSessionData(
@@ -328,10 +326,10 @@ def generate_select_sql(
     inner_sql = __build_inner_query(filter_data, project_id, limit, offset, False)
     final_sql = __build_final_query(inner_sql, project_id, False, for_id)
 
-    order_extention = __get_order_by(filter_data, project_id)
+    order_extension = __get_order_by(filter_data, project_id)
 
-    if order_extention != "":
-        final_sql += order_extention
+    if order_extension != "":
+        final_sql += order_extension
     else:
         final_sql += "ORDER BY db_order"
     return final_sql
@@ -360,7 +358,7 @@ def __build_base_query(
     else:
         order_by_add = __get_order_by(filter_data, project_id)
 
-    where_add = __build_where_add(filter_data)
+    where_add = __build_where_add(project_id, filter_data)
 
     tmp_selection_add, tmp_from_add = __build_subquery_data(
         filter_data, project_id, "WHITELIST"
@@ -454,17 +452,17 @@ def __build_subquery(
 
 
 def __build_where_add(
-    filter_data: List[Dict[str, Any]], outer: Optional[bool] = True
+    project_id: str, filter_data: List[Dict[str, Any]], outer: Optional[bool] = True
 ) -> str:
     current_condition = ""
     for filter_element in filter_data:
         ret = ""
         if FilterDataDictKeys.OPERATOR.value in filter_element:
-            ret = build_search_condition(filter_element)
+            ret = build_search_condition(project_id, filter_element)
 
         if FilterDataDictKeys.FILTER.value in filter_element:
             ret = __build_where_add(
-                filter_element[FilterDataDictKeys.FILTER.value], False
+                project_id, filter_element[FilterDataDictKeys.FILTER.value], False
             )
             if ret != "" and ret[0] != "(":
                 ret = f"( {ret} )"
