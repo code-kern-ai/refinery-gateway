@@ -46,8 +46,10 @@ def get_zero_shot_recommendations(
     project_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     recommendations = zs_service.get_recommended_models()
-    project_item = project.get(project_id)
+    if not project_id:
+        return recommendations
 
+    project_item = project.get(project_id)
     if project_item and project_item.tokenizer_blank:
         recommendations = [
             r for r in recommendations if r["language"] == project_item.tokenizer_blank
