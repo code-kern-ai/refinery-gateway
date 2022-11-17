@@ -1,4 +1,6 @@
 import graphene
+
+from graphql_api.mutation.upload_task import UploadTaskMutation
 from graphql_api.query.attribute import AttributeQuery
 from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
@@ -97,6 +99,7 @@ class Mutation(
     TokenizationMutation,
     WeakSupervisionMutation,
     ZeroShotMutation,
+    UploadTaskMutation,
     graphene.ObjectType,
 ):
     pass

@@ -1,5 +1,7 @@
 import os
+import logging
 import json
+import traceback
 from typing import Any, List, Optional, Dict
 import zipfile
 from controller.transfer import export_parser
@@ -11,11 +13,12 @@ from controller.transfer.project_transfer_manager import (
     get_project_export_dump,
 )
 from controller.transfer.record_export_manager import get_records_by_options_query_data
-from controller.upload_task import manager as upload_task_manager
 from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
 from controller.transfer.labelstudio import (
     template_generator as labelstudio_template_generator,
+    project_creation_manager,
+    project_update_manager,
 )
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export
@@ -25,8 +28,9 @@ from submodules.model.business_objects import (
     record_label_association,
     data_slice,
     knowledge_base,
+    upload_task,
 )
-from submodules.model.business_objects import general, project
+from submodules.model.business_objects import general
 from controller.upload_task import manager as upload_task_manager
 from submodules.s3 import controller as s3
 import pandas as pd
@@ -34,6 +38,10 @@ from datetime import datetime
 from util import notification
 from sqlalchemy.sql import text as sql_text
 
+from util.notification import create_notification
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_upload_credentials_and_id(
     project_id: str,
@@ -41,9 +49,10 @@ def get_upload_credentials_and_id(
     file_name: str,
     file_type: str,
     file_import_options: str,
+    upload_type: str,
 ):
     task = upload_task_manager.create_upload_task(
-        str(user_id), project_id, file_name, file_type, file_import_options
+        str(user_id), project_id, file_name, file_type, file_import_options, upload_type
     )
     org_id = organization.get_id_by_project_id(project_id)
     return s3.get_upload_credentials_and_id(org_id, project_id + "/" + str(task.id))
@@ -255,3 +264,33 @@ def generate_labelstudio_template(
     return labelstudio_template_generator.generate_template(
         project_id, labeling_task_ids, attribute_ids
     )
+
+
+def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
+    try:
+        if attribute.get_all(project_id):
+            project_update_manager.manage_data_import(project_id, upload_task_id)
+        else:
+            project_creation_manager.manage_data_import(project_id, upload_task_id)
+        upload_task.update(project_id, upload_task_id, state=enums.UploadStates.DONE.value)
+    except Exception:
+        general.rollback()
+        task = upload_task.get(project_id, upload_task_id)
+        task.state = enums.UploadStates.ERROR.value
+        general.commit()
+        create_notification(
+            enums.NotificationType.IMPORT_FAILED,
+            task.user_id,
+            task.project_id,
+            task.file_type,
+        )
+        logger.error(
+            upload_task_manager.get_upload_task_message(
+                task,
+            )
+        )
+        print(traceback.format_exc(), flush=True)
+        notification.send_organization_update(
+            project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
+        )
+

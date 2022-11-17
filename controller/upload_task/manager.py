@@ -38,15 +38,26 @@ def create_upload_task(
     file_name: str,
     file_type: str,
     file_import_options: str,
+    upload_type: str,
 ) -> UploadTask:
     task = upload_task.create(
-        user_id, project_id, file_name, file_type, file_import_options, with_commit=True
+        user_id,
+        project_id,
+        file_name,
+        file_type,
+        file_import_options,
+        upload_type,
+        with_commit=True,
     )
     return task
 
 
 def update_upload_task_to_finished(task: UploadTask) -> None:
     upload_task.finish(task.project_id, task.id, with_commit=True)
+    update_task(
+        task.project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
+    )
+
 
 
 def update_task(
@@ -54,6 +65,8 @@ def update_task(
     task_id: str,
     state: Optional[str] = None,
     progress: Optional[float] = None,
+    file_additional_info=None,
+    mappings=None,
 ) -> None:
 
     if progress is not None:
@@ -61,8 +74,15 @@ def update_task(
             raise Exception(f"Progress out of bounds. Progress is {progress}")
 
     upload_task.update(
-        project_id, task_id, state=state, progress=progress, with_commit=True
+        project_id,
+        task_id,
+        state=state,
+        progress=progress,
+        file_additional_info=file_additional_info,
+        mappings=mappings,
+        with_commit=True,
     )
+
     if state:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task_id)}:state:{state}"

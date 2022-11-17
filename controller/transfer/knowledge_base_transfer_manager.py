@@ -8,9 +8,7 @@ import pandas as pd
 
 
 def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
-    upload_task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.PENDING.value
-    )
+    upload_task_manager.update_task(project_id, task.id, state=enums.UploadStates.PENDING.value)
     general.commit()
 
     file_type = task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
@@ -45,9 +43,7 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
             project_id, list_id, to_add, with_commit=True
         )
 
-    upload_task_manager.update_task(
-        project_id, task.id, state=enums.UploadStates.IN_PROGRESS.value
-    )
+    upload_task_manager.update_task(project_id, task.id, state=enums.UploadStates.IN_PROGRESS.value)
     task.state = enums.UploadStates.DONE.value
     general.commit()
 

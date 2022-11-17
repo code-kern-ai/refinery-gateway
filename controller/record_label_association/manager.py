@@ -300,9 +300,7 @@ def delete_record_label_association(
         project_id, record_id, association_ids
     )
     task_ids = get_labeling_tasks_from_ids(project_id, association_ids)
-    record_label_association.delete_by_ids(
-        project_id, record_id, association_ids, with_commit=True
-    )
+    record_label_association.delete_by_ids(project_id, association_ids, record_id, with_commit=True)
     for task_id in task_ids:
         update_is_relevant_manual_label(project_id, task_id, record_id)
     general.commit()

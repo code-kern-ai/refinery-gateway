@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Dict, Any, Optional, Tuple, List
 
@@ -14,8 +15,7 @@ from submodules.model.business_objects import (
     organization,
     project,
     record,
-    record_label_association,
-)
+    record_label_association, )
 from controller.user import manager as user_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
@@ -82,16 +82,12 @@ def import_records_and_rlas(
 
         if upload_task is not None:
             progress = ((idx + 1) / chunks_count) * 100
-            upload_task_manager.update_task(
-                project_id, upload_task.id, progress=progress
-            )
+            upload_task_manager.update_task(project_id, upload_task.id, progress=progress)
 
 
-def import_file(project_id: str, upload_task: UploadTask) -> None:
-    # load data from s3 and do transfer task/notification management
-    upload_task_manager.update_task(
-        project_id, upload_task.id, state=enums.UploadStates.PENDING.value
-    )
+def download_file(project_id: str, upload_task: UploadTask) -> str:
+    # TODO is copied from import_file and can be refactored because atm its duplicated code
+    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.PENDING.value)
     org_id = organization.get_id_by_project_id(project_id)
 
     file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
@@ -103,16 +99,21 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     is_zip = file_type == "zip"
     if is_zip:
         tmp_file_name = extract_first_zip_file(download_file_name)
-        file_type = tmp_file_name.rsplit(".", 1)[1]
     else:
         tmp_file_name = download_file_name
 
     if is_zip and os.path.exists(download_file_name):
         os.remove(download_file_name)
 
-    upload_task_manager.update_task(
-        project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
-    )
+    return tmp_file_name
+
+
+def import_file(project_id: str, upload_task: UploadTask) -> None:
+    # load data from s3 and do transfer task/notification management
+    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
+    tmp_file_name = download_file(project_id, upload_task)
+
+    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value)
     record_category = category.infer_category(upload_task.file_name)
 
     data = convert_to_record_dict(
@@ -128,9 +129,6 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     )
 
     upload_task_manager.update_upload_task_to_finished(upload_task)
-    upload_task_manager.update_task(
-        project_id, upload_task.id, state=enums.UploadStates.DONE.value, progress=100.0
-    )
 
     user = user_manager.get_or_create_user(upload_task.user_id)
     project_item = project.get(project_id)
@@ -313,3 +311,4 @@ def create_attributes_and_get_text_attributes(
         notification.send_organization_update(project_id, f"attributes_updated")
 
     return text_attributes
+
