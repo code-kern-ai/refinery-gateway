@@ -7,6 +7,7 @@ from graphql_api import types
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
 from util import doc_ock, notification
+from typing import Dict
 
 
 class CreateLabelingTaskLabel(graphene.Mutation):
@@ -83,6 +84,35 @@ class UpdateLabelingTaskLabelHotkey(graphene.Mutation):
         return UpdateLabelingTaskLabelColor(ok=True)
 
 
+class UpdateLabelingTaskLabelName(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        labeling_task_label_id = graphene.ID(required=True)
+        new_name = graphene.String(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, labeling_task_label_id: str, new_name: str):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.update_label_name(project_id, labeling_task_label_id, new_name)
+        return UpdateLabelingTaskLabelColor(ok=True)
+
+
+class HandleLabelRenameWarnings(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        warning_data = graphene.JSONString(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, warning_data: Dict[str, str]):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.handle_label_rename_warning(project_id, warning_data)
+        return UpdateLabelingTaskLabelColor(ok=True)
+
+
 class DeleteLabelingTaskLabel(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -107,3 +137,5 @@ class LabelingTaskLabelMutation(graphene.ObjectType):
     delete_label = DeleteLabelingTaskLabel.Field()
     update_label_color = UpdateLabelingTaskLabelColor.Field()
     update_label_hotkey = UpdateLabelingTaskLabelHotkey.Field()
+    update_label_name = UpdateLabelingTaskLabelName.Field()
+    handle_label_rename_warnings = HandleLabelRenameWarnings.Field()

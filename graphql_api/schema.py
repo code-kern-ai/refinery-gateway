@@ -11,6 +11,7 @@ from graphql_api.query.information_source import InformationSourceQuery
 from graphql_api.query.knowledge_base import KnowledgeBaseQuery
 from graphql_api.query.knowledge_term import KnowledgeTermQuery
 from graphql_api.query.labeling_task import LabelingTaskQuery
+from graphql_api.query.labeling_task_label import LabelingTaskLabelQuery
 from graphql_api.query.misc import MiscQuery
 from graphql_api.query.notification import NotificationQuery
 from graphql_api.query.organization import OrganizationQuery
@@ -58,6 +59,7 @@ class Query(
     KnowledgeBaseQuery,
     KnowledgeTermQuery,
     LabelingTaskQuery,
+    LabelingTaskLabelQuery,
     MiscQuery,
     ModelProviderQuery,
     OrganizationQuery,
