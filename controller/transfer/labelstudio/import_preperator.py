@@ -137,7 +137,7 @@ def __add_annotation_target(annotation: Dict[str, Any], tasks: Set[str]) -> None
 def __get_annotation_targets(annotation: Dict[str, Any]) -> Set[str]:
     target = annotation.get("result")
     if target and len(target) > 0:
-        return {t["from_name"] for t in target if "from_name" in t}
+        return {t["from_name"] for t in target if "from_name" in t and t["type"] == "choices"}
     return {}
 
 
