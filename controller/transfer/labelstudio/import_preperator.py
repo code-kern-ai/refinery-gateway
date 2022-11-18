@@ -50,6 +50,7 @@ def analyze_file(
     ex_predictions = None
     ex_extraction = None
     ex_multiple_choices = None
+    ex_to_names_check = None
     # multiple annotation for a user within the same record/task
     ex_multiple_annotations = None
 
@@ -65,6 +66,10 @@ def analyze_file(
             ex_predictions = f"\n\tExample: record {record_id}"
         if not ex_multiple_annotations and __check_record_has_multi_annotation(record):
             ex_multiple_annotations = f"\n\tExample: record {record_id}"
+        if not ex_to_names_check and __check_to_names_without_attribute_equivalent(
+            record
+        ):
+            ex_to_names_check = f"\n\tExample: record {record_id}"
         if (
             is_project_update
             and not ex_no_kern_id
@@ -108,6 +113,11 @@ def analyze_file(
             "Named Entity Recognition / extraction labels are not supported.\nThese annotations will be ignored if you proceed."
             + ex_extraction
         )
+    if ex_to_names_check:
+        file_additional_info["warnings"].append(
+            "Task targets found without equivalent in records attributes \nThese will be created as full record tasks if you proceed."
+            + ex_to_names_check
+        )
     if ex_multiple_choices:
         file_additional_info["warnings"].append(
             "Multiple choices for a result set are not supported.\nThese annotations will be ignored if you proceed."
@@ -130,15 +140,31 @@ def analyze_file(
     file_additional_info["file_info"]["annotations"] = user_id_counts
 
 
-def __add_annotation_target(annotation: Dict[str, Any], tasks: Set[str]) -> None:
+def __add_annotation_target(
+    annotation: Dict[str, Any], tasks: Set[str]
+) -> None:
     tasks |= __get_annotation_targets(annotation)
 
 
 def __get_annotation_targets(annotation: Dict[str, Any]) -> Set[str]:
     target = annotation.get("result")
     if target and len(target) > 0:
-        return {t["from_name"] for t in target if "from_name" in t and t["type"] == "choices"}
+        return {
+            t["from_name"]
+            for t in target
+            if "from_name" in t and t["type"] == "choices"
+        }
     return {}
+
+
+def __check_to_names_without_attribute_equivalent(
+    record: Dict[str, Any]
+) -> bool:
+    for annotation in record.get("annotations"):
+        target = annotation.get("result")
+        to_names = [t["to_name"] for t in target if "to_name" in t and t["type"] == "choices"]
+
+    return len(set(to_names) - set(record.get("data"))) != 0
 
 
 def __check_record_has_values_for(
