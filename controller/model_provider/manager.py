@@ -15,7 +15,14 @@ def get_model_provider_info() -> List[ModelProviderInfoResult]:
     # parse dates to datetime format
     for model in model_info:
         if model["date"]:
-            model["date"] = datetime.fromisoformat(model["date"])
+            try:
+                date = datetime.fromisoformat(model["date"])
+                if date:
+                    model["date"] = date
+            except ValueError:
+                pass
+            except TypeError:
+                pass
 
     return model_info
 
