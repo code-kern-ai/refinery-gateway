@@ -27,6 +27,29 @@ class ZeroShotProject(graphene.Mutation):
         return ZeroShotProject(ok=True)
 
 
+class CancelZeroShotRun(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        information_source_id = graphene.ID(required=True)
+        payload_id = graphene.ID(required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(
+        self,
+        info,
+        project_id: str,
+        information_source_id: str,
+        payload_id: str,
+    ):
+        auth_manager.check_demo_access(info)
+        auth_manager.check_project_access(info, project_id)
+
+        manager.cancel_zero_shot_run(project_id, information_source_id, payload_id)
+
+        return ZeroShotProject(ok=True)
+
+
 class CreateZeroShotInformationSource(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -60,3 +83,4 @@ class CreateZeroShotInformationSource(graphene.Mutation):
 class ZeroShotMutation(graphene.ObjectType):
     zero_shot_project = ZeroShotProject.Field()
     create_zero_shot_information_source = CreateZeroShotInformationSource.Field()
+    cancel_zero_shot_run = CancelZeroShotRun.Field()

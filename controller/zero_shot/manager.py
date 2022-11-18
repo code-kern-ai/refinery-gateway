@@ -184,3 +184,18 @@ def __start_zero_shot_for_project(
             f"Can't calculate stats for zero shot project {project_id}, is {information_source_id}",
             flush=True,
         )
+
+
+def cancel_zero_shot_run(
+    project_id: str,
+    information_source_id: str,
+    payload_id: str,
+) -> None:
+    item = information_source.get_payload(project_id, payload_id)
+    if not item:
+        raise ValueError("unknown payload:" + payload_id)
+    if str(item.source_id) != information_source_id:
+        raise ValueError("payload does not belong to information source")
+    # setting the state to failed with be noted by the thread in zs service and handled
+    item.state = enums.PayloadState.FAILED.value
+    general.commit()
