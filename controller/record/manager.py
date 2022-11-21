@@ -2,10 +2,12 @@ from typing import List, Dict, Any
 
 from graphql_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
-from submodules.model.business_objects import general, record, user_session
+from submodules.model.business_objects import general, record, user_session, embedding
 from service.search import search
 
 from controller.record import neural_search_connector
+from controller.embedding import manager as embedding_manager
+from util import daemon
 
 
 def get_record(project_id: str, record_id: str) -> Record:
@@ -89,7 +91,14 @@ def get_records_by_extended_search(
 
 def delete_record(project_id: str, record_id: str) -> None:
     record.delete(project_id, record_id, with_commit=True)
+    daemon.run(__reupload_embeddings, project_id)
 
 
 def delete_all_records(project_id: str) -> None:
     record.delete_all(project_id, with_commit=True)
+
+
+def __reupload_embeddings(project_id: str) -> None:
+    embeddings = embedding.get_finished_embeddings(project_id)
+    for e in embeddings:
+        embedding_manager.request_tensor_upload(project_id, str(e.id))
