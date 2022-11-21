@@ -81,7 +81,14 @@ def update_project(
 def delete_project(project_id: str) -> None:
     org_id = organization.get_id_by_project_id(project_id)
     project.delete_by_id(project_id, with_commit=True)
-    daemon.run(s3.archive_bucket, org_id, project_id + "/")
+
+    daemon.run(__delete_project_data_from_minio, org_id, project_id)
+
+
+def __delete_project_data_from_minio(org_id, project_id: str) -> None:
+    objects = s3.get_bucket_objects(org_id, project_id + "/")
+    for obj in objects:
+        s3.delete_object(org_id, obj)
 
 
 def import_sample_project(user_id: str, organization_id: str, name: str) -> Project:

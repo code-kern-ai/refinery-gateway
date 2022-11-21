@@ -23,6 +23,7 @@ def manage_data_import(project_id: str, task_id: str) -> None:
     task = upload_task.get(project_id, task_id)
     file_path = download_file(project_id, task)
     mappings = json.loads(task.mappings)
+    attribute_names = []
     user_mapping = mappings.get("users")
     user_mapping = create_unknown_users(user_mapping)
     attribute_task_mapping = mappings.get("tasks")
@@ -32,18 +33,17 @@ def manage_data_import(project_id: str, task_id: str) -> None:
     first_record_item = data[0]
     for attribute_name, attribute_value in first_record_item.get("data").items():
         __create_attribute(project_id, attribute_name, attribute_value)
+        attribute_names.append(attribute_name)
 
     labeling_tasks, records, record_label_associations = __extract_data(
-        data, user_mapping, attribute_task_mapping
+        data, user_mapping, attribute_task_mapping, attribute_names
     )
     label_id_lookup = __create_labeling_tasks(project_id, labeling_tasks)
 
     CHUNK_SIZE = 500
-    chunks = [records[x: x + CHUNK_SIZE] for x in range(0, len(records), CHUNK_SIZE)]
+    chunks = [records[x : x + CHUNK_SIZE] for x in range(0, len(records), CHUNK_SIZE)]
     for idx, chunk in enumerate(chunks):
-        __create_records(
-            project_id, chunk, record_label_associations, label_id_lookup
-        )
+        __create_records(project_id, chunk, record_label_associations, label_id_lookup)
     number_records = len(records)
 
     upload_task_manager.update_upload_task_to_finished(task)
@@ -87,7 +87,9 @@ def __create_records(
             )
 
 
-def __create_labeling_tasks(project_id: str, labeling_tasks: Dict[str, Any]) -> Dict[str, Any]:
+def __create_labeling_tasks(
+    project_id: str, labeling_tasks: Dict[str, Any]
+) -> Dict[str, Any]:
     label_id_lookup = {}
 
     attribute_ids_by_names = {
@@ -120,7 +122,12 @@ def __infer_target(target_attribute: str) -> str:
     )
 
 
-def __extract_data(data: Any, user_mapping: Dict[str, Any], attribute_task_mapping: Dict[str, Any]) -> Tuple[Dict[str, Any], List, Dict[str, Any]]:
+def __extract_data(
+    data: Any,
+    user_mapping: Dict[str, Any],
+    attribute_task_mapping: Dict[str, Any],
+    attribute_names: List[str],
+) -> Tuple[Dict[str, Any], List, Dict[str, Any]]:
     labeling_tasks = {}
     records = []
     record_label_associations = {}
@@ -160,6 +167,7 @@ def __extract_data(data: Any, user_mapping: Dict[str, Any], attribute_task_mappi
                 if (
                     attribute_task_mapping.get(task_name)
                     == enums.RecordImportMappingValues.ATTRIBUTE_SPECIFIC.value
+                    and result.get("to_name") in attribute_names
                 ):
                     labeling_tasks.get(task_name)["attribute"] = result.get("to_name")
 

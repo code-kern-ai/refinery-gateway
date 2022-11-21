@@ -118,21 +118,59 @@ def __check_warnings_label_rename(
     project_id: str, label: LabelingTaskLabel, new_name: str
 ) -> List[Dict[str, Any]]:
     append_me = []
-
     information_sources = information_source.get_all(project_id)
+    task_type = labeling_task.get(project_id, label.labeling_task_id).task_type
+
+    old_var_name = label.name.replace(" ", "_")
+    new_var_name = new_name.replace(" ", "_")
+
     for information_source_item in information_sources:
+        old_highlighting, new_highlighting = [], []
         current_code = information_source_item.source_code
-        new_code = re.sub(r"\b%s\b" % label.name, new_name, current_code)
+        new_code = current_code
+
+        if task_type == LabelingTaskType.INFORMATION_EXTRACTION.value:
+            if re.search("import knowledge", new_code):
+                format_import = r"(?<=\bknowledge\.)({label_name})(?=\b)"
+                pattern_import = format_import.format(label_name=old_var_name)
+                old_highlighting.append(pattern_import)
+                new_highlighting.append(format_import.format(label_name=new_var_name))
+                new_code = re.sub(pattern_import, f"{new_var_name}", new_code)
+            if re.search(rf"(?<=from knowledge import).*?\b{old_var_name}\b", new_code):
+                format_relative_import = r"(?<!\['\"])(\b{label_name}\b)(?!['\"])"
+                pattern_relative_import = format_relative_import.format(
+                    label_name=old_var_name
+                )
+                old_highlighting.append(pattern_relative_import)
+                new_highlighting.append(
+                    format_relative_import.format(label_name=new_var_name)
+                )
+                new_code = re.sub(pattern_relative_import, f"{new_var_name}", new_code)
+
+        if information_source_item.labeling_task_id == label.labeling_task_id:
+            format_label = r"['\"]{label_name}['\"]"
+            pattern_label = format_label.format(label_name=label.name)
+            old_highlighting.append(pattern_label)
+            new_highlighting.append(format_label.format(label_name=new_name))
+            new_code = re.sub(pattern_label, f'"{new_name}"', new_code)
+
         if current_code != new_code:
             entry = __get_msg_dict(
-                "Information source with matching word was detected."
+                f"Matching label found in information source {information_source_item.name}."
             )
             entry["key"] = enums.CommentCategory.HEURISTIC.value
             entry["id"] = str(information_source_item.id)
+            entry["information_source_name"] = information_source_item.name
             entry["old"] = current_code
             entry["new"] = new_code
             entry["old_name"] = label.name
             entry["new_name"] = new_name
+            entry["old_highlighting"] = old_highlighting
+            entry["new_highlighting"] = new_highlighting
+            entry[
+                "href"
+            ] = f"/projects/{project_id}/information_sources/{information_source_item.id}"
+
             append_me.append(entry)
 
     return append_me
@@ -152,4 +190,4 @@ def __check_label_rename_knowledge_base(
             entry["msg"] += "\n\tNew label name however, already exists as lookup list."
             append_to["errors"].append(entry)
         else:
-            append_to["warnings"].append(entry)
+            append_to["warnings"].insert(0, entry)
