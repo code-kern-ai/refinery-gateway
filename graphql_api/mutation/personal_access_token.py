@@ -1,4 +1,5 @@
 from controller.auth import manager as auth
+from controller.personal_access_token import manager as token_manager
 import graphene
 
 
@@ -14,7 +15,14 @@ class CreatePersonalAccessToken(graphene.Mutation):
     def mutate(self, info, project_id: str, name: str, scope: str, expires_at: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        print("Hello from PAT creation", project_id, name, scope, expires_at)
+        user_id = auth.get_user_id_by_info(info)
+        token_manager.create_personal_access_token(
+            project_id=project_id,
+            user_id=user_id,
+            name=name,
+            scope=scope,
+            expires_at=expires_at,
+        )
         return CreatePersonalAccessToken(ok=True)
 
 
