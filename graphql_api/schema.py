@@ -1,4 +1,5 @@
 import graphene
+from graphql_api.mutation.personal_access_token import PersonalAccessTokenMutations
 
 from graphql_api.mutation.upload_task import UploadTaskMutation
 from graphql_api.query.attribute import AttributeQuery
@@ -100,6 +101,7 @@ class Mutation(
     WeakSupervisionMutation,
     ZeroShotMutation,
     UploadTaskMutation,
+    PersonalAccessTokenMutations,
     graphene.ObjectType,
 ):
     pass
