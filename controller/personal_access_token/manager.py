@@ -6,9 +6,17 @@ from dateutil.relativedelta import relativedelta
 from submodules.model.business_objects import personal_access_token
 
 
+def get_personal_access_token(project_id: str, user_id: str, name: str):
+    return personal_access_token.get(project_id, user_id, name)
+
+
+def get_all_personal_access_tokens(project_id: str, user_id: str):
+    return personal_access_token.get_all(project_id, user_id)
+
+
 def create_personal_access_token(
     project_id: str, user_id: str, name: str, scope: str, expires_at: str
-):
+) -> None:
     if personal_access_token.get(project_id, user_id, name):
         raise Exception(
             f"Personal Access Key with name {name} already exists for user/project-combination."
@@ -39,3 +47,7 @@ def create_personal_access_token(
         token=token,
         with_commit=True,
     )
+
+
+def delete_personal_access_token(project_id: str, user_id: str, name: str) -> None:
+    personal_access_token.delete(project_id, user_id, name)
