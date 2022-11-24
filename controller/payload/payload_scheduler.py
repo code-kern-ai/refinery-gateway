@@ -13,7 +13,6 @@ from datetime import datetime
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
-    attribute,
     information_source,
     embedding,
     labeling_task,
@@ -60,6 +59,7 @@ __tz = pytz.timezone("Europe/Berlin")
 lf_exec_env_image = os.getenv("LF_EXEC_ENV_IMAGE")
 ml_exec_env_image = os.getenv("ML_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
+inference_dir = os.getenv("INFERENCE_DIR")
 
 
 def create_payload(
@@ -183,6 +183,7 @@ def create_payload(
             training_record_ids = get_exclusion_record_ids(information_source_id)
             input_data = json.dumps(
                 {
+                    "information_source_id": str(information_source_item.id),
                     "embedding_type": embedding_item.type,
                     "embedding_name": embedding_item.name,
                     "labels": {"manual": labels_manual},
@@ -351,6 +352,7 @@ def run_container(
         information_source_payload.source_code,
     )
 
+    volumes = None
     if information_source_type == enums.InformationSourceType.ACTIVE_LEARNING.value:
         s3.put_object(org_id, project_id + "/" + prefixed_input_name, input_data)
         command = [
@@ -359,6 +361,7 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
+        volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
@@ -380,6 +383,7 @@ def run_container(
         remove=True,
         detach=True,
         network=exec_env_network,
+        volumes=volumes,
     )
 
     information_source_payload.logs = [
