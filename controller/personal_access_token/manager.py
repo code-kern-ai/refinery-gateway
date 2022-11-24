@@ -51,8 +51,6 @@ def create_personal_access_token(
         token=token_hex_dig,
         with_commit=True,
     )
-
-    print(token)
     return token
 
 
