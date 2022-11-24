@@ -10,20 +10,20 @@ class CreatePersonalAccessToken(graphene.Mutation):
         scope = graphene.String(required=True)
         expires_at = graphene.String(required=True)
 
-    ok = graphene.Boolean()
+    token = graphene.String()
 
     def mutate(self, info, project_id: str, name: str, scope: str, expires_at: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        token_manager.create_personal_access_token(
+        token = token_manager.create_personal_access_token(
             project_id=project_id,
             user_id=user_id,
             name=name,
             scope=scope,
             expires_at=expires_at,
         )
-        return CreatePersonalAccessToken(ok=True)
+        return CreatePersonalAccessToken(token=token)
 
 
 class DeletePersonalAccessToken(graphene.Mutation):

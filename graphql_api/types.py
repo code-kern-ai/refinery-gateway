@@ -539,11 +539,11 @@ class Notification(SQLAlchemyObjectType):
 
 
 class PersonalAccessToken(graphene.ObjectType):
-    class Meta:
-        model = models.PersonalAccessToken
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
+    id = graphene.ID()
+    project_id = graphene.ID()
+    name = graphene.String()
+    scope = graphene.String()
+    expires_at = graphene.DateTime()
 
 
 class KnowledgeBase(SQLAlchemyObjectType):

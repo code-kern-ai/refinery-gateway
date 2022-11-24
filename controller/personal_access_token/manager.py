@@ -1,3 +1,4 @@
+import hashlib
 from submodules.model import enums
 from datetime import date
 import secrets
@@ -36,7 +37,10 @@ def create_personal_access_token(
     if scope not in [enums.TokenScope.READ.value, enums.TokenScope.READ_WRITE.value]:
         raise Exception(f"Option for token scope was invalid: Option: {scope}.")
 
-    token = secrets.token_urlsafe(25)
+    token = secrets.token_urlsafe(80)
+    encoded_token = str.encode(token)
+    hash_token = hashlib.sha256(encoded_token)
+    token_hex_dig = hash_token.hexdigest()
 
     personal_access_token.create(
         project_id=project_id,
@@ -44,9 +48,12 @@ def create_personal_access_token(
         name=name,
         scope=scope,
         expires_at=expires_at,
-        token=token,
+        token=token_hex_dig,
         with_commit=True,
     )
+
+    print(token)
+    return token
 
 
 def delete_personal_access_token(project_id: str, user_id: str, name: str) -> None:
