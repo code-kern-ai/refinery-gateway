@@ -544,6 +544,7 @@ class PersonalAccessToken(graphene.ObjectType):
     name = graphene.String()
     scope = graphene.String()
     expires_at = graphene.DateTime()
+    last_used = graphene.DateTime()
 
 
 class KnowledgeBase(SQLAlchemyObjectType):

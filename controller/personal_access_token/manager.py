@@ -54,5 +54,5 @@ def create_personal_access_token(
     return token
 
 
-def delete_personal_access_token(project_id: str, user_id: str, name: str) -> None:
-    personal_access_token.delete(project_id, user_id, name)
+def delete_personal_access_token(project_id: str, user_id: str, token_id: str) -> None:
+    personal_access_token.delete(project_id, user_id, token_id, with_commit=True)
