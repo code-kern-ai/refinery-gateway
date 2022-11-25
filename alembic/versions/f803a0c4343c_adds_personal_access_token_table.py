@@ -25,6 +25,7 @@ def upgrade():
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("scope", sa.String(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("expires_at", sa.DateTime(), nullable=True),
         sa.Column("last_used", sa.DateTime(), nullable=True),
         sa.Column("token", sa.String(), nullable=True),

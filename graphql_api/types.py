@@ -543,6 +543,7 @@ class PersonalAccessToken(graphene.ObjectType):
     project_id = graphene.ID()
     name = graphene.String()
     scope = graphene.String()
+    created_at = graphene.DateTime()
     expires_at = graphene.DateTime()
     last_used = graphene.DateTime()
 
