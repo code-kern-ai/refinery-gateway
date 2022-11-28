@@ -1,8 +1,7 @@
-import hashlib
 from typing import List
+from controller.personal_access_token.util import get_token_and_hash
 from submodules.model import enums
 from datetime import date
-import secrets
 from dateutil.relativedelta import relativedelta
 
 from submodules.model.business_objects import personal_access_token
@@ -43,11 +42,7 @@ def create_personal_access_token(
     if scope not in [enums.TokenScope.READ.value, enums.TokenScope.READ_WRITE.value]:
         raise Exception(f"Option for token scope was invalid: Option: {scope}.")
 
-    token = secrets.token_urlsafe(80)
-    encoded_token = str.encode(token)
-    hash_token = hashlib.sha256(encoded_token)
-    token_hex_dig = hash_token.hexdigest()
-
+    token, token_hex_dig = get_token_and_hash()
     personal_access_token.create(
         project_id=project_id,
         user_id=user_id,
