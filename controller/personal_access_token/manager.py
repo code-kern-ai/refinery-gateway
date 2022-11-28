@@ -1,17 +1,23 @@
 import hashlib
+from typing import List
 from submodules.model import enums
 from datetime import date
 import secrets
 from dateutil.relativedelta import relativedelta
 
 from submodules.model.business_objects import personal_access_token
+from submodules.model.models import PersonalAccessToken
 
 
-def get_personal_access_token(project_id: str, user_id: str, name: str):
+def get_personal_access_token(
+    project_id: str, user_id: str, name: str
+) -> PersonalAccessToken:
     return personal_access_token.get(project_id, user_id, name)
 
 
-def get_all_personal_access_tokens(project_id: str, user_id: str):
+def get_all_personal_access_tokens(
+    project_id: str, user_id: str
+) -> List[PersonalAccessToken]:
     return personal_access_token.get_all(project_id, user_id)
 
 
