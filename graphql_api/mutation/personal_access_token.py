@@ -36,9 +36,8 @@ class DeletePersonalAccessToken(graphene.Mutation):
     def mutate(self, info, project_id: str, token_id: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        user_id = auth.get_user_id_by_info(info)
         token_manager.delete_personal_access_token(
-            project_id=project_id, user_id=user_id, token_id=token_id
+            project_id=project_id, token_id=token_id
         )
         return DeletePersonalAccessToken(ok=True)
 
