@@ -14,10 +14,8 @@ def get_personal_access_token(
     return personal_access_token.get(project_id, user_id, name)
 
 
-def get_all_personal_access_tokens(
-    project_id: str, user_id: str
-) -> List[PersonalAccessToken]:
-    return personal_access_token.get_all(project_id, user_id)
+def get_all_personal_access_tokens(project_id: str) -> List[PersonalAccessToken]:
+    return personal_access_token.get_all(project_id)
 
 
 def create_personal_access_token(

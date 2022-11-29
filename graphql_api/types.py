@@ -543,9 +543,14 @@ class PersonalAccessToken(graphene.ObjectType):
     project_id = graphene.ID()
     name = graphene.String()
     scope = graphene.String()
+    created_by = graphene.String()
     created_at = graphene.DateTime()
     expires_at = graphene.DateTime()
     last_used = graphene.DateTime()
+
+    def resolve_created_by(self, info):
+        name = kratos.resolve_user_name_by_id(self.user_id)
+        return f"{name.get('first')} {name.get('last')}"
 
 
 class KnowledgeBase(SQLAlchemyObjectType):

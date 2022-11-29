@@ -30,5 +30,4 @@ class PersonalAccessTokenQuery(graphene.ObjectType):
     ) -> PersonalAccessToken:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        user_id = auth.get_user_id_by_info(info)
-        return token_manager.get_all_personal_access_tokens(project_id, user_id)
+        return token_manager.get_all_personal_access_tokens(project_id)
