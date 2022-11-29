@@ -42,6 +42,6 @@ class DeletePersonalAccessToken(graphene.Mutation):
         return DeletePersonalAccessToken(ok=True)
 
 
-class PersonalAccessTokenMutations(graphene.ObjectType):
+class PersonalAccessTokenMutation(graphene.ObjectType):
     create_personal_access_token = CreatePersonalAccessToken.Field()
     delete_personal_access_token = DeletePersonalAccessToken.Field()

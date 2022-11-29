@@ -47,7 +47,7 @@ from graphql_api.mutation.record_label_association import RecordLabelAssociation
 from graphql_api.mutation.tokenization import TokenizationMutation
 from graphql_api.mutation.weak_supervisor import WeakSupervisionMutation
 from graphql_api.mutation.zero_shot import ZeroShotMutation
-from graphql_api.mutation.personal_access_token import PersonalAccessTokenMutations
+from graphql_api.mutation.personal_access_token import PersonalAccessTokenMutation
 
 
 class Query(
@@ -103,7 +103,7 @@ class Mutation(
     WeakSupervisionMutation,
     ZeroShotMutation,
     UploadTaskMutation,
-    PersonalAccessTokenMutations,
+    PersonalAccessTokenMutation,
     graphene.ObjectType,
 ):
     pass
