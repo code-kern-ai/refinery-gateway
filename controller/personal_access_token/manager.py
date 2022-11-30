@@ -11,7 +11,7 @@ from submodules.model.models import PersonalAccessToken
 def get_personal_access_token(
     project_id: str, user_id: str, name: str
 ) -> PersonalAccessToken:
-    return personal_access_token.get(project_id, user_id, name)
+    return personal_access_token.get_by_user_and_name(project_id, user_id, name)
 
 
 def get_all_personal_access_tokens(project_id: str) -> List[PersonalAccessToken]:
@@ -21,7 +21,7 @@ def get_all_personal_access_tokens(project_id: str) -> List[PersonalAccessToken]
 def create_personal_access_token(
     project_id: str, user_id: str, name: str, scope: str, expires_at: str
 ) -> None:
-    if personal_access_token.get(project_id, user_id, name):
+    if personal_access_token.get_by_user_and_name(project_id, user_id, name):
         raise Exception(
             f"Personal Access Key with name {name} already exists for user/project-combination."
         )
