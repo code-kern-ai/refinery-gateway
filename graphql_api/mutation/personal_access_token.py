@@ -15,6 +15,7 @@ class CreatePersonalAccessToken(graphene.Mutation):
     def mutate(self, info, project_id: str, name: str, scope: str, expires_at: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
+        auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
         token = token_manager.create_personal_access_token(
             project_id=project_id,
@@ -36,6 +37,7 @@ class DeletePersonalAccessToken(graphene.Mutation):
     def mutate(self, info, project_id: str, token_id: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
+        auth.check_admin_access(info)
         token_manager.delete_personal_access_token(
             project_id=project_id, token_id=token_id
         )
