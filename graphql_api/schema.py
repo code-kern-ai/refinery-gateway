@@ -6,6 +6,7 @@ from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
 from graphql_api.query.labeling_access_link import LabelingAccessLinkQuery
 from graphql_api.query.embedding import EmbeddingQuery
+from graphql_api.query.personal_access_token import PersonalAccessTokenQuery
 from graphql_api.query.transfer import TransferQuery
 from graphql_api.query.information_source import InformationSourceQuery
 from graphql_api.query.knowledge_base import KnowledgeBaseQuery
@@ -46,6 +47,7 @@ from graphql_api.mutation.record_label_association import RecordLabelAssociation
 from graphql_api.mutation.tokenization import TokenizationMutation
 from graphql_api.mutation.weak_supervisor import WeakSupervisionMutation
 from graphql_api.mutation.zero_shot import ZeroShotMutation
+from graphql_api.mutation.personal_access_token import PersonalAccessTokenMutation
 
 
 class Query(
@@ -72,6 +74,7 @@ class Query(
     WeakSupervisionQuery,
     ZeroShotQuery,
     RunRecordIDEPayload,
+    PersonalAccessTokenQuery,
     graphene.ObjectType,
 ):
     pass
@@ -100,6 +103,7 @@ class Mutation(
     WeakSupervisionMutation,
     ZeroShotMutation,
     UploadTaskMutation,
+    PersonalAccessTokenMutation,
     graphene.ObjectType,
 ):
     pass
