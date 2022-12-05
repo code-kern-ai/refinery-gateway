@@ -63,7 +63,7 @@ def get_zero_shot_recommendations(
             {
                 "configString": model["name"],
                 "avgTime": "n/a",
-                "language": "",  # TODO All
+                "language": "n/a",
                 "link": model["link"],
                 "base": "n/a",
                 "size": __format_size_string(model["size"]),
