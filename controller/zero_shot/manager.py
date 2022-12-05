@@ -22,6 +22,7 @@ from submodules.model.business_objects import (
 )
 from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+from controller.model_provider import manager as model_manager
 
 
 def get_zero_shot_text(
@@ -46,6 +47,7 @@ def get_zero_shot_recommendations(
     project_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     recommendations = zs_service.get_recommended_models()
+
     if not project_id:
         return recommendations
 
@@ -55,6 +57,22 @@ def get_zero_shot_recommendations(
             r for r in recommendations if r["language"] == project_item.tokenizer_blank
         ]
 
+    existing_models = model_manager.get_model_provider_info()
+    recommendations.extend(
+        [
+            {
+                "configString": model["name"],
+                "avgTime": "n/a",
+                "language": "",  # TODO All
+                "link": model["link"],
+                "base": "n/a",
+                "size": __format_size_string(model["size"]),
+                "prio": len(recommendations) + 1,
+            }
+            for model in existing_models
+            if not model["zero_shot_pipeline"] and model["name"] not in recommendations
+        ]
+    )
     return recommendations
 
 
@@ -199,3 +217,12 @@ def cancel_zero_shot_run(
     # setting the state to failed with be noted by the thread in zs service and handled
     item.state = enums.PayloadState.FAILED.value
     general.commit()
+
+
+def __format_size_string(size: int) -> str:
+    size_in_mb = int(size / 1048576)
+
+    if size_in_mb < 1000:
+        return str(size_in_mb) + " MB"
+    else:
+        return str(size_in_mb / 1000) + " GB"
