@@ -208,6 +208,7 @@ def import_file(
             source_code=attribute_item.get(
                 "source_code",
             ),
+            visibility=attribute_item.get("visibility"),
             project_id=project_id,
         )
         attribute_ids_by_old_id[
@@ -984,6 +985,7 @@ def get_project_export_dump(
             "source_code": attribute_item.source_code,
             "state": attribute_item.state,
             "logs": attribute_item.logs,
+            "visibility": attribute_item.visibility,
         }
         for attribute_item in attributes
     ]
