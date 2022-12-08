@@ -5,10 +5,36 @@ from submodules.model import enums
 from util import daemon
 from . import util
 from . import connector
+from controller.model_provider import manager as model_manager
 
 
 def get_recommended_encoders() -> List[Any]:
-    return connector.request_listing_recommended_encoders()
+    recommendations = connector.request_listing_recommended_encoders()
+    existing_models = model_manager.get_model_provider_info()
+    for model in existing_models:
+
+        if not model["zero_shot_pipeline"]:
+            not_yet_known = (
+                len(
+                    list(
+                        filter(
+                            lambda rec: rec["config_string"] == model["name"],
+                            recommendations,
+                        )
+                    )
+                )
+                == 0
+            )
+            if not_yet_known:
+                recommendations.append(
+                    {
+                        "config_string": model["name"],
+                        "description": "User downloaded model",
+                        "tokenizers": ["all"],
+                        "applicability": {"attribute": True, "token": True},
+                    }
+                )
+    return recommendations
 
 
 def create_attribute_level_embedding(

@@ -22,6 +22,7 @@ from submodules.model.business_objects import (
 )
 from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+from controller.model_provider import manager as model_manager
 
 
 def get_zero_shot_text(
@@ -46,15 +47,44 @@ def get_zero_shot_recommendations(
     project_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     recommendations = zs_service.get_recommended_models()
+    existing_models = model_manager.get_model_provider_info()
+
+    for model in existing_models:
+        if model["zero_shot_pipeline"]:
+            not_existing_yet = (
+                len(
+                    list(
+                        filter(
+                            lambda rec: rec["configString"] == model["name"],
+                            recommendations,
+                        )
+                    )
+                )
+                == 0
+            )
+            if not_existing_yet:
+                recommendations.append(
+                    {
+                        "configString": model["name"],
+                        "avgTime": "n/a",
+                        "language": "n/a",
+                        "link": model["link"],
+                        "base": "n/a",
+                        "size": __format_size_string(model["size"]),
+                        "prio": 1,
+                    }
+                )
+
     if not project_id:
         return recommendations
 
     project_item = project.get(project_id)
     if project_item and project_item.tokenizer_blank:
         recommendations = [
-            r for r in recommendations if r["language"] == project_item.tokenizer_blank
+            r
+            for r in recommendations
+            if r["language"] == project_item.tokenizer_blank or r["language"] == "n/a"
         ]
-
     return recommendations
 
 
@@ -199,3 +229,12 @@ def cancel_zero_shot_run(
     # setting the state to failed with be noted by the thread in zs service and handled
     item.state = enums.PayloadState.FAILED.value
     general.commit()
+
+
+def __format_size_string(size: int) -> str:
+    size_in_mb = int(size / 1048576)
+
+    if size_in_mb < 1024:
+        return str(size_in_mb) + " MB"
+    else:
+        return str(size_in_mb / 1024) + " GB"
