@@ -11,18 +11,27 @@ from controller.model_provider import manager as model_manager
 def get_recommended_encoders() -> List[Any]:
     recommendations = connector.request_listing_recommended_encoders()
     existing_models = model_manager.get_model_provider_info()
-    recommendations.extend(
-        [
-            {
-                "config_string": model["name"],
-                "description": "User downloaded model",
-                "tokenizers": ["all"],
-                "applicability": {"attribute": True, "token": True},
-            }
-            for model in existing_models
-            if not model["zero_shot_pipeline"] and model["name"] not in recommendations
-        ]
-    )
+    for model in existing_models:
+        not_existing_yet = (
+            len(
+                list(
+                    filter(
+                        lambda rec: rec["config_string"] == model["name"],
+                        recommendations,
+                    )
+                )
+            )
+            == 0
+        )
+        if not model["zero_shot_pipeline"] and not_existing_yet:
+            recommendations.append(
+                {
+                    "config_string": model["name"],
+                    "description": "User downloaded model",
+                    "tokenizers": ["all"],
+                    "applicability": {"attribute": True, "token": True},
+                }
+            )
     return recommendations
 
 
