@@ -28,6 +28,7 @@ class UpdateAttribute(graphene.Mutation):
         is_primary_key = graphene.Boolean()
         name = graphene.String()
         source_code = graphene.String()
+        visibility = graphene.String()
 
     ok = graphene.Boolean()
 
@@ -40,11 +41,18 @@ class UpdateAttribute(graphene.Mutation):
         is_primary_key: Optional[bool] = None,
         name: Optional[str] = None,
         source_code: Optional[str] = None,
+        visibility: Optional[str] = None,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.update_attribute(
-            project_id, attribute_id, data_type, is_primary_key, name, source_code
+            project_id,
+            attribute_id,
+            data_type,
+            is_primary_key,
+            name,
+            source_code,
+            visibility,
         )
         return UpdateAttribute(ok=True)
 

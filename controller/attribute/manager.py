@@ -88,6 +88,7 @@ def update_attribute(
     is_primary_key: bool,
     name: str,
     source_code: str,
+    visibility: str,
 ) -> None:
 
     attribute_item: Attribute = attribute.update(
@@ -98,6 +99,7 @@ def update_attribute(
         name,
         source_code,
         with_commit=True,
+        visibility=visibility,
     )
 
     notification.send_organization_update(
