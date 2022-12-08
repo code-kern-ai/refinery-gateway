@@ -50,29 +50,30 @@ def get_zero_shot_recommendations(
     existing_models = model_manager.get_model_provider_info()
 
     for model in existing_models:
-        not_existing_yet = (
-            len(
-                list(
-                    filter(
-                        lambda rec: rec["configString"] == model["name"],
-                        recommendations,
+        if model["zero_shot_pipeline"]:
+            not_existing_yet = (
+                len(
+                    list(
+                        filter(
+                            lambda rec: rec["configString"] == model["name"],
+                            recommendations,
+                        )
                     )
                 )
+                == 0
             )
-            == 0
-        )
-        if model["zero_shot_pipeline"] and not_existing_yet:
-            recommendations.append(
-                {
-                    "configString": model["name"],
-                    "avgTime": "n/a",
-                    "language": "n/a",
-                    "link": model["link"],
-                    "base": "n/a",
-                    "size": __format_size_string(model["size"]),
-                    "prio": 1,
-                }
-            )
+            if not_existing_yet:
+                recommendations.append(
+                    {
+                        "configString": model["name"],
+                        "avgTime": "n/a",
+                        "language": "n/a",
+                        "link": model["link"],
+                        "base": "n/a",
+                        "size": __format_size_string(model["size"]),
+                        "prio": 1,
+                    }
+                )
 
     if not project_id:
         return recommendations

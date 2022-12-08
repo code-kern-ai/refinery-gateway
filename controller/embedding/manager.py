@@ -12,26 +12,28 @@ def get_recommended_encoders() -> List[Any]:
     recommendations = connector.request_listing_recommended_encoders()
     existing_models = model_manager.get_model_provider_info()
     for model in existing_models:
-        not_existing_yet = (
-            len(
-                list(
-                    filter(
-                        lambda rec: rec["config_string"] == model["name"],
-                        recommendations,
+
+        if not model["zero_shot_pipeline"]:
+            not_yet_known = (
+                len(
+                    list(
+                        filter(
+                            lambda rec: rec["config_string"] == model["name"],
+                            recommendations,
+                        )
                     )
                 )
+                == 0
             )
-            == 0
-        )
-        if not model["zero_shot_pipeline"] and not_existing_yet:
-            recommendations.append(
-                {
-                    "config_string": model["name"],
-                    "description": "User downloaded model",
-                    "tokenizers": ["all"],
-                    "applicability": {"attribute": True, "token": True},
-                }
-            )
+            if not_yet_known:
+                recommendations.append(
+                    {
+                        "config_string": model["name"],
+                        "description": "User downloaded model",
+                        "tokenizers": ["all"],
+                        "applicability": {"attribute": True, "token": True},
+                    }
+                )
     return recommendations
 
 
