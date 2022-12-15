@@ -16,6 +16,26 @@ from util import notification
 from typing import List, Any, Dict
 import re
 
+LABEL_COLORS = [
+    "red",
+    "orange",
+    "amber",
+    "yellow",
+    "lime",
+    "green",
+    "emerald",
+    "teal",
+    "cyan",
+    "sky",
+    "blue",
+    "indigo",
+    "violet",
+    "purple",
+    "fuchsia",
+    "pink",
+    "rose",
+]
+
 
 def get_label(project_id: str, label_id: str) -> LabelingTaskLabel:
     return labeling_task_label.get(project_id, label_id)
@@ -71,6 +91,25 @@ def create_label(
 
     general.commit()
     return label
+
+
+def create_labels(
+    project_id: str, labeling_task_id: str, names: List[str]
+) -> List[LabelingTaskLabel]:
+    task = labeling_task.get(project_id, labeling_task_id)
+    labels = []
+
+    available_colors = len(LABEL_COLORS)
+    for idx, name in enumerate(names):
+        labels.append(
+            labeling_task_label.create(
+                project_id, name, labeling_task_id, LABEL_COLORS[idx % available_colors]
+            )
+        )
+        if task.task_type == LabelingTaskType.INFORMATION_EXTRACTION.value:
+            create_knowledge_base_if_not_existing(name, project_id)
+    general.commit()
+    return labels
 
 
 def delete_label(project_id: str, label_id: str) -> None:
