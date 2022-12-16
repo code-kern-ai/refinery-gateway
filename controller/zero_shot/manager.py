@@ -23,6 +23,7 @@ from submodules.model.business_objects import (
 from util import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.model_provider import manager as model_manager
+from controller.misc import manager as misc
 
 
 def get_zero_shot_text(
@@ -47,7 +48,10 @@ def get_zero_shot_recommendations(
     project_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     recommendations = zs_service.get_recommended_models()
-    existing_models = model_manager.get_model_provider_info()
+    if misc.check_is_managed:
+        existing_models = model_manager.get_model_provider_info()
+    else:
+        existing_models = []
 
     for model in existing_models:
         if model["zero_shot_pipeline"]:
