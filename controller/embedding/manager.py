@@ -5,12 +5,16 @@ from submodules.model import enums
 from util import daemon
 from . import util
 from . import connector
+from controller.misc import manager as misc
 from controller.model_provider import manager as model_manager
 
 
 def get_recommended_encoders() -> List[Any]:
     recommendations = connector.request_listing_recommended_encoders()
-    existing_models = model_manager.get_model_provider_info()
+    if misc.check_is_managed:
+        existing_models = model_manager.get_model_provider_info()
+    else:
+        existing_models = []
     for model in existing_models:
 
         if not model["zero_shot_pipeline"]:
