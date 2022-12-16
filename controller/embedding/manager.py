@@ -11,7 +11,7 @@ from controller.model_provider import manager as model_manager
 
 def get_recommended_encoders() -> List[Any]:
     recommendations = connector.request_listing_recommended_encoders()
-    if misc.check_is_managed:
+    if misc.check_is_managed():
         existing_models = model_manager.get_model_provider_info()
     else:
         existing_models = []

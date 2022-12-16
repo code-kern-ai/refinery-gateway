@@ -48,7 +48,7 @@ def get_zero_shot_recommendations(
     project_id: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     recommendations = zs_service.get_recommended_models()
-    if misc.check_is_managed:
+    if misc.check_is_managed():
         existing_models = model_manager.get_model_provider_info()
     else:
         existing_models = []
