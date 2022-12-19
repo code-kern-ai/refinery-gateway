@@ -1,6 +1,7 @@
 import time
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import (
+    request_tokenize_calculated_attribute,
     request_tokenize_project,
     request_reupload_docbins,
 )
@@ -251,17 +252,28 @@ def __calculate_user_attribute_all_records(
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
-    if attribute.get(project_id, attribute_id).data_type == DataTypes.TEXT.value:
+    attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item.data_type == DataTypes.TEXT.value:
         util.add_log_to_attribute_logs(
             project_id, attribute_id, "Triggering tokenization."
         )
-        tokenization.delete_docbins(project_id, with_commit=True)
-        tokenization.delete_token_statistics_for_project(project_id, with_commit=True)
+        try:
+            request_tokenize_calculated_attribute(
+                project_id, user_id, attribute_item.name
+            )
+        except:
+            record.delete_user_created_attribute(
+                project_id=project_id,
+                attribute_id=attribute_id,
+                with_commit=True,
+            )
+            __notify_attribute_calculation_failed(
+                project_id=project_id,
+                attribute_id=attribute_id,
+                log="Writing to the database failed.",
+            )
+            return
 
-        while record.count_tokenized_records(project_id) > 0:
-            time.sleep(2)
-
-        request_tokenize_project(project_id, user_id)
     else:
         util.add_log_to_attribute_logs(
             project_id, attribute_id, "Adding attribute to docbins."
