@@ -95,8 +95,8 @@ steps:
         - "registry.dev.onetask.ai/${DRONE_REPO}:${DRONE_COMMIT_BRANCH}_arm64"
 
 trigger:
-  # branch:
-  #   - dev
+  branch:
+    - dev
   event:
     - push
 

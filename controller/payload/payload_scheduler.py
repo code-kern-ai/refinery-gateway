@@ -48,6 +48,7 @@ from controller.auth.manager import get_user_by_info
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
+from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
@@ -59,7 +60,8 @@ __tz = pytz.timezone("Europe/Berlin")
 lf_exec_env_image = os.getenv("LF_EXEC_ENV_IMAGE")
 ml_exec_env_image = os.getenv("ML_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
-inference_dir = os.getenv("INFERENCE_DIR")
+if config_service.get_config_value("is_managed"):
+    inference_dir = os.getenv("INFERENCE_DIR")
 
 
 def create_payload(
@@ -361,7 +363,8 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
-        volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
+        if config_service.get_config_value("is_managed"):
+            volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
