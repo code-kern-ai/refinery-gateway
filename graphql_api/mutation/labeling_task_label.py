@@ -7,7 +7,7 @@ from graphql_api import types
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
 from util import doc_ock, notification
-from typing import Dict
+from typing import Dict, List
 
 
 class CreateLabelingTaskLabel(graphene.Mutation):
@@ -48,6 +48,37 @@ class CreateLabelingTaskLabel(graphene.Mutation):
         )
 
         return CreateLabelingTaskLabel(label=label)
+
+
+class CreateLabelingTaskLabels(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        labeling_task_id = graphene.ID(required=True)
+        labels = graphene.List(graphene.String, required=True)
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str, labeling_task_id: str, labels: List[str]):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user = auth.get_user_by_info(info)
+        created_labels = manager.create_labels(project_id, labeling_task_id, labels)
+        task = task_manager.get_labeling_task(project_id, labeling_task_id)
+        project = project_manager.get_project(project_id)
+        for label in created_labels:
+            doc_ock.post_event(
+                user,
+                events.AddLabel(
+                    ProjectName=f"{project.name}-{project_id}",
+                    Name=label.name,
+                    LabelingTaskName=task.name,
+                ),
+            )
+            notification.send_organization_update(
+                project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
+            )
+
+        return CreateLabelingTaskLabels(ok=True)
 
 
 class UpdateLabelingTaskLabelColor(graphene.Mutation):
@@ -134,6 +165,7 @@ class DeleteLabelingTaskLabel(graphene.Mutation):
 
 class LabelingTaskLabelMutation(graphene.ObjectType):
     create_label = CreateLabelingTaskLabel.Field()
+    create_labels = CreateLabelingTaskLabels.Field()
     delete_label = DeleteLabelingTaskLabel.Field()
     update_label_color = UpdateLabelingTaskLabelColor.Field()
     update_label_hotkey = UpdateLabelingTaskLabelHotkey.Field()

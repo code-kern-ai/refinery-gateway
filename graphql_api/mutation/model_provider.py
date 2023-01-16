@@ -13,7 +13,7 @@ class ModelProviderDownloadModel(graphene.Mutation):
 
     def mutate(self, info, model_name: str):
         auth.check_demo_access(info)
-        if misc.check_is_managed:
+        if misc.check_is_managed():
             if not auth.check_is_single_organization():
                 auth.check_admin_access(info)
         else:
@@ -30,7 +30,7 @@ class ModelProviderDeleteModel(graphene.Mutation):
 
     def mutate(self, info, model_name: str):
         auth.check_demo_access(info)
-        if misc.check_is_managed:
+        if misc.check_is_managed():
             if not auth.check_is_single_organization():
                 auth.check_admin_access(info)
         else:
