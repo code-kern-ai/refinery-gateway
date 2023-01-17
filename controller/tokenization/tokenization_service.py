@@ -26,13 +26,13 @@ def request_tokenize_project(project_id: str, user_id: str) -> None:
 
 
 def request_tokenize_calculated_attribute(
-    project_id: str, user_id: str, attribute_name: str
+    project_id: str, user_id: str, attribute_id: str
 ) -> None:
     url = f"{BASE_URI}/tokenize_calculated_attribute"
     data = {
         "project_id": str(project_id),
         "user_id": str(user_id),
-        "attribute_name": str(attribute_name),
+        "attribute_id": str(attribute_id),
     }
     service_requests.post_call_or_raise(url, data)
 
