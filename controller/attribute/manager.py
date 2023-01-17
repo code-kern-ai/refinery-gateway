@@ -259,7 +259,7 @@ def __calculate_user_attribute_all_records(
         )
         try:
             request_tokenize_calculated_attribute(
-                project_id, user_id, attribute_item.name
+                project_id, user_id, attribute_item.id
             )
         except:
             record.delete_user_created_attribute(
