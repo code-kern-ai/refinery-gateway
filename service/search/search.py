@@ -454,7 +454,7 @@ def __build_subquery(
 def __build_where_add(
     project_id: str, filter_data: List[Dict[str, Any]], outer: Optional[bool] = True
 ) -> str:
-    current_condition = ""
+    current_condition = "("
     for filter_element in filter_data:
         ret = ""
         if FilterDataDictKeys.OPERATOR.value in filter_element:
@@ -471,6 +471,10 @@ def __build_where_add(
         if ret != "" and filter_element[FilterDataDictKeys.RELATION.value] != "NONE":
             ret = f" {filter_element[FilterDataDictKeys.RELATION.value]} {ret} "
         current_condition += ret
+
+    current_condition += ")"
+    if current_condition == "()":
+        current_condition = ""
 
     if current_condition != "" and outer:
         current_condition = f" AND ({current_condition})"
