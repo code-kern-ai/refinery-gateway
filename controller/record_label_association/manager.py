@@ -187,7 +187,7 @@ def create_manual_extraction_label(
     new_tokens = record_label_association.create_token_objects(
         project_id, token_start_index, token_end_index + 1
     )
-    l = record_label_association.create(
+    record_label_association.create(
         project_id,
         record_id,
         label_id,
