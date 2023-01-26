@@ -326,6 +326,8 @@ def generate_select_sql(
     inner_sql = __build_inner_query(filter_data, project_id, limit, offset, False)
     final_sql = __build_final_query(inner_sql, project_id, False, for_id)
 
+    print(final_sql)
+
     order_extension = __get_order_by(filter_data, project_id)
 
     if order_extension != "":
@@ -454,7 +456,7 @@ def __build_subquery(
 def __build_where_add(
     project_id: str, filter_data: List[Dict[str, Any]], outer: Optional[bool] = True
 ) -> str:
-    current_condition = "("
+    current_condition = ""
     for filter_element in filter_data:
         ret = ""
         if FilterDataDictKeys.OPERATOR.value in filter_element:
@@ -464,17 +466,13 @@ def __build_where_add(
             ret = __build_where_add(
                 project_id, filter_element[FilterDataDictKeys.FILTER.value], False
             )
-            if ret != "" and ret[0] != "(":
+            if ret != "":
                 ret = f"( {ret} )"
         if ret != "" and filter_element[FilterDataDictKeys.NEGATION.value]:
             ret = f" NOT ( {ret} )"
         if ret != "" and filter_element[FilterDataDictKeys.RELATION.value] != "NONE":
             ret = f" {filter_element[FilterDataDictKeys.RELATION.value]} {ret} "
         current_condition += ret
-
-    current_condition += ")"
-    if current_condition == "()":
-        current_condition = ""
 
     if current_condition != "" and outer:
         current_condition = f" AND ({current_condition})"
