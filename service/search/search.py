@@ -326,8 +326,6 @@ def generate_select_sql(
     inner_sql = __build_inner_query(filter_data, project_id, limit, offset, False)
     final_sql = __build_final_query(inner_sql, project_id, False, for_id)
 
-    print(final_sql)
-
     order_extension = __get_order_by(filter_data, project_id)
 
     if order_extension != "":
