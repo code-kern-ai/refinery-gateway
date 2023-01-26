@@ -650,6 +650,12 @@ def __get_embedding_id_from_function(
         re.IGNORECASE,
     )
     if not embedding_name:
+        embedding_name = re.search(
+            r'YOUR_EMBEDDING: str = "([\w\W]+?)"',
+            source_item.source_code,
+            re.IGNORECASE,
+        )
+    if not embedding_name:
         raise ValueError("Can't extract embedding from function code")
     embedding_name = embedding_name.group(1)
 
