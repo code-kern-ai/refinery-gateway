@@ -60,8 +60,6 @@ __tz = pytz.timezone("Europe/Berlin")
 lf_exec_env_image = os.getenv("LF_EXEC_ENV_IMAGE")
 ml_exec_env_image = os.getenv("ML_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
-if config_service.get_config_value("is_managed"):
-    inference_dir = os.getenv("INFERENCE_DIR")
 
 
 def create_payload(
@@ -185,7 +183,7 @@ def create_payload(
             training_record_ids = get_exclusion_record_ids(information_source_id)
             input_data = json.dumps(
                 {
-                    "information_source_id": str(information_source_item.id),
+                    "information_source_id": information_source_id,
                     "embedding_type": embedding_item.type,
                     "embedding_name": embedding_item.name,
                     "labels": {"manual": labels_manual},
@@ -364,7 +362,7 @@ def run_container(
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
         if config_service.get_config_value("is_managed"):
-            volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
+            volumes = [f"{os.path.join(get_inference_dir(), project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
@@ -402,6 +400,12 @@ def run_container(
     s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
+
+
+def get_inference_dir() -> str:
+    if config_service.get_config_value("is_managed"):
+        return os.getenv("INFERENCE_DIR")
+    return None
 
 
 def update_records(

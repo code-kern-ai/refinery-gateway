@@ -123,10 +123,15 @@ def update_information_source(
 
 
 def delete_information_source(project_id: str, source_id: str) -> None:
-    if information_source.get(
-        project_id, source_id
-    ).type == enums.InformationSourceType.ACTIVE_LEARNING.value and config_service.get_config_value(
-        "is_managed"
+    information_source_item = information_source.get(project_id, source_id)
+    if not information_source_item:
+        print(f"Information source {source_id} not found. Could not delete it.")
+        return
+
+    if (
+        information_source_item.type
+        == enums.InformationSourceType.ACTIVE_LEARNING.value
+        and config_service.get_config_value("is_managed")
     ):
         daemon.run(__delete_active_learner_from_inference_dir, project_id, source_id)
 
