@@ -19,12 +19,19 @@ else
     echo "architecture: $currentArch"
 fi
 
-echo -ne 'downloading exec-envs...'
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 > /dev/null 2>&1
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 > /dev/null 2>&1
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 > /dev/null 2>&1
-docker pull registry.dev.onetask.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 > /dev/null 2>&1
-echo -ne '\t [done]\n'
+INFERENCE_DIR=${PWD%/*}/dev-setup/inference/
+if [ ! -d "$_DIR" ] 
+then
+    INFERENCE_DIR=${PWD%/*/*}/dev-setup/inference/
+    if [ ! -d "$INFERENCE_DIR" ] 
+    then
+        # to include volume for local development, use the dev-setup inference folder:  
+        # alternative use manual logic with
+        # -v /path/to/dev-setup/inference:/models \
+        echo "Can't find model data directory: $INFERENCE_DIR -> stopping" 
+        exit 1
+    fi
+fi
 
 echo -ne 'building container...'
 docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
@@ -64,6 +71,8 @@ docker run -d --rm \
 -e TOKENIZER=http://refinery-tokenizer:80 \
 -e DOC_OCK=http://refinery-doc-ock:80 \
 -e KRATOS_ADMIN_URL=http://kratos:4434 \
+-e INFERENCE_DIR=$INFERENCE_DIR \
+-v "$INFERENCE_DIR":/inference \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
