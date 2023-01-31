@@ -45,6 +45,7 @@ from util.notification import create_notification
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def get_upload_credentials_and_id(
     project_id: str,
     user_id: str,
@@ -62,7 +63,7 @@ def get_upload_credentials_and_id(
 
 def import_records_from_file(project_id: str, task: UploadTask) -> None:
     import_file(project_id, task)
-    __check_and_add_running_id(project_id, str(task.user_id))
+    check_and_add_running_id(project_id, str(task.user_id))
 
 
 def import_records_from_json(
@@ -93,7 +94,7 @@ def import_records_from_json(
         os.remove(file_path)
 
 
-def __check_and_add_running_id(project_id: str, user_id: str):
+def check_and_add_running_id(project_id: str, user_id: str):
     attributes = attribute.get_all(project_id)
     add_running_id = True
     for att in attributes:
@@ -276,7 +277,9 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
             project_creation_manager.manage_data_import(project_id, upload_task_id)
             task = upload_task.get(project_id, upload_task_id)
             tokenization_service.request_tokenize_project(project_id, str(task.user_id))
-        upload_task.update(project_id, upload_task_id, state=enums.UploadStates.DONE.value)
+        upload_task.update(
+            project_id, upload_task_id, state=enums.UploadStates.DONE.value
+        )
     except Exception:
         general.rollback()
         task = upload_task.get(project_id, upload_task_id)
@@ -297,4 +300,3 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
         )
-
