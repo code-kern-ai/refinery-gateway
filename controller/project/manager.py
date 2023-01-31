@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 from typing import Dict, List, Optional
 
 from controller.transfer import project_transfer_manager as handler
@@ -13,6 +15,7 @@ from submodules.model.business_objects import (
 )
 from graphql_api.types import HuddleData, ProjectSize
 from util import daemon
+from controller.misc import config_service
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import data_slice as ds_manager
 from submodules.model.business_objects import (
@@ -83,12 +86,20 @@ def delete_project(project_id: str) -> None:
     project.delete_by_id(project_id, with_commit=True)
 
     daemon.run(__delete_project_data_from_minio, org_id, project_id)
+    if config_service.get_config_value("is_managed"):
+        daemon.run(__delete_project_data_from_inference_dir, project_id)
 
 
 def __delete_project_data_from_minio(org_id, project_id: str) -> None:
     objects = s3.get_bucket_objects(org_id, project_id + "/")
     for obj in objects:
         s3.delete_object(org_id, obj)
+
+
+def __delete_project_data_from_inference_dir(project_id: str) -> None:
+    project_dir = os.path.join("/inference", project_id)
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)
 
 
 def import_sample_project(user_id: str, organization_id: str, name: str) -> Project:

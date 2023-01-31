@@ -13,7 +13,6 @@ from datetime import datetime
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
-    attribute,
     information_source,
     embedding,
     labeling_task,
@@ -49,6 +48,7 @@ from controller.auth.manager import get_user_by_info
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
+from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
@@ -183,6 +183,7 @@ def create_payload(
             training_record_ids = get_exclusion_record_ids(information_source_id)
             input_data = json.dumps(
                 {
+                    "information_source_id": information_source_id,
                     "embedding_type": embedding_item.type,
                     "embedding_name": embedding_item.name,
                     "labels": {"manual": labels_manual},
@@ -351,6 +352,7 @@ def run_container(
         information_source_payload.source_code,
     )
 
+    volumes = None
     if information_source_type == enums.InformationSourceType.ACTIVE_LEARNING.value:
         s3.put_object(org_id, project_id + "/" + prefixed_input_name, input_data)
         command = [
@@ -359,6 +361,8 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
+        if config_service.get_config_value("is_managed"):
+            volumes = [f"{os.path.join(get_inference_dir(), project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
@@ -380,6 +384,7 @@ def run_container(
         remove=True,
         detach=True,
         network=exec_env_network,
+        volumes=volumes,
     )
 
     information_source_payload.logs = [
@@ -395,6 +400,12 @@ def run_container(
     s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
+
+
+def get_inference_dir() -> str:
+    if config_service.get_config_value("is_managed"):
+        return os.getenv("INFERENCE_DIR")
+    return None
 
 
 def update_records(
@@ -649,6 +660,12 @@ def __get_embedding_id_from_function(
         source_item.source_code,
         re.IGNORECASE,
     )
+    if not embedding_name:
+        embedding_name = re.search(
+            r'YOUR_EMBEDDING: str = "([\w\W]+?)"',
+            source_item.source_code,
+            re.IGNORECASE,
+        )
     if not embedding_name:
         raise ValueError("Can't extract embedding from function code")
     embedding_name = embedding_name.group(1)

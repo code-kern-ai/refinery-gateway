@@ -1,4 +1,5 @@
 import json
+import os
 from typing import List, Optional
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
@@ -8,9 +9,11 @@ from submodules.model.business_objects import (
     information_source,
     payload,
 )
+from controller.misc import config_service
 from controller.labeling_access_link import manager as link_manager
 from controller.record_label_association import manager as rla_manager
 from controller.payload import manager as payload_manager
+from util import daemon
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
@@ -120,7 +123,27 @@ def update_information_source(
 
 
 def delete_information_source(project_id: str, source_id: str) -> None:
+    information_source_item = information_source.get(project_id, source_id)
+    if not information_source_item:
+        print(f"Information source {source_id} not found. Could not delete it.")
+        return
+
+    if (
+        information_source_item.type
+        == enums.InformationSourceType.ACTIVE_LEARNING.value
+        and config_service.get_config_value("is_managed")
+    ):
+        daemon.run(__delete_active_learner_from_inference_dir, project_id, source_id)
+
     information_source.delete(project_id, source_id, with_commit=True)
+
+
+def __delete_active_learner_from_inference_dir(project_id: str, source_id: str) -> None:
+    pickle_path = os.path.join(
+        "/inference", project_id, f"active-learner-{source_id}.pkl"
+    )
+    if os.path.exists(pickle_path):
+        os.remove(pickle_path)
 
 
 def delete_information_source_payload(

@@ -464,7 +464,7 @@ def __build_where_add(
             ret = __build_where_add(
                 project_id, filter_element[FilterDataDictKeys.FILTER.value], False
             )
-            if ret != "" and ret[0] != "(":
+            if ret != "":
                 ret = f"( {ret} )"
         if ret != "" and filter_element[FilterDataDictKeys.NEGATION.value]:
             ret = f" NOT ( {ret} )"
