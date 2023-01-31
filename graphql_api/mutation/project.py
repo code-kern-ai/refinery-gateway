@@ -15,6 +15,7 @@ from submodules.model.business_objects import notification as notification_model
 
 
 from controller.transfer.record_transfer_manager import import_records_and_rlas
+from controller.transfer.manager import check_and_add_running_id
 from controller.auth import manager as auth_manager
 from controller.project import manager as project_manager
 from controller.upload_task import manager as upload_task_manager
@@ -48,6 +49,17 @@ class CreateProject(graphene.Mutation):
         return CreateProject(project=project, ok=True)
 
 
+class SingletonWorkflowEngine:
+    def __init__(self):
+        self.engine = None
+
+    def get_engine(self):
+        if self.engine is None:
+            workflow_postgres_url = os.getenv("WORKFLOW_POSTGRES")
+            self.engine = create_engine(workflow_postgres_url)
+        return self.engine
+
+
 class CreateProjectByWorkflowStore(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -70,7 +82,8 @@ class CreateProjectByWorkflowStore(graphene.Mutation):
             organization.id, name, description, user.id
         )
         project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
-        engine = create_engine(workflow_postgres_url)
+
+        engine = SingletonWorkflowEngine().get_engine()
 
         Session = sessionmaker(engine)
         with Session() as session:
@@ -95,8 +108,19 @@ class CreateProjectByWorkflowStore(graphene.Mutation):
             upload_task,
             enums.RecordCategory.SCALE.value,
         )
+        check_and_add_running_id(project.id, user.id)
+
         upload_task_manager.update_upload_task_to_finished(upload_task)
         tokenization_service.request_tokenize_project(str(project.id), str(user.id))
+
+        notification.send_organization_update(
+            project.id, f"project_created:{str(project.id)}", True
+        )
+        doc_ock.post_event(
+            user,
+            events.CreateProject(Name=f"{name}-{project.id}", Description=description),
+        )
+
         return CreateProjectByWorkflowStore(project=project, ok=True)
 
 
