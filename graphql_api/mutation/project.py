@@ -23,6 +23,15 @@ from submodules.model import enums
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+__engine = None
+
+
+def get_workflow_db_engine():
+    global __engine
+    if __engine is None:
+        __engine = create_engine(os.getenv("WORKFLOW_POSTGRES"))
+    return __engine
+
 
 class CreateProject(graphene.Mutation):
     class Arguments:
@@ -49,17 +58,6 @@ class CreateProject(graphene.Mutation):
         return CreateProject(project=project, ok=True)
 
 
-class SingletonWorkflowEngine:
-    def __init__(self):
-        self.engine = None
-
-    def get_engine(self):
-        if self.engine is None:
-            workflow_postgres_url = os.getenv("WORKFLOW_POSTGRES")
-            self.engine = create_engine(workflow_postgres_url)
-        return self.engine
-
-
 class CreateProjectByWorkflowStore(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -71,7 +69,6 @@ class CreateProjectByWorkflowStore(graphene.Mutation):
     project = graphene.Field(lambda: Project)
 
     def mutate(self, info, name: str, description: str, tokenizer: str, storeId: str):
-        workflow_postgres_url = os.getenv("WORKFLOW_POSTGRES")
         user = auth.get_user_by_info(info)
         organization = auth_manager.get_organization_by_user_id(user.id)
 
@@ -83,9 +80,7 @@ class CreateProjectByWorkflowStore(graphene.Mutation):
         )
         project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
 
-        engine = SingletonWorkflowEngine().get_engine()
-
-        Session = sessionmaker(engine)
+        Session = sessionmaker(get_workflow_db_engine())
         with Session() as session:
             results = session.execute(
                 f"SELECT record FROM store_entry WHERE store_id = '{storeId}'"
