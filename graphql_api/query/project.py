@@ -88,6 +88,11 @@ class ProjectQuery(graphene.ObjectType):
         huddle_type=graphene.String(required=True),
     )
 
+    is_gates_ready = graphene.Field(
+        graphene.Boolean,
+        project_id=graphene.ID(required=True),
+    )
+
     def resolve_project_by_project_id(self, info, project_id: str) -> Project:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
@@ -205,3 +210,8 @@ class ProjectQuery(graphene.ObjectType):
         return manager.resolve_request_huddle_data(
             project_id, user_id, huddle_id, huddle_type
         )
+
+    def resolve_is_gates_ready(self, info, project_id: str) -> bool:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return manager.is_gates_ready(project_id)

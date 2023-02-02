@@ -12,6 +12,7 @@ from submodules.model.business_objects import (
     project,
     record_label_association,
     data_slice,
+    embedding,
 )
 from graphql_api.types import HuddleData, ProjectSize
 from util import daemon
@@ -228,3 +229,43 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         )
     else:
         raise ValueError("invalid huddle type")
+
+
+def is_gates_ready(project_id: str) -> bool:
+
+    if not __tokenizer_pickle_exists(project_id):
+        return False
+
+    embedding_items = embedding.get_finished_embeddings(project_id)
+    for embedding_item in embedding_items:
+        if not __embedding_pickle_exists(project_id, embedding_item.id):
+            return False
+
+    is_items = information_source_manager.get_all(project_id)
+    for is_item in is_items:
+        if is_item.type != enums.InformationSourceType.ACTIVE_LEARNING.value:
+            continue
+        last_payload = information_source_manager.get_last_payload(
+            project_id, str(is_item.id)
+        )
+        if last_payload.state == enums.PayloadState.FINISHED.value:
+            if not __active_learner_pickle_exists(project_id, is_item.id):
+                return False
+    return True
+
+
+def __tokenizer_pickle_exists(project_id: str) -> bool:
+    tokenizer_path = os.path.join("/inference", project_id, "tokenizer.pkl")
+    return os.path.exists(tokenizer_path)
+
+
+def __embedding_pickle_exists(project_id: str, embedding_id: str) -> bool:
+    emb_path = os.path.join("/inference", project_id, f"embedder-{embedding_id}.pkl")
+    return os.path.exists(emb_path)
+
+
+def __active_learner_pickle_exists(project_id: str, active_learner_id: str) -> bool:
+    al_path = os.path.join(
+        "/inference", project_id, f"active-learner-{active_learner_id}.pkl"
+    )
+    return os.path.exists(al_path)
