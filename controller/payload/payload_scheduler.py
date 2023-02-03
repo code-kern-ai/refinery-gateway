@@ -44,7 +44,6 @@ from submodules.model.models import (
     InformationSourcePayload,
     User,
 )
-from controller.auth.manager import get_user_by_info
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
@@ -52,6 +51,7 @@ from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+from controller.user import manager as user_manager
 
 # lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
@@ -63,7 +63,6 @@ exec_env_network = os.getenv("LF_NETWORK")
 
 
 def create_payload(
-    info,
     project_id: str,
     information_source_id: str,
     user_id: str,
@@ -313,7 +312,7 @@ def create_payload(
             ),
         )
 
-    user = get_user_by_info(info)
+    user = user_manager.get_user(user_id)
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
