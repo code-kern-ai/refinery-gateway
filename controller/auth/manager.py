@@ -26,6 +26,10 @@ def get_user_by_info(info) -> User:
     return user_manager.get_or_create_user(user_id)
 
 
+def get_user_by_id(user_id: str) -> User:
+    return user_manager.get_or_create_user(user_id)
+
+
 def get_user_by_email(email: str) -> User:
     return user_manager.get_or_create_user_by_email(email)
 
