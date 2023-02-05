@@ -88,6 +88,7 @@ def import_records_from_json(
             f"{file_path}",
             "records",
             "",
+            upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
         )
         upload_path = f"{project_id}/{str(upload_task.id)}/{file_path}"
         s3.upload_object(organization_id, upload_path, file_path)
