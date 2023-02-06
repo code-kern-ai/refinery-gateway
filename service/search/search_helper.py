@@ -84,7 +84,10 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
                 and filter_value != 0
                 and attribute_item.data_type != DataTypes.BOOLEAN.value
             ):
-                return ""
+                if operator == SearchOperators.EQUAL:
+                    return search_column + " is null"
+                else:
+                    return ""
         else:
             filter_value = filter_values[0]
 
