@@ -216,8 +216,11 @@ def build_order_by_table_select(
         column = __lookup_order_by_column[order_by].value
         col_text = ""
         alias = ""
-        if column == SearchColumn.CONFIDENCE.value:
-            column = f"CASE WHEN source_type IN ('{LabelSource.WEAK_SUPERVISION.value}', '{LabelSource.MODEL_CALLBACK.value}') THEN confidence ELSE null END"
+        if order_by == SearchOrderBy.MODEL_CALLBACK_CONFIDENCE:
+            column = f"CASE WHEN source_type = '{LabelSource.MODEL_CALLBACK.value}' THEN confidence ELSE null END"
+            alias = "min_confidence" if direction == "ASC" else "max_confidence"
+        elif order_by == SearchOrderBy.WEAK_SUPERVISION_CONFIDENCE:
+            column = f"CASE WHEN source_type = '{LabelSource.WEAK_SUPERVISION.value}' THEN confidence ELSE null END"
             alias = "min_confidence" if direction == "ASC" else "max_confidence"
         if direction == "ASC":
             if alias == "":
