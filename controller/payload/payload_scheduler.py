@@ -52,6 +52,10 @@ from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+import time
+import uuid
+
+__containers_running = {}
 
 # lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
@@ -255,7 +259,7 @@ def create_payload(
                 )
 
             payload_item.state = enums.PayloadState.FINISHED.value
-            general.commit()
+            set_payload_progress(project_id, payload_item, 1)
             create_notification(
                 enums.NotificationType.INFORMATION_SOURCE_COMPLETED,
                 user_id,
@@ -378,28 +382,86 @@ def run_container(
             project_item.tokenizer_blank,
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
-    container = client.containers.run(
+    information_source_payload.progress = 0.0
+    general.commit()
+    container_name = str(uuid.uuid4())
+    container = client.containers.create(
         image=image,
         command=command,
-        remove=True,
+        name=container_name,
         detach=True,
+        # auto_remove=True,
         network=exec_env_network,
         volumes=volumes,
     )
-
+    set_payload_progress(project_id, information_source_payload, 0.05)
+    __containers_running[container_name] = True
+    daemon.run(
+        read_container_logs_thread,
+        project_id,
+        container_name,
+        information_source_payload,
+        container,
+    )
+    container.start()
+    # final log preparation
     information_source_payload.logs = [
         line.decode("utf-8").strip("\n")
         for line in container.logs(
             stream=True, stdout=True, stderr=True, timestamps=True
         )
+        if "progress" not in line.decode("utf-8")
     ]
+    del __containers_running[container_name]
 
     information_source_payload.finished_at = datetime.now()
-    general.commit()
+    set_payload_progress(project_id, information_source_payload, 0.9)
 
     s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
+
+
+def set_payload_progress(
+    project_id: str,
+    information_source_payload: InformationSourcePayload,
+    progress: float,
+    factor: float = 1.0,
+) -> None:
+    information_source_payload.progress = round(progress * factor, 4)
+    general.commit()
+
+    notification.send_organization_update(
+        project_id,
+        f"payload_progress:{information_source_payload.source_id}:{information_source_payload.id}:{str(information_source_payload.progress)}",
+    )
+
+
+def read_container_logs_thread(
+    project_id: str,
+    name: str,
+    information_source_payload: InformationSourcePayload,
+    docker_container: Any,
+):
+    previous_progress = -1
+    while name in __containers_running:
+        current_logs = [
+            line.decode("utf-8").strip("\n")
+            for line in docker_container.logs(
+                stream=True, stdout=True, stderr=True, timestamps=True, tail=5
+            )
+            if "progress" in line.decode("utf-8")
+        ]
+        if len(current_logs) == 0:
+            continue
+        last_entry = float(current_logs[-1].split("progress: ")[1].strip())
+        if previous_progress == last_entry:
+            continue
+        previous_progress = last_entry
+        set_payload_progress(
+            project_id, information_source_payload, last_entry, factor=0.8
+        )
+        time.sleep(1)
 
 
 def get_inference_dir() -> str:
