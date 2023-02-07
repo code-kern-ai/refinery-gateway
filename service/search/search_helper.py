@@ -85,7 +85,13 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
                 and attribute_item.data_type != DataTypes.BOOLEAN.value
             ):
                 if operator == SearchOperators.EQUAL:
-                    return search_column + " IS NULL"
+                    if attribute_item.data_type in [
+                        DataTypes.INTEGER.value,
+                        DataTypes.FLOAT.value,
+                        DataTypes.UNKNOWN.value,
+                    ]:
+                        return f"{search_column} IS NULL"
+                    return f"({search_column} IS NULL OR {search_column} IN ('',' '))"
                 else:
                     return ""
         else:
