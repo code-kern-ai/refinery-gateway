@@ -10,6 +10,7 @@ from graphql_api.types import (
     ProjectSize,
     Project,
     UserSession,
+    GatesIntegrationData,
 )
 from controller.auth import manager as auth
 from controller.project import manager
@@ -88,8 +89,8 @@ class ProjectQuery(graphene.ObjectType):
         huddle_type=graphene.String(required=True),
     )
 
-    is_gates_ready = graphene.Field(
-        graphene.Boolean,
+    get_gates_integration_data = graphene.Field(
+        GatesIntegrationData,
         project_id=graphene.ID(required=True),
     )
 
@@ -211,7 +212,9 @@ class ProjectQuery(graphene.ObjectType):
             project_id, user_id, huddle_id, huddle_type
         )
 
-    def resolve_is_gates_ready(self, info, project_id: str) -> bool:
+    def resolve_get_gates_integration_data(
+        self, info, project_id: str
+    ) -> GatesIntegrationData:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.is_gates_ready(project_id)
+        return manager.get_gates_integration_data(project_id)

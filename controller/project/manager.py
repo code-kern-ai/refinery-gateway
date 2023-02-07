@@ -2,7 +2,9 @@ import json
 import os
 import shutil
 import time
+import threading
 from typing import Dict, List, Optional
+from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
@@ -18,7 +20,7 @@ from submodules.model.business_objects import (
     information_source,
     general,
 )
-from graphql_api.types import HuddleData, ProjectSize
+from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon
 from controller.misc import config_service
 from controller.tokenization.tokenization_service import request_tokenize_project
@@ -236,22 +238,38 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         raise ValueError("invalid huddle type")
 
 
-def is_gates_ready(project_id: str) -> bool:
+# GATES
+projects_updating = set()
+projects_updating_lock = threading.Lock()
+
+
+def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
 
     project_item = project.get(project_id)
     if not project_item:
-        return False
+        raise GraphQLError("Project not found")
 
-    if not __tokenizer_pickle_exists(project_item.tokenizer):
-        return False
+    if project_id in projects_updating:
+        return GatesIntegrationData(status=enums.GatesIntegrationStatus.UPDATING.value)
 
-    if __get_missing_embedding_pickles(project_id):
-        return False
+    missing_tokenizer = not __tokenizer_pickle_exists(project_item.tokenizer)
+    missing_embeddings = __get_missing_embedding_pickles(project_id)
+    missing_information_sources = __get_missing_information_source_pickles(project_id)
 
-    if __get_missing_information_source_pickles(project_id):
-        return False
+    status = enums.GatesIntegrationStatus.READY.value
+    if (
+        missing_tokenizer
+        or len(missing_embeddings) > 0
+        or len(missing_information_sources) > 0
+    ):
+        status = enums.GatesIntegrationStatus.NOT_READY.value
 
-    return True
+    return GatesIntegrationData(
+        status=status,
+        missing_tokenizer=missing_tokenizer,
+        missing_embeddings=missing_embeddings,
+        missing_information_sources=missing_information_sources,
+    )
 
 
 def __tokenizer_pickle_exists(config_string: str) -> bool:
@@ -298,6 +316,12 @@ def update_project_for_gates(project_id: str, user_id: str) -> None:
     if not project_item:
         return
 
+    global projects_updating
+    with projects_updating_lock:
+        if project_id in projects_updating:
+            return
+        projects_updating.add(project_id)
+
     if not __tokenizer_pickle_exists(project_item.tokenizer):
         daemon.run(request_save_tokenizer, project_item.tokenizer)
 
@@ -305,6 +329,8 @@ def update_project_for_gates(project_id: str, user_id: str) -> None:
     for embedding_id in missing_emb_pickles:
         __create_embedding_pickle(project_id, embedding_id, user_id)
 
+    # removes the project from the set of projects that are currently updating
+    # when the function returns
     daemon.run(
         __wait_and_create_information_source_pickles,
         project_id,
@@ -340,22 +366,33 @@ def __wait_and_create_information_source_pickles(
     project_id: str,
     user_id: str,
 ) -> None:
+    # wait to make sure db entries for embeddings are created
+    time.sleep(5)
+    __wait_for_tokenizer(project_id)
     __wait_for_embeddings(project_id)
 
     missing_is_ids = __get_missing_information_source_pickles(project_id)
     for is_id in missing_is_ids:
         payload_manager.create_payload(project_id, is_id, user_id)
 
+    global projects_updating
+    with projects_updating_lock:
+        if project_id in projects_updating:
+            projects_updating.remove(project_id)
+
+
+def __wait_for_tokenizer(project_id: str) -> None:
+    while not __tokenizer_pickle_exists(project.get(project_id).tokenizer):
+        time.sleep(1)
+
 
 def __wait_for_embeddings(project_id: str) -> None:
-    # wait until db entries for embeddings are created
     session_token = general.get_ctx_token()
-    time.sleep(10)
 
     embedding_items = embedding.get_project_embeddings(project_id)
     embedding_ids = [str(embedding_item.id) for embedding_item in embedding_items]
     while embedding_ids:
-        time.sleep(5)
+        time.sleep(1)
         session_token = general.remove_and_refresh_session(
             session_token, request_new=True
         )
@@ -369,4 +406,5 @@ def __wait_for_embeddings(project_id: str) -> None:
                 enums.EmbeddingState.FAILED.value,
             ]:
                 embedding_ids.remove(emb_id)
+
     general.remove_and_refresh_session(session_token)

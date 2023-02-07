@@ -777,3 +777,10 @@ class LabelingFunctionSampleRecords(graphene.ObjectType):
     records = graphene.List(LabelingFunctionSampleRecordWrapper)
     container_logs = graphene.List(graphene.String)
     code_has_errors = graphene.Boolean()
+
+
+class GatesIntegrationData(graphene.ObjectType):
+    status = graphene.String()
+    missing_tokenizer = graphene.Boolean()
+    missing_embeddings = graphene.List(graphene.String)
+    missing_information_sources = graphene.List(graphene.String)
