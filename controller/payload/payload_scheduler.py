@@ -360,8 +360,9 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
-        if config_service.get_config_value("is_managed"):
-            volumes = [f"{os.path.join(get_inference_dir(), project_id)}:/inference"]
+        inference_dir = get_inference_dir()
+        if inference_dir:
+            volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
