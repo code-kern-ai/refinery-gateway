@@ -143,7 +143,6 @@ def create_payload(
             information_source_item.type
             == enums.InformationSourceType.ACTIVE_LEARNING.value
         ):
-
             # for active learning, we can not evaluate on all records that are used for training
             # as otherwise, we would retrieve a false understanding of the accuracy!
             add_information_source_statistics_exclusion(
@@ -207,7 +206,6 @@ def create_payload(
         add_file_name: str,
         input_data: Dict[str, Any],
     ) -> None:
-
         if (
             information_source_item.type
             == enums.InformationSourceType.LABELING_FUNCTION.value
@@ -848,7 +846,6 @@ def prepare_sample_records_doc_bin(
 def run_labeling_function_exec_env(
     project_id: str, information_source_id: str, prefixed_doc_bin: str
 ) -> Tuple[List[str], List[List[str]], bool]:
-
     information_source_item = information_source.get(project_id, information_source_id)
 
     prefixed_function_name = f"{information_source_id}_fn"
