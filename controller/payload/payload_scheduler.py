@@ -8,7 +8,10 @@ import json
 import docker
 import timeit
 import traceback
-from datetime import datetime
+
+# from datetime import datetime
+from dateutil import parser
+import datetime
 
 from graphql.error.base import GraphQLError
 from submodules.model import enums, events
@@ -52,6 +55,10 @@ from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+import time
+import uuid
+
+__containers_running = {}
 
 # lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
@@ -238,7 +245,7 @@ def create_payload(
             if has_error:
                 payload_item = information_source.get_payload(project_id, payload_id)
                 tmp_log_store = payload_item.logs
-                berlin_now = datetime.now(__tz)
+                berlin_now = datetime.datetime.now(__tz)
                 tmp_log_store.append(
                     " ".join(
                         [
@@ -255,7 +262,7 @@ def create_payload(
                 )
 
             payload_item.state = enums.PayloadState.FINISHED.value
-            general.commit()
+            set_payload_progress(project_id, payload_item, 1)
             create_notification(
                 enums.NotificationType.INFORMATION_SOURCE_COMPLETED,
                 user_id,
@@ -378,28 +385,127 @@ def run_container(
             project_item.tokenizer_blank,
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
-    container = client.containers.run(
+    information_source_payload.progress = 0.0
+    general.commit()
+    container_name = str(uuid.uuid4())
+    container = client.containers.create(
         image=image,
         command=command,
-        remove=True,
+        name=container_name,
         detach=True,
+        auto_remove=True,
         network=exec_env_network,
         volumes=volumes,
     )
-
+    set_payload_progress(project_id, information_source_payload, 0.05)
+    __containers_running[container_name] = True
+    daemon.run(
+        read_container_logs_thread,
+        project_id,
+        container_name,
+        str(information_source_payload.id),
+        container,
+    )
+    container.start()
+    # final log preparation
     information_source_payload.logs = [
         line.decode("utf-8").strip("\n")
         for line in container.logs(
             stream=True, stdout=True, stderr=True, timestamps=True
         )
+        if "progress" not in line.decode("utf-8")
     ]
+    del __containers_running[container_name]
 
-    information_source_payload.finished_at = datetime.now()
-    general.commit()
+    information_source_payload.finished_at = datetime.datetime.now()
+    set_payload_progress(project_id, information_source_payload, 0.9)
 
     s3.delete_object(org_id, project_id + "/" + prefixed_input_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_knowledge_base)
+
+
+def set_payload_progress(
+    project_id: str,
+    information_source_payload: InformationSourcePayload,
+    progress: float,
+    factor: float = 1.0,
+) -> None:
+    information_source_payload.progress = round(progress * factor, 4)
+    general.commit()
+
+    notification.send_organization_update(
+        project_id,
+        f"payload_progress:{information_source_payload.source_id}:{information_source_payload.id}:{str(information_source_payload.progress)}",
+    )
+
+
+def extend_logs(
+    project_id: str,
+    information_source_payload: InformationSourcePayload,
+    logs: List[str],
+) -> None:
+    if not logs or len(logs) == 0:
+        return
+
+    if not information_source_payload.logs:
+        information_source_payload.logs = logs
+    else:
+        all_logs = [l for l in information_source_payload.logs]
+        all_logs += logs
+        information_source_payload.logs = all_logs
+    general.commit()
+    # currently dummy since frontend doesn't have a log change yet
+    notification.send_organization_update(
+        project_id,
+        f"payload_created:{information_source_payload.source_id}:{information_source_payload.id}",
+    )
+
+
+def read_container_logs_thread(
+    project_id: str,
+    name: str,
+    payload_id: str,
+    docker_container: Any,
+):
+    # needs to be refetched since it is not thread safe
+    information_source_payload = information_source.get_payload(project_id, payload_id)
+    previous_progress = -1
+    last_timestamp = None
+    while name in __containers_running:
+        time.sleep(1)
+        if not name in __containers_running:
+            break
+        log_lines = docker_container.logs(
+            stdout=True,
+            stderr=True,
+            timestamps=True,
+            since=last_timestamp,
+        )
+        current_logs = [
+            l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
+        ]
+
+        if len(current_logs) == 0:
+            continue
+        last_entry = current_logs[-1]
+        last_timestamp_str = last_entry.split(" ")[0]
+        last_timestamp = parser.parse(last_timestamp_str).replace(
+            tzinfo=None
+        ) + datetime.timedelta(seconds=1)
+        non_progress_logs = [l for l in current_logs if "progress" not in l]
+        progress_logs = [l for l in current_logs if "progress" in l]
+        if len(non_progress_logs) > 0:
+            extend_logs(project_id, information_source_payload, non_progress_logs)
+        if len(progress_logs) == 0:
+            continue
+        last_entry = float(progress_logs[-1].split("progress: ")[1].strip())
+        if previous_progress == last_entry:
+            continue
+        previous_progress = last_entry
+        set_payload_progress(
+            project_id, information_source_payload, last_entry, factor=0.8
+        )
 
 
 def get_inference_dir() -> str:
@@ -420,7 +526,7 @@ def update_records(
             )
         )
     except Exception:
-        berlin_now = datetime.now(__tz)
+        berlin_now = datetime.datetime.now(__tz)
         tmp_log_store.append(
             " ".join(
                 [
@@ -434,7 +540,7 @@ def update_records(
         general.commit()
         return True
 
-    berlin_now = datetime.now(__tz)
+    berlin_now = datetime.datetime.now(__tz)
     tmp_log_store.append(
         berlin_now.strftime("%Y-%m-%dT%H:%M:%S") + " Writing results to the database."
     )
@@ -458,7 +564,7 @@ def update_records(
             tmp_log_store,
             output_data,
         )
-    berlin_now = datetime.now(__tz)
+    berlin_now = datetime.datetime.now(__tz)
     if has_errors:
         tmp_log_store.append(
             berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
@@ -607,21 +713,21 @@ def __check_extraction_errors(
     confidence, label_name, token_idx_start, token_idx_end = lf_result
     max_token = max_token_num[record_id]
     if token_idx_start > max_token:
-        berlin_now = datetime.now(__tz)
+        berlin_now = datetime.datetime.now(__tz)
         tmp_log_store.append(
             berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
             + f" token start {{{token_idx_start}}} exceeds record {{{record_id}}} max token {{{max_token}}}"
         )
         has_error = True
     if token_idx_end > max_token:
-        berlin_now = datetime.now(__tz)
+        berlin_now = datetime.datetime.now(__tz)
         tmp_log_store.append(
             berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
             + f" token end {{{token_idx_end}}} exceeds record {{{record_id}}} max token {{{max_token}}}"
         )
         has_error = True
     if token_idx_end - token_idx_start < 1:
-        berlin_now = datetime.now(__tz)
+        berlin_now = datetime.datetime.now(__tz)
         tmp_log_store.append(
             berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
             + f" token span without length detected. start {{{token_idx_start}}}, end {{{token_idx_end}}} -> length {token_idx_start - token_idx_end} record {{{record_id}}}"
@@ -641,7 +747,7 @@ def __check_label_errors(
 ) -> bool:
     if label_name not in labels_valid:
         if label_name not in labels_in_task:
-            berlin_now = datetime.now(__tz)
+            berlin_now = datetime.datetime.now(__tz)
             tmp_log_store.append(
                 berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
                 + f" Provided label {{{label_name}}} couldn't be found for this task"
