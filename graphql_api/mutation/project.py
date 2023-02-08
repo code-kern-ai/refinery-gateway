@@ -139,6 +139,20 @@ class UpdateProjectTokenizer(graphene.Mutation):
         return UpdateProjectTokenizer(ok=True)
 
 
+class UpdateProjectForGates(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_by_info(info).id
+        manager.update_project_for_gates(project_id, user_id)
+        return UpdateProjectForGates(ok=True)
+
+
 class ProjectMutation(graphene.ObjectType):
     create_project = CreateProject.Field()
     create_sample_project = CreateSampleProject.Field()
@@ -146,3 +160,4 @@ class ProjectMutation(graphene.ObjectType):
     update_project_status = UpdateProjectStatus.Field()
     update_project_name_and_description = UpdateProjectNameAndDescription.Field()
     update_project_tokenizer = UpdateProjectTokenizer.Field()
+    update_project_for_gates = UpdateProjectForGates.Field()

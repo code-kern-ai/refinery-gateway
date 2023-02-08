@@ -58,3 +58,13 @@ def request_reupload_docbins(
         "project_id": str(project_id),
     }
     service_requests.post_call_or_raise(url, data)
+
+
+def request_save_tokenizer(
+    config_string: str,
+) -> None:
+    url = f"{BASE_URI}/save_tokenizer"
+    data = {
+        "config_string": config_string,
+    }
+    service_requests.post_call_or_raise(url, data)

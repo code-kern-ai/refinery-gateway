@@ -47,7 +47,6 @@ from submodules.model.models import (
     InformationSourcePayload,
     User,
 )
-from controller.auth.manager import get_user_by_info
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
@@ -55,6 +54,7 @@ from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
+from controller.user import manager as user_manager
 import time
 import uuid
 
@@ -70,7 +70,6 @@ exec_env_network = os.getenv("LF_NETWORK")
 
 
 def create_payload(
-    info,
     project_id: str,
     information_source_id: str,
     user_id: str,
@@ -320,7 +319,7 @@ def create_payload(
             ),
         )
 
-    user = get_user_by_info(info)
+    user = user_manager.get_user(user_id)
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
@@ -368,8 +367,9 @@ def run_container(
             s3.create_access_link(org_id, project_id + "/" + add_file_name),
             s3.create_file_upload_link(org_id, project_id + "/" + payload_id),
         ]
-        if config_service.get_config_value("is_managed"):
-            volumes = [f"{os.path.join(get_inference_dir(), project_id)}:/inference"]
+        inference_dir = get_inference_dir()
+        if inference_dir:
+            volumes = [f"{os.path.join(inference_dir, project_id)}:/inference"]
     else:
         s3.put_object(
             org_id,
