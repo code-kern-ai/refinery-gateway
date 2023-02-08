@@ -21,7 +21,7 @@ from submodules.model.business_objects import (
     general,
 )
 from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
-from util import daemon
+from util import daemon, notification
 from controller.misc import config_service
 from controller.tokenization.tokenization_service import request_tokenize_project
 from submodules.model.business_objects import util as db_util
@@ -322,6 +322,8 @@ def update_project_for_gates(project_id: str, user_id: str) -> None:
             return
         projects_updating.add(project_id)
 
+    notification.send_organization_update(project_id, "gates_integration:started")
+
     if not __tokenizer_pickle_exists(project_item.tokenizer):
         daemon.run(request_save_tokenizer, project_item.tokenizer)
 
@@ -379,6 +381,8 @@ def __wait_and_create_information_source_pickles(
     with projects_updating_lock:
         if project_id in projects_updating:
             projects_updating.remove(project_id)
+
+    notification.send_organization_update(project_id, "gates_integration:finished")
 
 
 def __wait_for_tokenizer(project_id: str) -> None:
