@@ -33,6 +33,7 @@ from controller.embedding.connector import (
     request_creating_token_level_embedding,
     request_deleting_embedding,
 )
+from controller.embedding.util import has_encoder_running
 from controller.payload import manager as payload_manager
 
 
@@ -328,8 +329,9 @@ def update_project_for_gates(project_id: str, user_id: str) -> None:
         daemon.run(request_save_tokenizer, project_item.tokenizer)
 
     missing_emb_pickles = __get_missing_embedding_pickles(project_id)
-    for embedding_id in missing_emb_pickles:
-        __create_embedding_pickle(project_id, embedding_id, user_id)
+    daemon.run(
+        __create_missing_embedding_pickles, project_id, user_id, missing_emb_pickles
+    )
 
     # removes the project from the set of projects that are currently updating
     # when the function returns
@@ -338,6 +340,16 @@ def update_project_for_gates(project_id: str, user_id: str) -> None:
         project_id,
         user_id,
     )
+
+
+def __create_missing_embedding_pickles(
+    project_id: str, user_id: str, missing_embedding_ids: List[str]
+):
+    for embedding_id in missing_embedding_ids:
+        __create_embedding_pickle(project_id, embedding_id, user_id)
+        time.sleep(10)
+        while has_encoder_running(project_id):
+            time.sleep(10)
 
 
 def __create_embedding_pickle(project_id: str, embedding_id: str, user_id: str):
