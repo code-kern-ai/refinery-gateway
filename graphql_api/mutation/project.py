@@ -5,7 +5,6 @@ from controller.tokenization import tokenization_service
 import graphene
 
 from controller.auth import manager as auth
-from graphql_api import types
 from graphql_api.types import Project
 from submodules.model import enums, events
 from controller.project import manager
@@ -19,7 +18,6 @@ from controller.transfer.manager import check_and_add_running_id
 from controller.auth import manager as auth_manager
 from controller.project import manager as project_manager
 from controller.upload_task import manager as upload_task_manager
-from submodules.model import enums
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -222,6 +220,20 @@ class UpdateProjectTokenizer(graphene.Mutation):
         return UpdateProjectTokenizer(ok=True)
 
 
+class UpdateProjectForGates(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, project_id: str):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        user_id = auth.get_user_by_info(info).id
+        manager.update_project_for_gates(project_id, user_id)
+        return UpdateProjectForGates(ok=True)
+
+
 class ProjectMutation(graphene.ObjectType):
     create_project = CreateProject.Field()
     create_project_by_workflow_store = CreateProjectByWorkflowStore.Field()
@@ -230,3 +242,4 @@ class ProjectMutation(graphene.ObjectType):
     update_project_status = UpdateProjectStatus.Field()
     update_project_name_and_description = UpdateProjectNameAndDescription.Field()
     update_project_tokenizer = UpdateProjectTokenizer.Field()
+    update_project_for_gates = UpdateProjectForGates.Field()

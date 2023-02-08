@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from controller.payload import payload_scheduler
 from graphql_api.types import (
     LabelingFunctionSampleRecordWrapper,
@@ -13,7 +13,6 @@ def get_payload(project_id: str, payload_id: str) -> InformationSourcePayload:
 
 
 def create_payload(
-    info,
     project_id: str,
     information_source_id: str,
     user_id: str,
@@ -23,7 +22,7 @@ def create_payload(
     if information_source_item.type == enums.InformationSourceType.CROWD_LABELER:
         return None
     return payload_scheduler.create_payload(
-        info, project_id, information_source_id, user_id, asynchronous
+        project_id, information_source_id, user_id, asynchronous
     )
 
 

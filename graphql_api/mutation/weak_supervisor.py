@@ -126,7 +126,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         pl_manager.create_payload(
-            info, project_id, information_source_id, user.id, asynchronous=False
+            project_id, information_source_id, user.id, asynchronous=False
         )
         labeling_task_item = labeling_task.get(project_id, labeling_task_id)
         for information_source in labeling_task_item.information_sources:
