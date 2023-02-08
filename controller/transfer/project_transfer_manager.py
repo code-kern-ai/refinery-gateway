@@ -500,9 +500,10 @@ def import_file(
                     "id",
                 )
             ] = data_slice_object.id
-            link_manager.generate_data_slice_access_link(
-                project_id, import_user_id, data_slice_object.id, with_commit=False
-            )
+            if data_slice_object.slice_type == enums.SliceTypes.STATIC_DEFAULT.value:
+                link_manager.generate_data_slice_access_link(
+                    project_id, import_user_id, data_slice_object.id, with_commit=False
+                )
 
     for information_source_payload_item in data.get(
         "information_source_payloads_data",

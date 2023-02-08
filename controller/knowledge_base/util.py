@@ -1,4 +1,5 @@
 from submodules.model.business_objects import knowledge_base, knowledge_term
+import re
 
 
 def find_free_name(project_id: str, counter: int = 0) -> str:
@@ -23,7 +24,9 @@ def build_knowledge_base_from_project(project_id: str) -> str:
     for knowledge_base_item in knowledge_base.get_all_by_project_id(project_id):
         knowledge_bases_dict[resolve_name_as_variable(knowledge_base_item.name)] = []
 
-    for term, knowledge_base_item in knowledge_term.get_terms_with_base_names(project_id):
+    for term, knowledge_base_item in knowledge_term.get_terms_with_base_names(
+        project_id
+    ):
         knowledge_bases_dict[resolve_name_as_variable(knowledge_base_item)].append(
             term
         )  # use here knowledge base name in standard format (underscore and )
@@ -37,5 +40,7 @@ def build_knowledge_base_from_project(project_id: str) -> str:
     return knowledge_base_source
 
 
-def resolve_name_as_variable(name: str) -> str:
-    return name.lower().replace(" ", "_")
+def resolve_name_as_variable(name: str, prefix: str = "_") -> str:
+    name = name.lower().replace(" ", "_")
+    name = re.sub("[^\w]", "", name).strip()
+    return (prefix + name) if name[0].isdigit() else name
