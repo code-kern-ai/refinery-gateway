@@ -64,6 +64,8 @@ def get_upload_credentials_and_id(
 def import_records_from_file(project_id: str, task: UploadTask) -> None:
     import_file(project_id, task)
     check_and_add_running_id(project_id, str(task.user_id))
+    record_label_association.update_is_valid_manual_label_for_project(project_id)
+    general.commit()
 
 
 def import_records_from_json(
