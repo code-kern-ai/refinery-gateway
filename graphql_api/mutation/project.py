@@ -8,24 +8,7 @@ from submodules.model import enums, events
 from controller.project import manager
 from util import doc_ock, notification
 from submodules.model.business_objects import notification as notification_model
-
-
-from controller.transfer.record_transfer_manager import import_records_and_rlas
-from controller.transfer.manager import check_and_add_running_id
-from controller.auth import manager as auth_manager
-from controller.project import manager as project_manager
-from controller.upload_task import manager as upload_task_manager
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-__engine = None
-
-
-def get_workflow_db_engine():
-    global __engine
-    if __engine is None:
-        __engine = create_engine(os.getenv("WORKFLOW_POSTGRES"))
-    return __engine
+from submodules.model import enums
 
 
 class CreateProject(graphene.Mutation):
