@@ -1,7 +1,6 @@
 import logging
 import traceback
 
-import controller.transfer.labelstudio.import_preperator
 from controller import organization
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
@@ -10,12 +9,13 @@ from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import organization
 
-from controller.transfer import manager as transfer_manager, record_transfer_manager
+from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
+from controller.project import manager as project_manager
 
 from submodules.model import enums, exceptions
 from util.notification import create_notification
@@ -116,7 +116,12 @@ class PrepareFileImport(HTTPEndpoint):
         file_type = request_body["file_type"]
         file_import_options = request_body.get("file_import_options")
         task = upload_task_manager.create_upload_task(
-            user_id, project_id, file_name, file_type, file_import_options
+            user_id,
+            project_id,
+            file_name,
+            file_type,
+            file_import_options,
+            upload_type=enums.UploadTypes.DEFAULT.value,
         )
         org_id = organization.get_id_by_project_id(project_id)
         credentials_and_id = s3.get_upload_credentials_and_id(
@@ -132,10 +137,26 @@ class JSONImport(HTTPEndpoint):
         request_body = await request.json()
         user_id = request_body["user_id"]
         auth_manager.check_project_access_from_user_id(user_id, project_id)
+
+        records = request_body["records"]
+
+        project = project_manager.get_project(project_id)
+        num_project_records = len(project.records)
+        for attribute in project.attributes:
+            if attribute.is_primary_key:
+                for idx, record in enumerate(records):
+                    if attribute.name not in record:
+                        if attribute.name == "running_id":
+                            records[idx][attribute.name] = num_project_records + idx + 1
+                        else:
+                            raise exceptions.InvalidInputException(
+                                f"Non-running-id, primary key {attribute.name} missing in record"
+                            )
+
         transfer_manager.import_records_from_json(
             project_id,
             user_id,
-            request_body["records"],
+            records,
             request_body["request_uuid"],
             request_body["is_last"],
         )
@@ -212,9 +233,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             f"file_upload:{str(task.id)}:state:{task.state}",
             is_global_update,
         )
-    if (
-        task.file_type != "knowledge_base"
-    ):
+    if task.file_type != "knowledge_base":
         tokenization_service.request_tokenize_project(project_id, str(task.user_id))
 
 
