@@ -15,7 +15,8 @@ from submodules.model.business_objects import (
     organization,
     project,
     record,
-    record_label_association, )
+    record_label_association,
+)
 from controller.user import manager as user_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
@@ -63,7 +64,7 @@ def import_records_and_rlas(
             labels_data,
             tasks_data,
         ) = split_record_data_and_label_data(chunk)
-        
+
         if idx == 0:
             create_attributes_and_get_text_attributes(project_id, records_data)
             primary_keys = attribute.get_primary_keys(project_id)
@@ -82,12 +83,16 @@ def import_records_and_rlas(
 
         if upload_task is not None:
             progress = ((idx + 1) / chunks_count) * 100
-            upload_task_manager.update_task(project_id, upload_task.id, progress=progress)
+            upload_task_manager.update_task(
+                project_id, upload_task.id, progress=progress
+            )
 
 
 def download_file(project_id: str, upload_task: UploadTask) -> str:
     # TODO is copied from import_file and can be refactored because atm its duplicated code
-    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.PENDING.value)
+    upload_task_manager.update_task(
+        project_id, upload_task.id, state=enums.UploadStates.PENDING.value
+    )
     org_id = organization.get_id_by_project_id(project_id)
 
     file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
@@ -113,7 +118,9 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
     tmp_file_name = download_file(project_id, upload_task)
 
-    upload_task_manager.update_task(project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value)
+    upload_task_manager.update_task(
+        project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
+    )
     record_category = category.infer_category(upload_task.file_name)
 
     data = convert_to_record_dict(
@@ -236,6 +243,12 @@ def create_records_and_labels(
     labels_data: List[Dict[str, Any]],
     category: str,
 ):
+    df_check = pd.DataFrame(records_data)
+    for key in df_check.columns:
+        if df_check[key].dtype.name == "datetime64[ns]":
+            df_check[key] = df_check[key].astype(str)
+    records_data = df_check.to_dict("records")
+
     created_records = record.create_records(
         project_id=project_id, records_data=records_data, category=category
     )
@@ -290,6 +303,9 @@ def create_attributes_and_get_text_attributes(
     created_something = False
     df_check = pd.DataFrame(records_data)
     for key in df_check.columns:
+        if df_check[key].dtype.name == "datetime64[ns]":
+            df_check[key] = df_check[key].astype(str)
+
         if attribute.get_by_name(project_id, key) is None:
             relative_position = attribute.get_relative_position(project_id)
             if relative_position is None:
@@ -311,4 +327,3 @@ def create_attributes_and_get_text_attributes(
         notification.send_organization_update(project_id, f"attributes_updated")
 
     return text_attributes
-
