@@ -11,6 +11,7 @@ import os
 import logging
 import traceback
 from submodules.model.business_objects import export
+from util import category
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -98,7 +99,15 @@ def convert_to_record_dict(
         os.remove(file_name)
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
-    return df.to_dict(orient="records")
+    return check_and_convert_category_for_unknown(df)
+
+
+def check_and_convert_category_for_unknown(df: pd.DataFrame) -> Dict:
+    df_check = pd.DataFrame(df.to_dict(orient="records"))
+    for key in df_check.columns:
+        if category.infer_category_enum(df_check, key) == enums.DataTypes.UNKNOWN.value:
+            df_check[key] = df_check[key].astype(str)
+    return df_check.to_dict("records")
 
 
 def string_to_import_option_dict(
