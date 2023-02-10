@@ -10,6 +10,7 @@ from graphql_api.types import (
     ProjectSize,
     Project,
     UserSession,
+    GatesIntegrationData,
 )
 from controller.auth import manager as auth
 from controller.project import manager
@@ -86,6 +87,11 @@ class ProjectQuery(graphene.ObjectType):
         project_id=graphene.ID(required=True),
         huddle_id=graphene.ID(required=True),
         huddle_type=graphene.String(required=True),
+    )
+
+    get_gates_integration_data = graphene.Field(
+        GatesIntegrationData,
+        project_id=graphene.ID(required=True),
     )
 
     def resolve_project_by_project_id(self, info, project_id: str) -> Project:
@@ -205,3 +211,10 @@ class ProjectQuery(graphene.ObjectType):
         return manager.resolve_request_huddle_data(
             project_id, user_id, huddle_id, huddle_type
         )
+
+    def resolve_get_gates_integration_data(
+        self, info, project_id: str
+    ) -> GatesIntegrationData:
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        return manager.get_gates_integration_data(project_id)

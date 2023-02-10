@@ -1,4 +1,5 @@
 import logging
+from api.healthcheck import Healthcheck
 import graphene
 from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
@@ -30,6 +31,7 @@ routes = [
         ),
     ),
     Route("/notify/{path:path}", Notify),
+    Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}", ProjectDetails),
     Route(
         "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",

@@ -84,7 +84,16 @@ def build_search_condition(project_id: str, filter_element: Dict[str, str]) -> s
                 and filter_value != 0
                 and attribute_item.data_type != DataTypes.BOOLEAN.value
             ):
-                return ""
+                if operator == SearchOperators.EQUAL:
+                    if attribute_item.data_type in [
+                        DataTypes.INTEGER.value,
+                        DataTypes.FLOAT.value,
+                        DataTypes.UNKNOWN.value,
+                    ]:
+                        return f"{search_column} IS NULL"
+                    return f"({search_column} IS NULL OR {search_column} IN ('',' '))"
+                else:
+                    return ""
         else:
             filter_value = filter_values[0]
 
@@ -216,8 +225,11 @@ def build_order_by_table_select(
         column = __lookup_order_by_column[order_by].value
         col_text = ""
         alias = ""
-        if column == SearchColumn.CONFIDENCE.value:
-            column = f"CASE WHEN source_type IN ('{LabelSource.WEAK_SUPERVISION.value}', '{LabelSource.MODEL_CALLBACK.value}') THEN confidence ELSE null END"
+        if order_by == SearchOrderBy.MODEL_CALLBACK_CONFIDENCE:
+            column = f"CASE WHEN source_type = '{LabelSource.MODEL_CALLBACK.value}' THEN confidence ELSE null END"
+            alias = "min_confidence" if direction == "ASC" else "max_confidence"
+        elif order_by == SearchOrderBy.WEAK_SUPERVISION_CONFIDENCE:
+            column = f"CASE WHEN source_type = '{LabelSource.WEAK_SUPERVISION.value}' THEN confidence ELSE null END"
             alias = "min_confidence" if direction == "ASC" else "max_confidence"
         if direction == "ASC":
             if alias == "":

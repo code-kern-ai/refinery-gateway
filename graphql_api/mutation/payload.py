@@ -1,6 +1,5 @@
 import graphene
 from controller.auth import manager as auth
-from graphql_api import types
 from controller.auth.manager import get_user_by_info
 from controller.payload import manager
 from graphql_api.types import InformationSourcePayload
@@ -17,9 +16,7 @@ class CreatePayload(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        payload = manager.create_payload(
-            info, project_id, information_source_id, user.id
-        )
+        payload = manager.create_payload(project_id, information_source_id, user.id)
         return CreatePayload(payload)
 
 
