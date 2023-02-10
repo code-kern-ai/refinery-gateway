@@ -7,29 +7,10 @@ from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 from submodules.model import exceptions
 
-import os
 from controller.tokenization import tokenization_service
-from submodules.model import enums, events
+from submodules.model import events
 from submodules.s3.controller import bucket_exists, create_bucket
-from util import doc_ock, notification
-from controller.transfer.record_transfer_manager import import_records_and_rlas
-from controller.transfer.manager import check_and_add_running_id
-from controller.auth import manager as auth_manager
-from controller.project import manager as project_manager
-from controller.upload_task import manager as upload_task_manager
-from submodules.model import enums
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-__engine = None
-
-
-def get_workflow_db_engine():
-    global __engine
-    if __engine is None:
-        __engine = create_engine(os.getenv("WORKFLOW_POSTGRES"))
-    return __engine
-
+from util import doc_ock, notification, adapter
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -67,13 +48,14 @@ class ProjectDetails(HTTPEndpoint):
 
 
 class ProjectCreationFromWorkflow(HTTPEndpoint):
-    async def post(self, request) -> JSONResponse:
-        user_id = request.query_params["user_id"]
-        request_body = await request.json()
-        name = request_body["name"]
-        description = request_body["description"]
-        tokenizer = request_body["tokenizer"]
-        store_id = request_body["store_id"]
+    async def post(self, request_body) -> JSONResponse:
+        (
+            user_id,
+            name,
+            description,
+            tokenizer,
+            store_id,
+        ) = await adapter.unpack_request_body(request_body)
 
         user = auth_manager.get_user_by_id(user_id)
         organization = auth_manager.get_organization_by_user_id(user.id)
@@ -85,33 +67,13 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             organization.id, name, description, user.id
         )
         project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
+        data = adapter.get_records_from_store(store_id)
+        adapter.check(data, project.id, user.id)
 
-        Session = sessionmaker(get_workflow_db_engine())
-        with Session() as session:
-            results = session.execute(
-                f"SELECT record FROM store_entry WHERE store_id = '{store_id}'"
-            ).all()
-
-        data = [result for result, in results]
-
-        upload_task = upload_task_manager.create_upload_task(
-            user_id=user.id,
-            project_id=project.id,
-            file_name=name,
-            file_type="json",
-            file_import_options="",
-            upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
+        project_manager.add_workflow_store_data_to_project(
+            user_id=user.id, project_id=project.id, file_name=name, data=data
         )
-        import_records_and_rlas(
-            project.id,
-            user.id,
-            data,
-            upload_task,
-            enums.RecordCategory.SCALE.value,
-        )
-        check_and_add_running_id(project.id, user.id)
 
-        upload_task_manager.update_upload_task_to_finished(upload_task)
         tokenization_service.request_tokenize_project(str(project.id), str(user.id))
 
         notification.send_organization_update(
