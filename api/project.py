@@ -67,8 +67,11 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             organization.id, name, description, user.id
         )
         project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
+        data = adapter.get_records_from_store(store_id)
+        adapter.check(data, project.id, user.id)
+
         project_manager.add_workflow_store_data_to_project(
-            store_id=store_id, user_id=user.id, project_id=project.id, file_name=name
+            user_id=user.id, project_id=project.id, file_name=name, data=data
         )
 
         tokenization_service.request_tokenize_project(str(project.id), str(user.id))

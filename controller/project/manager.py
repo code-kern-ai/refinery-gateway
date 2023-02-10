@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 import threading
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
@@ -248,11 +248,8 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
 
 
 def add_workflow_store_data_to_project(
-    store_id: str, project_id: str, user_id: str, file_name: str
+    project_id: str, user_id: str, file_name: str, data: List[Dict[str, Any]]
 ):
-
-    data = adapter.get_records_from_store(store_id)
-
     upload_task = upload_task_manager.create_upload_task(
         user_id=user_id,
         project_id=project_id,

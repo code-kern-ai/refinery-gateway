@@ -2,7 +2,9 @@ import os
 from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import pandas as pd
 
+from controller.transfer.checks import run_checks, run_limit_checks
 
 __engine = None
 
@@ -33,3 +35,9 @@ def get_records_from_store(store_id: str) -> List[Dict[str, Any]]:
 
     record_dict_list = [result for result, in record_entity_list]
     return record_dict_list
+
+
+def check(data, project_id, user_id):
+    df = pd.DataFrame(data)
+    run_checks(df, project_id, user_id)
+    run_limit_checks(df, project_id, user_id)
