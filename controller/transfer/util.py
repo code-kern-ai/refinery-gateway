@@ -102,8 +102,7 @@ def convert_to_record_dict(
     return check_and_convert_category_for_unknown(df)
 
 
-def check_and_convert_category_for_unknown(df: pd.DataFrame) -> Dict:
-    df_check = pd.DataFrame(df.to_dict(orient="records"))
+def check_and_convert_category_for_unknown(df_check: pd.DataFrame) -> Dict:
     for key in df_check.columns:
         if category.infer_category_enum(df_check, key) == enums.DataTypes.UNKNOWN.value:
             df_check[key] = df_check[key].astype(str)
