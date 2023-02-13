@@ -116,7 +116,7 @@ def check_and_convert_category_for_unknown(
             NotificationType.UNKNOWN_DATATYPE.value,
             user_id,
             project_id,
-            ",".join(changed_keys),
+            ", ".join(changed_keys),
         )
 
 
