@@ -93,7 +93,7 @@ def check_and_update_null_labels(project_id: str, user_id: str) -> None:
             label_reference_error = labeling_task_label_manager.create_label(
                 project_id, DUMMY_LABEL_NAME, labeling_task_import_issues.id, "red"
             )
-        rla.update_null_labels(project_id, label_reference_error.id)
+        rla.update_null_labels(project_id, str(label_reference_error.id))
         notification.create_notification(
             enums.NotificationType.IMPORT_ISSUES_WARNING.value, user_id, project_id
         )
