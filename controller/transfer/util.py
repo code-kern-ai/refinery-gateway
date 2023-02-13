@@ -5,12 +5,13 @@ from submodules.model import enums
 from .checks import check_argument_allowed, run_checks, run_limit_checks
 from submodules.model.models import UploadTask, Attribute
 import pandas as pd
-from util.notification import create_notification
 from submodules.model.enums import NotificationType
 import os
 import logging
 import traceback
 from submodules.model.business_objects import export
+from util import category
+from util import notification
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -46,7 +47,7 @@ def convert_to_record_dict(
     project_id: str,
 ) -> List:
     if not file_type:
-        create_notification(
+        notification.create_notification(
             NotificationType.FILE_TYPE_NOT_GIVEN,
             user_id,
             project_id,
@@ -74,7 +75,7 @@ def convert_to_record_dict(
         elif file_type == "json":
             df = pd.read_json(file_name, **file_import_options)
         else:
-            create_notification(
+            notification.create_notification(
                 NotificationType.INVALID_FILE_TYPE,
                 user_id,
                 project_id,
@@ -85,7 +86,7 @@ def convert_to_record_dict(
         df.fillna(" ", inplace=True)
     except Exception as e:
         logger.error(traceback.format_exc())
-        create_notification(
+        notification.create_notification(
             NotificationType.UPLOAD_CONVERSION_FAILED,
             user_id,
             project_id,
@@ -98,7 +99,25 @@ def convert_to_record_dict(
         os.remove(file_name)
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
-    return df.to_dict(orient="records")
+    check_and_convert_category_for_unknown(df, project_id, user_id)
+    return df.to_dict("records")
+
+
+def check_and_convert_category_for_unknown(
+    df_check: pd.DataFrame, project_id: str, user_id: str
+) -> None:
+    changed_keys = []
+    for key in df_check.columns:
+        if category.infer_category_enum(df_check, key) == enums.DataTypes.UNKNOWN.value:
+            changed_keys.append(key)
+            df_check[key] = df_check[key].astype(str)
+    if len(changed_keys) > 0:
+        notification.create_notification(
+            NotificationType.UNKNOWN_DATATYPE.value,
+            user_id,
+            project_id,
+            ", ".join(changed_keys),
+        )
 
 
 def string_to_import_option_dict(
