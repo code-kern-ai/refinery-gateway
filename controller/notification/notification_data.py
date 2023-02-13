@@ -334,7 +334,7 @@ __notification_data = {
         "docs": enums.DOCS.CREATING_PROJECTS.value,
     },
     enums.NotificationType.UNKNOWN_DATATYPE.value: {
-        "message_template": "Some attribute datatypes(@@arg@@) were converted to string since they are not nativly supported by refinery.",
+        "message_template": "Some attribute datatypes (@@arg@@) were converted to string since they are not natively supported by refinery.",
         "title": "Unknown categories",
         "level": enums.Notification.INFO.value,
         "page": enums.Pages.SETTINGS.value,
