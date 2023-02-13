@@ -83,7 +83,8 @@ def check_and_update_null_labels(project_id: str, user_id: str) -> None:
             labeling_task_import_issues = labeling_task_manager.create_labeling_task(
                 project_id,
                 DUMMY_TASK_NAME,
-                enums.LabelingTaskTarget.ON_WHOLE_RECORD.value,
+                enums.LabelingTaskType.CLASSIFICATION.value,
+                None,
             )
 
         label_reference_error = labeling_task_label_manager.get_label_by_name(

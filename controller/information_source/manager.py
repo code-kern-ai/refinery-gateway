@@ -110,8 +110,8 @@ def update_information_source(
     )
 
     if item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        slice_id = json.loads(item.source_code)["data_slice_id"]
-        if slice_id:
+        link_id = json.loads(item.source_code)["access_link_id"]
+        if link_id:
             if new_payload_needed and len(item.payloads) > 0:
                 delete_information_source_payload(
                     project_id, source_id, str(item.payloads[0].id)
