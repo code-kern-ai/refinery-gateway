@@ -99,14 +99,14 @@ def convert_to_record_dict(
         os.remove(file_name)
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
-    return check_and_convert_category_for_unknown(df)
+    check_and_convert_category_for_unknown(df)
+    return df.to_dict("records")
 
 
-def check_and_convert_category_for_unknown(df_check: pd.DataFrame) -> Dict:
+def check_and_convert_category_for_unknown(df_check: pd.DataFrame) -> None:
     for key in df_check.columns:
         if category.infer_category_enum(df_check, key) == enums.DataTypes.UNKNOWN.value:
             df_check[key] = df_check[key].astype(str)
-    return df_check.to_dict("records")
 
 
 def string_to_import_option_dict(

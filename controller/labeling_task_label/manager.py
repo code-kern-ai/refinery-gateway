@@ -41,6 +41,12 @@ def get_label(project_id: str, label_id: str) -> LabelingTaskLabel:
     return labeling_task_label.get(project_id, label_id)
 
 
+def get_label_by_name(
+    project_id: str, labeling_task_id: str, name: str
+) -> LabelingTaskLabel:
+    return labeling_task_label.get_by_name(project_id, labeling_task_id, name)
+
+
 def update_label_color(project_id: str, label_id: str, color: str) -> None:
     label = get_label(project_id, label_id)
     label.color = color
