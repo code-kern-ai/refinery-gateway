@@ -308,6 +308,8 @@ def __get_missing_information_source_pickles(project_id: str) -> List[str]:
             continue
         is_id = str(is_item.id)
         last_payload = information_source.get_last_payload(project_id, is_id)
+        if not last_payload:
+            continue
         if last_payload.state == enums.PayloadState.FINISHED.value:
             al_path = os.path.join(
                 "/inference", project_id, f"active-learner-{is_id}.pkl"
