@@ -140,9 +140,7 @@ def analyze_file(
     file_additional_info["file_info"]["annotations"] = user_id_counts
 
 
-def __add_annotation_target(
-    annotation: Dict[str, Any], tasks: Set[str]
-) -> None:
+def __add_annotation_target(annotation: Dict[str, Any], tasks: Set[str]) -> None:
     tasks |= __get_annotation_targets(annotation)
 
 
@@ -154,15 +152,15 @@ def __get_annotation_targets(annotation: Dict[str, Any]) -> Set[str]:
             for t in target
             if "from_name" in t and t["type"] == "choices"
         }
-    return {}
+    return set()
 
 
-def __check_to_names_without_attribute_equivalent(
-    record: Dict[str, Any]
-) -> bool:
+def __check_to_names_without_attribute_equivalent(record: Dict[str, Any]) -> bool:
     for annotation in record.get("annotations"):
         target = annotation.get("result")
-        to_names = [t["to_name"] for t in target if "to_name" in t and t["type"] == "choices"]
+        to_names = [
+            t["to_name"] for t in target if "to_name" in t and t["type"] == "choices"
+        ]
 
     return len(set(to_names) - set(record.get("data"))) != 0
 

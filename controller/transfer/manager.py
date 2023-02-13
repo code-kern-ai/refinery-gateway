@@ -39,6 +39,9 @@ import pandas as pd
 from datetime import datetime
 from util import notification
 from sqlalchemy.sql import text as sql_text
+from controller.labeling_task import manager as labeling_task_manager
+from controller.labeling_task_label import manager as labeling_task_label_manager
+from submodules.model.business_objects import record_label_association as rla
 
 from util.notification import create_notification
 
@@ -64,6 +67,37 @@ def get_upload_credentials_and_id(
 def import_records_from_file(project_id: str, task: UploadTask) -> None:
     import_file(project_id, task)
     check_and_add_running_id(project_id, str(task.user_id))
+    record_label_association.update_is_valid_manual_label_for_project(project_id)
+    general.commit()
+    check_and_update_null_labels(project_id, str(task.user_id))
+
+
+def check_and_update_null_labels(project_id: str, user_id: str) -> None:
+    DUMMY_TASK_NAME = "import_issues"
+    DUMMY_LABEL_NAME = "reference_error"
+    if rla.count_null_labels(project_id) != 0:
+        labeling_task_import_issues = labeling_task_manager.get_labeling_task_by_name(
+            project_id, DUMMY_TASK_NAME
+        )
+        if labeling_task_import_issues is None:
+            labeling_task_import_issues = labeling_task_manager.create_labeling_task(
+                project_id,
+                DUMMY_TASK_NAME,
+                enums.LabelingTaskType.CLASSIFICATION.value,
+                None,
+            )
+
+        label_reference_error = labeling_task_label_manager.get_label_by_name(
+            project_id, labeling_task_import_issues.id, DUMMY_LABEL_NAME
+        )
+        if label_reference_error is None:
+            label_reference_error = labeling_task_label_manager.create_label(
+                project_id, DUMMY_LABEL_NAME, labeling_task_import_issues.id, "red"
+            )
+        rla.update_null_labels(project_id, str(label_reference_error.id))
+        notification.create_notification(
+            enums.NotificationType.IMPORT_ISSUES_WARNING.value, user_id, project_id
+        )
 
 
 def import_records_from_json(
