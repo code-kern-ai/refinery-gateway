@@ -374,6 +374,12 @@ def __create_missing_embedding_pickles(
     missing_emb_pickles = __get_missing_embedding_pickles(project_id)
 
     for embedding_id in missing_emb_pickles:
+        embedding_item = embedding.get(project_id, embedding_id)
+        if embedding_item:
+            embedding_item.state = enums.EmbeddingState.FAILED.value
+    general.commit()
+
+    for embedding_id in missing_emb_pickles:
         session_token = general.remove_and_refresh_session(
             session_token, request_new=True
         )
