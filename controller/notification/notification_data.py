@@ -326,6 +326,20 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.CREATE_EMBEDDINGS.value,
     },
+    enums.NotificationType.IMPORT_ISSUES_WARNING.value: {
+        "message_template": "Some labels couldn't be imported. Check task import_issues for more information.",
+        "title": "Import issues",
+        "level": enums.Notification.WARNING.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.CREATING_PROJECTS.value,
+    },
+    enums.NotificationType.UNKNOWN_DATATYPE.value: {
+        "message_template": "Some attribute datatypes (@@arg@@) were converted to string since they are not natively supported by refinery.",
+        "title": "Unknown categories",
+        "level": enums.Notification.INFO.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.CREATING_PROJECTS.value,
+    },
 }
 
 

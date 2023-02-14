@@ -36,6 +36,11 @@ from controller.embedding.connector import (
 from controller.embedding.util import has_encoder_running
 from controller.payload.util import has_active_learner_running
 from controller.payload import manager as payload_manager
+from controller.transfer.record_transfer_manager import import_records_and_rlas
+from controller.transfer.manager import check_and_add_running_id
+from controller.upload_task import manager as upload_task_manager
+from submodules.model import enums
+from util import adapter
 
 
 def get_project(project_id: str) -> Project:
@@ -238,6 +243,32 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         return information_source.get_first_crowd_is_for_annotator(project_id, user_id)
     else:
         raise ValueError("invalid huddle type")
+
+
+# WORKFLOW
+
+
+def add_workflow_store_data_to_project(
+    project_id: str, user_id: str, file_name: str, data: List[Dict[str, Any]]
+):
+    upload_task = upload_task_manager.create_upload_task(
+        user_id=user_id,
+        project_id=project_id,
+        file_name=file_name,
+        file_type=enums.RecordImportFileTypes.JSON.value,
+        file_import_options="",
+        upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
+    )
+    import_records_and_rlas(
+        project_id,
+        user_id,
+        data,
+        upload_task,
+        enums.RecordCategory.SCALE.value,
+    )
+    check_and_add_running_id(project_id, user_id)
+
+    upload_task_manager.update_upload_task_to_finished(upload_task)
 
 
 # GATES

@@ -7,6 +7,10 @@ from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 from submodules.model import exceptions
 
+from controller.tokenization import tokenization_service
+from submodules.model import events
+from submodules.s3.controller import bucket_exists, create_bucket
+from util import doc_ock, notification, adapter
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,3 +45,43 @@ class ProjectDetails(HTTPEndpoint):
             "knowledge_base_ids": [str(list.id) for list in project.knowledge_bases],
         }
         return JSONResponse(result)
+
+
+class ProjectCreationFromWorkflow(HTTPEndpoint):
+    async def post(self, request_body) -> JSONResponse:
+        (
+            user_id,
+            name,
+            description,
+            tokenizer,
+            store_id,
+        ) = await adapter.unpack_request_body(request_body)
+
+        user = auth_manager.get_user_by_id(user_id)
+        organization = auth_manager.get_organization_by_user_id(user.id)
+
+        if not bucket_exists(str(organization.id)):
+            create_bucket(str(organization.id))
+
+        project = project_manager.create_project(
+            organization.id, name, description, user.id
+        )
+        project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
+        data = adapter.get_records_from_store(store_id)
+        adapter.check(data, project.id, user.id)
+
+        project_manager.add_workflow_store_data_to_project(
+            user_id=user.id, project_id=project.id, file_name=name, data=data
+        )
+
+        tokenization_service.request_tokenize_project(str(project.id), str(user.id))
+
+        notification.send_organization_update(
+            project.id, f"project_created:{str(project.id)}", True
+        )
+        doc_ock.post_event(
+            user,
+            events.CreateProject(Name=f"{name}-{project.id}", Description=description),
+        )
+
+        return JSONResponse({"project_id": str(project.id)})

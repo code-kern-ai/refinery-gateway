@@ -1,7 +1,7 @@
 import logging
 from api.healthcheck import Healthcheck
 import graphene
-from api.project import ProjectDetails
+from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
     AssociationsImport,
     FileExport,
@@ -42,6 +42,7 @@ routes = [
     Route("/project/{project_id:str}/import_file", PrepareFileImport),
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
+    Route("/project", ProjectCreationFromWorkflow),
 ]
 
 middleware = [Middleware(DatabaseSessionHandler)]
