@@ -179,6 +179,13 @@ __notification_data = {
         "page": enums.Pages.INFORMATION_SOURCES.value,
         "docs": enums.DOCS.WEAK_SUPERVISION.value,
     },
+    enums.NotificationType.WEAK_SUPERVISION_TASK_NO_VALID_LABELS.value: {
+        "message_template": "Can't start weak supervision without valid est. precision.",
+        "title": "Weak supervision",
+        "level": enums.Notification.WARNING.value,
+        "page": enums.Pages.INFORMATION_SOURCES.value,
+        "docs": enums.DOCS.WEAK_SUPERVISION.value,
+    },
     enums.NotificationType.IMPORT_SAMPLE_PROJECT.value: {
         "message_template": "Copying sample project into workspace.",
         "title": "Sample project",

@@ -146,7 +146,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 "Weak Supervision Task",
             )
             notification.send_organization_update(
-                project_id, f"weak_supervision_started"
+                project_id, "weak_supervision_started"
             )
 
             weak_supervision_task = ws_manager.create_task(
@@ -175,7 +175,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                     "Weak Supervision Task",
                 )
                 notification.send_organization_update(
-                    project_id, f"weak_supervision_finished"
+                    project_id, "weak_supervision_finished"
                 )
             except Exception as e:
                 print(traceback.format_exc(), flush=True)
@@ -187,19 +187,16 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                     with_commit=True,
                 )
                 notification.send_organization_update(
-                    project_id, f"weak_supervision_finished"
+                    project_id, "weak_supervision_failed"
                 )
                 raise e
         else:
             create_notification(
-                NotificationType.WEAK_SUPERVISION_TASK_FAILED,
+                NotificationType.WEAK_SUPERVISION_TASK_NO_VALID_LABELS,
                 user.id,
                 project_id,
-                "Weak Supervision Task",
             )
-            notification.send_organization_update(
-                project_id, f"weak_supervision_failed"
-            )
+            notification.send_organization_update(project_id, "weak_supervision_failed")
         return RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(ok=True)
 
 
