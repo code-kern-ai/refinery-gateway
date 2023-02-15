@@ -127,6 +127,8 @@ def __extract_table_meta_classification_data(
     tables_mapping = {}
     tables_meta_data = {}
     for task_id in selected_tasks:
+        if task_id == "NONE_IN_PROJECT":
+            break
         task = tasks_by_id.get(task_id)
 
         if task.task_type == enums.LabelingTaskType.INFORMATION_EXTRACTION.value:
