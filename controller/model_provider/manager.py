@@ -23,6 +23,8 @@ def get_model_provider_info() -> List[ModelProviderInfoResult]:
                 pass
             except TypeError:
                 pass
+        else:
+            model["date"] = None
 
     return model_info
 
