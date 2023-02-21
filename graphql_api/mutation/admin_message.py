@@ -22,14 +22,15 @@ class CreateAdminMessage(graphene.Mutation):
 class ArchiveAdminMessage(graphene.Mutation):
     class Arguments:
         message_id = graphene.ID(required=True)
+        archived_reason = graphene.String(required=True)
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, message_id: str):
+    def mutate(self, info, message_id: str, archived_reason: str):
         auth.check_demo_access(info)
         auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
-        manager.archive_admin_message(id, user_id)
+        manager.archive_admin_message(message_id, user_id, archived_reason),
         return ArchiveAdminMessage(ok=True)
 
 

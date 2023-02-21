@@ -6,7 +6,7 @@ from controller.admin_message import manager
 
 
 class AdminMessageQuery(graphene.ObjectType):
-    all_active_messages = graphene.Field(
+    all_admin_messages = graphene.Field(
         graphene.List(AdminMessage),
     )
 

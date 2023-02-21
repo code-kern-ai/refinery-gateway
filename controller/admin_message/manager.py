@@ -14,8 +14,8 @@ def get_all_active_admin_messages():
     now = datetime.now()
 
     for message in messages:
-        if now - message.created_at > timedelta(hours=message.lasting_hours):
-            admin_message.archive(message.id, by_time=True)
+        if now > message.archive_date:
+            admin_message.archive(message.id, None, now, "Archive date reached.")
         else:
             messages_to_return.append(message)
 
@@ -31,6 +31,6 @@ def create_admin_message(text: str, level: str, archive_date: Any, created_by: s
     )
 
 
-def archive_admin_message(message_id: str, archived_by: str):
-    archived_at = datetime.now()
-    admin_message.archive(message_id, archived_by, archived_at)
+def archive_admin_message(message_id: str, archived_by: str, archived_reason: str):
+    archive_date = datetime.now()
+    admin_message.archive(message_id, archived_by, archive_date, archived_reason)
