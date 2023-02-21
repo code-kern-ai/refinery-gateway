@@ -23,6 +23,9 @@ def get_all_active_admin_messages():
 
 
 def create_admin_message(text: str, level: str, archive_date: Any, created_by: str):
+    now = datetime.now()
+    if archive_date < now:
+        raise Exception("Archive date not valid")
     admin_message.create(
         text=text,
         level=level,
