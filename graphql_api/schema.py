@@ -1,6 +1,8 @@
 import graphene
+from graphql_api.mutation.admin_message import AdminMessageMutation
 
 from graphql_api.mutation.upload_task import UploadTaskMutation
+from graphql_api.query.admin_message import AdminMessageQuery
 from graphql_api.query.attribute import AttributeQuery
 from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
@@ -51,6 +53,7 @@ from graphql_api.mutation.personal_access_token import PersonalAccessTokenMutati
 
 
 class Query(
+    AdminMessageQuery,
     AttributeQuery,
     CommentQuery,
     DataSliceQuery,
@@ -81,6 +84,7 @@ class Query(
 
 
 class Mutation(
+    AdminMessageMutation,
     AttributeMutation,
     CommentMutation,
     DataSliceMutation,

@@ -242,6 +242,14 @@ class InformationSourcePayload(SQLAlchemyObjectType):
     id = graphene.ID(source="id", required=True)
 
 
+class AdminMessage(SQLAlchemyObjectType):
+    class Meta:
+        model = models.AdminMessage
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+
+
 class SourceStatistics(SQLAlchemyObjectType):
     class Meta:
         model = models.InformationSourceStatistics

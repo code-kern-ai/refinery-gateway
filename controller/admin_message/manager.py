@@ -1,0 +1,36 @@
+from typing import Any
+from datetime import datetime, timedelta
+from submodules.model.business_objects import admin_message
+
+
+def get_all_admin_messages():
+    return admin_message.get_all()
+
+
+def get_all_active_admin_messages():
+    messages = admin_message.get_all_active()
+
+    messages_to_return = []
+    now = datetime.now()
+
+    for message in messages:
+        if now - message.created_at > timedelta(hours=message.lasting_hours):
+            admin_message.archive(message.id, by_time=True)
+        else:
+            messages_to_return.append(message)
+
+    return messages_to_return
+
+
+def create_admin_message(text: str, level: str, archive_date: Any, created_by: str):
+    admin_message.create(
+        text=text,
+        level=level,
+        archive_date=archive_date,
+        created_by=created_by,
+    )
+
+
+def archive_admin_message(message_id: str, archived_by: str):
+    archived_at = datetime.now()
+    admin_message.archive(message_id, archived_by, archived_at)
