@@ -1,20 +1,26 @@
 from typing import Dict
 from submodules.model import User, enums
-from submodules.model.business_objects import user
+from submodules.model.business_objects import user, user_activity
 from submodules.model.business_objects import general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
+from sqlalchemy import sql
+from datetime import timedelta
 
 
 def get_user(user_id: str) -> User:
-    return user.get(user_id)
+    user_item = user.get(user_id)
+    user_activity.update_last_interaction(user_item.id)
+    return user_item
 
 
 def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
+    user_activity.update_last_interaction(user_item.id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
+
     return user_item
 
 
@@ -25,6 +31,16 @@ def get_or_create_user_by_email(email: str) -> User:
 
 def get_user_roles() -> Dict[str, str]:
     return {str(u.id): u.role for u in user.get_all()}
+
+
+def get_active_users(minutes: str):
+    now = sql.func.now()
+    last_interaction_range = now - timedelta(minutes=minutes)
+    user_activity.get_user_activity_in_range(last_interaction_range)
+
+
+def update_last_interaction(user_id):
+    user_activity.update_last_interaction(user_id)
 
 
 def update_organization_of_user(organization_name: str, user_mail: str) -> None:
