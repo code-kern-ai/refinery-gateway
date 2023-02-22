@@ -1,6 +1,7 @@
 from typing import Any
 from datetime import datetime, timedelta
 from submodules.model.business_objects import admin_message
+from util.notification import send_global_update_for_all_organizations
 
 
 def get_all_admin_messages():
@@ -16,6 +17,7 @@ def get_all_active_admin_messages():
     for message in messages:
         if now > message.archive_date:
             admin_message.archive(message.id, None, now, "Archive date reached.")
+            send_global_update_for_all_organizations(f"admin_message")
         else:
             messages_to_return.append(message)
 
@@ -26,7 +28,7 @@ def create_admin_message(text: str, level: str, archive_date: Any, created_by: s
     now = datetime.now()
     if archive_date < now:
         raise Exception("Archive date not valid")
-    admin_message.create(
+    return admin_message.create(
         text=text,
         level=level,
         archive_date=archive_date,

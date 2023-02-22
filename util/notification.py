@@ -19,13 +19,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 WEBSOCKET_ENDPOINT = os.getenv("WS_NOTIFY_ENDPOINT")
 
-
 def send_global_update_for_all_organizations(message: str):
     endpoint = os.getenv("WS_NOTIFY_ENDPOINT")
-    if not endpoint:
-        print(
-            "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
-        )
+    if not __check_endpoint_set():
         return
 
     message = f"GLOBAL:{message}"
@@ -51,10 +47,7 @@ def send_organization_update(
     organization_id: Optional[str] = None,
 ) -> None:
 
-    if not WEBSOCKET_ENDPOINT:
-        print(
-            "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
-        )
+    if not __check_endpoint_set():
         return
 
     if is_global:
@@ -129,3 +122,12 @@ def get_notification_data(notification_type: str) -> Dict[str, str]:
             f"No data for type {notification_type} found."
         )
     return notification_data
+
+def __check_endpoint_set():
+    endpoint = os.getenv("WS_NOTIFY_ENDPOINT")
+    if not endpoint:
+        print(
+            "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
+        )
+        return False
+    return True

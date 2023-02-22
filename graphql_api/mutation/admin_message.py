@@ -1,6 +1,7 @@
 from controller.auth import manager as auth
 from controller.admin_message import manager
 import graphene
+from util.notification import send_global_update_for_all_organizations
 
 
 class CreateAdminMessage(graphene.Mutation):
@@ -16,6 +17,7 @@ class CreateAdminMessage(graphene.Mutation):
         auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
         manager.create_admin_message(text, level, archive_date, user_id)
+        send_global_update_for_all_organizations(f"admin_message")
         return CreateAdminMessage(ok=True)
 
 
@@ -30,7 +32,8 @@ class ArchiveAdminMessage(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
-        manager.archive_admin_message(message_id, user_id, archived_reason),
+        manager.archive_admin_message(message_id, user_id, archived_reason)
+        send_global_update_for_all_organizations(f"admin_message")
         return ArchiveAdminMessage(ok=True)
 
 
