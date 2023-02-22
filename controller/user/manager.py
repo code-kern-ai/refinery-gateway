@@ -8,18 +8,22 @@ from controller.organization import manager as organization_manager
 from sqlalchemy import sql
 from datetime import timedelta
 
+from util.decorator import param_throttle
+
 
 def get_user(user_id: str) -> User:
     user_item = user.get(user_id)
-    user_activity.update_last_interaction(user_item.id)
+    if user_item:
+        update_last_interaction(user_item.id)
     return user_item
 
 
 def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
-    user_activity.update_last_interaction(user_item.id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
+    
+    update_last_interaction(user_item.id)
 
     return user_item
 
@@ -39,6 +43,7 @@ def get_active_users(minutes: str):
     user_activity.get_user_activity_in_range(last_interaction_range)
 
 
+@param_throttle(seconds=10)
 def update_last_interaction(user_id):
     user_activity.update_last_interaction(user_id)
 
