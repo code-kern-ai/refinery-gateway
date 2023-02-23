@@ -24,6 +24,7 @@ from graphql_api.query.record import RecordQuery
 from graphql_api.query.record_label_association import RecordLabelAssociationQuery
 from graphql_api.query.zero_shot import ZeroShotQuery
 from graphql_api.query.upload_task import UploadTaskQuery
+from graphql_api.query.user import UserQuery
 from graphql_api.query.weak_supervision import WeakSupervisionQuery
 from graphql_api.query.record_ide import RunRecordIDEPayload
 from graphql_api.query.model_provider import ModelProviderQuery
@@ -74,6 +75,7 @@ class Query(
     RecordQuery,
     NotificationQuery,
     UploadTaskQuery,
+    UserQuery,
     WeakSupervisionQuery,
     ZeroShotQuery,
     RunRecordIDEPayload,
