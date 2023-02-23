@@ -5,7 +5,6 @@ from submodules.model.business_objects import general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
-from sqlalchemy import sql
 from datetime import datetime, timedelta
 
 from util.decorator import param_throttle
@@ -37,10 +36,10 @@ def get_user_roles() -> Dict[str, str]:
     return {str(u.id): u.role for u in user.get_all()}
 
 
-def get_active_users(minutes: str):
+def get_active_users(minutes: str, order_by_interaction: bool):
     now = datetime.now()
-    last_interaction_range = now - timedelta(minutes=minutes)
-    return user_activity.get_active_users_in_range(last_interaction_range)
+    last_interaction_range = now - timedelta(minutes=minutes) if minutes else None
+    return user_activity.get_active_users_in_range(last_interaction_range, order_by_interaction)
 
 
 @param_throttle(seconds=10)

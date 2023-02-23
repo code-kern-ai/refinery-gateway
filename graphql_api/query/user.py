@@ -8,9 +8,10 @@ class UserQuery(graphene.ObjectType):
 
     active_users = graphene.Field(
         graphene.List(User),
-        minutes_range=graphene.Int(required=False),
+        minutes_range=graphene.Int(),
+        order_by_interaction=graphene.Boolean(),
     )
 
-    def resolve_active_users(self, info, minutes_range: int):
+    def resolve_active_users(self, info, minutes_range: int = None, order_by_interaction: bool = None):
         auth.check_admin_access(info)
-        return manager.get_active_users(minutes_range)
+        return manager.get_active_users(minutes_range, order_by_interaction)
