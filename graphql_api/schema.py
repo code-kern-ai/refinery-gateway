@@ -8,6 +8,7 @@ from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
 from graphql_api.query.labeling_access_link import LabelingAccessLinkQuery
 from graphql_api.query.embedding import EmbeddingQuery
+from graphql_api.query.monitor import MonitorQuery
 from graphql_api.query.personal_access_token import PersonalAccessTokenQuery
 from graphql_api.query.transfer import TransferQuery
 from graphql_api.query.information_source import InformationSourceQuery
@@ -80,6 +81,7 @@ class Query(
     ZeroShotQuery,
     RunRecordIDEPayload,
     PersonalAccessTokenQuery,
+    MonitorQuery,
     graphene.ObjectType,
 ):
     pass

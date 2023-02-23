@@ -792,3 +792,8 @@ class GatesIntegrationData(graphene.ObjectType):
     missing_tokenizer = graphene.Boolean()
     missing_embeddings = graphene.List(graphene.String)
     missing_information_sources = graphene.List(graphene.String)
+
+
+class Task(graphene.ObjectType):
+    id = graphene.String()
+    task_type = graphene.String()
