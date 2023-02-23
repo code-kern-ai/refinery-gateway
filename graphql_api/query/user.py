@@ -11,6 +11,6 @@ class UserQuery(graphene.ObjectType):
         minutes_range=graphene.Int(required=False),
     )
 
-    def resolve_active_users(self, info, minutes_interval: int):
+    def resolve_active_users(self, info, minutes_range: int):
         auth.check_admin_access(info)
-        return manager.get_active_users(minutes_interval)
+        return manager.get_active_users(minutes_range)
