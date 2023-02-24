@@ -21,7 +21,7 @@ def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
-    
+
     update_last_interaction(user_item.id)
 
     return user_item
@@ -36,14 +36,16 @@ def get_user_roles() -> Dict[str, str]:
     return {str(u.id): u.role for u in user.get_all()}
 
 
-def get_active_users(minutes: str, order_by_interaction: bool):
+def get_active_users(minutes: str, order_by_interaction: bool) -> User:
     now = datetime.now()
     last_interaction_range = now - timedelta(minutes=minutes) if minutes else None
-    return user_activity.get_active_users_in_range(last_interaction_range, order_by_interaction)
+    return user_activity.get_active_users_in_range(
+        last_interaction_range, order_by_interaction
+    )
 
 
 @param_throttle(seconds=10)
-def update_last_interaction(user_id):
+def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
 
 

@@ -18,7 +18,7 @@ class CancelInformationSourcePayload(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, payload_id):
+    def mutate(self, info, payload_id: str):
         auth.check_admin_access(info)
         manager.cancel_information_source_payload(payload_id=payload_id)
         return CancelInformationSourcePayload(ok=True)
@@ -30,7 +30,7 @@ class CancelUploadTaskTask(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, task_id):
+    def mutate(self, info, task_id: str):
         auth.check_admin_access(info)
         manager.cancel_upload_task(upload_task_id=task_id)
         return CancelUploadTaskTask(ok=True)
@@ -42,7 +42,7 @@ class CancelWeakSupervisionTask(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, payload_id):
+    def mutate(self, info, payload_id: str):
         auth.check_admin_access(info)
         manager.cancel_weak_supervision(payload_id=payload_id)
         return CancelWeakSupervisionTask(ok=True)
@@ -54,7 +54,7 @@ class CancelAttributeCalculationTask(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, attribute_id):
+    def mutate(self, info, attribute_id: str):
         auth.check_admin_access(info)
         manager.cancel_attribute_calculation(attribute_id=attribute_id)
         return CancelAttributeCalculationTask(ok=True)
@@ -66,7 +66,7 @@ class CancelEmbeddingTask(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, embedding_id):
+    def mutate(self, info, embedding_id: str):
         auth.check_admin_access(info)
         manager.cancel_embedding(embedding_id=embedding_id)
         return CancelEmbeddingTask(ok=True)
@@ -78,7 +78,7 @@ class CancelTokenizationTask(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, task_id):
+    def mutate(self, info, task_id: str):
         auth.check_admin_access(info)
         manager.cancel_record_tokenization_task(tokenization_task_id=task_id)
         return CancelTokenizationTask(ok=True)
