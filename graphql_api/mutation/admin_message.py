@@ -1,3 +1,4 @@
+from datetime import datetime
 from controller.auth import manager as auth
 from controller.admin_message import manager
 import graphene
@@ -12,7 +13,7 @@ class CreateAdminMessage(graphene.Mutation):
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, text: str, level: str, archive_date):
+    def mutate(self, info, text: str, level: str, archive_date: datetime):
         auth.check_demo_access(info)
         auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
