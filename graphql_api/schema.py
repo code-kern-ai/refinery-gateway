@@ -1,5 +1,6 @@
 import graphene
 from graphql_api.mutation.admin_message import AdminMessageMutation
+from graphql_api.mutation.monitor import MonitorMutation
 
 from graphql_api.mutation.upload_task import UploadTaskMutation
 from graphql_api.query.admin_message import AdminMessageQuery
@@ -112,6 +113,7 @@ class Mutation(
     ZeroShotMutation,
     UploadTaskMutation,
     PersonalAccessTokenMutation,
+    MonitorMutation,
     graphene.ObjectType,
 ):
     pass
