@@ -794,6 +794,8 @@ class GatesIntegrationData(graphene.ObjectType):
 
 
 class Task(graphene.ObjectType):
+    id = graphene.String()
+    created_by = graphene.String()
     project_id = graphene.String()
     state = graphene.String()
     task_type = graphene.String()
