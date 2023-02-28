@@ -6,6 +6,7 @@ from util.notification import send_global_update_for_all_organizations
 
 
 def get_all_admin_messages() -> List[AdminMessage]:
+    get_all_active_admin_messages()  # set messages on archived if they should be archived
     return admin_message.get_all()
 
 
@@ -30,7 +31,8 @@ def get_all_active_admin_messages() -> List[AdminMessage]:
 def create_admin_message(
     text: str, level: str, archive_date: datetime, created_by: str
 ) -> AdminMessage:
-    now = datetime.now()
+    now = datetime.now().astimezone(archive_date.tzinfo)
+
     if archive_date < now:
         raise Exception("Archive date not valid")
     return admin_message.create(
