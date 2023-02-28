@@ -24,7 +24,7 @@ def refresh_config():
     response = requests.get(REQUEST_URL)
     if response.status_code == 200:
         global __config
-        __config = json.loads(json.loads(response.text))
+        __config = json.loads(response.text)
         daemon.run(invalidate_after, 3600)  # one hour as failsave
     else:
         raise Exception(
