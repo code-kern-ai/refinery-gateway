@@ -29,7 +29,7 @@ def get_black_white_demo() -> Dict[str, List[str]]:
 def get_version_overview() -> List[ServiceVersionResult]:
     updater_version_overview = __updater_version_overview()
     date_format = "%Y-%m-%dT%H:%M:%S.%f"  # 2022-09-06T12:10:39.167397
-    version_overview = [
+    return [
         ServiceVersionResult(
             service=service["name"],
             installed_version=service["installed_version"],
@@ -40,12 +40,10 @@ def get_version_overview() -> List[ServiceVersionResult]:
         )
         for service in updater_version_overview
     ]
-    return version_overview
 
 
 def has_updates() -> List[ServiceVersionResult]:
-    has_updates = __updater_has_updates()
-    return has_updates
+    return __updater_has_updates()
 
 
 def __updater_version_overview() -> List[Dict[str, Any]]:
