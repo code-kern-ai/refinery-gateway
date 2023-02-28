@@ -1,11 +1,15 @@
 import graphene
+from graphql_api.mutation.admin_message import AdminMessageMutation
+from graphql_api.mutation.monitor import MonitorMutation
 
 from graphql_api.mutation.upload_task import UploadTaskMutation
+from graphql_api.query.admin_message import AdminMessageQuery
 from graphql_api.query.attribute import AttributeQuery
 from graphql_api.query.comment import CommentQuery
 from graphql_api.query.data_slice import DataSliceQuery
 from graphql_api.query.labeling_access_link import LabelingAccessLinkQuery
 from graphql_api.query.embedding import EmbeddingQuery
+from graphql_api.query.monitor import MonitorQuery
 from graphql_api.query.personal_access_token import PersonalAccessTokenQuery
 from graphql_api.query.transfer import TransferQuery
 from graphql_api.query.information_source import InformationSourceQuery
@@ -20,6 +24,7 @@ from graphql_api.query.payload import PayloadQuery
 from graphql_api.query.project import ProjectQuery
 from graphql_api.query.record import RecordQuery
 from graphql_api.query.record_label_association import RecordLabelAssociationQuery
+from graphql_api.query.user import UserQuery
 from graphql_api.query.zero_shot import ZeroShotQuery
 from graphql_api.query.upload_task import UploadTaskQuery
 from graphql_api.query.weak_supervision import WeakSupervisionQuery
@@ -75,6 +80,9 @@ class Query(
     ZeroShotQuery,
     RunRecordIDEPayload,
     PersonalAccessTokenQuery,
+    AdminMessageQuery,
+    UserQuery,
+    MonitorQuery,
     graphene.ObjectType,
 ):
     pass
@@ -104,6 +112,8 @@ class Mutation(
     ZeroShotMutation,
     UploadTaskMutation,
     PersonalAccessTokenMutation,
+    AdminMessageMutation,
+    MonitorMutation,
     graphene.ObjectType,
 ):
     pass

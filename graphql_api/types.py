@@ -372,7 +372,6 @@ class LabelingTask(SQLAlchemyObjectType):
                         )
                     )
         elif self.task_type == enums.LabelingTaskType.INFORMATION_EXTRACTION.value:
-
             confusion_matrix_elements = {}
             for label_gt in self.labels + [
                 Label(name=enums.ConfusionMatrixElements.OUTSIDE.value)
@@ -784,3 +783,20 @@ class GatesIntegrationData(graphene.ObjectType):
     missing_tokenizer = graphene.Boolean()
     missing_embeddings = graphene.List(graphene.String)
     missing_information_sources = graphene.List(graphene.String)
+
+
+class AdminMessage(SQLAlchemyObjectType):
+    class Meta:
+        model = models.AdminMessage
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)
+
+
+class Task(graphene.ObjectType):
+    id = graphene.String()
+    organization_name = graphene.String()
+    created_by = graphene.String()
+    project_id = graphene.String()
+    state = graphene.String()
+    task_type = graphene.String()
