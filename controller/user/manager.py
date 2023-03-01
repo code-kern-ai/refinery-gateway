@@ -83,7 +83,7 @@ def remove_organization_from_user(user_mail: str) -> None:
 
 def get_active_users(minutes: str, order_by_interaction: bool) -> User:
     now = datetime.now()
-    last_interaction_range = now - timedelta(minutes=minutes) if minutes else None
+    last_interaction_range = (now - timedelta(minutes=minutes)) if minutes else None
     return user_activity.get_active_users_in_range(
         last_interaction_range, order_by_interaction
     )

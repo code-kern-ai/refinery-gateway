@@ -18,7 +18,7 @@ class CreateAdminMessage(graphene.Mutation):
         auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
         manager.create_admin_message(text, level, archive_date, user_id)
-        send_global_update_for_all_organizations(f"admin_message")
+        send_global_update_for_all_organizations("admin_message")
         return CreateAdminMessage(ok=True)
 
 

@@ -794,9 +794,10 @@ class AdminMessage(SQLAlchemyObjectType):
 
 
 class Task(graphene.ObjectType):
-    id = graphene.String()
+    id = graphene.ID()
+    project_id = graphene.ID()
+    created_by = graphene.ID()
     organization_name = graphene.String()
-    created_by = graphene.String()
-    project_id = graphene.String()
+    project_name = graphene.String()
     state = graphene.String()
     task_type = graphene.String()
