@@ -5,13 +5,13 @@ from submodules.model.models import AdminMessage
 from util.notification import send_global_update_for_all_organizations
 
 
-def get_all_admin_messages() -> List[AdminMessage]:
-    get_and_check_all_active_admin_messages()
-    return admin_message.get_all()
+def get_all_admin_messages(limit: int) -> List[AdminMessage]:
+    get_and_check_all_active_admin_messages(limit)
+    return admin_message.get_all(limit)
 
 
-def get_and_check_all_active_admin_messages() -> List[AdminMessage]:
-    messages = admin_message.get_all_active()
+def get_and_check_all_active_admin_messages(limit: int) -> List[AdminMessage]:
+    messages = admin_message.get_all_active(limit)
     messages_to_return = []
     now = datetime.now()
     message_archived = False
