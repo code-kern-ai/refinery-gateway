@@ -125,7 +125,7 @@ def get_notification_data(notification_type: str) -> Dict[str, str]:
     return notification_data
 
 
-def __check_endpoint_set():
+def __check_endpoint_set() -> bool:
     endpoint = os.getenv("WS_NOTIFY_ENDPOINT")
     if not endpoint:
         print(
