@@ -18,9 +18,10 @@ def get_messages(limit: int = 100, active_only: bool = True) -> List[AdminMessag
             message_archived = True
         elif active_only:
             messages_to_return.append(message)
-        if message_archived:
-            general.commit()
-            send_global_update_for_all_organizations("admin_message")
+
+    if message_archived:
+        general.commit()
+        send_global_update_for_all_organizations("admin_message")
 
     if not active_only:
         messages_to_return = admin_message.get_all(limit)
