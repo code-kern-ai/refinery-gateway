@@ -17,7 +17,7 @@ class AdminMessageQuery(graphene.ObjectType):
     def resolve_all_admin_messages(self, info, limit: int = 100) -> AdminMessage:
         auth.check_demo_access(info)
         auth.check_admin_access(info)
-        return manager.get_messages(limit)
+        return manager.get_messages(limit, active_only=False)
 
     def resolve_all_active_admin_messages(self, info, limit: int = 100) -> AdminMessage:
         auth.check_demo_access(info)
