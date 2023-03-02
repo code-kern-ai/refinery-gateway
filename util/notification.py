@@ -21,7 +21,6 @@ WEBSOCKET_ENDPOINT = os.getenv("WS_NOTIFY_ENDPOINT")
 
 
 def send_global_update_for_all_organizations(message: str):
-    endpoint = os.getenv("WS_NOTIFY_ENDPOINT")
     if not __check_endpoint_set():
         return
 
@@ -29,7 +28,7 @@ def send_global_update_for_all_organizations(message: str):
 
     for organization_item in organization.get_all():
         req = requests.post(
-            f"{endpoint}/notify",
+            f"{WEBSOCKET_ENDPOINT}/notify",
             json={
                 "organization": str(organization_item.id),
                 "message": message,
