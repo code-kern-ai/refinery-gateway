@@ -126,8 +126,7 @@ def get_notification_data(notification_type: str) -> Dict[str, str]:
 
 
 def __check_endpoint_set() -> bool:
-    endpoint = os.getenv("WS_NOTIFY_ENDPOINT")
-    if not endpoint:
+    if not WEBSOCKET_ENDPOINT:
         print(
             "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
         )

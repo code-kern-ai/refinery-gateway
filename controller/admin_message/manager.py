@@ -1,32 +1,29 @@
-from typing import Any, List
+from typing import List
 from datetime import datetime
 from submodules.model.business_objects import admin_message, general
 from submodules.model.models import AdminMessage
 from util.notification import send_global_update_for_all_organizations
 
 
-def get_all_admin_messages(limit: int) -> List[AdminMessage]:
-    get_and_check_all_active_admin_messages(limit)
-    return admin_message.get_all(limit)
-
-
-def get_and_check_all_active_admin_messages(limit: int) -> List[AdminMessage]:
+def get_messages(limit: int = 100, active_only: bool = True) -> List[AdminMessage]:
     messages = admin_message.get_all_active(limit)
+    message_archived = False
     messages_to_return = []
     now = datetime.now()
-    message_archived = False
     for message in messages:
         if now > message.archive_date:
             admin_message.archive(
                 message.id, None, now, "Archive date reached.", with_commit=False
             )
             message_archived = True
-        else:
+        elif active_only:
             messages_to_return.append(message)
         if message_archived:
             general.commit()
             send_global_update_for_all_organizations("admin_message")
 
+    if not active_only:
+        messages_to_return = admin_message.get_all(limit)
     return messages_to_return
 
 
