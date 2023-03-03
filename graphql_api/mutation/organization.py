@@ -99,7 +99,8 @@ class ChangeOrganization(graphene.Mutation):
 
     def mutate(self, info, org_id: str, changes: Dict[str, Any]):
         auth.check_demo_access(info)
-        auth.check_admin_access(info)
+        if config_service.get_config_value("is_managed"):
+            auth.check_admin_access(info)
         organization_manager.change_organization(org_id, changes)
         return DeleteOrganization(ok=True)
 

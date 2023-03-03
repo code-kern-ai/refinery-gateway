@@ -1,20 +1,25 @@
 from typing import Dict
 from submodules.model import User, enums
-from submodules.model.business_objects import user
-from submodules.model.business_objects import general
+from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
+from datetime import datetime, timedelta
+from util.decorator import param_throttle
 
 
 def get_user(user_id: str) -> User:
-    return user.get(user_id)
+    user_item = user.get(user_id)
+    if user_item:
+        update_last_interaction(user_item.id)
+    return user_item
 
 
 def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
+    update_last_interaction(user_item.id)
     return user_item
 
 
@@ -74,3 +79,16 @@ def remove_organization_from_user(user_mail: str) -> None:
         raise Exception("User has no organization")
 
     user.remove_organization(user_id, with_commit=True)
+
+
+def get_active_users(minutes: str, order_by_interaction: bool) -> User:
+    now = datetime.now()
+    last_interaction_range = (now - timedelta(minutes=minutes)) if minutes else None
+    return user_activity.get_active_users_in_range(
+        last_interaction_range, order_by_interaction
+    )
+
+
+@param_throttle(seconds=10)
+def update_last_interaction(user_id: str) -> None:
+    user_activity.update_last_interaction(user_id)

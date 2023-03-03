@@ -8,7 +8,7 @@ from controller.notification.notification_data import __notification_data
 from submodules.model import events
 from exceptions import exceptions
 from controller.user.manager import get_or_create_user
-from submodules.model.business_objects import project, general
+from submodules.model.business_objects import project, general, organization
 from submodules.model.business_objects.notification import get_duplicated, create
 from submodules.model.business_objects.organization import get_organization_id
 from submodules.model.enums import NotificationType
@@ -20,17 +20,34 @@ logger = logging.getLogger(__name__)
 WEBSOCKET_ENDPOINT = os.getenv("WS_NOTIFY_ENDPOINT")
 
 
+def send_global_update_for_all_organizations(message: str):
+    if not __check_endpoint_set():
+        return
+
+    message = f"GLOBAL:{message}"
+
+    for organization_item in organization.get_all():
+        req = requests.post(
+            f"{WEBSOCKET_ENDPOINT}/notify",
+            json={
+                "organization": str(organization_item.id),
+                "message": message,
+            },
+        )
+        if req.status_code != 200:
+            print(
+                f"Could not send notification update for organization: {organization_item.id}",
+                flush=True,
+            )
+
+
 def send_organization_update(
     project_id: str,
     message: str,
     is_global: bool = False,
     organization_id: Optional[str] = None,
 ) -> None:
-
-    if not WEBSOCKET_ENDPOINT:
-        print(
-            "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
-        )
+    if not __check_endpoint_set():
         return
 
     if is_global:
@@ -105,3 +122,12 @@ def get_notification_data(notification_type: str) -> Dict[str, str]:
             f"No data for type {notification_type} found."
         )
     return notification_data
+
+
+def __check_endpoint_set() -> bool:
+    if not WEBSOCKET_ENDPOINT:
+        print(
+            "- WS_NOTIFY_ENDPOINT not set -- did you run the start script?", flush=True
+        )
+        return False
+    return True
