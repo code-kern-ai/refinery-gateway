@@ -801,3 +801,5 @@ class Task(graphene.ObjectType):
     project_name = graphene.String()
     state = graphene.String()
     task_type = graphene.String()
+    started_at = graphene.DateTime()
+    finished_at = graphene.DateTime()

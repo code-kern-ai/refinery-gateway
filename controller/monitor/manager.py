@@ -3,6 +3,7 @@ from submodules.model.business_objects import monitor as task_monitor
 
 
 def monitor_all_tasks(project_id: str = None, only_running: bool = True) -> List[Any]:
+    print(task_monitor.get_all_tasks(project_id, only_running))
     return task_monitor.get_all_tasks(project_id, only_running)
 
 
