@@ -10,17 +10,5 @@ class Healthcheck(HTTPEndpoint):
 
 class DatabaseHealthcheck(HTTPEndpoint):
     def get(self, request) -> PlainTextResponse:
-        response = "OK"
-
-        if not __test_database_connection():
-            response = "FAILED"
-
+        response = "OK" if general.test_database_connection() else "FAILED"
         return PlainTextResponse(response)
-
-
-def __test_database_connection() -> bool:
-    try:
-        general.execute("SELECT 1")
-        return True
-    except Exception:
-        return False
