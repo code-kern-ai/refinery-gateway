@@ -149,20 +149,30 @@ def import_file(
     """
     send_progress_update_throttle(project_id, task_id, 0)
     project_item = project.get(project_id)
-    project_item.name = data.get("project_details_data",).get(
+    project_item.name = data.get(
+        "project_details_data",
+    ).get(
         "name",
     )
-    project_item.description = data.get("project_details_data",).get(
+    project_item.description = data.get(
+        "project_details_data",
+    ).get(
         "description",
     )
-    project_item.tokenizer = data.get("project_details_data",).get(
+    project_item.tokenizer = data.get(
+        "project_details_data",
+    ).get(
         "tokenizer",
     )
-    spacy_language = data.get("project_details_data",).get(
+    spacy_language = data.get(
+        "project_details_data",
+    ).get(
         "tokenizer",
     )[:2]
     project_item.tokenizer_blank = spacy_language
-    project_item.status = data.get("project_details_data",).get(
+    project_item.status = data.get(
+        "project_details_data",
+    ).get(
         "status",
     )
     old_project_id = data.get(
@@ -209,6 +219,8 @@ def import_file(
                 "source_code",
             ),
             visibility=attribute_item.get("visibility"),
+            started_at=attribute_item.get("started_at"),
+            finished_at=attribute_item.get("finished_at"),
             project_id=project_id,
         )
         attribute_ids_by_old_id[
@@ -606,7 +618,6 @@ def import_file(
         for embedding_item in data.get(
             "embeddings_data",
         ):
-
             attribute_id = embedding_item.get("attribute_id")
             embedding_name = embedding_item.get("name")
             if attribute_id:
@@ -627,6 +638,12 @@ def import_file(
                 ),
                 type=embedding_item.get(
                     "type",
+                ),
+                started_at=embedding_item.get(
+                    "started_at",
+                ),
+                finished_at=embedding_item.get(
+                    "finished_at",
                 ),
             )
             embedding_ids[
@@ -987,6 +1004,8 @@ def get_project_export_dump(
             "state": attribute_item.state,
             "logs": attribute_item.logs,
             "visibility": attribute_item.visibility,
+            "started_at": attribute_item.started_at,
+            "finished_at": attribute_item.finished_at,
         }
         for attribute_item in attributes
     ]
@@ -1080,6 +1099,8 @@ def get_project_export_dump(
             "name": embedding_item.name,
             "custom": embedding_item.custom,
             "type": embedding_item.type,
+            "started_at": embedding_item.started_at,
+            "finished_at": embedding_item.finished_at,
         }
         for embedding_item in embeddings
     ]
@@ -1218,7 +1239,7 @@ def delete_project(project_id: str) -> bool:
 
 def replace_by_mappings(text: str, mappings: List[Dict[str, str]]) -> str:
     for mapping in mappings:
-        for (key, value) in mapping.items():
+        for key, value in mapping.items():
             text = text.replace(str(key), str(value))
     return text
 
