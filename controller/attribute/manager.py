@@ -91,7 +91,6 @@ def update_attribute(
     source_code: str,
     visibility: str,
 ) -> None:
-
     attribute_item: Attribute = attribute.update(
         project_id,
         attribute_id,
@@ -142,7 +141,6 @@ def add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
     if for_retokenization:
-
         daemon.run(
             request_tokenize_project,
             project_id,
@@ -174,6 +172,8 @@ def calculate_user_attribute_all_records(
         return
 
     attribute_item = attribute.get(project_id, attribute_id)
+    print("attribute item", attribute_item, attribute_item.name)
+
     equally_named_attributes = attribute.get_all_by_names(
         project_id, [attribute_item.name]
     )
@@ -186,7 +186,7 @@ def calculate_user_attribute_all_records(
             append_to_logs=False,
         )
         return
-
+    print("updated to running")
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -207,11 +207,12 @@ def calculate_user_attribute_all_records(
 def __calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str
 ) -> None:
-
+    print("calculate_user_attribute_all_records", attribute_id)
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
         )
+        print("calculated_attributes", calculated_attributes)
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
                 project_id=project_id,

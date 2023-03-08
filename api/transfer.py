@@ -1,5 +1,6 @@
 import logging
 import traceback
+import time
 
 from controller import organization
 from starlette.endpoints import HTTPEndpoint
@@ -7,7 +8,7 @@ from starlette.responses import PlainTextResponse, JSONResponse
 
 from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
-from submodules.model.business_objects import organization
+from submodules.model.business_objects import attribute, organization
 
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
@@ -16,10 +17,11 @@ from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
+from controller.attribute import manager as attribute_manager
 
 from submodules.model import enums, exceptions
 from util.notification import create_notification
-from submodules.model.enums import NotificationType
+from submodules.model.enums import AttributeState, NotificationType
 from submodules.model.models import UploadTask
 from submodules.model.business_objects import general
 from util import notification
@@ -221,6 +223,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
+        calculate_missing_attributes(project_id, task.user_id)
     elif "project" in task.file_type:
         transfer_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
@@ -258,3 +261,39 @@ def file_import_error_handling(
     notification.send_organization_update(
         project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update
     )
+
+
+def calculate_missing_attributes(project_id: str, user_id: str) -> None:
+    attributes_usable = attribute.get_all(
+        project_id,
+        state_filter=[
+            enums.AttributeState.USABLE.value,
+        ],
+    )
+    if len(attributes_usable) == 0:
+        return
+
+    for a in attributes_usable:
+        print(a.name)
+
+    i = 0
+    idx = 0
+    while True:
+        print("i", i)
+        if i >= len(attributes_usable):
+            break
+
+        check_if_running = attribute.get_all(
+            project_id=project_id, state_filter=[enums.AttributeState.RUNNING.value]
+        )
+        print("checkifrunninggg", check_if_running, not check_if_running)
+        if not check_if_running:
+            attribute_manager.calculate_user_attribute_all_records(
+                project_id,
+                user_id,
+                attributes_usable[i].id,
+            )
+            i += 1
+        else:
+            time.sleep(5)
+            continue
