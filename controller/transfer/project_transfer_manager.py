@@ -33,6 +33,7 @@ from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
 from submodules.s3 import controller as s3
 import os
+from sqlalchemy import sql
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -627,6 +628,10 @@ def import_file(
                     embedding_name
                 )
                 attribute_id = attribute_ids_by_old_name[attribute_name]
+
+            finished_at_str = embedding_item.get("finished_at")
+            if finished_at_str is None:
+                embedding_item.finished_at = sql.func.now()
 
             embedding_object = embedding.create(
                 project_id=project_id,
