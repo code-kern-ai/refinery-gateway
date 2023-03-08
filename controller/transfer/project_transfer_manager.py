@@ -629,9 +629,9 @@ def import_file(
                 )
                 attribute_id = attribute_ids_by_old_name[attribute_name]
 
-            finished_at_str = embedding_item.get("finished_at")
-            if finished_at_str is None:
-                embedding_item.finished_at = sql.func.now()
+            finished_at_str = "finished_at" in embedding_item
+            if not finished_at_str:
+                embedding_item["finished_at"] = sql.func.now()
 
             embedding_object = embedding.create(
                 project_id=project_id,
