@@ -24,7 +24,7 @@ from submodules.model import enums, exceptions
 from util.notification import create_notification
 from submodules.model.enums import AttributeState, NotificationType
 from submodules.model.models import UploadTask
-from submodules.model.business_objects import general
+from submodules.model.business_objects import general, tokenization
 from util import notification
 from controller.tokenization import tokenization_service
 
@@ -274,41 +274,33 @@ def calculate_missing_attributes(project_id: str, user_id: str) -> None:
     if len(attributes_usable) == 0:
         return
 
-    for a in attributes_usable:
-        print("", a.name)
+    if not check_if_tokenization_finished(project_id):
+        for att_usable in attributes_usable:
+            attribute.update(
+                project_id,
+                att_usable.id,
+                state=enums.AttributeState.RUNNING.value,
+            )
 
-    i = 0
-    idx = 0
-    while True:
-        print("i", i)
-        if i >= len(attributes_usable):
-            break
-
-        check_if_running = attribute.get_all(
-            project_id=project_id, state_filter=[enums.AttributeState.RUNNING.value]
-        )
-        check_if_tokenization_running = (
-            project_manager.is_rats_tokenization_still_running(project_id)
-        )
-        check_if_doc_bin_running = is_doc_bin_creation_running(project_id)
-        print(
-            "checkifrunninggg",
-            check_if_running,
-            check_if_tokenization_running,
-            check_if_doc_bin_running,
-        )
-        if (
-            not check_if_running
-            and not check_if_tokenization_running
-            and not check_if_doc_bin_running
-        ):
-            time.sleep(1)
+    print("check if tokenization finished", check_if_tokenization_finished(project_id))
+    if check_if_tokenization_finished(project_id):
+        for att_usable in attributes_usable:
             attribute_manager.calculate_user_attribute_all_records(
                 project_id,
                 user_id,
-                attributes_usable[i].id,
+                att_usable.id,
             )
-            i += 1
+            check_if_running = attribute.get_all(
+                project_id=project_id, state_filter=[enums.AttributeState.RUNNING.value]
+            )
+            while check_if_running and not check_if_tokenization_finished(project_id):
+                time.sleep(10)
         else:
-            time.sleep(5)
-            continue
+            time.sleep(10)
+
+
+def check_if_tokenization_finished(project_id):
+    tokenization_task = tokenization.get_record_tokenization_task(project_id)
+    return tokenization_task.progress == 1 and (
+        project_manager.is_rats_tokenization_still_running(project_id) == False
+    )
