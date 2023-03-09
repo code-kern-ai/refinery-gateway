@@ -16,7 +16,6 @@ def get_recommended_encoders() -> List[Any]:
     else:
         existing_models = []
     for model in existing_models:
-
         if not model["zero_shot_pipeline"]:
             not_yet_known = (
                 len(
@@ -110,6 +109,6 @@ def __embed_one_by_one_helper(
                 user_id=user_id,
                 config_string=splitted[2],
             )
-        time.sleep(10)
+        time.sleep(5)
         while util.has_encoder_running(project_id):
-            time.sleep(10)
+            time.sleep(5)

@@ -11,6 +11,7 @@ from submodules.model.enums import AttributeState, DataTypes
 from util import daemon, notification
 
 from . import util
+from sqlalchemy import sql
 
 
 def get_attribute(project_id: str, attribute_id: str) -> Attribute:
@@ -91,7 +92,6 @@ def update_attribute(
     source_code: str,
     visibility: str,
 ) -> None:
-
     attribute_item: Attribute = attribute.update(
         project_id,
         attribute_id,
@@ -142,7 +142,6 @@ def add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
     if for_retokenization:
-
         daemon.run(
             request_tokenize_project,
             project_id,
@@ -192,6 +191,7 @@ def calculate_user_attribute_all_records(
         attribute_id=attribute_id,
         state=AttributeState.RUNNING.value,
         with_commit=True,
+        started_at=sql.func.now(),
     )
     notification.send_organization_update(
         project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
@@ -207,7 +207,6 @@ def calculate_user_attribute_all_records(
 def __calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str
 ) -> None:
-
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
@@ -285,6 +284,7 @@ def __calculate_user_attribute_all_records(
         attribute_id=attribute_id,
         state=AttributeState.USABLE.value,
         with_commit=True,
+        finished_at=sql.func.now(),
     )
 
     notification.send_organization_update(
