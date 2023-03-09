@@ -7,6 +7,7 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 
 from controller.transfer.labelstudio import import_preperator
+from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import attribute, organization
 
@@ -274,7 +275,7 @@ def calculate_missing_attributes(project_id: str, user_id: str) -> None:
         return
 
     for a in attributes_usable:
-        print(a.name)
+        print("", a.name)
 
     i = 0
     idx = 0
@@ -286,8 +287,22 @@ def calculate_missing_attributes(project_id: str, user_id: str) -> None:
         check_if_running = attribute.get_all(
             project_id=project_id, state_filter=[enums.AttributeState.RUNNING.value]
         )
-        print("checkifrunninggg", check_if_running, not check_if_running)
-        if not check_if_running:
+        check_if_tokenization_running = (
+            project_manager.is_rats_tokenization_still_running(project_id)
+        )
+        check_if_doc_bin_running = is_doc_bin_creation_running(project_id)
+        print(
+            "checkifrunninggg",
+            check_if_running,
+            check_if_tokenization_running,
+            check_if_doc_bin_running,
+        )
+        if (
+            not check_if_running
+            and not check_if_tokenization_running
+            and not check_if_doc_bin_running
+        ):
+            time.sleep(1)
             attribute_manager.calculate_user_attribute_all_records(
                 project_id,
                 user_id,
