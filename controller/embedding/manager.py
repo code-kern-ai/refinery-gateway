@@ -109,3 +109,6 @@ def __embed_one_by_one_helper(
                 user_id=user_id,
                 config_string=splitted[2],
             )
+    time.sleep(10)
+    while util.has_encoder_running(project_id):
+        time.sleep(10)
