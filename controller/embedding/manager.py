@@ -16,7 +16,6 @@ def get_recommended_encoders() -> List[Any]:
     else:
         existing_models = []
     for model in existing_models:
-
         if not model["zero_shot_pipeline"]:
             not_yet_known = (
                 len(
@@ -94,22 +93,28 @@ def __embed_one_by_one_helper(
     embedding_data: List[Dict[str, Any]],
     attribute_names: Dict[str, str],
 ) -> None:
-    for embedding_item in embedding_data:
+    i = 0
+    while True:
+        if i >= len(embedding_data):
+            break
+        embedding_item = embedding_data[i]
         splitted = embedding_item.get("name").split("-", 2)
-        if embedding_item.get("type") == enums.EmbeddingType.ON_ATTRIBUTE.value:
-            connector.request_creating_attribute_level_embedding(
-                project_id,
-                attribute_id=attribute_names[splitted[0]],
-                user_id=user_id,
-                config_string=splitted[2],
-            )
-        elif embedding_item.get("type") == enums.EmbeddingType.ON_TOKEN.value:
-            connector.request_creating_token_level_embedding(
-                project_id,
-                attribute_id=attribute_names[splitted[0]],
-                user_id=user_id,
-                config_string=splitted[2],
-            )
-        time.sleep(10)
-        while util.has_encoder_running(project_id):
+        if not util.has_encoder_running(project_id):
+            if embedding_item.get("type") == enums.EmbeddingType.ON_ATTRIBUTE.value:
+                connector.request_creating_attribute_level_embedding(
+                    project_id,
+                    attribute_id=attribute_names[splitted[0]],
+                    user_id=user_id,
+                    config_string=splitted[2],
+                )
+            elif embedding_item.get("type") == enums.EmbeddingType.ON_TOKEN.value:
+                connector.request_creating_token_level_embedding(
+                    project_id,
+                    attribute_id=attribute_names[splitted[0]],
+                    user_id=user_id,
+                    config_string=splitted[2],
+                )
+            i += 1
+        else:
             time.sleep(10)
+            continue
