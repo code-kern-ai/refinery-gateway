@@ -316,6 +316,10 @@ def __calculate_missing_attributes(project_id: str, user_id: str):
         time.sleep(5)
         i += 1
         if len(attribute_ids) == 0:
+            notification.send_organization_update(
+                project_id=project_id,
+                message=f"calculate_attribute:finished:all",
+            )
             break
         if i >= 60:
             i = 0
