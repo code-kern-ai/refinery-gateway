@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from controller.tokenization.tokenization_service import (
     request_tokenize_calculated_attribute,
     request_tokenize_project,
@@ -149,7 +149,7 @@ def add_running_id(
 
 
 def calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str
+    project_id: str, user_id: str, attribute_id: str, include_rats: bool = True
 ) -> None:
     if attribute.get_all(
         project_id=project_id, state_filter=[AttributeState.RUNNING.value]
@@ -172,8 +172,6 @@ def calculate_user_attribute_all_records(
         return
 
     attribute_item = attribute.get(project_id, attribute_id)
-    print("attribute item", attribute_item, attribute_item.name)
-
     equally_named_attributes = attribute.get_all_by_names(
         project_id, [attribute_item.name]
     )
@@ -186,7 +184,6 @@ def calculate_user_attribute_all_records(
             append_to_logs=False,
         )
         return
-    print("updated to running")
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -201,16 +198,19 @@ def calculate_user_attribute_all_records(
         project_id,
         user_id,
         attribute_id,
+        include_rats,
     )
 
 
 def __calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str
+    project_id: str, user_id: str, attribute_id: str, include_rats: bool
 ) -> None:
     print("calculate_user_attribute_all_records", attribute_id)
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
-            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
+            attribute_id=attribute_id,
+            project_id=project_id,
+            doc_bin="docbin_full",
         )
         print("calculated_attributes", calculated_attributes)
         if not calculated_attributes:
@@ -260,7 +260,7 @@ def __calculate_user_attribute_all_records(
         )
         try:
             request_tokenize_calculated_attribute(
-                project_id, user_id, attribute_item.id
+                project_id, user_id, attribute_item.id, include_rats
             )
         except:
             record.delete_user_created_attribute(

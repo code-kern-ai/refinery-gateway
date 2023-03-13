@@ -19,13 +19,14 @@ from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
+from controller.tokenization import manager as tokenization_manager
 
 from submodules.model import enums, exceptions
 from util.notification import create_notification
-from submodules.model.enums import AttributeState, NotificationType
+from submodules.model.enums import AttributeState, NotificationType, UploadStates
 from submodules.model.models import UploadTask
-from submodules.model.business_objects import general, tokenization
-from util import notification
+from submodules.model.business_objects import general, tokenization, record
+from util import daemon, notification
 from controller.tokenization import tokenization_service
 
 logging.basicConfig(level=logging.DEBUG)
@@ -238,7 +239,10 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             is_global_update,
         )
     if task.file_type != "knowledge_base":
-        tokenization_service.request_tokenize_project(project_id, str(task.user_id))
+        only_usable_attributes = task.file_type == "records_add"
+        tokenization_service.request_tokenize_project(
+            project_id, str(task.user_id), True, only_usable_attributes
+        )
 
 
 def file_import_error_handling(
@@ -265,42 +269,76 @@ def file_import_error_handling(
 
 
 def calculate_missing_attributes(project_id: str, user_id: str) -> None:
-    attributes_usable = attribute.get_all(
+    daemon.run(
+        __calculate_missing_attributes,
         project_id,
+        user_id,
+    )
+
+
+def __calculate_missing_attributes(project_id: str, user_id: str):
+    time.sleep(
+        1
+    )  # wait a second to ensure that the process is started in the tokenization service
+    ctx_token = general.get_ctx_token()
+    attributes_usable = attribute.get_all_ordered(
+        project_id,
+        True,
         state_filter=[
             enums.AttributeState.USABLE.value,
         ],
     )
     if len(attributes_usable) == 0:
         return
-
-    if not check_if_tokenization_finished(project_id):
-        for att_usable in attributes_usable:
-            attribute.update(
-                project_id,
-                att_usable.id,
-                state=enums.AttributeState.RUNNING.value,
-            )
-
-    print("check if tokenization finished", check_if_tokenization_finished(project_id))
-    if check_if_tokenization_finished(project_id):
-        for att_usable in attributes_usable:
-            attribute_manager.calculate_user_attribute_all_records(
-                project_id,
-                user_id,
-                att_usable.id,
-            )
-            check_if_running = attribute.get_all(
-                project_id=project_id, state_filter=[enums.AttributeState.RUNNING.value]
-            )
-            while check_if_running and not check_if_tokenization_finished(project_id):
-                time.sleep(10)
-        else:
-            time.sleep(10)
-
-
-def check_if_tokenization_finished(project_id):
-    tokenization_task = tokenization.get_record_tokenization_task(project_id)
-    return tokenization_task.progress == 1 and (
-        project_manager.is_rats_tokenization_still_running(project_id) == False
+    # stored as list so connection results do not affect
+    attribute_ids = [str(att_usable.id) for att_usable in attributes_usable]
+    for att_id in attribute_ids:
+        attribute.update(project_id, att_id, state=enums.AttributeState.INITIAL.value)
+    general.commit()
+    notification.send_organization_update(
+        project_id=project_id, message=f"calculate_attribute:started:all"
     )
+    # first check project tokenization completed
+    i = 0
+    while True:
+        i += 1
+        if i >= 60:
+            i = 0
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+        if tokenization.is_doc_bin_creation_running(project_id):
+            time.sleep(5)
+            continue
+        else:
+            break
+    # next, ensure that the attributes are calculated and tokenized
+    i = 0
+    while True:
+        time.sleep(5)
+        i += 1
+        if len(attribute_ids) == 0:
+            break
+        if i >= 60:
+            i = 0
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+
+        current_att_id = attribute_ids[0]
+        current_att = attribute.get(project_id, current_att_id)
+        if current_att.state == enums.AttributeState.RUNNING.value:
+            continue
+        elif current_att.state == enums.AttributeState.INITIAL.value:
+            attribute_manager.calculate_user_attribute_all_records(
+                project_id, user_id, current_att_id, True
+            )
+        else:
+            if tokenization.is_doc_bin_creation_running_for_attribute(
+                project_id, current_att.name
+            ):
+                continue
+            else:
+                attribute_ids.pop(0)
+                notification.send_organization_update(
+                    project_id=project_id,
+                    message=f"calculate_attribute:finished:{current_att_id}",
+                )
+
+    general.remove_and_refresh_session(ctx_token, False)

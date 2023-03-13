@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 import docker
 import json
 import os
@@ -97,7 +98,6 @@ def run_attribute_calculation_exec_env(
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
         print("Payload: ", payload)
         calculated_attributes = json.loads(payload)
-        print("Calculated attributes: ", calculated_attributes)
     except Exception:
         print("Could not grab data from s3 -- attribute calculation")
         calculated_attributes = {}
