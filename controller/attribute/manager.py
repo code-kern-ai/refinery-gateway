@@ -11,6 +11,7 @@ from submodules.model.enums import AttributeState, DataTypes
 from util import daemon, notification
 
 from . import util
+from sqlalchemy import sql
 
 
 def get_attribute(project_id: str, attribute_id: str) -> Attribute:
@@ -189,6 +190,7 @@ def calculate_user_attribute_all_records(
         attribute_id=attribute_id,
         state=AttributeState.RUNNING.value,
         with_commit=True,
+        started_at=sql.func.now(),
     )
     notification.send_organization_update(
         project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
@@ -205,7 +207,6 @@ def calculate_user_attribute_all_records(
 def __calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str, include_rats: bool
 ) -> None:
-    print("calculate_user_attribute_all_records", attribute_id)
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id,
@@ -286,6 +287,7 @@ def __calculate_user_attribute_all_records(
         attribute_id=attribute_id,
         state=AttributeState.USABLE.value,
         with_commit=True,
+        finished_at=sql.func.now(),
     )
 
     notification.send_organization_update(
