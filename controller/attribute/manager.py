@@ -213,7 +213,6 @@ def __calculate_user_attribute_all_records(
             project_id=project_id,
             doc_bin="docbin_full",
         )
-        print("calculated_attributes", calculated_attributes)
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
                 project_id=project_id,

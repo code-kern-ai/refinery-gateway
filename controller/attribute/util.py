@@ -96,7 +96,6 @@ def run_attribute_calculation_exec_env(
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
-        print("Payload: ", payload)
         calculated_attributes = json.loads(payload)
     except Exception:
         print("Could not grab data from s3 -- attribute calculation")
