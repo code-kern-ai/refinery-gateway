@@ -403,10 +403,9 @@ def __create_embeddings(
         save_embeddings.append(embedding_item)
         request_deleting_embedding(project_id, embedding_id)
 
-    i = 0
-    for embedding_id in embedding_ids:
+    for idx, embedding_id in enumerate(embedding_ids):
         ctx_token = general.remove_and_refresh_session(ctx_token, request_new=True)
-        embedding_item = save_embeddings[i]
+        embedding_item = save_embeddings[idx]
         notification.send_organization_update(
             project_id=project_id, message="embedding:started:all"
         )
@@ -427,5 +426,4 @@ def __create_embeddings(
         time.sleep(5)
         while has_encoder_running(project_id):
             time.sleep(1)
-        i += 1
     return ctx_token
