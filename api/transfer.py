@@ -1,7 +1,7 @@
 import logging
 import traceback
 import time
-from typing import Any
+from typing import Any, List
 
 from controller import organization
 from controller.embedding.connector import (
@@ -325,7 +325,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     # next, ensure that the attributes are calculated and tokenized
     i = 0
     while True:
-        time.sleep(5)
+        time.sleep(1)
         i += 1
         if len(attribute_ids) == 0:
             notification.send_organization_update(
@@ -349,6 +349,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             if tokenization.is_doc_bin_creation_running_for_attribute(
                 project_id, current_att.name
             ):
+                time.sleep(5)
                 continue
             else:
                 attribute_ids.pop(0)
@@ -356,6 +357,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                     project_id=project_id,
                     message=f"calculate_attribute:finished:{current_att_id}",
                 )
+        time.sleep(5)
 
     general.remove_and_refresh_session(ctx_token, False)
 
@@ -376,7 +378,7 @@ def __calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None
 
     embedding_ids = [str(embed.id) for embed in embeddings]
     for embed_id in embedding_ids:
-        embedding.update_embedding_state_failed(project_id, embed_id)
+        embedding.update_embedding_state_waiting(project_id, embed_id)
     general.commit()
 
     try:
@@ -385,6 +387,10 @@ def __calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None
         print(
             f"Error while recreating embeddings for {project_id} when new records are uploaded : {e}"
         )
+        get_waiting_embeddings = embedding.get_waiting_embeddings(project_id)
+        for embed in get_waiting_embeddings:
+            embedding.update_embedding_state_failed(project_id, str(embed.id))
+        general.commit()
     finally:
         notification.send_organization_update(
             project_id=project_id, message="embedding:finished:all"
@@ -393,22 +399,22 @@ def __calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None
 
 
 def __create_embeddings(
-    project_id: str, embedding_ids: str, user_id: str, ctx_token: Any
+    project_id: str,
+    embedding_ids: List[str],
+    user_id: str,
+    ctx_token: Any,
 ) -> Any:
-    save_embeddings = []
+    notification.send_organization_update(
+        project_id=project_id, message="embedding:started:all"
+    )
     for embedding_id in embedding_ids:
+        ctx_token = general.remove_and_refresh_session(ctx_token, request_new=True)
         embedding_item = embedding.get(project_id, embedding_id)
         if not embedding_item:
             continue
-        save_embeddings.append(embedding_item)
+
         request_deleting_embedding(project_id, embedding_id)
 
-    for idx, embedding_id in enumerate(embedding_ids):
-        ctx_token = general.remove_and_refresh_session(ctx_token, request_new=True)
-        embedding_item = save_embeddings[idx]
-        notification.send_organization_update(
-            project_id=project_id, message="embedding:started:all"
-        )
         attribute_id = str(embedding_item.attribute_id)
         attribute_name = attribute.get(project_id, attribute_id).name
         if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
@@ -425,5 +431,7 @@ def __create_embeddings(
             )
         time.sleep(5)
         while has_encoder_running(project_id):
+            if embedding_item.state == enums.EmbeddingState.WAITING.value:
+                break
             time.sleep(1)
     return ctx_token
