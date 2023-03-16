@@ -4,12 +4,8 @@ import time
 from typing import Any, List
 
 from controller import organization
-from controller.embedding.connector import (
-    request_creating_attribute_level_embedding,
-    request_creating_token_level_embedding,
-    request_deleting_embedding,
-)
-from controller.embedding.util import has_encoder_running
+from controller.embedding import util as embedding_util
+from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 
@@ -413,24 +409,24 @@ def __create_embeddings(
         if not embedding_item:
             continue
 
-        request_deleting_embedding(project_id, embedding_id)
+        embedding_connector.request_deleting_embedding(project_id, embedding_id)
 
         attribute_id = str(embedding_item.attribute_id)
         attribute_name = attribute.get(project_id, attribute_id).name
         if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
             prefix = f"{attribute_name}-classification-"
             config_string = embedding_item.name[len(prefix) :]
-            request_creating_attribute_level_embedding(
+            embedding_connector.request_creating_attribute_level_embedding(
                 project_id, attribute_id, user_id, config_string
             )
         else:
             prefix = f"{attribute_name}-extraction-"
             config_string = embedding_item.name[len(prefix) :]
-            request_creating_token_level_embedding(
+            embedding_connector.request_creating_token_level_embedding(
                 project_id, attribute_id, user_id, config_string
             )
         time.sleep(5)
-        while has_encoder_running(project_id):
+        while embedding_util.has_encoder_running(project_id):
             if embedding_item.state == enums.EmbeddingState.WAITING.value:
                 break
             time.sleep(1)
