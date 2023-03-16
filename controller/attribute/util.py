@@ -1,5 +1,3 @@
-import time
-from typing import Optional
 import docker
 import json
 import os
