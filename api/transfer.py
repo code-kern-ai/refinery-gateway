@@ -237,7 +237,6 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         else:
             transfer_manager.import_records_from_file(project_id, task)
         calculate_missing_attributes(project_id, task.user_id)
-        calculate_missing_embedding_tensors(project_id, task.user_id)
     elif "project" in task.file_type:
         transfer_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
@@ -360,6 +359,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
         time.sleep(5)
 
     general.remove_and_refresh_session(ctx_token, False)
+    calculate_missing_embedding_tensors(project_id, user_id)
 
 
 def calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None:
