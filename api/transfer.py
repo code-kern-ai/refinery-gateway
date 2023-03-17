@@ -284,9 +284,8 @@ def calculate_missing_attributes(project_id: str, user_id: str) -> None:
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
-    time.sleep(
-        5
-    )  # wait a second to ensure that the process is started in the tokenization service
+    # wait a second to ensure that the process is started in the tokenization service
+    time.sleep(5)
     ctx_token = general.get_ctx_token()
     attributes_usable = attribute.get_all_ordered(
         project_id,
