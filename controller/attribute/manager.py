@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from controller.tokenization.tokenization_service import (
     request_tokenize_calculated_attribute,
     request_tokenize_project,
@@ -150,7 +150,7 @@ def add_running_id(
 
 
 def calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str
+    project_id: str, user_id: str, attribute_id: str, include_rats: bool = True
 ) -> None:
     if attribute.get_all(
         project_id=project_id, state_filter=[AttributeState.RUNNING.value]
@@ -185,7 +185,6 @@ def calculate_user_attribute_all_records(
             append_to_logs=False,
         )
         return
-
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
@@ -201,15 +200,18 @@ def calculate_user_attribute_all_records(
         project_id,
         user_id,
         attribute_id,
+        include_rats,
     )
 
 
 def __calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str
+    project_id: str, user_id: str, attribute_id: str, include_rats: bool
 ) -> None:
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
-            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
+            attribute_id=attribute_id,
+            project_id=project_id,
+            doc_bin="docbin_full",
         )
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
@@ -258,7 +260,7 @@ def __calculate_user_attribute_all_records(
         )
         try:
             request_tokenize_calculated_attribute(
-                project_id, user_id, attribute_item.id
+                project_id, user_id, attribute_item.id, include_rats
             )
         except:
             record.delete_user_created_attribute(

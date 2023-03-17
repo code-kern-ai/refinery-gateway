@@ -1,13 +1,24 @@
 import logging
 import traceback
+import time
+from typing import Any, List
 
 from controller import organization
+from controller.embedding import util as embedding_util
+from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 
 from controller.transfer.labelstudio import import_preperator
+from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
 from submodules.s3 import controller as s3
-from submodules.model.business_objects import organization
+from submodules.model.business_objects import (
+    attribute,
+    embedding,
+    general,
+    organization,
+    tokenization,
+)
 
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
@@ -16,13 +27,13 @@ from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
+from controller.attribute import manager as attribute_manager
 
 from submodules.model import enums, exceptions
 from util.notification import create_notification
-from submodules.model.enums import NotificationType
-from submodules.model.models import UploadTask
-from submodules.model.business_objects import general
-from util import notification
+from submodules.model.enums import AttributeState, NotificationType, UploadStates
+from submodules.model.models import Embedding, UploadTask
+from util import daemon, notification
 from controller.tokenization import tokenization_service
 
 logging.basicConfig(level=logging.DEBUG)
@@ -221,6 +232,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
+        calculate_missing_attributes(project_id, task.user_id)
     elif "project" in task.file_type:
         transfer_manager.import_project(project_id, task)
     elif "knowledge_base" in task.file_type:
@@ -234,7 +246,10 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             is_global_update,
         )
     if task.file_type != "knowledge_base":
-        tokenization_service.request_tokenize_project(project_id, str(task.user_id))
+        only_usable_attributes = task.file_type == "records_add"
+        tokenization_service.request_tokenize_project(
+            project_id, str(task.user_id), True, only_usable_attributes
+        )
 
 
 def file_import_error_handling(
@@ -258,3 +273,160 @@ def file_import_error_handling(
     notification.send_organization_update(
         project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update
     )
+
+
+def calculate_missing_attributes(project_id: str, user_id: str) -> None:
+    daemon.run(
+        __calculate_missing_attributes,
+        project_id,
+        user_id,
+    )
+
+
+def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
+    # wait a second to ensure that the process is started in the tokenization service
+    time.sleep(5)
+    ctx_token = general.get_ctx_token()
+    attributes_usable = attribute.get_all_ordered(
+        project_id,
+        True,
+        state_filter=[
+            enums.AttributeState.USABLE.value,
+        ],
+    )
+    if len(attributes_usable) == 0:
+        return
+    # stored as list so connection results do not affect
+    attribute_ids = [str(att_usable.id) for att_usable in attributes_usable]
+    for att_id in attribute_ids:
+        attribute.update(project_id, att_id, state=enums.AttributeState.INITIAL.value)
+    general.commit()
+    notification.send_organization_update(
+        project_id=project_id, message="calculate_attribute:started:all"
+    )
+    # first check project tokenization completed
+    i = 0
+    while True:
+        i += 1
+        if i >= 60:
+            i = 0
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+        if tokenization.is_doc_bin_creation_running(project_id):
+            time.sleep(5)
+            continue
+        else:
+            break
+    # next, ensure that the attributes are calculated and tokenized
+    i = 0
+    while True:
+        time.sleep(1)
+        i += 1
+        if len(attribute_ids) == 0:
+            notification.send_organization_update(
+                project_id=project_id,
+                message="calculate_attribute:finished:all",
+            )
+            break
+        if i >= 60:
+            i = 0
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+
+        current_att_id = attribute_ids[0]
+        current_att = attribute.get(project_id, current_att_id)
+        if current_att.state == enums.AttributeState.RUNNING.value:
+            continue
+        elif current_att.state == enums.AttributeState.INITIAL.value:
+            attribute_manager.calculate_user_attribute_all_records(
+                project_id, user_id, current_att_id, True
+            )
+        else:
+            if tokenization.is_doc_bin_creation_running_for_attribute(
+                project_id, current_att.name
+            ):
+                time.sleep(5)
+                continue
+            else:
+                attribute_ids.pop(0)
+                notification.send_organization_update(
+                    project_id=project_id,
+                    message=f"calculate_attribute:finished:{current_att_id}",
+                )
+        time.sleep(5)
+
+    general.remove_and_refresh_session(ctx_token, False)
+    calculate_missing_embedding_tensors(project_id, user_id)
+
+
+def calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None:
+    daemon.run(
+        __calculate_missing_embedding_tensors,
+        project_id,
+        user_id,
+    )
+
+
+def __calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None:
+    ctx_token = general.get_ctx_token()
+    embeddings = embedding.get_finished_embeddings_by_started_at(project_id)
+    if len(embeddings) == 0:
+        return
+
+    embedding_ids = [str(embed.id) for embed in embeddings]
+    for embed_id in embedding_ids:
+        embedding.update_embedding_state_waiting(project_id, embed_id)
+    general.commit()
+
+    try:
+        ctx_token = __create_embeddings(project_id, embedding_ids, user_id, ctx_token)
+    except Exception as e:
+        print(
+            f"Error while recreating embeddings for {project_id} when new records are uploaded : {e}"
+        )
+        get_waiting_embeddings = embedding.get_waiting_embeddings(project_id)
+        for embed in get_waiting_embeddings:
+            embedding.update_embedding_state_failed(project_id, str(embed.id))
+        general.commit()
+    finally:
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:finished:all"
+        )
+        general.remove_and_refresh_session(ctx_token, False)
+
+
+def __create_embeddings(
+    project_id: str,
+    embedding_ids: List[str],
+    user_id: str,
+    ctx_token: Any,
+) -> Any:
+    notification.send_organization_update(
+        project_id=project_id, message="embedding:started:all"
+    )
+    for embedding_id in embedding_ids:
+        ctx_token = general.remove_and_refresh_session(ctx_token, request_new=True)
+        embedding_item = embedding.get(project_id, embedding_id)
+        if not embedding_item:
+            continue
+
+        embedding_connector.request_deleting_embedding(project_id, embedding_id)
+
+        attribute_id = str(embedding_item.attribute_id)
+        attribute_name = attribute.get(project_id, attribute_id).name
+        if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
+            prefix = f"{attribute_name}-classification-"
+            config_string = embedding_item.name[len(prefix) :]
+            embedding_connector.request_creating_attribute_level_embedding(
+                project_id, attribute_id, user_id, config_string
+            )
+        else:
+            prefix = f"{attribute_name}-extraction-"
+            config_string = embedding_item.name[len(prefix) :]
+            embedding_connector.request_creating_token_level_embedding(
+                project_id, attribute_id, user_id, config_string
+            )
+        time.sleep(5)
+        while embedding_util.has_encoder_running(project_id):
+            if embedding_item.state == enums.EmbeddingState.WAITING.value:
+                break
+            time.sleep(1)
+    return ctx_token

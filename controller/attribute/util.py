@@ -32,7 +32,6 @@ def add_log_to_attribute_logs(
 
 
 def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
-
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
@@ -54,7 +53,6 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
 def run_attribute_calculation_exec_env(
     attribute_id: str, project_id: str, doc_bin: str
 ) -> None:
-
     attribute_item = attribute.get(project_id, attribute_id)
 
     prefixed_function_name = f"{attribute_id}_fn"

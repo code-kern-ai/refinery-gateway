@@ -5,7 +5,7 @@ from controller.transfer import util as transfer_util
 from controller.transfer.valid_arguments import valid_arguments
 import pandas as pd
 from util.notification import create_notification
-from submodules.model.enums import NotificationType
+from submodules.model.enums import AttributeState, NotificationType
 from submodules.model.business_objects import attribute, record, general
 from controller.labeling_task.util import infer_labeling_task_name
 import logging
@@ -52,7 +52,6 @@ def run_checks(df: pd.DataFrame, project_id, user_id) -> None:
     duplicated_task_names = set()
     task_names_set = set()
     for task_name in task_names:
-
         if task_name in task_names_set:
             duplicated_task_names.add(task_name)
         else:
@@ -69,9 +68,16 @@ def run_checks(df: pd.DataFrame, project_id, user_id) -> None:
         errors["DuplicatedTaskNames"] = notification.message
 
     # check attribute equality
-    attribute_entities = attribute.get_all(project_id)
+    attribute_entities = attribute.get_all(
+        project_id,
+        state_filter=[
+            AttributeState.UPLOADED.value,
+            AttributeState.AUTOMATICALLY_CREATED.value,
+        ],
+    )
     attribute_names = [attribute_item.name for attribute_item in attribute_entities]
     differences = set(attribute_names).difference(set(attributes))
+
     if differences:
         guard = True
         notification = create_notification(
