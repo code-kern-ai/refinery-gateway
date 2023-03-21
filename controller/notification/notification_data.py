@@ -115,7 +115,7 @@ __notification_data = {
         "docs": enums.DOCS.UPLOADING_DATA.value,
     },
     enums.NotificationType.DUPLICATED_COMPOSITE_KEY.value: {
-        "message_template": "Please upload a file with to the selected composite primary key.",
+        "message_template": "Please upload a file with your projects primary key(s).",
         "title": "Data import",
         "level": enums.Notification.ERROR.value,
         "page": enums.Pages.SETTINGS.value,
