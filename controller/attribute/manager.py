@@ -1,11 +1,10 @@
-import time
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from controller.tokenization.tokenization_service import (
     request_tokenize_calculated_attribute,
     request_tokenize_project,
     request_reupload_docbins,
 )
-from submodules.model.business_objects import attribute, record, tokenization
+from submodules.model.business_objects import attribute, record, tokenization, general
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
 from util import daemon, notification
@@ -207,6 +206,7 @@ def calculate_user_attribute_all_records(
 def __calculate_user_attribute_all_records(
     project_id: str, user_id: str, attribute_id: str, include_rats: bool
 ) -> None:
+    session_token = general.get_ctx_token()
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
             attribute_id=attribute_id,
@@ -226,6 +226,7 @@ def __calculate_user_attribute_all_records(
             attribute_id=attribute_id,
             log="Attribute calculation failed",
         )
+        general.remove_and_refresh_session(session_token)
         return
 
     util.add_log_to_attribute_logs(
@@ -250,6 +251,7 @@ def __calculate_user_attribute_all_records(
             attribute_id=attribute_id,
             log="Writing to the database failed.",
         )
+        general.remove_and_refresh_session(session_token)
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
@@ -262,7 +264,7 @@ def __calculate_user_attribute_all_records(
             request_tokenize_calculated_attribute(
                 project_id, user_id, attribute_item.id, include_rats
             )
-        except:
+        except Exception:
             record.delete_user_created_attribute(
                 project_id=project_id,
                 attribute_id=attribute_id,
@@ -273,6 +275,7 @@ def __calculate_user_attribute_all_records(
                 attribute_id=attribute_id,
                 log="Writing to the database failed.",
             )
+            general.remove_and_refresh_session(session_token)
             return
 
     else:
@@ -292,6 +295,7 @@ def __calculate_user_attribute_all_records(
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
     )
+    general.remove_and_refresh_session(session_token)
 
 
 def __notify_attribute_calculation_failed(
