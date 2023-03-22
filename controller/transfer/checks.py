@@ -1,4 +1,5 @@
 from typing import Tuple, List, Union, Dict
+from controller.auth import manager as auth_manager
 from controller.misc.config_service import get_config_value
 
 from controller.transfer import util as transfer_util
@@ -128,42 +129,42 @@ def run_checks(df: pd.DataFrame, project_id, user_id) -> None:
 
 
 def run_limit_checks(df: pd.DataFrame, project_id, user_id) -> None:
-    limits = get_config_value("limit_checks")
+    org = auth_manager.get_organization_by_user_id(user_id)
     guard = False
     errors = {}
-    if df.shape[0] > limits["max_rows"]:
+    if df.shape[0] > org.max_rows:
         guard = True
         notification = create_notification(
             NotificationType.NEW_ROWS_EXCEED_MAXIMUM_LIMIT,
             user_id,
             project_id,
             df.shape[0],
-            limits["max_rows"],
+            org.max_rows,
         )
         errors["MaxRows"] = notification.message
     else:
         count_current_records = record.count(project_id)
         if count_current_records:
             updating = get_update_amount(df, project_id)
-            if count_current_records - updating + df.shape[0] > limits["max_rows"]:
+            if count_current_records - updating + df.shape[0] > org.max_rows:
                 guard = True
                 notification = create_notification(
                     NotificationType.TOTAL_ROWS_EXCEED_MAXIMUM_LIMIT,
                     user_id,
                     project_id,
                     count_current_records - updating + df.shape[0],
-                    limits["max_rows"],
+                    org.max_rows,
                 )
                 errors["MaxRows"] = notification.message
 
-    if df.shape[1] > limits["max_cols"]:
+    if df.shape[1] > org.max_cols:
         guard = True
         notification = create_notification(
             NotificationType.COLS_EXCEED_MAXIMUM_LIMIT,
             user_id,
             project_id,
             df.shape[1],
-            limits["max_cols"],
+            org.max_cols,
         )
         errors["MaxCols"] = notification.message
     max_length_dict = dict(
@@ -174,7 +175,7 @@ def run_limit_checks(df: pd.DataFrame, project_id, user_id) -> None:
     )
 
     for key in max_length_dict:
-        if max_length_dict[key] > limits["max_char_count"]:
+        if max_length_dict[key] > org.max_char_count:
             guard = True
             notification = create_notification(
                 NotificationType.COL_EXCEED_MAXIMUM_LIMIT,
@@ -182,7 +183,7 @@ def run_limit_checks(df: pd.DataFrame, project_id, user_id) -> None:
                 project_id,
                 key,
                 max_length_dict[key],
-                limits["max_char_count"],
+                org.max_char_count,
             )
             errors["MaxLength"] = notification.message
 

@@ -304,57 +304,75 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     notification.send_organization_update(
         project_id=project_id, message="calculate_attribute:started:all"
     )
-    # first check project tokenization completed
-    i = 0
-    while True:
-        i += 1
-        if i >= 60:
-            i = 0
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
-        if tokenization.is_doc_bin_creation_running(project_id):
-            time.sleep(5)
-            continue
-        else:
-            break
-    # next, ensure that the attributes are calculated and tokenized
-    i = 0
-    while True:
-        time.sleep(1)
-        i += 1
-        if len(attribute_ids) == 0:
-            notification.send_organization_update(
-                project_id=project_id,
-                message="calculate_attribute:finished:all",
-            )
-            break
-        if i >= 60:
-            i = 0
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
 
-        current_att_id = attribute_ids[0]
-        current_att = attribute.get(project_id, current_att_id)
-        if current_att.state == enums.AttributeState.RUNNING.value:
-            continue
-        elif current_att.state == enums.AttributeState.INITIAL.value:
-            attribute_manager.calculate_user_attribute_all_records(
-                project_id, user_id, current_att_id, True
-            )
-        else:
-            if tokenization.is_doc_bin_creation_running_for_attribute(
-                project_id, current_att.name
-            ):
+    try:
+        # first check project tokenization completed
+        i = 0
+        while True:
+            i += 1
+            if i >= 60:
+                i = 0
+                ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            if tokenization.is_doc_bin_creation_running(project_id):
                 time.sleep(5)
                 continue
             else:
-                attribute_ids.pop(0)
-                notification.send_organization_update(
-                    project_id=project_id,
-                    message=f"calculate_attribute:finished:{current_att_id}",
-                )
-        time.sleep(5)
+                break
+        # next, ensure that the attributes are calculated and tokenized
+        i = 0
+        while True:
+            time.sleep(1)
+            i += 1
+            if len(attribute_ids) == 0:
+                break
+            if i >= 60:
+                i = 0
+                ctx_token = general.remove_and_refresh_session(ctx_token, True)
 
-    general.remove_and_refresh_session(ctx_token, False)
-    calculate_missing_embedding_tensors(project_id, user_id)
+            current_att_id = attribute_ids[0]
+            current_att = attribute.get(project_id, current_att_id)
+            if current_att.state == enums.AttributeState.RUNNING.value:
+                continue
+            elif current_att.state == enums.AttributeState.INITIAL.value:
+                attribute_manager.calculate_user_attribute_all_records(
+                    project_id, user_id, current_att_id, True
+                )
+            else:
+                if tokenization.is_doc_bin_creation_running_for_attribute(
+                    project_id, current_att.name
+                ):
+                    time.sleep(5)
+                    continue
+                else:
+                    attribute_ids.pop(0)
+                    notification.send_organization_update(
+                        project_id=project_id,
+                        message=f"calculate_attribute:finished:{current_att_id}",
+                    )
+            time.sleep(5)
+    except Exception as e:
+        print(
+            f"Error while recreating attribute calculation for {project_id} when new records are uploaded : {e}"
+        )
+        get_initial_attributes = attribute.get_all_ordered(
+            project_id,
+            True,
+            state_filter=[
+                enums.AttributeState.INITIAL.value,
+            ],
+        )
+        for attr in get_initial_attributes:
+            attribute.update(
+                project_id, attr.id, state=enums.AttributeState.FAILED.value
+            )
+        general.commit()
+    finally:
+        notification.send_organization_update(
+            project_id=project_id,
+            message="calculate_attribute:finished:all",
+        )
+        general.remove_and_refresh_session(ctx_token, False)
+        calculate_missing_embedding_tensors(project_id, user_id)
 
 
 def calculate_missing_embedding_tensors(project_id: str, user_id: str) -> None:
