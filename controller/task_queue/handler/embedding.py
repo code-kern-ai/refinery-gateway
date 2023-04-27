@@ -44,8 +44,6 @@ def __start_task(task: Dict[str, Any]) -> bool:
         embedding_manager.create_token_level_embedding(
             project_id, user_id, attribute_id, embedding_handle
         )
-
-    # notification.send_organization_update(project_id, message="embedding:dequeued")
     return True
 
 

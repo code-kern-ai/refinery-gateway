@@ -1,10 +1,9 @@
 from threading import Lock, Thread
-from typing import List, Tuple, Dict, Any, Callable, Optional
-from uuid import uuid4
+from typing import Tuple, Dict, Any, Callable
 import os
 import time
 from submodules.model.models import TaskQueue as TaskQueueDBObj
-from . import manager  # import parse_task_to_dict, get_task_function_by_type
+from . import manager
 from submodules.model.business_objects import general, task_queue as task_queue_db_bo
 import traceback
 

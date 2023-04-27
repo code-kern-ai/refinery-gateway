@@ -33,10 +33,6 @@ class ZeroShotProject(graphene.Mutation):
                 "information_source_id": information_source_id,
             },
         )
-        # manager.start_zero_shot_for_project_thread(
-        #     project_id, information_source_id, user_id
-        # )
-
         return ZeroShotProject(ok=True)
 
 
