@@ -11,6 +11,8 @@ def request_tokenize_record(project_id: str, record_id: str) -> None:
         "project_id": str(project_id),
         "record_id": str(record_id),
         "user_id": "",
+        "include_rats": False,
+        "only_uploaded_attributes": False,
     }
     service_requests.post_call_or_raise(url, data)
 

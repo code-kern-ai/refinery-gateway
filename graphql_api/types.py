@@ -132,6 +132,15 @@ class Attribute(SQLAlchemyObjectType):
         interfaces = (Node,)
 
     id = graphene.ID(source="id", required=True)
+    state = graphene.String()
+
+    def resolve_state(self, info):
+        waiting_attribute = task_queue.get_waiting_by_attribute_id(
+            self.project_id, str(self.id)
+        )
+        if waiting_attribute:
+            return "QUEUED"
+        return self.state
 
 
 class Embedding(SQLAlchemyObjectType):

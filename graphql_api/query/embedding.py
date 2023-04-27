@@ -40,7 +40,7 @@ class EmbeddingQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         ##check queued stuff
-        waiting_task = task_queue.get_waiting_by_tokenization(project_id)
+        waiting_task = task_queue.get_by_tokenization(project_id)
         if waiting_task and not waiting_task.is_active:
             return RecordTokenizationTask(
                 id=waiting_task.id,

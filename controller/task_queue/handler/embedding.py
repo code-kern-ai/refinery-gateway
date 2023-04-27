@@ -6,6 +6,7 @@ from submodules.model.business_objects import (
     general,
 )
 from submodules.model.enums import EmbeddingState
+from util import notification
 
 TASK_DONE_STATES = [EmbeddingState.FINISHED.value, EmbeddingState.FAILED.value]
 
@@ -27,6 +28,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
         project_id, task["task_info"]["embedding_name"]
     )
     if embedding_item is not None:
+        task_queue_db_bo.remove_task_from_queue(project_id, task["id"], True)
         return False
     task_db_obj.is_active = True
     general.commit()
@@ -42,6 +44,8 @@ def __start_task(task: Dict[str, Any]) -> bool:
         embedding_manager.create_token_level_embedding(
             project_id, user_id, attribute_id, embedding_handle
         )
+
+    # notification.send_organization_update(project_id, message="embedding:dequeued")
     return True
 
 

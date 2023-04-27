@@ -130,11 +130,19 @@ def create_payload(
     def prepare_input_data_for_payload(
         information_source_item: InformationSource,
     ) -> Tuple[str, Dict[str, Any]]:
+        org_id = organization.get_id_by_project_id(project_id)
         if (
             information_source_item.type
             == enums.InformationSourceType.LABELING_FUNCTION.value
         ):
-            # isn't collected every time but rather whenever tokenization needs to run again --> accesslink to the docbin file on s3
+            # check if docbins exist
+            if not s3.object_exists(org_id, project_id + "/" + "docbin_full"):
+                notification = create_notification(
+                    enums.NotificationType.INFORMATION_SOURCE_S3_DOCBIN_MISSING,
+                    user_id,
+                    project_id,
+                )
+                raise ValueError(notification.message)
             return None, None
 
         elif (
@@ -156,7 +164,6 @@ def create_payload(
             )
             embedding_file_name = f"embedding_tensors_{embedding_id}.csv.bz2"
             embedding_item = embedding.get(project_id, embedding_id)
-            org_id = organization.get_id_by_project_id(project_id)
             if not s3.object_exists(org_id, project_id + "/" + embedding_file_name):
                 notification = create_notification(
                     enums.NotificationType.INFORMATION_SOURCE_S3_EMBEDDING_MISSING,

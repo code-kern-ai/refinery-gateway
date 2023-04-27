@@ -10,6 +10,7 @@ from .handler import (
     embedding as embedding_handler,
     information_source as information_source_handler,
     tokenization as tokenization_handler,
+    attribute_calculation as attribute_calculation_handler,
 )
 import copy
 
@@ -60,6 +61,8 @@ def get_task_function_by_type(type: str) -> Tuple[Callable, Callable, int]:
         return information_source_handler.get_task_functions()
     if type == enums.TaskType.TOKENIZATION.value:
         return tokenization_handler.get_task_functions()
+    if type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
+        return attribute_calculation_handler.get_task_functions()
     raise ValueError(f"Task type {type} not supported yet")
 
 

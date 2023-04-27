@@ -3,6 +3,9 @@ from controller.auth import manager as auth
 import graphene
 from controller.attribute import manager
 
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
+
 
 class CreateUserAttribute(graphene.Mutation):
     class Arguments:
@@ -97,7 +100,16 @@ class CalculateUserAttributeAllRecords(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_by_info(info).id
-        manager.calculate_user_attribute_all_records(project_id, user_id, attribute_id)
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.ATTRIBUTE_CALCULATION,
+            user_id,
+            {
+                "attribute_id": attribute_id,
+            },
+            True,
+        )
+
         return CalculateUserAttributeAllRecords(ok=True)
 
 

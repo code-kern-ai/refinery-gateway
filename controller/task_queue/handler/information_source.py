@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Tuple, Callable
+from typing import Any, Dict, Tuple, Callable
 from controller.payload import manager as payload_manager
 from controller.zero_shot import manager as zero_shot_manager
 from submodules.model.business_objects import (
@@ -55,5 +55,4 @@ def __check_finished(task: Dict[str, Any]) -> bool:
     payload_item = information_source_db_bo.get_payload(project_id, payload_id)
     if payload_item is None:
         return True
-    # print(payload_item.state, flush=True)
     return payload_item.state in TASK_DONE_STATES

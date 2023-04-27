@@ -3,7 +3,13 @@ from controller.tokenization.tokenization_service import (
     request_tokenize_calculated_attribute,
     request_reupload_docbins,
 )
-from submodules.model.business_objects import attribute, record, tokenization, general
+from submodules.model.business_objects import (
+    attribute,
+    record,
+    tokenization,
+    general,
+    task_queue,
+)
 from submodules.model.models import Attribute
 from submodules.model.enums import AttributeState, DataTypes
 from util import daemon, notification

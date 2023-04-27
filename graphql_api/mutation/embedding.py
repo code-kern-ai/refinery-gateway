@@ -34,6 +34,9 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
                 ),
             },
         )
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:queued"
+        )
         return CreateAttributeLevelEmbedding(ok=True)
 
 
@@ -62,6 +65,9 @@ class CreateTokenLevelEmbedding(graphene.Mutation):
                     project_id, attribute_id, type, embedding_handle
                 ),
             },
+        )
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:queued"
         )
         return CreateTokenLevelEmbedding(ok=True)
 

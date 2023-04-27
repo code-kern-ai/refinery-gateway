@@ -1,13 +1,8 @@
-from typing import Any, List, Dict, Tuple, Callable
-from controller.embedding import manager as embedding_manager
+from typing import Any, Dict, Tuple, Callable
 from submodules.model.business_objects import (
     task_queue as task_queue_db_bo,
-    embedding as embedding_db_bo,
     general,
 )
-from submodules.model.enums import EmbeddingState
-
-TASK_DONE_STATES = [EmbeddingState.FINISHED.value, EmbeddingState.FAILED.value]
 from controller.tokenization import tokenization_service
 from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
 
