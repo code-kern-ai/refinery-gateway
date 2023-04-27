@@ -6,7 +6,10 @@ from submodules.model import enums, Record
 import os
 from submodules.model.business_objects import task_queue as task_queue_db_bo
 from submodules.model.models import TaskQueue as TaskQueueDBObj
-from .handler import embedding as embedding_handler
+from .handler import (
+    embedding as embedding_handler,
+    information_source as information_source_handler,
+)
 import copy
 
 from controller.task_queue import task_queue
@@ -18,12 +21,13 @@ def add_task(
     user_id: str,
     task_info: Dict[str, str],
     priority: bool = False,
-):
-    task_obj = task_queue_db_bo.add_task_to_queue(
+) -> str:
+    task_item = task_queue_db_bo.add_task_to_queue(
         project_id, type, user_id, task_info, priority, with_commit=True
     )
 
-    add_task_to_task_queue(task_obj)
+    add_task_to_task_queue(task_item)
+    return str(task_item.id)
 
 
 def get_all_waiting_by_type(project_id: str, type: str) -> List[TaskQueueDBObj]:
@@ -51,6 +55,8 @@ def parse_task_to_dict(task: TaskQueueDBObj) -> Dict[str, Any]:
 def get_task_function_by_type(type: str) -> Tuple[Callable, Callable, int]:
     if type == enums.TaskType.EMBEDDING.value:
         return embedding_handler.get_task_functions()
+    if type == enums.TaskType.INFORMATION_SOURCE.value:
+        return information_source_handler.get_task_functions()
     raise ValueError(f"Task type {type} not supported yet")
 
 

@@ -55,6 +55,7 @@ class CustomTaskQueue:
             self.check_every = check_every
 
     def __init__(self, max_normal: int, max_priority: int):
+        self._lock = Lock()
         self._max_normal = max_normal
         self._fifo_queue_normal = ThreadSafeList()
         self._active_normal = ThreadSafeList()
@@ -74,30 +75,33 @@ class CustomTaskQueue:
         check_finished_function: Callable[[Dict[str, Any]], bool],
         check_every: int = 1,
     ):
-        active = self._active_priority if task.priority else self._active_normal
-        max = self._max_priority if task.priority else self._max_normal
+        with self._lock:
+            active = self._active_priority if task.priority else self._active_normal
+            max = self._max_priority if task.priority else self._max_normal
 
-        task_info = self.TaskInfo(
-            task, start_function, check_finished_function, check_every
-        )
-        # maybe ensure prio tasks can  be added to none prio queue if fits
-        if active.length() >= max:
-            append_to = (
-                self._fifo_queue_priority if task.priority else self._fifo_queue_normal
+            task_info = self.TaskInfo(
+                task, start_function, check_finished_function, check_every
             )
-            append_to.append(task_info)
-            return
-        self.__start_task(task_info)
+            add_to_prio = task.priority
+            # ensure prio tasks can be added to none prio queue if fits
+            if active.length() >= max:
+                if task.priority and self._active_normal.length() < self._max_normal:
+                    add_to_prio = False
+                else:
+                    append_to = (
+                        self._fifo_queue_priority
+                        if task.priority
+                        else self._fifo_queue_normal
+                    )
+                    append_to.append(task_info)
+                    return
+            self.__start_task(task_info, add_to_prio)
 
-    def __start_task(self, task_info: TaskInfo) -> bool:
+    def __start_task(self, task_info: TaskInfo, to_prio: bool) -> bool:
         if not task_info:
             return False
 
-        active = (
-            self._active_priority
-            if task_info.task_dict["priority"]
-            else self._active_normal
-        )
+        active = self._active_priority if to_prio else self._active_normal
         # since multiple gateway container can exist the start can "fail" if the task is already active
         if not task_info.start_function(task_info.task_dict):
             return False
@@ -138,25 +142,25 @@ class CustomTaskQueue:
             task_queue_db_bo.remove_task_from_queue(
                 finished.task_dict["project_id"], finished.task_dict["id"]
             )
-            next_task = None
-            while not self.__start_task(next_task):
-                next_task = self.__get_next_item(priority)
+            next_task, p = None, False
+            while not self.__start_task(next_task, p):
+                next_task, p = self.__get_next_item(priority)
                 if not next_task:
                     break
         if len(to_remove) > 0:
             general.commit()
 
-    def __get_next_item(self, priority: bool):
+    def __get_next_item(self, priority: bool) -> Tuple[TaskInfo, bool]:
         # normal queue can solve priority tasks but not the other way around
         if priority:
             if self._fifo_queue_priority.length() > 0:
-                return self._fifo_queue_priority.pop(0)
+                return self._fifo_queue_priority.pop(0), True
         else:
             if self._fifo_queue_normal.length() > 0:
-                return self._fifo_queue_normal.pop(0)
+                return self._fifo_queue_normal.pop(0), False
             if self._fifo_queue_priority.length() > 0:
-                return self._fifo_queue_priority.pop(0)
-        return None
+                return self._fifo_queue_priority.pop(0), False
+        return None, False
 
 
 task_queue = None

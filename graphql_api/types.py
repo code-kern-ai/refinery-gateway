@@ -17,6 +17,7 @@ from submodules.model.business_objects import (
     information_source,
     labeling_task,
     project,
+    task_queue,
 )
 from submodules.model import models
 from util import notification
@@ -438,6 +439,18 @@ class InformationSource(SQLAlchemyObjectType):
     last_payload = graphene.Field(InformationSourcePayload)
 
     def resolve_last_payload(self, info):
+        ##check queued stuff
+        waiting_payload = task_queue.get_waiting_by_information_source(
+            self.project_id, str(self.id)
+        )
+        if waiting_payload:
+            return InformationSourcePayload(
+                id=waiting_payload.id,
+                created_at=waiting_payload.created_at,
+                state="QUEUED",
+                iteration=-1,
+                progress=0,
+            )
         return information_source.get_last_payload(self.project_id, self.id)
 
 

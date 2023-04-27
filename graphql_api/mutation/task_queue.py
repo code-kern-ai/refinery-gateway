@@ -16,8 +16,6 @@ class DeleteFromTaskQueue(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         manager.remove_task_from_queue(project_id, task_id)
-        # TODO: add notification
-        # notification.send_organization_update(project_id, f"record_deleted:{record_id}")
         return DeleteFromTaskQueue(ok=True)
 
 

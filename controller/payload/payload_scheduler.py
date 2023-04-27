@@ -468,20 +468,33 @@ def read_container_logs_thread(
     payload_id: str,
     docker_container: Any,
 ):
+
+    ctx_token = general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     information_source_payload = information_source.get_payload(project_id, payload_id)
     previous_progress = -1
     last_timestamp = None
+    c = 0
     while name in __containers_running:
         time.sleep(1)
+        c += 1
+        if c > 100:
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            information_source_payload = information_source.get_payload(
+                project_id, payload_id
+            )
         if not name in __containers_running:
             break
-        log_lines = docker_container.logs(
-            stdout=True,
-            stderr=True,
-            timestamps=True,
-            since=last_timestamp,
-        )
+        try:
+            log_lines = docker_container.logs(
+                stdout=True,
+                stderr=True,
+                timestamps=True,
+                since=last_timestamp,
+            )
+        except:
+            # failsafe for containers that shut down during the read
+            break
         current_logs = [
             l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
         ]
@@ -506,6 +519,7 @@ def read_container_logs_thread(
         set_payload_progress(
             project_id, information_source_payload, last_entry, factor=0.8
         )
+    general.remove_and_refresh_session(ctx_token)
 
 
 def get_inference_dir() -> str:

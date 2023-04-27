@@ -171,18 +171,7 @@ def create_zero_shot_information_source(
 
 def start_zero_shot_for_project_thread(
     project_id: str, information_source_id: str, user_id: str
-) -> None:
-    daemon.run(
-        __start_zero_shot_for_project,
-        project_id,
-        information_source_id,
-        user_id,
-    )
-
-
-def __start_zero_shot_for_project(
-    project_id: str, information_source_id: str, user_id: str
-) -> None:
+) -> str:
     zero_shot_is = information_source.get(project_id, information_source_id)
 
     if not zero_shot_is:
@@ -199,9 +188,21 @@ def __start_zero_shot_for_project(
         datetime.datetime.now(),
         with_commit=True,
     )
-
     payload_id = str(new_payload.id)
-    new_payload = None  # free variable for gc
+    daemon.run(
+        __start_zero_shot_for_project,
+        project_id,
+        information_source_id,
+        user_id,
+        payload_id,
+    )
+    return payload_id
+
+
+def __start_zero_shot_for_project(
+    project_id: str, information_source_id: str, user_id: str, payload_id: str
+) -> None:
+
     zs_service.start_zero_shot_for_project(project_id, payload_id)
 
     # refetch after service call
