@@ -5,7 +5,6 @@ import traceback
 from typing import Any, List, Optional, Dict
 import zipfile
 
-from controller.tokenization import tokenization_service
 from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
     import_knowledge_base_file,
@@ -42,6 +41,8 @@ from sqlalchemy.sql import text as sql_text
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
 from submodules.model.business_objects import record_label_association as rla
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
 
 from util.notification import create_notification
 
@@ -311,7 +312,15 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
         else:
             project_creation_manager.manage_data_import(project_id, upload_task_id)
             task = upload_task.get(project_id, upload_task_id)
-            tokenization_service.request_tokenize_project(project_id, str(task.user_id))
+            task_queue_manager.add_task(
+                project_id,
+                TaskType.TOKENIZATION,
+                str(task.user_id),
+                {
+                    "include_rats": True,
+                    "only_uploaded_attributes": False,
+                },
+            )
         upload_task.update(
             project_id, upload_task_id, state=enums.UploadStates.DONE.value
         )

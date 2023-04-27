@@ -23,7 +23,8 @@ from submodules.model.business_objects import (
 from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
 from controller.misc import config_service
-from controller.tokenization.tokenization_service import request_tokenize_project
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
@@ -121,7 +122,15 @@ def __delete_project_data_from_inference_dir(project_id: str) -> None:
 
 def import_sample_project(user_id: str, organization_id: str, name: str) -> Project:
     project_item = handler.import_sample_project(user_id, organization_id, name)
-    request_tokenize_project(str(project_item.id), str(user_id))
+    task_queue_manager.add_task(
+        str(project_item.id),
+        TaskType.TOKENIZATION,
+        user_id,
+        {
+            "include_rats": True,
+            "only_uploaded_attributes": False,
+        },
+    )
     record_label_association.update_is_valid_manual_label_for_project(
         str(project_item.id)
     )

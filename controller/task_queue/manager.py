@@ -9,6 +9,7 @@ from submodules.model.models import TaskQueue as TaskQueueDBObj
 from .handler import (
     embedding as embedding_handler,
     information_source as information_source_handler,
+    tokenization as tokenization_handler,
 )
 import copy
 
@@ -22,7 +23,7 @@ def add_task(
     task_info: Dict[str, str],
     priority: bool = False,
 ) -> str:
-    task_item = task_queue_db_bo.add_task_to_queue(
+    task_item = task_queue_db_bo.add(
         project_id, type, user_id, task_info, priority, with_commit=True
     )
 
@@ -57,6 +58,8 @@ def get_task_function_by_type(type: str) -> Tuple[Callable, Callable, int]:
         return embedding_handler.get_task_functions()
     if type == enums.TaskType.INFORMATION_SOURCE.value:
         return information_source_handler.get_task_functions()
+    if type == enums.TaskType.TOKENIZATION.value:
+        return tokenization_handler.get_task_functions()
     raise ValueError(f"Task type {type} not supported yet")
 
 

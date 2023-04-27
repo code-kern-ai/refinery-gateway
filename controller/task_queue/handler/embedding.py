@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Tuple, Callable
+from typing import Any, Dict, Tuple, Callable
 from controller.embedding import manager as embedding_manager
 from submodules.model.business_objects import (
     task_queue as task_queue_db_bo,

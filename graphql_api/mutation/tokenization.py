@@ -4,6 +4,8 @@ from controller.auth import manager as auth
 from controller.tokenization import manager
 from controller.auth.manager import get_user_by_info
 import graphene
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
 
 
 class TokenizeRecord(graphene.Mutation):
@@ -30,7 +32,15 @@ class TokenizeProject(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        manager.request_tokenize_project(project_id, user.id)
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.TOKENIZATION,
+            str(user.id),
+            {
+                "include_rats": True,
+                "only_uploaded_attributes": False,
+            },
+        )
         return TokenizeRecord(ok=True)
 
 
