@@ -803,3 +803,11 @@ class Task(graphene.ObjectType):
     task_type = graphene.String()
     started_at = graphene.DateTime()
     finished_at = graphene.DateTime()
+
+
+class TaskQueue(SQLAlchemyObjectType):
+    class Meta:
+        model = models.TaskQueue
+        interfaces = (Node,)
+
+    id = graphene.ID(source="id", required=True)

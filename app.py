@@ -18,6 +18,8 @@ from starlette.middleware import Middleware
 from starlette.routing import Route
 
 from graphql_api import schema
+from controller.task_queue.task_queue import init_task_queue
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -48,3 +50,5 @@ routes = [
 middleware = [Middleware(DatabaseSessionHandler)]
 
 app = Starlette(routes=routes, middleware=middleware)
+
+init_task_queue()

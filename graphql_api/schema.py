@@ -23,6 +23,7 @@ from graphql_api.query.organization import OrganizationQuery
 from graphql_api.query.payload import PayloadQuery
 from graphql_api.query.project import ProjectQuery
 from graphql_api.query.record import RecordQuery
+from graphql_api.query.task_queue import TaskQueueQuery
 from graphql_api.query.record_label_association import RecordLabelAssociationQuery
 from graphql_api.query.user import UserQuery
 from graphql_api.query.zero_shot import ZeroShotQuery
@@ -48,6 +49,7 @@ from graphql_api.mutation.organization import OrganizationMutation
 from graphql_api.mutation.payload import PayloadMutation
 from graphql_api.mutation.project import ProjectMutation
 from graphql_api.mutation.record import RecordMutation
+from graphql_api.mutation.task_queue import TaskQueueMutation
 from graphql_api.mutation.record_label_association import RecordLabelAssociationMutation
 from graphql_api.mutation.tokenization import TokenizationMutation
 from graphql_api.mutation.weak_supervisor import WeakSupervisionMutation
@@ -74,6 +76,7 @@ class Query(
     ProjectQuery,
     RecordLabelAssociationQuery,
     RecordQuery,
+    TaskQueueQuery,
     NotificationQuery,
     UploadTaskQuery,
     WeakSupervisionQuery,
@@ -107,6 +110,7 @@ class Mutation(
     ProjectMutation,
     RecordLabelAssociationMutation,
     RecordMutation,
+    TaskQueueMutation,
     TokenizationMutation,
     WeakSupervisionMutation,
     ZeroShotMutation,
