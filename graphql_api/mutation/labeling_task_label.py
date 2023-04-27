@@ -36,7 +36,7 @@ class CreateLabelingTaskLabel(graphene.Mutation):
         task = task_manager.get_labeling_task(project_id, labeling_task_id)
         project = project_manager.get_project(project_id)
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.AddLabel(
                 ProjectName=f"{project.name}-{project.id}",
                 Name=label_name,
@@ -67,7 +67,7 @@ class CreateLabelingTaskLabels(graphene.Mutation):
         project = project_manager.get_project(project_id)
         for label in created_labels:
             doc_ock.post_event(
-                user,
+                str(user.id),
                 events.AddLabel(
                     ProjectName=f"{project.name}-{project_id}",
                     Name=label.name,

@@ -30,7 +30,7 @@ class CreateProject(graphene.Mutation):
             project.id, f"project_created:{str(project.id)}", True
         )
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.CreateProject(Name=f"{name}-{project.id}", Description=description),
         )
         return CreateProject(project=project, ok=True)
@@ -49,7 +49,7 @@ class CreateSampleProject(graphene.Mutation):
         organization = auth.get_organization_id_by_info(info)
         project = manager.import_sample_project(user.id, organization.id, name)
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.CreateProject(
                 Name=f"{project.name}-{project.id}", Description=project.description
             ),

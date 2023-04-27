@@ -48,10 +48,9 @@ def manage_data_import(project_id: str, task_id: str) -> None:
 
     upload_task_manager.update_upload_task_to_finished(task)
 
-    user = user_manager.get_or_create_user(task.user_id)
     project_item = project.get(project_id)
     doc_ock.post_event(
-        user,
+        task.user_id,
         events.UploadRecords(
             ProjectName=f"{project_item.name}-{project_item.id}", Records=number_records
         ),

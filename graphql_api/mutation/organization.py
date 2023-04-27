@@ -29,7 +29,7 @@ class AddUserToOrganization(graphene.Mutation):
         user = auth.get_user_by_email(user_mail)
         user_manager.update_organization_of_user(organization_name, user_mail)
         doc_ock.register_user(user)
-        doc_ock.post_event(user, events.SignUp())
+        doc_ock.post_event(str(user.id), events.SignUp())
         return AddUserToOrganization(ok=True)
 
 

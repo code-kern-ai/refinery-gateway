@@ -80,7 +80,7 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             project.id, f"project_created:{str(project.id)}", True
         )
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.CreateProject(Name=f"{name}-{project.id}", Description=description),
         )
 

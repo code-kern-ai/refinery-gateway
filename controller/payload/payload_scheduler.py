@@ -96,7 +96,6 @@ def create_payload(
     )
 
     def prepare_and_run_execution_pipeline(
-        user: User,
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
@@ -107,7 +106,6 @@ def create_payload(
                 information_source_item
             )
             execution_pipeline(
-                user,
                 payload_id,
                 project_id,
                 information_source_item,
@@ -200,7 +198,6 @@ def create_payload(
             return embedding_file_name, input_data
 
     def execution_pipeline(
-        user: User,
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
@@ -309,7 +306,7 @@ def create_payload(
 
         project_item = project.get(project_id)
         doc_ock.post_event(
-            user,
+            user_id,
             events.AddInformationSourceRun(
                 ProjectName=f"{project_item.name}-{project_item.id}",
                 Type=information_source_item.type,
@@ -319,18 +316,15 @@ def create_payload(
             ),
         )
 
-    user = user_manager.get_user(user_id)
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
-            user,
             payload.id,
             project_id,
             information_source_item,
         )
     else:
         prepare_and_run_execution_pipeline(
-            user,
             payload.id,
             project_id,
             information_source_item,
