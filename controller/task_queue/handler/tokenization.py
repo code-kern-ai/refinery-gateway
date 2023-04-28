@@ -22,12 +22,20 @@ def __start_task(task: Dict[str, Any]) -> bool:
     task_db_obj.is_active = True
     general.commit()
 
-    tokenization_service.request_tokenize_project(
-        project_id,
-        task["created_by"],
-        task["task_info"]["include_rats"],
-        task["task_info"]["only_uploaded_attributes"],
-    )
+    if task["task_info"]["type"] == "project":
+        tokenization_service.request_tokenize_project(
+            project_id,
+            task["created_by"],
+            task["task_info"]["include_rats"],
+            task["task_info"]["only_uploaded_attributes"],
+        )
+    else:
+        tokenization_service.request_tokenize_calculated_attribute(
+            project_id,
+            task["created_by"],
+            task["task_info"]["attribute_id"],
+            task["task_info"]["include_rats"],
+        )
 
     return True
 

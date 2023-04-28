@@ -82,6 +82,7 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             TaskType.TOKENIZATION,
             str(user.id),
             {
+                "type": "project",
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },

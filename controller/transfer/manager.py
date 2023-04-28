@@ -317,6 +317,7 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
                 TaskType.TOKENIZATION,
                 str(task.user_id),
                 {
+                    "type": "project",
                     "include_rats": True,
                     "only_uploaded_attributes": False,
                 },

@@ -254,6 +254,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             TaskType.TOKENIZATION,
             task.user_id,
             {
+                "type": "project",
                 "include_rats": True,
                 "only_uploaded_attributes": only_usable_attributes,
             },

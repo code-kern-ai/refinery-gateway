@@ -1,6 +1,5 @@
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import (
-    request_tokenize_calculated_attribute,
     request_reupload_docbins,
 )
 from submodules.model.business_objects import (
@@ -153,6 +152,7 @@ def add_running_id(
             TaskType.TOKENIZATION,
             user_id,
             {
+                "type": "project",
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },
@@ -272,9 +272,17 @@ def __calculate_user_attribute_all_records(
             project_id, attribute_id, "Triggering tokenization."
         )
         try:
-            request_tokenize_calculated_attribute(
-                project_id, user_id, attribute_item.id, include_rats
+            task_queue_manager.add_task(
+                project_id,
+                TaskType.TOKENIZATION,
+                user_id,
+                {
+                    "type": "attribute",
+                    "attribute_id": str(attribute_item.id),
+                    "include_rats": include_rats,
+                },
             )
+
         except Exception:
             record.delete_user_created_attribute(
                 project_id=project_id,

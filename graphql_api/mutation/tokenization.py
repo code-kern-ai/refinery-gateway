@@ -37,6 +37,7 @@ class TokenizeProject(graphene.Mutation):
             TaskType.TOKENIZATION,
             str(user.id),
             {
+                "type": "project",
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },

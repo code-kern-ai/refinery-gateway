@@ -127,6 +127,7 @@ def import_sample_project(user_id: str, organization_id: str, name: str) -> Proj
         TaskType.TOKENIZATION,
         user_id,
         {
+            "type": "project",
             "include_rats": True,
             "only_uploaded_attributes": False,
         },

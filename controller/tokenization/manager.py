@@ -98,6 +98,7 @@ def start_project_tokenization(project_id: str, user_id: str) -> None:
         TaskType.TOKENIZATION,
         user_id,
         {
+            "type": "project",
             "include_rats": True,
             "only_uploaded_attributes": False,
         },
