@@ -266,22 +266,30 @@ def split_record_data_and_label_data(
         label_data = {}
         for imported_key, item in data_item.items():
             if "__" in imported_key:
-                if (
-                    item.strip() == ""
-                ):  # if a label is only consists of whitespaces or is empty continue
+                item_str = item
+                if not isinstance(item, str):
+                    if isinstance(item, float):
+                        # special case since str(float) returns a string with a dot for integers %g is used to perserve . if nessecary but removes otherwise
+                        # this will result in some issues for close large numbers but this shouldn't be used as a label name anyway
+                        item_str = "%g" % (item)
+                    else:
+                        item_str = str(item)
+
+                if item_str.strip() == "":
+                    # if a label is only consists of whitespaces or is empty continue
                     continue
 
                 task_name = controller.labeling_task.util.infer_labeling_task_name(
                     imported_key
                 )
-                label_data[task_name] = item
+                label_data[task_name] = item_str
                 tasks_data[task_name] = tasks_data.get(task_name) or {
                     "attribute": controller.transfer.util.infer_attribute(imported_key)
                     or None,
                     "labels": [],
                 }
-                if item not in tasks_data.get(task_name).get("labels"):
-                    tasks_data.get(task_name).get("labels").append(item)
+                if item_str not in tasks_data.get(task_name).get("labels"):
+                    tasks_data.get(task_name).get("labels").append(item_str)
             else:
                 record_data[imported_key] = item
         records_data.append(record_data)
