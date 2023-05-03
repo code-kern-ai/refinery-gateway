@@ -109,8 +109,16 @@ class CustomTaskQueue:
             task_info.task_dict["is_active"] = True
         except:
             print(
-                f"Task start of failed (task info->{task_info.task_dict}):", flush=True
+                f"Task start of task failed (task info->{task_info.task_dict}) -> deleting from db...",
+                flush=True,
             )
+            task_queue_db_bo.remove_task_from_queue(
+                task_info.task_dict["project_id"],
+                task_info.task_dict["id"],
+                with_commit=True,
+            )
+
+            print(f"done...\nError:", flush=True)
             print(traceback.format_exc(), flush=True)
             return False
         return True
