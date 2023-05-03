@@ -25,9 +25,9 @@ def __start_task(task: Dict[str, Any]) -> bool:
         attribute_item = attribute_db_bo.get(
             project_id, task["task_info"]["attribute_id"]
         )
-        if attribute_item is None or (
-            attribute_item.state
-            not in [AttributeState.INITIAL.value, AttributeState.FAILED.value]
+        if (
+            attribute_item is None
+            or attribute_item.state != AttributeState.USABLE.value
         ):
             task_queue_db_bo.remove_task_from_queue(project_id, task["id"], True)
             return False

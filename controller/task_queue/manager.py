@@ -27,9 +27,9 @@ def add_task(
     task_item = task_queue_db_bo.add(
         project_id, task_type, user_id, task_info, priority, with_commit=True
     )
-
+    task_id = str(task_item.id)
     add_task_to_task_queue(task_item)
-    return str(task_item.id)
+    return task_id
 
 
 def get_all_waiting_by_type(project_id: str, task_type: str) -> List[TaskQueueDBObj]:
