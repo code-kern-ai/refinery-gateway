@@ -269,7 +269,7 @@ def split_record_data_and_label_data(
                 item_str = item
                 if not isinstance(item, str):
                     if isinstance(item, float):
-                        # special case since str(float) returns a string with a dot so %g is used
+                        # special case since str(float) returns a string with a dot for integers %g is used to perserve . if nessecary but removes otherwise
                         # this will result in some issues close large numbers but this shouldn't be used as a label name anyway
                         item_str = "%g" % (item)
                     else:
