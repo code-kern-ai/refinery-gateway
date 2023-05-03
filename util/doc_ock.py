@@ -23,19 +23,19 @@ def register_user(user: models.User):
     return service_requests.post_call_or_raise(url, user_data)
 
 
-def post_event(user: models.User, event: events.Event):
+def post_event(user_id: str, event: events.Event):
     caller_dict = __get_caller_data()
-    daemon.run(__post_thread, user, event, caller_dict)
+    daemon.run(__post_thread, user_id, event, caller_dict)
 
 
 def __post_thread(
-    user: models.User, event: events.Event, caller_dict: Dict[str, Union[str, int]]
+    user_id: str, event: events.Event, caller_dict: Dict[str, Union[str, int]]
 ):
     try:
-        url = f"{BASE_URI}/track/{user.id}/{event.event_name()}"
+        url = f"{BASE_URI}/track/{user_id}/{event.event_name()}"
         event.IsManaged = config_service.get_config_value("is_managed")
         add_user_activity_entry(
-            str(user.id),
+            str(user_id),
             {"eventName": event.event_name(), **event.__dict__},
             caller_dict,
         )

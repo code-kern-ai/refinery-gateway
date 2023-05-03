@@ -4,6 +4,10 @@ from controller.zero_shot import manager
 from controller.auth import manager as auth_manager
 
 
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
+
+
 class ZeroShotProject(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
@@ -20,10 +24,15 @@ class ZeroShotProject(graphene.Mutation):
         auth_manager.check_demo_access(info)
         auth_manager.check_project_access(info, project_id)
         user_id = auth_manager.get_user_id_by_info(info)
-        manager.start_zero_shot_for_project_thread(
-            project_id, information_source_id, user_id
-        )
 
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.INFORMATION_SOURCE,
+            user_id,
+            {
+                "information_source_id": information_source_id,
+            },
+        )
         return ZeroShotProject(ok=True)
 
 

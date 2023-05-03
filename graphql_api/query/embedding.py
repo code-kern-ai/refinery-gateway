@@ -5,7 +5,7 @@ import graphene
 from controller.auth import manager as auth
 from graphql_api import types
 from graphql_api.types import Encoder, LanguageModel, RecordTokenizationTask
-from submodules.model.business_objects import tokenization
+from submodules.model.business_objects import tokenization, task_queue
 from util import spacy_util
 from controller.embedding import manager
 
@@ -39,4 +39,13 @@ class EmbeddingQuery(graphene.ObjectType):
     ) -> RecordTokenizationTask:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
+        ##check queued stuff
+        waiting_task = task_queue.get_by_tokenization(project_id)
+        if waiting_task and not waiting_task.is_active:
+            return RecordTokenizationTask(
+                id=waiting_task.id,
+                started_at=waiting_task.created_at,
+                state="QUEUED",
+                progress=-1,
+            )
         return tokenization.get_record_tokenization_task(project_id)

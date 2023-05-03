@@ -13,10 +13,11 @@ from submodules.model.business_objects.record import (
 from util import daemon
 from controller.tokenization import tokenization_service
 from controller.tokenization.tokenization_service import (
-    request_tokenize_project,
     request_tokenize_record,
 )
 import logging
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,10 +93,15 @@ def start_record_tokenization(project_id: str, record_id: str) -> None:
 
 
 def start_project_tokenization(project_id: str, user_id: str) -> None:
-    daemon.run(
-        request_tokenize_project,
+    task_queue_manager.add_task(
         project_id,
+        TaskType.TOKENIZATION,
         user_id,
+        {
+            "scope": RecordTokenizationScope.PROJECT.value,
+            "include_rats": True,
+            "only_uploaded_attributes": False,
+        },
     )
 
 

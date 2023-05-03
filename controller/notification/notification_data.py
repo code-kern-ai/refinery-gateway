@@ -158,6 +158,13 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.INFORMATION_SOURCES.value,
     },
+    enums.NotificationType.INFORMATION_SOURCE_S3_DOCBIN_MISSING.value: {
+        "message_template": "Tokenization docs missing in S3 storage. Docs are present once tokenization process is started (not queued).",
+        "title": "Heuristic execution",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.INFORMATION_SOURCES.value,
+    },
     enums.NotificationType.WEAK_SUPERVISION_TASK_STARTED.value: {
         "message_template": "Started weak supervision.",
         "title": "Weak supervision",

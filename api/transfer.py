@@ -10,7 +10,6 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 
 from controller.transfer.labelstudio import import_preperator
-from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
@@ -31,10 +30,13 @@ from controller.attribute import manager as attribute_manager
 
 from submodules.model import enums, exceptions
 from util.notification import create_notification
-from submodules.model.enums import AttributeState, NotificationType, UploadStates
-from submodules.model.models import Embedding, UploadTask
+from submodules.model.enums import NotificationType
+from submodules.model.models import UploadTask
 from util import daemon, notification
-from controller.tokenization import tokenization_service
+
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType, RecordTokenizationScope
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -247,8 +249,15 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         )
     if task.file_type != "knowledge_base":
         only_usable_attributes = task.file_type == "records_add"
-        tokenization_service.request_tokenize_project(
-            project_id, str(task.user_id), True, only_usable_attributes
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.TOKENIZATION,
+            task.user_id,
+            {
+                "scope": RecordTokenizationScope.PROJECT.value,
+                "include_rats": True,
+                "only_uploaded_attributes": only_usable_attributes,
+            },
         )
 
 

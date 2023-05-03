@@ -96,7 +96,6 @@ def create_payload(
     )
 
     def prepare_and_run_execution_pipeline(
-        user: User,
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
@@ -107,7 +106,6 @@ def create_payload(
                 information_source_item
             )
             execution_pipeline(
-                user,
                 payload_id,
                 project_id,
                 information_source_item,
@@ -132,11 +130,19 @@ def create_payload(
     def prepare_input_data_for_payload(
         information_source_item: InformationSource,
     ) -> Tuple[str, Dict[str, Any]]:
+        org_id = organization.get_id_by_project_id(project_id)
         if (
             information_source_item.type
             == enums.InformationSourceType.LABELING_FUNCTION.value
         ):
-            # isn't collected every time but rather whenever tokenization needs to run again --> accesslink to the docbin file on s3
+            # check if docbins exist
+            if not s3.object_exists(org_id, project_id + "/" + "docbin_full"):
+                notification = create_notification(
+                    enums.NotificationType.INFORMATION_SOURCE_S3_DOCBIN_MISSING,
+                    user_id,
+                    project_id,
+                )
+                raise ValueError(notification.message)
             return None, None
 
         elif (
@@ -158,7 +164,6 @@ def create_payload(
             )
             embedding_file_name = f"embedding_tensors_{embedding_id}.csv.bz2"
             embedding_item = embedding.get(project_id, embedding_id)
-            org_id = organization.get_id_by_project_id(project_id)
             if not s3.object_exists(org_id, project_id + "/" + embedding_file_name):
                 notification = create_notification(
                     enums.NotificationType.INFORMATION_SOURCE_S3_EMBEDDING_MISSING,
@@ -200,7 +205,6 @@ def create_payload(
             return embedding_file_name, input_data
 
     def execution_pipeline(
-        user: User,
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
@@ -309,7 +313,7 @@ def create_payload(
 
         project_item = project.get(project_id)
         doc_ock.post_event(
-            user,
+            user_id,
             events.AddInformationSourceRun(
                 ProjectName=f"{project_item.name}-{project_item.id}",
                 Type=information_source_item.type,
@@ -319,18 +323,15 @@ def create_payload(
             ),
         )
 
-    user = user_manager.get_user(user_id)
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
-            user,
             payload.id,
             project_id,
             information_source_item,
         )
     else:
         prepare_and_run_execution_pipeline(
-            user,
             payload.id,
             project_id,
             information_source_item,
@@ -468,20 +469,33 @@ def read_container_logs_thread(
     payload_id: str,
     docker_container: Any,
 ):
+
+    ctx_token = general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     information_source_payload = information_source.get_payload(project_id, payload_id)
     previous_progress = -1
     last_timestamp = None
+    c = 0
     while name in __containers_running:
         time.sleep(1)
+        c += 1
+        if c > 100:
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            information_source_payload = information_source.get_payload(
+                project_id, payload_id
+            )
         if not name in __containers_running:
             break
-        log_lines = docker_container.logs(
-            stdout=True,
-            stderr=True,
-            timestamps=True,
-            since=last_timestamp,
-        )
+        try:
+            log_lines = docker_container.logs(
+                stdout=True,
+                stderr=True,
+                timestamps=True,
+                since=last_timestamp,
+            )
+        except:
+            # failsafe for containers that shut down during the read
+            break
         current_logs = [
             l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
         ]
@@ -506,6 +520,7 @@ def read_container_logs_thread(
         set_payload_progress(
             project_id, information_source_payload, last_entry, factor=0.8
         )
+    general.remove_and_refresh_session(ctx_token)
 
 
 def get_inference_dir() -> str:

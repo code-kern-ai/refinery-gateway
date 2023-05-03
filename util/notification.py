@@ -89,8 +89,7 @@ def create_notification(
         send_organization_update(
             project_id, f"notification_created:{user_id}", True, organization_id
         )
-    user = get_or_create_user(user_id)
-    doc_ock.post_event(user, events.AddNotification(Level=level, Message=message))
+    doc_ock.post_event(user_id, events.AddNotification(Level=level, Message=message))
     return new_notification
 
 

@@ -49,7 +49,7 @@ class CreateClassificationAssociation(graphene.Mutation):
         # this below seems not optimal positioned here
         project = project_manager.get_project(project_id)
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.AddLabelsToRecord(
                 ProjectName=f"{project.name}-{project.id}",
                 Type=enums.LabelingTaskType.CLASSIFICATION.value,
@@ -105,7 +105,7 @@ class CreateExtractionAssociation(graphene.Mutation):
         )
         project = project_manager.get_project(project_id)
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.AddLabelsToRecord(
                 ProjectName=f"{project.name}-{project.id}",
                 Type=enums.LabelingTaskType.INFORMATION_EXTRACTION.value,
@@ -141,7 +141,7 @@ class SetGoldStarAnnotationForTask(graphene.Mutation):
 
         project = project_manager.get_project(project_id)
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.AddLabelsToRecord(
                 ProjectName=f"{project.name}-{project.id}",
                 Type=task_type,

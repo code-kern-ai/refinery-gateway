@@ -49,7 +49,7 @@ class PostDocOck(graphene.Mutation):
 
         for key in event_data:
             setattr(event_instance, key, event_data[key])
-        doc_ock.post_event(user, event_instance)
+        doc_ock.post_event(str(user.id), event_instance)
         return UpdateConfig(ok=True)
 
 

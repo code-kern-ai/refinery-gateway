@@ -1,14 +1,19 @@
 from typing import List, Tuple
 from controller.tokenization.tokenization_service import (
-    request_tokenize_calculated_attribute,
-    request_tokenize_project,
     request_reupload_docbins,
 )
-from submodules.model.business_objects import attribute, record, tokenization, general
+from submodules.model.business_objects import (
+    attribute,
+    record,
+    tokenization,
+    general,
+)
 from submodules.model.models import Attribute
-from submodules.model.enums import AttributeState, DataTypes
+from submodules.model.enums import AttributeState, DataTypes, RecordTokenizationScope
 from util import daemon, notification
 
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
 from . import util
 from sqlalchemy import sql
 
@@ -141,10 +146,15 @@ def add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
     if for_retokenization:
-        daemon.run(
-            request_tokenize_project,
+        task_queue_manager.add_task(
             project_id,
+            TaskType.TOKENIZATION,
             user_id,
+            {
+                "scope": RecordTokenizationScope.PROJECT.value,
+                "include_rats": True,
+                "only_uploaded_attributes": False,
+            },
         )
 
 
@@ -261,9 +271,17 @@ def __calculate_user_attribute_all_records(
             project_id, attribute_id, "Triggering tokenization."
         )
         try:
-            request_tokenize_calculated_attribute(
-                project_id, user_id, attribute_item.id, include_rats
+            task_queue_manager.add_task(
+                project_id,
+                TaskType.TOKENIZATION,
+                user_id,
+                {
+                    "scope": RecordTokenizationScope.ATTRIBUTE.value,
+                    "attribute_id": str(attribute_item.id),
+                    "include_rats": include_rats,
+                },
             )
+
         except Exception:
             record.delete_user_created_attribute(
                 project_id=project_id,

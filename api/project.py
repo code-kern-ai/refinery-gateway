@@ -12,6 +12,9 @@ from submodules.model import events
 from submodules.s3.controller import bucket_exists, create_bucket
 from util import doc_ock, notification, adapter
 
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType, RecordTokenizationScope
+
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -74,13 +77,22 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             user_id=user.id, project_id=project.id, file_name=name, data=data
         )
 
-        tokenization_service.request_tokenize_project(str(project.id), str(user.id))
+        task_queue_manager.add_task(
+            str(project.id),
+            TaskType.TOKENIZATION,
+            str(user.id),
+            {
+                "scope": RecordTokenizationScope.PROJECT.value,
+                "include_rats": True,
+                "only_uploaded_attributes": False,
+            },
+        )
 
         notification.send_organization_update(
             project.id, f"project_created:{str(project.id)}", True
         )
         doc_ock.post_event(
-            user,
+            str(user.id),
             events.CreateProject(Name=f"{name}-{project.id}", Description=description),
         )
 

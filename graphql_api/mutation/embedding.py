@@ -4,6 +4,9 @@ from controller.auth.manager import get_user_by_info
 from util import notification
 import graphene
 
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType, EmbeddingType
+
 
 class CreateAttributeLevelEmbedding(graphene.Mutation):
     class Arguments:
@@ -17,8 +20,22 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        manager.create_attribute_level_embedding(
-            project_id, user.id, attribute_id, embedding_handle
+        embedding_type = EmbeddingType.ON_ATTRIBUTE.value
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.EMBEDDING,
+            user.id,
+            {
+                "embedding_type": embedding_type,
+                "attribute_id": attribute_id,
+                "embedding_handle": embedding_handle,
+                "embedding_name": manager.get_embedding_name(
+                    project_id, attribute_id, embedding_type, embedding_handle
+                ),
+            },
+        )
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:queued"
         )
         return CreateAttributeLevelEmbedding(ok=True)
 
@@ -35,8 +52,22 @@ class CreateTokenLevelEmbedding(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        manager.create_token_level_embedding(
-            project_id, user.id, attribute_id, embedding_handle
+        embedding_type = EmbeddingType.ON_TOKEN.value
+        task_queue_manager.add_task(
+            project_id,
+            TaskType.EMBEDDING,
+            user.id,
+            {
+                "embedding_type": embedding_type,
+                "attribute_id": attribute_id,
+                "embedding_handle": embedding_handle,
+                "embedding_name": manager.get_embedding_name(
+                    project_id, attribute_id, embedding_type, embedding_handle
+                ),
+            },
+        )
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:queued"
         )
         return CreateTokenLevelEmbedding(ok=True)
 

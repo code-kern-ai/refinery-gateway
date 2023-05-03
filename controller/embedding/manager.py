@@ -7,6 +7,7 @@ from . import util
 from . import connector
 from controller.misc import manager as misc
 from controller.model_provider import manager as model_manager
+from submodules.model.business_objects import attribute
 
 
 def get_recommended_encoders() -> List[Any]:
@@ -112,3 +113,25 @@ def __embed_one_by_one_helper(
         time.sleep(5)
         while util.has_encoder_running(project_id):
             time.sleep(5)
+
+
+def get_embedding_name(
+    project_id: str, attribute_id: str, level: str, embedding_handle: str
+) -> str:
+    if level not in [
+        enums.EmbeddingType.ON_ATTRIBUTE.value,
+        enums.EmbeddingType.ON_TOKEN.value,
+    ]:
+        raise ValueError("level must be either attribute or token")
+    embedding_type = (
+        "classification"
+        if level == enums.EmbeddingType.ON_ATTRIBUTE.value
+        else "extraction"
+    )
+
+    attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item is None:
+        raise ValueError("attribute not found")
+    attribute_name = attribute_item.name
+
+    return f"{attribute_name}-{embedding_type}-{embedding_handle}"

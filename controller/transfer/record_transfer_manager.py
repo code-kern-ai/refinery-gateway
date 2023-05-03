@@ -140,7 +140,7 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     user = user_manager.get_or_create_user(upload_task.user_id)
     project_item = project.get(project_id)
     doc_ock.post_event(
-        user,
+        str(user.id),
         events.UploadRecords(
             ProjectName=f"{project_item.name}-{project_item.id}", Records=number_records
         ),
