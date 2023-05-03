@@ -107,7 +107,7 @@ class CustomTaskQueue:
                 return False
             active.append(task_info)
             task_info.task_dict["is_active"] = True
-        except:
+        except Exception:
             print(
                 f"Task start of task failed (task info->{task_info.task_dict}) -> deleting from db...",
                 flush=True,
@@ -118,7 +118,7 @@ class CustomTaskQueue:
                 with_commit=True,
             )
 
-            print(f"done...\nError:", flush=True)
+            print("done...\nError:", flush=True)
             print(traceback.format_exc(), flush=True)
             return False
         return True
@@ -135,7 +135,7 @@ class CustomTaskQueue:
             try:
                 self.__check_task_queue(True, seconds)
                 self.__check_task_queue(False, seconds)
-            except:
+            except Exception:
                 print(traceback.format_exc(), flush=True)
             time.sleep(1)
 

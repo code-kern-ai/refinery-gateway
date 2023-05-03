@@ -6,7 +6,6 @@ from submodules.model.business_objects import (
     general,
 )
 from submodules.model.enums import EmbeddingState, EmbeddingType
-from util import notification
 
 TASK_DONE_STATES = [EmbeddingState.FINISHED.value, EmbeddingState.FAILED.value]
 
