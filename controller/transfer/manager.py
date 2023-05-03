@@ -42,7 +42,7 @@ from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
 from submodules.model.business_objects import record_label_association as rla
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, RecordTokenizationScope
 
 from util.notification import create_notification
 
@@ -317,7 +317,7 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
                 TaskType.TOKENIZATION,
                 str(task.user_id),
                 {
-                    "type": "project",
+                    "scope": RecordTokenizationScope.PROJECT.value,
                     "include_rats": True,
                     "only_uploaded_attributes": False,
                 },

@@ -24,7 +24,7 @@ from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
 from controller.misc import config_service
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
@@ -40,8 +40,6 @@ from controller.payload import manager as payload_manager
 from controller.transfer.record_transfer_manager import import_records_and_rlas
 from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
-from submodules.model import enums
-from util import adapter
 
 
 def get_project(project_id: str) -> Project:
@@ -127,7 +125,7 @@ def import_sample_project(user_id: str, organization_id: str, name: str) -> Proj
         TaskType.TOKENIZATION,
         user_id,
         {
-            "type": "project",
+            "scope": RecordTokenizationScope.PROJECT.value,
             "include_rats": True,
             "only_uploaded_attributes": False,
         },

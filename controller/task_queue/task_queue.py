@@ -22,7 +22,7 @@ class ThreadSafeList:
         with self._lock:
             self._list.extend(value)
 
-    def pop(self, index=-1):
+    def pop(self, index: int = -1):
         with self._lock:
             return self._list.pop(index)
 
@@ -47,13 +47,13 @@ class CustomTaskQueue:
             start_function: Callable[[Dict[str, Any]], bool],
             check_finished_function: Callable[[Dict[str, Any]], bool],
             check_every: int,
-        ):
+        ) -> None:
             self.task_dict = manager.parse_task_to_dict(task)
             self.start_function = start_function
             self.check_finished_function = check_finished_function
             self.check_every = check_every
 
-    def __init__(self, max_normal: int, max_priority: int):
+    def __init__(self, max_normal: int, max_priority: int) -> None:
         self._lock = Lock()
         self._max_normal = max_normal
         self._fifo_queue_normal = ThreadSafeList()
@@ -73,7 +73,7 @@ class CustomTaskQueue:
         start_function: Callable[[Dict[str, Any]], bool],
         check_finished_function: Callable[[Dict[str, Any]], bool],
         check_every: int = 1,
-    ):
+    ) -> None:
         with self._lock:
             active = self._active_priority if task.priority else self._active_normal
             max = self._max_priority if task.priority else self._max_normal
@@ -102,13 +102,20 @@ class CustomTaskQueue:
 
         active = self._active_priority if to_prio else self._active_normal
         # since multiple gateway container can exist the start can "fail" if the task is already active
-        if not task_info.start_function(task_info.task_dict):
+        try:
+            if not task_info.start_function(task_info.task_dict):
+                return False
+            active.append(task_info)
+            task_info.task_dict["is_active"] = True
+        except:
+            print(
+                f"Task start of failed (task info->{task_info.task_dict}):", flush=True
+            )
+            print(traceback.format_exc(), flush=True)
             return False
-        active.append(task_info)
-        task_info.task_dict["is_active"] = True
         return True
 
-    def __thread_checker(self):
+    def __thread_checker(self) -> None:
         ctx_token = general.get_ctx_token()
 
         seconds = 0
@@ -124,7 +131,7 @@ class CustomTaskQueue:
                 print(traceback.format_exc(), flush=True)
             time.sleep(1)
 
-    def __check_task_queue(self, priority: bool, seconds: int):
+    def __check_task_queue(self, priority: bool, seconds: int) -> None:
         to_check = self._active_priority if priority else self._active_normal
 
         to_remove = []
@@ -135,7 +142,7 @@ class CustomTaskQueue:
                     task.task_dict["is_active"] = False
                     to_remove.append(idx)
 
-        # cleanup
+        # cleanup & requeue existing tasks
         for idx in reversed(to_remove):
             finished = to_check.pop(idx)
             task_queue_db_bo.remove_task_from_queue(
@@ -179,7 +186,7 @@ def init_task_queue() -> CustomTaskQueue:
     existing_tasks = task_queue_db_bo.get_all_tasks()
     for task in existing_tasks:
         start_func, check_func, check_every = manager.get_task_function_by_type(
-            task.type
+            task.task_type
         )
         task_queue.add_task(task, start_func, check_func, check_every)
     return task_queue

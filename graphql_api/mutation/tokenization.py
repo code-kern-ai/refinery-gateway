@@ -5,7 +5,7 @@ from controller.tokenization import manager
 from controller.auth.manager import get_user_by_info
 import graphene
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, RecordTokenizationScope
 
 
 class TokenizeRecord(graphene.Mutation):
@@ -37,7 +37,7 @@ class TokenizeProject(graphene.Mutation):
             TaskType.TOKENIZATION,
             str(user.id),
             {
-                "type": "project",
+                "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },

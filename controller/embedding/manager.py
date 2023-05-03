@@ -118,9 +118,16 @@ def __embed_one_by_one_helper(
 def get_embedding_name(
     project_id: str, attribute_id: str, level: str, embedding_handle: str
 ) -> str:
-    if level not in ["attribute", "token"]:
+    if level not in [
+        enums.EmbeddingType.ON_ATTRIBUTE.value,
+        enums.EmbeddingType.ON_TOKEN.value,
+    ]:
         raise ValueError("level must be either attribute or token")
-    embedding_type = "classification" if level == "attribute" else "extraction"
+    embedding_type = (
+        "classification"
+        if level == enums.EmbeddingType.ON_ATTRIBUTE.value
+        else "extraction"
+    )
 
     attribute_item = attribute.get(project_id, attribute_id)
     if attribute_item is None:

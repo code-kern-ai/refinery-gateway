@@ -19,5 +19,6 @@ class TaskQueueQuery(graphene.ObjectType):
     def resolve_queued_tasks(
         self, info, project_id: str, task_type: str
     ) -> List[TaskQueue]:
+        auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         return manager.get_all_waiting_by_type(project_id, task_type)

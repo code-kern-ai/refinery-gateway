@@ -35,7 +35,7 @@ from submodules.model.models import UploadTask
 from util import daemon, notification
 
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, RecordTokenizationScope
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -254,7 +254,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             TaskType.TOKENIZATION,
             task.user_id,
             {
-                "type": "project",
+                "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": only_usable_attributes,
             },

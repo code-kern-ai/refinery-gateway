@@ -5,7 +5,7 @@ from util import notification
 import graphene
 
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, EmbeddingType
 
 
 class CreateAttributeLevelEmbedding(graphene.Mutation):
@@ -20,17 +20,17 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        type = "attribute"
+        embedding_type = EmbeddingType.ON_ATTRIBUTE.value
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
             user.id,
             {
-                "type": type,
+                "embedding_type": embedding_type,
                 "attribute_id": attribute_id,
                 "embedding_handle": embedding_handle,
                 "embedding_name": manager.get_embedding_name(
-                    project_id, attribute_id, type, embedding_handle
+                    project_id, attribute_id, embedding_type, embedding_handle
                 ),
             },
         )
@@ -52,17 +52,17 @@ class CreateTokenLevelEmbedding(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        type = "token"
+        embedding_type = EmbeddingType.ON_TOKEN.value
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
             user.id,
             {
-                "type": type,
+                "embedding_type": embedding_type,
                 "attribute_id": attribute_id,
                 "embedding_handle": embedding_handle,
                 "embedding_name": manager.get_embedding_name(
-                    project_id, attribute_id, type, embedding_handle
+                    project_id, attribute_id, embedding_type, embedding_handle
                 ),
             },
         )

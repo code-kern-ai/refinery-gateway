@@ -7,10 +7,9 @@ from submodules.model.business_objects import (
     record,
     tokenization,
     general,
-    task_queue,
 )
 from submodules.model.models import Attribute
-from submodules.model.enums import AttributeState, DataTypes
+from submodules.model.enums import AttributeState, DataTypes, RecordTokenizationScope
 from util import daemon, notification
 
 from controller.task_queue import manager as task_queue_manager
@@ -152,7 +151,7 @@ def add_running_id(
             TaskType.TOKENIZATION,
             user_id,
             {
-                "type": "project",
+                "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },
@@ -277,7 +276,7 @@ def __calculate_user_attribute_all_records(
                 TaskType.TOKENIZATION,
                 user_id,
                 {
-                    "type": "attribute",
+                    "scope": RecordTokenizationScope.ATTRIBUTE.value,
                     "attribute_id": str(attribute_item.id),
                     "include_rats": include_rats,
                 },

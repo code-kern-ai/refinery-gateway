@@ -22,7 +22,7 @@ def upgrade():
         "task_queue",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("type", sa.String(), nullable=True),
+        sa.Column("task_type", sa.String(), nullable=True),
         sa.Column("task_info", sa.JSON(), nullable=True),
         sa.Column("priority", sa.Boolean(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=True),

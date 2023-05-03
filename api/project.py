@@ -13,7 +13,7 @@ from submodules.s3.controller import bucket_exists, create_bucket
 from util import doc_ock, notification, adapter
 
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -82,7 +82,7 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
             TaskType.TOKENIZATION,
             str(user.id),
             {
-                "type": "project",
+                "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": False,
             },

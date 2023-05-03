@@ -5,7 +5,7 @@ from submodules.model.business_objects import (
     embedding as embedding_db_bo,
     general,
 )
-from submodules.model.enums import EmbeddingState
+from submodules.model.enums import EmbeddingState, EmbeddingType
 from util import notification
 
 TASK_DONE_STATES = [EmbeddingState.FINISHED.value, EmbeddingState.FAILED.value]
@@ -36,7 +36,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
     user_id = task["created_by"]
     attribute_id = task["task_info"]["attribute_id"]
     embedding_handle = task["task_info"]["embedding_handle"]
-    if task["task_info"]["type"] == "attribute":
+    if task["task_info"]["embedding_type"] == EmbeddingType.ON_ATTRIBUTE.value:
         embedding_manager.create_attribute_level_embedding(
             project_id, user_id, attribute_id, embedding_handle
         )
