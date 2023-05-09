@@ -141,7 +141,20 @@ def add_running_id(
 ) -> None:
     if attribute.get_by_name(project_id, attribute_name):
         raise ValueError(f"attribute with name {attribute_name} already exists")
+    general.commit()
 
+    # added threading for session management because otherwise this can sometimes create a deadlock
+    thread = daemon.prepare_thread(
+        __add_running_id, user_id, project_id, attribute_name, for_retokenization
+    )
+    thread.start()
+    thread.join()
+
+
+def __add_running_id(
+    user_id: str, project_id: str, attribute_name: str, for_retokenization: bool = True
+):
+    session_token = general.get_ctx_token()
     attribute.add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
@@ -156,6 +169,7 @@ def add_running_id(
                 "only_uploaded_attributes": False,
             },
         )
+    general.remove_and_refresh_session(session_token)
 
 
 def calculate_user_attribute_all_records(

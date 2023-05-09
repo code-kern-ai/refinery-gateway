@@ -67,10 +67,16 @@ def get_upload_credentials_and_id(
 
 def import_records_from_file(project_id: str, task: UploadTask) -> None:
     import_file(project_id, task)
-    check_and_add_running_id(project_id, str(task.user_id))
+    import datetime
+
+    print("after import", datetime.datetime.now(), flush=True)
+    # check_and_add_running_id(project_id, str(task.user_id))
+    print("after running_id", datetime.datetime.now(), flush=True)
     record_label_association.update_is_valid_manual_label_for_project(project_id)
+    print("after valid manual", datetime.datetime.now(), flush=True)
     general.commit()
     check_and_update_null_labels(project_id, str(task.user_id))
+    print("after null check", datetime.datetime.now(), flush=True)
 
 
 def check_and_update_null_labels(project_id: str, user_id: str) -> None:
