@@ -229,11 +229,12 @@ def __get_record_data_query(project_id: str, row_options: Dict[str, Any]) -> str
 
 
 def __record_data_by_type(project_id: str, row_options: Dict[str, Any]) -> str:
-    if row_options.get("type") == "SLICE":
+    print(row_options, flush=True)
+    if row_options.get("type") == enums.RecordExportAmountTypes.SLICE.value:
         return ___record_data_by_slice(project_id, row_options.get("id"))
-    elif row_options.get("type") == "SESSION":
+    elif row_options.get("type") == enums.RecordExportAmountTypes.SESSION.value:
         return __record_data_by_session(project_id, row_options.get("id"))
-    elif row_options.get("type") == "ALL":
+    elif row_options.get("type") == enums.RecordExportAmountTypes.ALL.value:
         return __record_data_without_reducing(project_id)
     else:
         message = (

@@ -19,6 +19,7 @@ from submodules.model.business_objects import (
     embedding,
     information_source,
     general,
+    organization,
 )
 from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
@@ -469,3 +470,22 @@ def __create_missing_information_source_pickles(
             time.sleep(1)
 
     return session_token
+
+
+def check_in_deletion_projects() -> None:
+    # this is only supposed to be called during startup of the application
+    daemon.run(__check_in_deletion_projects)
+
+
+def __check_in_deletion_projects() -> None:
+    # wait for startup to finish
+    time.sleep(2)
+    to_be_deleted = []
+    orgs = organization.get_all()
+    for org_item in orgs:
+        projects = project.get_all(str(org_item.id))
+        for project_item in projects:
+            if project_item.status == enums.ProjectStatus.IN_DELETION.value:
+                to_be_deleted.append(str(project_item.id))
+    for project_id in to_be_deleted:
+        delete_project(project_id)

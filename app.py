@@ -19,6 +19,7 @@ from starlette.routing import Route
 
 from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queue
+from controller.project.manager import check_in_deletion_projects
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -52,3 +53,4 @@ middleware = [Middleware(DatabaseSessionHandler)]
 app = Starlette(routes=routes, middleware=middleware)
 
 init_task_queue()
+check_in_deletion_projects()

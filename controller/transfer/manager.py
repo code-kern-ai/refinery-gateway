@@ -67,7 +67,7 @@ def get_upload_credentials_and_id(
 
 def import_records_from_file(project_id: str, task: UploadTask) -> None:
     import_file(project_id, task)
-    check_and_add_running_id(project_id, str(task.user_id))
+    # adding of running_id now in pandas handling for performance reasons
     record_label_association.update_is_valid_manual_label_for_project(project_id)
     general.commit()
     check_and_update_null_labels(project_id, str(task.user_id))

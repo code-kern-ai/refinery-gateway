@@ -3,13 +3,13 @@ from typing import List, Dict, Tuple, Union, Optional
 
 from submodules.model import enums
 from .checks import check_argument_allowed, run_checks, run_limit_checks
-from submodules.model.models import UploadTask, Attribute
+from submodules.model.models import UploadTask
 import pandas as pd
 from submodules.model.enums import NotificationType
+from submodules.model.business_objects import record
 import os
 import logging
 import traceback
-from submodules.model.business_objects import export
 from util import category
 from util import notification
 
@@ -45,7 +45,7 @@ def convert_to_record_dict(
     user_id: str,
     file_import_options: str,
     project_id: str,
-) -> List:
+) -> Tuple[List, str]:
     if not file_type:
         notification.create_notification(
             NotificationType.FILE_TYPE_NOT_GIVEN,
@@ -100,7 +100,28 @@ def convert_to_record_dict(
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)
-    return df.to_dict("records")
+    added_col = add_running_id_if_not_present(df, project_id)
+    return df.to_dict("records"), added_col
+
+
+def add_running_id_if_not_present(df: pd.DataFrame, project_id: str) -> Optional[str]:
+    record_item = record.get_one(project_id)
+    if record_item:
+        # project already has records => no extensions of existing data
+        return
+    has_id_like = False
+    for key in df.columns:
+        if category.infer_category_enum(df, key) == enums.DataTypes.INTEGER.value:
+            has_id_like = True
+            break
+    if has_id_like:
+        return
+    col_name = "running_id"
+    while col_name in df.columns:
+        col_name += "_"
+    df[col_name] = df.index
+
+    return col_name
 
 
 def check_and_convert_category_for_unknown(
@@ -130,7 +151,7 @@ def string_to_import_option_dict(
         if len(tmp) == 2:
             parameter = tmp[0].strip()
             if not check_argument_allowed(parameter):
-                create_notification(
+                notification.create_notification(
                     NotificationType.UNKNOWN_PARAMETER,
                     user_id,
                     project_id,

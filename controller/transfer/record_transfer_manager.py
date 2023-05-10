@@ -123,7 +123,7 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     )
     record_category = category.infer_category(upload_task.file_name)
 
-    data = convert_to_record_dict(
+    data, added_col = convert_to_record_dict(
         file_type,
         tmp_file_name,
         upload_task.user_id,
@@ -134,7 +134,12 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
     import_records_and_rlas(
         project_id, upload_task.user_id, data, upload_task, record_category
     )
-
+    if added_col:
+        attribute_item = attribute.get_by_name(project_id, added_col)
+        attribute_item.relative_position = 0
+        attribute_item.is_primary_key = True
+        attribute_item.state = enums.AttributeState.AUTOMATICALLY_CREATED.value
+        general.commit()
     upload_task_manager.update_upload_task_to_finished(upload_task)
 
     user = user_manager.get_or_create_user(upload_task.user_id)
