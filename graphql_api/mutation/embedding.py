@@ -13,10 +13,11 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
         project_id = graphene.ID(required=True)
         attribute_id = graphene.ID(required=True)
         embedding_handle = graphene.String()
+        platform = graphene.String()
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
+    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str, platform: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
@@ -30,8 +31,9 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
                 "attribute_id": attribute_id,
                 "embedding_handle": embedding_handle,
                 "embedding_name": manager.get_embedding_name(
-                    project_id, attribute_id, embedding_type, embedding_handle
+                    project_id, attribute_id, embedding_type, embedding_handle, platform
                 ),
+                "platform": platform,
             },
         )
         notification.send_organization_update(
@@ -45,10 +47,11 @@ class CreateTokenLevelEmbedding(graphene.Mutation):
         project_id = graphene.ID(required=True)
         attribute_id = graphene.ID(required=True)
         embedding_handle = graphene.String()
+        platform = graphene.String()
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
+    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str, platform: str):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)

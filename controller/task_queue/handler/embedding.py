@@ -35,13 +35,14 @@ def __start_task(task: Dict[str, Any]) -> bool:
     user_id = task["created_by"]
     attribute_id = task["task_info"]["attribute_id"]
     embedding_handle = task["task_info"]["embedding_handle"]
+    platform = task["task_info"]["platform"]
     if task["task_info"]["embedding_type"] == EmbeddingType.ON_ATTRIBUTE.value:
         embedding_manager.create_attribute_level_embedding(
-            project_id, user_id, attribute_id, embedding_handle
+            project_id, user_id, attribute_id, embedding_handle, platform
         )
     else:
         embedding_manager.create_token_level_embedding(
-            project_id, user_id, attribute_id, embedding_handle
+            project_id, user_id, attribute_id, embedding_handle, platform
         )
     return True
 

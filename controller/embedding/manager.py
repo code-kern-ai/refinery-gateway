@@ -7,6 +7,7 @@ from . import util
 from . import connector
 from controller.misc import manager as misc
 from controller.model_provider import manager as model_manager
+from controller.project import manager as project_manager
 from submodules.model.business_objects import attribute
 
 
@@ -42,7 +43,7 @@ def get_recommended_encoders() -> List[Any]:
 
 
 def create_attribute_level_embedding(
-    project_id: str, user_id: str, attribute_id: str, embedding_handle: str
+    project_id: str, user_id: str, attribute_id: str, embedding_handle: str, platform: str
 ) -> None:
     daemon.run(
         connector.request_creating_attribute_level_embedding,
@@ -50,11 +51,12 @@ def create_attribute_level_embedding(
         attribute_id,
         user_id,
         embedding_handle,
+        platform,
     )
 
 
 def create_token_level_embedding(
-    project_id: str, user_id: str, attribute_id: str, embedding_handle: str
+    project_id: str, user_id: str, attribute_id: str, embedding_handle: str, platform: str
 ) -> None:
     daemon.run(
         connector.request_creating_token_level_embedding,
@@ -62,6 +64,7 @@ def create_token_level_embedding(
         attribute_id,
         user_id,
         embedding_handle,
+        platform,
     )
 
 
@@ -96,12 +99,14 @@ def __embed_one_by_one_helper(
 ) -> None:
     for embedding_item in embedding_data:
         splitted = embedding_item.get("name").split("-", 2)
+        platform = project_manager.__get_platform_name(embedding_item.get("name"))
         if embedding_item.get("type") == enums.EmbeddingType.ON_ATTRIBUTE.value:
             connector.request_creating_attribute_level_embedding(
                 project_id,
                 attribute_id=attribute_names[splitted[0]],
                 user_id=user_id,
                 config_string=splitted[2],
+                platform=platform,
             )
         elif embedding_item.get("type") == enums.EmbeddingType.ON_TOKEN.value:
             connector.request_creating_token_level_embedding(
@@ -109,6 +114,7 @@ def __embed_one_by_one_helper(
                 attribute_id=attribute_names[splitted[0]],
                 user_id=user_id,
                 config_string=splitted[2],
+                platform=platform,
             )
         time.sleep(5)
         while util.has_encoder_running(project_id):
@@ -116,7 +122,7 @@ def __embed_one_by_one_helper(
 
 
 def get_embedding_name(
-    project_id: str, attribute_id: str, level: str, embedding_handle: str
+    project_id: str, attribute_id: str, level: str, embedding_handle: str, platform: str
 ) -> str:
     if level not in [
         enums.EmbeddingType.ON_ATTRIBUTE.value,
@@ -134,4 +140,4 @@ def get_embedding_name(
         raise ValueError("attribute not found")
     attribute_name = attribute_item.name
 
-    return f"{attribute_name}-{embedding_type}-{embedding_handle}"
+    return f"{attribute_name}-{embedding_type}-{embedding_handle}-{platform}"
