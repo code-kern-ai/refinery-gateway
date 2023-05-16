@@ -89,10 +89,7 @@ def run_attribute_calculation_exec_env(
         line = line.decode("utf-8").strip("\n")
         logs.append(line)
 
-
         splitted_line = line.split(":")
-        print("line", line, flush=True)
-        print("splitted_line", splitted_line, flush=True)
         if len(splitted_line) > 1:
             if splitted_line[-2] == "progress":
                 __update_progress(project_id=project_id, attribute_id=attribute_id, logs=logs, progress=round(float(splitted_line[-1]),2))
