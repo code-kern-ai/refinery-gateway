@@ -1,3 +1,4 @@
+from typing import List
 import docker
 import json
 import os
@@ -7,6 +8,7 @@ from datetime import datetime
 from submodules.model.business_objects import attribute, record, project, tokenization
 from submodules.model.enums import DataTypes
 from submodules.s3 import controller as s3
+from util import notification
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -81,16 +83,21 @@ def run_attribute_calculation_exec_env(
         network=exec_env_network,
     )
 
-    logs = [
-        line.decode("utf-8").strip("\n")
-        for line in container.logs(
-            stream=True, stdout=True, stderr=True, timestamps=True
-        )
-    ]
+    logs = []
+    __update_progress(project_id=project_id, attribute_id=attribute_id, logs=logs, progress=0.0)
+    for line in container.logs(stream=True, stdout=True, stderr=True, timestamps=True):
+        line = line.decode("utf-8").strip("\n")
+        logs.append(line)
 
-    attribute.update(
-        project_id=project_id, attribute_id=attribute_id, logs=logs, with_commit=True
-    )
+
+        splitted_line = line.split(":")
+        print("line", line, flush=True)
+        print("splitted_line", splitted_line, flush=True)
+        if len(splitted_line) > 1:
+            if splitted_line[-2] == "progress":
+                __update_progress(project_id=project_id, attribute_id=attribute_id, logs=logs, progress=round(float(splitted_line[-1]),2))
+        
+    __update_progress(project_id=project_id, attribute_id=attribute_id, logs=logs, progress=1.0)
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
@@ -106,3 +113,14 @@ def run_attribute_calculation_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
 
     return calculated_attributes
+
+
+def __update_progress(project_id: str, attribute_id: str, logs: List[str], progress: float) -> None:
+    progress = progress
+    attribute.update(
+        project_id=project_id, attribute_id=attribute_id, logs=logs, progress=progress, with_commit=True
+    )
+    message = f"calculate_attribute:progress:{attribute_id}:{progress}"
+    notification.send_organization_update(project_id, message)
+
+    
