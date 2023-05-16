@@ -45,6 +45,9 @@ def get_version_overview() -> List[ServiceVersionResult]:
 def has_updates() -> List[ServiceVersionResult]:
     return __updater_has_updates()
 
+def update_versions_to_newest() -> None:
+    return __update_versions_to_newest()
+
 
 def __updater_version_overview() -> List[Dict[str, Any]]:
     url = f"{BASE_URI_UPDATER}/version_overview"
@@ -58,3 +61,8 @@ def __updater_has_updates() -> bool:
 
 def __updater_update_to_newest() -> None:
     raise ValueError("This endpoint should only be called from the update batch script")
+
+
+def __update_versions_to_newest() -> None:
+    url = f"{BASE_URI_UPDATER}/update_versions_to_newest"
+    return service_requests.post_call_or_raise(url, {})
