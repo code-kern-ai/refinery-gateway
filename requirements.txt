@@ -9,7 +9,9 @@ alembic==1.7.1
 aniso8601==7.0.0
     # via graphene
 anyio==3.6.2
-    # via -r requirements/common-requirements.txt
+    # via
+    #   -r requirements/common-requirements.txt
+    #   starlette
 blis==0.7.9
     # via thinc
 boto3==1.25.0
@@ -182,7 +184,7 @@ srsly==2.4.5
     # via
     #   spacy
     #   thinc
-starlette==0.14.1
+starlette==0.27.0
     # via -r requirements/requirements.in
 thinc==8.1.5
     # via spacy

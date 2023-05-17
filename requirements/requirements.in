@@ -10,4 +10,4 @@ graphql-core==2.3.2
 openpyxl==3.0.10
 pyjwt==2.4.0
 spacy==3.4.2
-starlette==0.14.1
+starlette==0.27.0
