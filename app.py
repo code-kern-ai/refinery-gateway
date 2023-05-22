@@ -1,5 +1,6 @@
 import logging
 from api.healthcheck import Healthcheck
+from api.misc import IsDemoRest, IsManagedRest
 import graphene
 from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
@@ -46,6 +47,8 @@ routes = [
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
     Route("/project", ProjectCreationFromWorkflow),
+    Route("/is_managed", IsManagedRest),
+    Route("/is_demo", IsDemoRest),
 ]
 
 middleware = [Middleware(DatabaseSessionHandler)]
