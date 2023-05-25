@@ -1,4 +1,4 @@
-import parser
+from dateutil import parser
 import time
 from typing import Any, List
 import uuid
@@ -27,6 +27,9 @@ def add_log_to_attribute_logs(
     berlin_now = datetime.now(pytz.timezone("Europe/Berlin"))
     if append_to_logs:
         logs = attribute_item.logs
+        if not logs:
+            attribute_item.logs = []
+            logs = attribute_item.logs
         logs.append(" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log]))
     else:
         logs = [" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log])]
@@ -57,6 +60,7 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     return prefixed_doc_bin
 
 
+
 def run_attribute_calculation_exec_env(
     attribute_id: str, project_id: str, doc_bin: str
 ) -> None:
@@ -81,7 +85,7 @@ def run_attribute_calculation_exec_env(
     ]
 
     # initial log preparation
-    __update_progress(project_id=project_id, attribute_id=attribute_id, logs=[], progress=0.0)
+    __update_progress(project_id=project_id, attribute_item=attribute_item, progress=0.0)
 
     container_name = str(uuid.uuid4())
     container = client.containers.create(
@@ -92,7 +96,7 @@ def run_attribute_calculation_exec_env(
         network=exec_env_network,
     )
     __containers_running[container_name] = True
-    daemon.run(__read_execution_logs, project_id, attribute_id, container, container_name)
+    daemon.run(__read_container_logs_thread, project_id, container_name, attribute_id, container)
     container.start()
 
     # final log preparation
@@ -105,7 +109,7 @@ def run_attribute_calculation_exec_env(
     ]
 
     del __containers_running[container_name]
-    __update_progress(project_id, attribute_id, logs, 1.0) 
+    __update_progress(project_id, attribute_item, 1.0) 
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
@@ -123,42 +127,26 @@ def run_attribute_calculation_exec_env(
     return calculated_attributes
 
 
-    
-
-def __read_execution_logs(project_id: str, attribute_id: str, container: Any, container_name: str) -> None:
-    logs = []
-    for line in container.logs(stream=False, stdout=True, stderr=True, timestamps=True):
-        line = line.decode("utf-8").strip("\n")
-
-        if not ":progress:" in logs:
-            logs.append(line)
-        else:
-            splitted_line = line.split(":")
-            if len(splitted_line) > 1:
-                if splitted_line[-2] == "progress":
-                    __update_progress(project_id=project_id, attribute_id=attribute_id, logs=logs, progress=round(float(splitted_line[-1]),2))
-
-
-def read_container_logs_thread(
+def __read_container_logs_thread(
     project_id: str,
-    name: str,
+    container_name: str,
     attribute_id: str,
     docker_container: Any,
 ):
 
     ctx_token = general.get_ctx_token()
     # needs to be refetched since it is not thread safe
-    attribute_item = attribute.get(project_id, name)
+    attribute_item = attribute.get(project_id, attribute_id)
     previous_progress = -1
     last_timestamp = None
     c = 0
-    while name in __containers_running:
+    while container_name in __containers_running:
         time.sleep(1)
         c += 1
         if c > 100:
             ctx_token = general.remove_and_refresh_session(ctx_token, True)
-            attribute_item = attribute.get(project_id, name)
-        if not name in __containers_running:
+            attribute_item = attribute.get(project_id, attribute_id)
+        if not container_name in __containers_running:
             break
         try:
             log_lines = docker_container.logs(
@@ -181,10 +169,7 @@ def read_container_logs_thread(
         last_timestamp = parser.parse(last_timestamp_str).replace(
             tzinfo=None
         ) + timedelta(seconds=1)
-        non_progress_logs = [l for l in current_logs if "progress" not in l]
         progress_logs = [l for l in current_logs if "progress" in l]
-        if len(non_progress_logs) > 0:
-            update_logs(project_id, attribute_item, non_progress_logs)
         if len(progress_logs) == 0:
             continue
         progress = float(progress_logs[-1].split(":")[-1].strip())
@@ -192,34 +177,33 @@ def read_container_logs_thread(
             continue
         previous_progress = last_entry
         __update_progress(
-            project_id, attribute_id, progress
+            project_id, attribute_item, progress
         )
     general.remove_and_refresh_session(ctx_token)
 
 
-    def update_logs(
-        project_id: str,
-        attribute: Attribute,
-        logs: List[str],
-        ) -> None:
-        if not logs or len(logs) == 0:
-            return
+def __update_logs(
+    project_id: str,
+    attribute_item: Attribute,
+    logs: List[str],
+    ) -> None:
+    if not logs or len(logs) == 0:
+        return
 
-        if not attribute.logs:
-            attribute.logs = logs
-        else:
-            all_logs = [l for l in attribute.logs]
-            all_logs += logs
-            attribute.logs = all_logs
-        general.commit()
-        # currently dummy since frontend doesn't have a log change yet
-        message = f"calculate_attribute:logs:{attribute_id}"
-        notification.send_organization_update(project_id, message)
+    if not attribute_item.logs:
+        attribute_item.logs = logs
+    else:
+        all_logs = [l for l in attribute_item.logs]
+        all_logs += logs
+        attribute_item.logs = all_logs
+    general.commit()
+    # currently dummy since frontend doesn't have a log change yet
+    message = f"calculate_attribute:logs:{attribute_item.id}"
+    notification.send_organization_update(project_id, message)
 
-
-    def __update_progress(project_id: str, attribute_id: str, progress: float) -> None:
-        attribute.update(
-            project_id=project_id, attribute_id=attribute_id, progress=progress, with_commit=True
-        )
-        message = f"calculate_attribute:progress:{attribute_id}:{progress}"
-        notification.send_organization_update(project_id, message)
+def __update_progress(project_id: str, attribute_item: Attribute, progress: float) -> None:
+    attribute_item.progress = progress
+    general.commit()
+    message = f"calculate_attribute:progress:{attribute_item.id}:{progress}"
+    notification.send_organization_update(project_id, message)
+    
