@@ -128,7 +128,7 @@ def __read_container_logs_thread(
     container_name: str,
     attribute_id: str,
     docker_container: Any,
-):
+) -> None:
 
     ctx_token = general.get_ctx_token()
 
@@ -154,7 +154,7 @@ def __read_container_logs_thread(
                     if progress > last_progress:
                         last_progress = progress
                         __update_progress(project_id, attribute_item, progress)
-        except Exception as e:
+        except Exception:
             continue
     general.remove_and_refresh_session(ctx_token)
 
