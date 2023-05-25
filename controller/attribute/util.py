@@ -158,7 +158,6 @@ def __read_container_logs_thread(
                         last_progress = progress
                         __update_progress(project_id, attribute_item, progress)
         except Exception as e:
-            print("Exception", str(e), flush=True)
             continue
     general.remove_and_refresh_session(ctx_token)
 
