@@ -146,7 +146,6 @@ def __read_container_logs_thread(
             last_progress = 0.0
             for log in docker_container.logs(
                 stream=True,
-                timestamps=True,
                 tail=10
             ):
                 log = log.decode("utf-8")
