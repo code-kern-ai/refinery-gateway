@@ -1,13 +1,12 @@
-from dateutil import parser
 import time
-from typing import Any, List
+from typing import Any
 import uuid
 import docker
 import json
 import os
 import pytz
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from submodules.model.business_objects import attribute, general, record, project, tokenization
 from submodules.model.enums import DataTypes
 from submodules.model.models import Attribute
@@ -147,9 +146,8 @@ def __read_container_logs_thread(
             last_progress = 0.0
             for log in docker_container.logs(
                 stream=True,
-                stdout=True,
-                stderr=True,
                 timestamps=True,
+                tail=10
             ):
                 log = log.decode("utf-8")
                 if ":progress:" in log:
