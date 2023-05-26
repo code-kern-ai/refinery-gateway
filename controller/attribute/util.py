@@ -152,9 +152,11 @@ def __read_container_logs_thread(
                 if "progress:" in log:
                     value = log.split(":")[-1].strip()
                     progress = float(value)
+                    if progress > 0.95:
+                        progress = 0.95
                     if progress > last_progress:
-                        last_progress = progress
-                        update_progress(project_id, attribute_item, progress * 0.75)
+                        last_progress = progress * 0.75
+                        update_progress(project_id, attribute_item, progress)
         except Exception:
             continue
     general.remove_and_refresh_session(ctx_token)
