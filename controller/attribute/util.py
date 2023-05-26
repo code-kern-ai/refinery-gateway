@@ -84,7 +84,7 @@ def run_attribute_calculation_exec_env(
     ]
 
     # initial log preparation
-    __update_progress(project_id=project_id, attribute_item=attribute_item, progress=0.0)
+    update_progress(project_id=project_id, attribute_item=attribute_item, progress=0.05)
 
     container_name = str(uuid.uuid4())
     container = client.containers.create(
@@ -105,7 +105,7 @@ def run_attribute_calculation_exec_env(
         if "progress" not in line.decode("utf-8")
     ]
     del __containers_running[container_name]
-    __update_progress(project_id, attribute_item, 1.0) 
+    update_progress(project_id, attribute_item, 0.9) 
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
@@ -146,20 +146,21 @@ def __read_container_logs_thread(
             last_progress = 0.0
             for log in docker_container.logs(
                 stream=True,
-                tail=10
+                tail=25
             ):
                 log = log.decode("utf-8")
-                if ":progress:" in log:
-                    progress = float(log.split(":")[-1])
+                if "progress:" in log:
+                    value = log.split(":")[-1].strip()
+                    progress = float(value)
                     if progress > last_progress:
                         last_progress = progress
-                        __update_progress(project_id, attribute_item, progress)
+                        update_progress(project_id, attribute_item, progress * 0.8)
         except Exception:
             continue
     general.remove_and_refresh_session(ctx_token)
 
 
-def __update_progress(project_id: str, attribute_item: Attribute, progress: float) -> None:
+def update_progress(project_id: str, attribute_item: Attribute, progress: float) -> None:
     attribute_item.progress = progress
     general.commit()
     message = f"calculate_attribute:progress:{attribute_item.id}:{progress}"
