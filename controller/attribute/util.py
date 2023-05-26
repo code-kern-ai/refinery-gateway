@@ -105,7 +105,7 @@ def run_attribute_calculation_exec_env(
         if "progress" not in line.decode("utf-8")
     ]
     del __containers_running[container_name]
-    update_progress(project_id, attribute_item, 0.9) 
+    update_progress(project_id, attribute_item, 0.95) 
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
@@ -154,7 +154,7 @@ def __read_container_logs_thread(
                     progress = float(value)
                     if progress > last_progress:
                         last_progress = progress
-                        update_progress(project_id, attribute_item, progress * 0.8)
+                        update_progress(project_id, attribute_item, progress * 0.75)
         except Exception:
             continue
     general.remove_and_refresh_session(ctx_token)
