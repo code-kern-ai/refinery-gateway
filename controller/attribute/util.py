@@ -1,5 +1,5 @@
 import time
-from typing import Any
+from typing import Any, List
 import uuid
 import docker
 import json
@@ -16,6 +16,7 @@ from util import daemon, notification
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
 exec_env_network = os.getenv("LF_NETWORK")
+__tz = pytz.timezone("Europe/Berlin")
 
 __containers_running = {}
 
@@ -23,22 +24,36 @@ def add_log_to_attribute_logs(
     project_id: str, attribute_id: str, log: str, append_to_logs: bool = True
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
-    berlin_now = datetime.now(pytz.timezone("Europe/Berlin"))
-    if append_to_logs:
-        logs = attribute_item.logs
-        if not logs:
-            attribute_item.logs = []
-            logs = attribute_item.logs
-        logs.append(" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log]))
-    else:
-        logs = [" ".join([berlin_now.strftime("%Y-%m-%dT%H:%M:%S"), log])]
-    attribute.update(
-        project_id=project_id,
-        attribute_id=attribute_id,
-        logs=logs,
-        with_commit=True,
-    )
+    berlin_now = datetime.now(__tz)
+    time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
+    line = f"{time_string} {log}"
+    line = log
 
+    if not append_to_logs or not attribute_item.logs:
+        logs = [line]
+        attribute.update(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            logs=logs,
+            with_commit=True,
+        )
+    else:
+        attribute_item.logs.append(line)
+        general.commit()
+
+def extend_attribute_logs(
+    project_id: str, attribute_id: str, logs: List[str]
+) -> None:
+    attribute_item = attribute.get(project_id, attribute_id)
+    if not attribute_item.logs:
+        attribute_item.logs = []
+
+    berlin_now = datetime.now(__tz)
+    time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
+    logs = [f"{time_string} {line}" for line in logs]
+
+    attribute_item.logs.extend(logs)
+    general.commit()
 
 def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
@@ -97,15 +112,16 @@ def run_attribute_calculation_exec_env(
     __containers_running[container_name] = True
     daemon.run(__read_container_logs_thread, project_id, container_name, attribute_id, container)
     container.start()
-    attribute_item.logs = [
+    logs = [
         line.decode("utf-8").strip("\n")
         for line in container.logs(
-            stream=True, stdout=True, stderr=True, timestamps=True
+            stream=True, stdout=True, stderr=True
         )
         if "progress" not in line.decode("utf-8")
     ]
+
+    logs = extend_attribute_logs(project_id, attribute_id, logs)
     del __containers_running[container_name]
-    update_progress(project_id, attribute_item, 0.95) 
 
     try:
         payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
@@ -143,19 +159,19 @@ def __read_container_logs_thread(
         if not container_name in __containers_running:
             break
         try:
-            last_progress = 0.0
+            last_progress = 0.05
             for log in docker_container.logs(
                 stream=True,
                 tail=25
             ):
-                log = log.decode("utf-8")
-                if "progress:" in log:
-                    value = log.split(":")[-1].strip()
+                line = log.decode("utf-8")
+                if "progress:" in line:
+                    value = line.split(":")[-1].strip()
                     progress = float(value)
                     if progress > 0.95:
                         progress = 0.95
                     if progress > last_progress:
-                        last_progress = progress * 0.75
+                        last_progress = progress
                         update_progress(project_id, attribute_item, progress)
         except Exception:
             continue
@@ -163,6 +179,7 @@ def __read_container_logs_thread(
 
 
 def update_progress(project_id: str, attribute_item: Attribute, progress: float) -> None:
+    print("progress", progress, flush=True)
     attribute_item.progress = progress
     general.commit()
     message = f"calculate_attribute:progress:{attribute_item.id}:{progress}"
