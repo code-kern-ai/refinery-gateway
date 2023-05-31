@@ -5,10 +5,8 @@ import docker
 import json
 import os
 import pytz
-import re
 from datetime import datetime
 from submodules.model.business_objects import attribute, general, record, project, tokenization
-from submodules.model.enums import DataTypes
 from submodules.model.models import Attribute
 from submodules.s3 import controller as s3
 from util import daemon, notification
@@ -27,7 +25,6 @@ def add_log_to_attribute_logs(
     berlin_now = datetime.now(__tz)
     time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
     line = f"{time_string} {log}"
-    line = log
 
     if not append_to_logs or not attribute_item.logs:
         logs = [line]
@@ -47,12 +44,12 @@ def extend_attribute_logs(
     attribute_item = attribute.get(project_id, attribute_id)
     if not attribute_item.logs:
         attribute_item.logs = []
-
     berlin_now = datetime.now(__tz)
     time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
     logs = [f"{time_string} {line}" for line in logs]
-
-    attribute_item.logs.extend(logs)
+    new_logs = [l for l in attribute_item.logs]
+    new_logs.extend(logs)
+    attribute_item.logs = new_logs
     general.commit()
 
 def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
@@ -80,6 +77,9 @@ def run_attribute_calculation_exec_env(
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
 
+    if attribute_item.logs:
+        add_log_to_attribute_logs(project_id, attribute_id, "re-run attribute calculation", append_to_logs=False)
+    
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
     project_item = project.get(project_id)
@@ -150,16 +150,14 @@ def __read_container_logs_thread(
 
     attribute_item = attribute.get(project_id, attribute_id)
     c = 0
+    last_progress = 0.05
     while container_name in __containers_running:
         time.sleep(1)
         c += 1
         if c > 100:
             ctx_token = general.remove_and_refresh_session(ctx_token, True)
             attribute_item = attribute.get(project_id, attribute_id)
-        if not container_name in __containers_running:
-            break
         try:
-            last_progress = 0.05
             for log in docker_container.logs(
                 stream=True,
                 tail=25
@@ -173,13 +171,14 @@ def __read_container_logs_thread(
                     if progress > last_progress:
                         last_progress = progress
                         update_progress(project_id, attribute_item, progress)
+            if not container_name in __containers_running:
+                break
         except Exception:
             continue
     general.remove_and_refresh_session(ctx_token)
 
 
 def update_progress(project_id: str, attribute_item: Attribute, progress: float) -> None:
-    print("progress", progress, flush=True)
     attribute_item.progress = progress
     general.commit()
     message = f"calculate_attribute:progress:{attribute_item.id}:{progress}"
