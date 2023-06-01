@@ -316,7 +316,7 @@ def __calculate_user_attribute_all_records(
         )
         request_reupload_docbins(project_id)
 
-    util.update_progress(project_id, attribute_item, 1.0)
+    util.set_progress(project_id, attribute_item, 1.0)
     attribute.update(
         project_id=project_id,
         attribute_id=attribute_id,
