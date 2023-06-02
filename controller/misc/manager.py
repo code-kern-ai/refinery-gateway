@@ -13,6 +13,8 @@ BASE_URI_UPDATER = os.getenv("UPDATER")
 def check_is_managed() -> bool:
     return config_service.get_config_value("is_managed")
 
+def check_is_demo() -> bool:
+    return config_service.get_config_value("is_demo")
 
 def update_config(dict_str: str) -> None:
     return config_service.change_config(dict_str)
