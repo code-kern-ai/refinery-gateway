@@ -3,8 +3,7 @@ from typing import List, Optional
 import graphene
 
 from controller.auth import manager as auth
-from graphql_api import types
-from graphql_api.types import Encoder, LanguageModel, RecordTokenizationTask
+from graphql_api.types import EmbeddingPlatform, Encoder, LanguageModel, RecordTokenizationTask
 from submodules.model.business_objects import tokenization, task_queue
 from util import spacy_util
 from controller.embedding import manager
@@ -21,6 +20,8 @@ class EmbeddingQuery(graphene.ObjectType):
     project_tokenization = graphene.Field(
         RecordTokenizationTask, project_id=graphene.ID(required=True)
     )
+
+    embedding_platforms = graphene.Field(graphene.List(EmbeddingPlatform))
 
     def resolve_recommended_encoders(
         self, info, project_id: Optional[str] = None
@@ -49,3 +50,27 @@ class EmbeddingQuery(graphene.ObjectType):
                 progress=-1,
             )
         return tokenization.get_record_tokenization_task(project_id)
+
+    def resolve_embedding_platforms(self, info) -> List[EmbeddingPlatform]:
+        return [
+            {
+            "platform": "python",
+            "gdpr_compliant": True,
+            "terms": "Text"
+            },
+            {
+            "platform": "openai",
+            "gdpr_compliant": False,
+            "terms": "Text"
+            },
+            {
+            "platform": "cohere",
+            "gdpr_compliant": False,
+            "terms": "Text"
+            },
+            {
+            "platform": "huggingface",
+            "gdpr_compliant": True,
+            "terms": "Text"
+            }
+        ]

@@ -827,6 +827,12 @@ class Task(graphene.ObjectType):
     finished_at = graphene.DateTime()
 
 
+class EmbeddingPlatform(graphene.ObjectType):
+    platform = graphene.String()
+    terms = graphene.String()
+    gdpr_compliant = graphene.Boolean()
+
+
 class TaskQueue(SQLAlchemyObjectType):
     class Meta:
         model = models.TaskQueue

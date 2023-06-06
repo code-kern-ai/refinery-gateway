@@ -1,6 +1,9 @@
 from typing import Any, Dict, Tuple, Callable
 from controller.embedding import manager as embedding_manager
+from submodules.model import enums
 from submodules.model.business_objects import (
+    agreement as agreement_db_bo,
+    attribute as attribute_db_bo,
     task_queue as task_queue_db_bo,
     embedding as embedding_db_bo,
     general,
@@ -34,15 +37,24 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
     user_id = task["created_by"]
     attribute_id = task["task_info"]["attribute_id"]
-    embedding_handle = task["task_info"]["embedding_handle"]
+    embedding_type = task["task_info"]["embedding_type"]
+    embedding_name = task["task_info"]["embedding_name"]
     platform = task["task_info"]["platform"]
-    if task["task_info"]["embedding_type"] == EmbeddingType.ON_ATTRIBUTE.value:
+    model = task["task_info"]["model"]
+    api_token = task["task_info"]["api_token"]
+
+    terms_text = task["task_info"]["terms_text"]
+    terms_accepted = task["task_info"]["terms_accepted"]
+    agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted,xftype=enums.AgreementType.EMBEDDING.value, with_commit=True)
+    
+
+    if embedding_type == EmbeddingType.ON_ATTRIBUTE.value:
         embedding_manager.create_attribute_level_embedding(
-            project_id, user_id, attribute_id, embedding_handle, platform
+            project_id, user_id, attribute_id, model, platform
         )
     else:
         embedding_manager.create_token_level_embedding(
-            project_id, user_id, attribute_id, embedding_handle, platform
+            project_id, user_id, attribute_id, model, platform
         )
     return True
 

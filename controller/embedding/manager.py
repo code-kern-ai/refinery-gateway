@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from submodules.model import enums
 from util import daemon
@@ -40,6 +40,7 @@ def get_recommended_encoders() -> List[Any]:
                     }
                 )
     return recommendations
+
 
 
 def create_attribute_level_embedding(
@@ -122,16 +123,16 @@ def __embed_one_by_one_helper(
 
 
 def get_embedding_name(
-    project_id: str, attribute_id: str, level: str, embedding_handle: str, platform: str
+    project_id: str, attribute_id: str,  platform: str, embedding_type: str, model: Optional[str] = None, apiToken: Optional[str] = None
 ) -> str:
-    if level not in [
+    if embedding_type not in [
         enums.EmbeddingType.ON_ATTRIBUTE.value,
         enums.EmbeddingType.ON_TOKEN.value,
     ]:
-        raise ValueError("level must be either attribute or token")
+        raise ValueError("Embedding type must be either attribute or token")
     embedding_type = (
         "classification"
-        if level == enums.EmbeddingType.ON_ATTRIBUTE.value
+        if embedding_type == enums.EmbeddingType.ON_ATTRIBUTE.value
         else "extraction"
     )
 
@@ -140,4 +141,13 @@ def get_embedding_name(
         raise ValueError("attribute not found")
     attribute_name = attribute_item.name
 
-    return f"{attribute_name}-{embedding_type}-{embedding_handle}-{platform}"
+    name = f"{attribute_name}-{embedding_type}-{platform}"
+
+    if model:
+        name += f"-{model}"
+
+    if apiToken:
+        name += f"-{apiToken[:8]}..."
+    
+    return name
+
