@@ -54,23 +54,23 @@ class EmbeddingQuery(graphene.ObjectType):
     def resolve_embedding_platforms(self, info) -> List[EmbeddingPlatform]:
         return [
             {
-            "platform": "python",
+            "platform": "huggingface",
             "gdpr_compliant": True,
-            "terms": "Text"
-            },
-            {
-            "platform": "openai",
-            "gdpr_compliant": False,
             "terms": "Text"
             },
             {
             "platform": "cohere",
             "gdpr_compliant": False,
             "terms": "Text"
+            }, 
+            {
+            "platform": "openai",
+            "gdpr_compliant": False,
+            "terms": "Text"
             },
             {
-            "platform": "huggingface",
+            "platform": "python",
             "gdpr_compliant": True,
             "terms": "Text"
-            }
+            },
         ]
