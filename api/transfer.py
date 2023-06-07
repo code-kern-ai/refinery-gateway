@@ -435,23 +435,22 @@ def __create_embeddings(
         if not embedding_item:
             continue
 
+        embedding_item = embedding.get(project_id, embedding_id)
+
         embedding_connector.request_deleting_embedding(project_id, embedding_id)
 
-        attribute_id = str(embedding_item.attribute_id)
-        attribute_name = attribute.get(project_id, attribute_id).name
-        platform = project_manager.__get_platform_name(embedding_item.name)
-        if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
-            prefix = f"{attribute_name}-classification-"
-            config_string = embedding_item.name[len(prefix) :]
-            embedding_connector.request_creating_attribute_level_embedding(
-                project_id, attribute_id, user_id, config_string, platform
-            )
-        else:
-            prefix = f"{attribute_name}-extraction-"
-            config_string = embedding_item.name[len(prefix) :]
-            embedding_connector.request_creating_token_level_embedding(
-                project_id, attribute_id, user_id, config_string, platform
-            )
+        embedding_item = embedding.create(
+            project_id,
+            embedding_item.attribute_id,
+            embedding_item.name,
+            enums.EmbeddingState.INITIALIZING.value,
+            type=embedding_item.type,
+            model=embedding_item.model,
+            platform=embedding_item.platform,
+            api_token=embedding_item.api_token,
+        )
+        embedding_connector.request_embedding(project_id, embedding_item.id)
+        
         time.sleep(5)
         while embedding_util.has_encoder_running(project_id):
             if embedding_item.state == enums.EmbeddingState.WAITING.value:

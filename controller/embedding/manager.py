@@ -43,29 +43,13 @@ def get_recommended_encoders() -> List[Any]:
 
 
 
-def create_attribute_level_embedding(
-    project_id: str, user_id: str, attribute_id: str, embedding_handle: str, platform: str
+def create_embedding(
+    project_id: str, embedding_id: str
 ) -> None:
     daemon.run(
-        connector.request_creating_attribute_level_embedding,
+        connector.request_embedding,
         project_id,
-        attribute_id,
-        user_id,
-        embedding_handle,
-        platform,
-    )
-
-
-def create_token_level_embedding(
-    project_id: str, user_id: str, attribute_id: str, embedding_handle: str, platform: str
-) -> None:
-    daemon.run(
-        connector.request_creating_token_level_embedding,
-        project_id,
-        attribute_id,
-        user_id,
-        embedding_handle,
-        platform,
+        embedding_id
     )
 
 
@@ -101,22 +85,8 @@ def __embed_one_by_one_helper(
     for embedding_item in embedding_data:
         splitted = embedding_item.get("name").split("-", 2)
         platform = project_manager.__get_platform_name(embedding_item.get("name"))
-        if embedding_item.get("type") == enums.EmbeddingType.ON_ATTRIBUTE.value:
-            connector.request_creating_attribute_level_embedding(
-                project_id,
-                attribute_id=attribute_names[splitted[0]],
-                user_id=user_id,
-                config_string=splitted[2],
-                platform=platform,
-            )
-        elif embedding_item.get("type") == enums.EmbeddingType.ON_TOKEN.value:
-            connector.request_creating_token_level_embedding(
-                project_id,
-                attribute_id=attribute_names[splitted[0]],
-                user_id=user_id,
-                config_string=splitted[2],
-                platform=platform,
-            )
+
+        connector.request_embedding(project_id, None) # TODO Set up correctly
         time.sleep(5)
         while util.has_encoder_running(project_id):
             time.sleep(5)

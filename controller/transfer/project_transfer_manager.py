@@ -650,6 +650,12 @@ def import_file(
                 finished_at=embedding_item.get(
                     "finished_at",
                 ),
+                platform=embedding_item.get(
+                    "platform",
+                ),
+                model=embedding_item.get(
+                    "model",
+                ),    
             )
             embedding_ids[
                 embedding_item.get(
@@ -1106,6 +1112,8 @@ def get_project_export_dump(
             "type": embedding_item.type,
             "started_at": embedding_item.started_at,
             "finished_at": embedding_item.finished_at,
+            "platform": embedding_item.platform,
+            "model": embedding_item.model,
         }
         for embedding_item in embeddings
     ]

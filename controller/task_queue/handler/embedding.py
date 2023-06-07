@@ -45,17 +45,22 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
     terms_text = task["task_info"]["terms_text"]
     terms_accepted = task["task_info"]["terms_accepted"]
-    agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted,xftype=enums.AgreementType.EMBEDDING.value, with_commit=True)
-    
+    embedding_item = embedding_db_bo.create(
+        project_id,
+        attribute_id,
+        embedding_name,
+        enums.EmbeddingState.INITIALIZING.value,
+        type=embedding_type,
+        model=model,
+        platform=platform,
+        api_token=api_token,
 
-    if embedding_type == EmbeddingType.ON_ATTRIBUTE.value:
-        embedding_manager.create_attribute_level_embedding(
-            project_id, user_id, attribute_id, model, platform
-        )
-    else:
-        embedding_manager.create_token_level_embedding(
-            project_id, user_id, attribute_id, model, platform
-        )
+    )
+    agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted, xfkey=embedding_item.id, xftype=enums.AgreementType.EMBEDDING.value, with_commit=True)
+    embedding_manager.create_embedding(
+        project_id, str(embedding_item.id)
+    )
+
     return True
 
 

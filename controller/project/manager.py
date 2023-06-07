@@ -31,9 +31,8 @@ from submodules.s3 import controller as s3
 from service.search import search
 from controller.tokenization.tokenization_service import request_save_tokenizer
 from controller.embedding.connector import (
-    request_creating_attribute_level_embedding,
-    request_creating_token_level_embedding,
     request_deleting_embedding,
+    request_embedding
 )
 from controller.embedding.util import has_encoder_running
 from controller.payload.util import has_active_learner_running
@@ -429,35 +428,26 @@ def __create_missing_embedding_pickles(
             time.sleep(1)
     return session_token
 
-
-def __get_platform_name(embedding_item_name: str):
-    platform = embedding_item_name.split("-")[-1]
-    if platform not in ["huggingface", "openai", "cohere", "python"]:
-        platform = "huggingface"
-    return platform
-
 def __create_embedding_pickle(project_id: str, embedding_id: str, user_id: str) -> None:
     embedding_item = embedding.get(project_id, embedding_id)
     if not embedding_item:
         return
 
+    embedding_item = embedding.get(project_id, embedding_id)
+
     request_deleting_embedding(project_id, embedding_id)
 
-    attribute_id = str(embedding_item.attribute_id)
-    attribute_name = attribute.get(project_id, attribute_id).name
-    platform = __get_platform_name(embedding_item.name)
-    if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
-        prefix = f"{attribute_name}-classification-"
-        config_string = embedding_item.name[len(prefix) :]
-        request_creating_attribute_level_embedding(
-            project_id, attribute_id, user_id, config_string, platform
-        )
-    else:
-        prefix = f"{attribute_name}-extraction-"
-        config_string = embedding_item.name[len(prefix) :]
-        request_creating_token_level_embedding(
-            project_id, attribute_id, user_id, config_string, platform
-        )
+    embedding_item = embedding.create(
+        project_id,
+        embedding_item.attribute_id,
+        embedding_item.name,
+        enums.EmbeddingState.INITIALIZING.value,
+        type=embedding_item.type,
+        model=embedding_item.model,
+        platform=embedding_item.platform,
+        api_token=embedding_item.api_token,
+    )
+    request_embedding(project_id, embedding_item.id)
 
 
 def __create_missing_information_source_pickles(
