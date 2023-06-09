@@ -664,7 +664,7 @@ class Encoder(graphene.ObjectType):
     description = graphene.String()
     tokenizers = graphene.List(graphene.String)
     applicability = graphene.JSONString()
-
+    platform = graphene.String()
 
 class UploadTask(SQLAlchemyObjectType):
     class Meta:
