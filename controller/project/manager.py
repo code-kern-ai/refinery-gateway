@@ -4,6 +4,7 @@ import shutil
 import time
 import threading
 from typing import Any, Dict, List, Optional
+from controller.embedding.manager import recreate_embedding
 from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
@@ -30,10 +31,6 @@ from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
 from controller.tokenization.tokenization_service import request_save_tokenizer
-from controller.embedding.connector import (
-    request_deleting_embedding,
-    request_embedding
-)
 from controller.embedding.util import has_encoder_running
 from controller.payload.util import has_active_learner_running
 from controller.payload import manager as payload_manager
@@ -433,21 +430,8 @@ def __create_embedding_pickle(project_id: str, embedding_id: str, user_id: str) 
     if not embedding_item:
         return
 
-    embedding_item = embedding.get(project_id, embedding_id)
+    recreate_embedding(project_id, embedding_id)
 
-    request_deleting_embedding(project_id, embedding_id)
-
-    embedding_item = embedding.create(
-        project_id,
-        embedding_item.attribute_id,
-        embedding_item.name,
-        enums.EmbeddingState.INITIALIZING.value,
-        type=embedding_item.type,
-        model=embedding_item.model,
-        platform=embedding_item.platform,
-        api_token=embedding_item.api_token,
-    )
-    request_embedding(project_id, embedding_item.id)
 
 
 def __create_missing_information_source_pickles(

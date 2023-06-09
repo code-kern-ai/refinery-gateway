@@ -8,6 +8,7 @@ from controller.embedding import util as embedding_util
 from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
+from controller.embedding.manager import recreate_embedding
 
 from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
@@ -435,22 +436,7 @@ def __create_embeddings(
         if not embedding_item:
             continue
 
-        embedding_item = embedding.get(project_id, embedding_id)
-
-        embedding_connector.request_deleting_embedding(project_id, embedding_id)
-
-        embedding_item = embedding.create(
-            project_id,
-            embedding_item.attribute_id,
-            embedding_item.name,
-            enums.EmbeddingState.INITIALIZING.value,
-            type=embedding_item.type,
-            model=embedding_item.model,
-            platform=embedding_item.platform,
-            api_token=embedding_item.api_token,
-        )
-        embedding_connector.request_embedding(project_id, embedding_item.id)
-        
+        recreate_embedding(project_id, embedding_id)
         time.sleep(5)
         while embedding_util.has_encoder_running(project_id):
             if embedding_item.state == enums.EmbeddingState.WAITING.value:
