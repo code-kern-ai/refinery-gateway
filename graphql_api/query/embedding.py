@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import graphene
 
+from controller.misc import manager as misc
 from controller.auth import manager as auth
 from graphql_api.types import EmbeddingPlatform, Encoder, LanguageModel, RecordTokenizationTask
 from submodules.model.business_objects import tokenization, task_queue
@@ -29,7 +30,8 @@ class EmbeddingQuery(graphene.ObjectType):
         auth.check_demo_access(info)
         if project_id:
             auth.check_project_access(info, project_id)
-        return manager.get_recommended_encoders()
+        is_managed = misc.check_is_managed()
+        return manager.get_recommended_encoders(is_managed)
 
     def resolve_language_models(self, info) -> List[LanguageModel]:
         auth.check_demo_access(info)

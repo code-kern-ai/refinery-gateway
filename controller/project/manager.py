@@ -4,7 +4,7 @@ import shutil
 import time
 import threading
 from typing import Any, Dict, List, Optional
-from controller.embedding.manager import recreate_embedding
+from controller.embedding.util import recreate_embedding
 from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler

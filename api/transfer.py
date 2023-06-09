@@ -8,7 +8,7 @@ from controller.embedding import util as embedding_util
 from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
-from controller.embedding.manager import recreate_embedding
+from controller.embedding.util import recreate_embedding
 
 from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
