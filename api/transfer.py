@@ -398,9 +398,12 @@ def __recreate_embeddings(project_id: str) -> None:
     if len(embeddings) == 0:
         return
     embedding_ids = [str(embed.id) for embed in embeddings]
-    for embed_id in embedding_ids:
-        embedding.update_embedding_state_waiting(project_id, embed_id)
-        embedding.update_embedding_progress(project_id, embed_id, 0.0, with_commit=True)
+    for embedding_id in embedding_ids:
+        embedding.update_embedding_state_waiting(project_id, embedding_id)
+        notification.send_organization_update(
+                project_id,
+                f"embedding:{embedding_id}:progress:{0.0}",
+            )
         notification.send_organization_update(
                 project_id,
                 f"embedding:{embedding_id}:state:{enums.EmbeddingState.WAITING.value}",
@@ -412,7 +415,7 @@ def __recreate_embeddings(project_id: str) -> None:
             embedding_item = embedding.get(project_id, embedding_id)
             if not embedding_item:
                 continue
-            recreate_embedding(project_id, embedding_id)
+            embedding_item = recreate_embedding(project_id, embedding_id)
             time.sleep(5)
             while embedding_util.has_encoder_running(project_id):
                 if embedding_item.state == enums.EmbeddingState.WAITING.value:

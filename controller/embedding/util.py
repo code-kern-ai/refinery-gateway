@@ -1,6 +1,7 @@
 from controller.embedding import connector
 from submodules.model import enums
 from submodules.model.business_objects import agreement, embedding, general
+from submodules.model.models import Embedding
 from util import daemon
 
 
@@ -10,7 +11,7 @@ def has_encoder_running(project_id: str) -> bool:
 
 def recreate_embedding(
     project_id: str, embedding_id: str
-) -> None:
+) -> Embedding:
     old_embedding_item = embedding.get(project_id, embedding_id)
     agreement_item = agreement.get_by_xfkey(project_id, old_embedding_item.id) 
     new_embedding_item = embedding.create(
@@ -35,3 +36,4 @@ def recreate_embedding(
         project_id,
         new_embedding_item.id
     )
+    return new_embedding_item
