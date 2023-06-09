@@ -67,6 +67,8 @@ def request_tensor_upload(project_id: str, embedding_id: str) -> Any:
 
 
 def delete_embedding(project_id: str, embedding_id: str) -> None:
+    embedding.delete(project_id, embedding_id)
+    embedding.delete_tensors(embedding_id, with_commit=True)
     connector.request_deleting_embedding(project_id, embedding_id)
 
 
