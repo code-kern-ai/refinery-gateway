@@ -13,7 +13,6 @@ def request_listing_recommended_encoders() -> Any:
 def request_embedding(
     project_id: str, embedding_id: str
 ) -> Any:
-    
     url = f"{BASE_URI}/embed"
     data = {
         "project_id": str(project_id),

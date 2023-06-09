@@ -611,11 +611,11 @@ def import_file(
                 ),
             )
 
+    embedding_ids = {}
     if data.get(
-        "embedding_tensors_data",
+        "embeddings_data",
     ):
         # if tensor data exists use that otherwise recreate embedding
-        embedding_ids = {}
         for embedding_item in data.get(
             "embeddings_data",
         ):
@@ -638,6 +638,7 @@ def import_file(
                 attribute_id=attribute_id,
                 name=embedding_name,
                 state="FINISHED",
+                created_by=import_user_id,
                 custom=embedding_item.get(
                     "custom",
                 ),
@@ -663,25 +664,28 @@ def import_file(
                 )
             ] = embedding_object.id
 
-        for embedding_tensor_item in data.get(
+        if data.get(
             "embedding_tensors_data",
-        ):
-            embedding.create_tensor(
-                project_id=project_id,
-                record_id=record_ids.get(
-                    embedding_tensor_item.get(
-                        "record_id",
-                    )
-                ),
-                embedding_id=embedding_ids.get(
-                    embedding_tensor_item.get(
-                        "embedding_id",
-                    )
-                ),
-                data=embedding_tensor_item.get(
-                    "data",
-                ),
-            )
+        ): 
+            for embedding_tensor_item in data.get(
+                "embedding_tensors_data",
+            ):
+                embedding.create_tensor(
+                    project_id=project_id,
+                    record_id=record_ids.get(
+                        embedding_tensor_item.get(
+                            "record_id",
+                        )
+                    ),
+                    embedding_id=embedding_ids.get(
+                        embedding_tensor_item.get(
+                            "embedding_id",
+                        )
+                    ),
+                    data=embedding_tensor_item.get(
+                        "data",
+                    ),
+                )
 
     weak_supervision_ids = {}
     if data.get("weak_supervision_task_data"):
@@ -860,14 +864,10 @@ def import_file(
     # start thread after everything else is done so the service can access the db data
     if not data.get(
         "embedding_tensors_data",
-    ):
+    ):  
         embedding_manager.create_embeddings_one_by_one(
             project_id,
-            import_user_id,
-            data.get(
-                "embeddings_data",
-            ),
-            attribute_ids_by_old_name,
+            embedding_ids.values()
         )
     else:
         for old_id in embedding_ids:

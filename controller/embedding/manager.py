@@ -53,16 +53,12 @@ def create_embedding(
 
 def create_embeddings_one_by_one(
     project_id: str,
-    user_id: str,
-    embedding_data: Dict[str, Any],
-    attribute_names: Dict[str, str],
+    embeddings_ids: List[str],
 ) -> None:
     daemon.run(
         __embed_one_by_one_helper,
         project_id,
-        user_id,
-        embedding_data,
-        attribute_names,
+        embeddings_ids
     )
 
 
@@ -76,15 +72,10 @@ def delete_embedding(project_id: str, embedding_id: str) -> None:
 
 def __embed_one_by_one_helper(
     project_id: str,
-    user_id: str,
-    embedding_data: List[Dict[str, Any]],
-    attribute_names: Dict[str, str],
+    embeddings_ids: List[str]
 ) -> None:
-    for embedding_item in embedding_data:
-        splitted = embedding_item.get("name").split("-", 2)
-        platform = project_manager.__get_platform_name(embedding_item.get("name"))
-
-        connector.request_embedding(project_id, None) # TODO Set up correctly
+    for embedding_id in embeddings_ids:
+        connector.request_embedding(project_id, embedding_id)
         time.sleep(5)
         while util.has_encoder_running(project_id):
             time.sleep(5)

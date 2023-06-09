@@ -12,7 +12,7 @@ def recreate_embedding(
     project_id: str, embedding_id: str
 ) -> None:
     old_embedding_item = embedding.get(project_id, embedding_id)
-    agreement_item = agreement.get(project_id, old_embedding_item.agreement_id)
+    agreement_item = agreement.get_by_xfkey(project_id, old_embedding_item.id) 
     new_embedding_item = embedding.create(
         project_id,
         old_embedding_item.attribute_id,
@@ -24,9 +24,12 @@ def recreate_embedding(
         api_token=old_embedding_item.api_token,
         with_commit=False
     )
+    old_embedding_id = old_embedding_item.id
+    embedding.delete(project_id, embedding_id, with_commit=False)
+    embedding.delete_tensors(embedding_id, with_commit=False)
     agreement_item.xfkey = new_embedding_item.id
     general.commit()
-    connector.request_deleting_embedding(project_id, old_embedding_item.id)
+    connector.request_deleting_embedding(project_id, old_embedding_id)
     daemon.run(
         connector.request_embedding,
         project_id,
