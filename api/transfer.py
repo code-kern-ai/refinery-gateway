@@ -297,7 +297,6 @@ def __recalculate_missing_attributes_and_embeddings(project_id: str, user_id: st
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
-    print("Hello from __calculate_missing_attributes", flush=True)
     # wait a second to ensure that the process is started in the tokenization service
     time.sleep(2)
     ctx_token = general.get_ctx_token()
