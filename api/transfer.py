@@ -307,14 +307,9 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             enums.AttributeState.USABLE.value,
         ],
     )
-    try:
+    if len(attributes_usable) == 0:
+        return
 
-
-        if len(attributes_usable) == 0:
-            return
-    except Exception as e:
-        print("Hello from Exception",flush=True)
-        print(e,flush=True)
     # stored as list so connection results do not affect
     attribute_ids = [str(att_usable.id) for att_usable in attributes_usable]
     for att_id in attribute_ids:
@@ -416,14 +411,18 @@ def __recreate_embeddings(project_id: str) -> None:
             if not embedding_item:
                 continue
             embedding_item = recreate_embedding(project_id, embedding_id)
-            time.sleep(5)
-            while embedding_util.has_encoder_running(project_id):
-                if embedding_item.state == enums.EmbeddingState.WAITING.value:
+            time.sleep(2)
+            while True:
+                embedding_item = general.refresh(embedding_item)
+                if not embedding_item:
+                    raise Exception("Embedding not found")
+                elif embedding_item.state == enums.EmbeddingState.FAILED.value or embedding_item.state == enums.EmbeddingState.FINISHED.value:
                     break
-                time.sleep(1)
+                else:
+                    time.sleep(1)
     except Exception as e:
         print(
-            f"Error while recreating embeddings for {project_id} when new records are uploaded : {e}"
+            f"Error while recreating embeddings for {project_id} when new records are uploaded : {e}", flush=True
         )
         get_waiting_embeddings = embedding.get_waiting_embeddings(project_id)
         for embed in get_waiting_embeddings:
