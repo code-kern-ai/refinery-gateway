@@ -6,6 +6,7 @@ from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
+from util import notification
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
@@ -14,7 +15,9 @@ def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
         raise ValueError(f"Organization with id {org_id} does not exist")
 
     for k in changes:
+
         if hasattr(org, k):
+            __check_notification(org_id, k, changes[k])
             setattr(org, k, changes[k])
         else:
             raise ValueError(f"Organization has no attribute {k}")
@@ -76,3 +79,7 @@ def can_create_local(org: bool = True) -> bool:
     if user.get_count_assigned() != 0:
         return False
     return True
+
+def __check_notification(org_id: str, key: str, value: Any):
+    if key in ["gdpr_compliant"]:
+        notification.send_organization_update(None, f"gdpr_compliant:{value}" , True, org_id)
