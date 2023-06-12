@@ -298,7 +298,7 @@ def __recalculate_missing_attributes_and_embeddings(project_id: str, user_id: st
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     print("Hello from __calculate_missing_attributes", flush=True)
     # wait a second to ensure that the process is started in the tokenization service
-    time.sleep(5)
+    time.sleep(2)
     ctx_token = general.get_ctx_token()
     attributes_usable = attribute.get_all_ordered(
         project_id,
@@ -327,7 +327,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 i = 0
                 ctx_token = general.remove_and_refresh_session(ctx_token, True)
             if tokenization.is_doc_bin_creation_running(project_id):
-                time.sleep(5)
+                time.sleep(2)
                 continue
             else:
                 break
@@ -354,7 +354,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 if tokenization.is_doc_bin_creation_running_for_attribute(
                     project_id, current_att.name
                 ):
-                    time.sleep(5)
+                    time.sleep(2)
                     continue
                 else:
                     attribute_ids.pop(0)
@@ -362,7 +362,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                         project_id=project_id,
                         message=f"calculate_attribute:finished:{current_att_id}",
                     )
-            time.sleep(5)
+            time.sleep(2)
     except Exception as e:
         print(
             f"Error while recreating attribute calculation for {project_id} when new records are uploaded : {e}"
@@ -404,13 +404,14 @@ def __recreate_embeddings(project_id: str) -> None:
                 f"embedding:{embedding_id}:state:{enums.EmbeddingState.WAITING.value}",
             )
     general.commit()
-    try:
-        for embedding_id in embedding_ids:
-            ctx_token = general.remove_and_refresh_session(ctx_token, request_new=True)
+    for embedding_id in embedding_ids:
+        new_id = None
+        try:
             embedding_item = embedding.get(project_id, embedding_id)
             if not embedding_item:
                 continue
             embedding_item = recreate_embedding(project_id, embedding_id)
+            new_id = embedding_item.id
             time.sleep(2)
             while True:
                 embedding_item = general.refresh(embedding_item)
@@ -420,17 +421,25 @@ def __recreate_embeddings(project_id: str) -> None:
                     break
                 else:
                     time.sleep(1)
-    except Exception as e:
-        print(
-            f"Error while recreating embeddings for {project_id} when new records are uploaded : {e}", flush=True
-        )
-        get_waiting_embeddings = embedding.get_waiting_embeddings(project_id)
-        for embed in get_waiting_embeddings:
-            embedding.update_embedding_state_failed(project_id, str(embed.id))
-        general.commit()
-        raise e
-    finally:
+        except Exception as e:
+            print(
+                f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}", flush=True
+            )
+            notification.send_organization_update(
+                project_id,
+                f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
+            )
+            old_embedding_item = embedding.get(project_id, embedding_id)
+            if old_embedding_item:
+                old_embedding_item.state = enums.EmbeddingState.FAILED.value
+            
+            if new_id:
+                new_embedding_item = embedding.get(project_id, new_id)
+                if new_embedding_item:
+                    new_embedding_item.state = enums.EmbeddingState.FAILED.value
+            general.commit()
+
+
         notification.send_organization_update(
             project_id=project_id, message="embedding:finished:all"
         )
-        general.remove_and_refresh_session(ctx_token, False)

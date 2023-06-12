@@ -49,6 +49,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
         project_id,
         attribute_id,
         embedding_name,
+        user_id,
         enums.EmbeddingState.INITIALIZING.value,
         type=embedding_type,
         model=model,
