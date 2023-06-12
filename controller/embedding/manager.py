@@ -7,11 +7,12 @@ from util import daemon, notification
 from . import util
 from . import connector
 from controller.model_provider import manager as model_manager
-from controller.project import manager as project_manager
 from submodules.model.business_objects import attribute, embedding, agreement, general
 
 
 def get_recommended_encoders(is_managed: bool) -> List[Any]:
+    # only use is_managed if it is really managed
+    # can run into circular import problems if directly resolved here by helper method
     recommendations = connector.request_listing_recommended_encoders()
     if is_managed:
         existing_models = model_manager.get_model_provider_info()
@@ -109,7 +110,7 @@ def get_embedding_name(
         name += f"-{model}"
 
     if apiToken:
-        name += f"-{apiToken[:8]}..."
+        name += f"-{apiToken[:8]}...{apiToken[-4:]}"
     
     return name
 
@@ -194,7 +195,7 @@ def __recreate_embedding(
     embedding.delete_tensors(embedding_id, with_commit=False)
     general.commit()
 
-    if new_embedding_item.platform == "openai" or new_embedding_item.platform == "cohere":
+    if new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value:
         agreement_item = agreement.get_by_xfkey(project_id, old_id)
         if not agreement_item:
             new_embedding_item.state = enums.EmbeddingState.FAILED.value

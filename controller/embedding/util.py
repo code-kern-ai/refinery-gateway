@@ -30,7 +30,7 @@ def recreate_embedding(
     embedding.delete_tensors(embedding_id, with_commit=False)
     general.commit()
 
-    if new_embedding_item.platform == "openai" or new_embedding_item.platform == "cohere":
+    if new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value:
         agreement_item = agreement.get_by_xfkey(project_id, old_id)
         if not agreement_item:
             new_embedding_item.state = enums.EmbeddingState.FAILED.value

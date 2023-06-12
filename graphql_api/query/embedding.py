@@ -5,6 +5,7 @@ import graphene
 from controller.misc import manager as misc
 from controller.auth import manager as auth
 from graphql_api.types import EmbeddingPlatform, Encoder, LanguageModel, RecordTokenizationTask
+from submodules.model import enums
 from submodules.model.business_objects import tokenization, task_queue
 from util import spacy_util
 from controller.embedding import manager
@@ -56,22 +57,22 @@ class EmbeddingQuery(graphene.ObjectType):
     def resolve_embedding_platforms(self, info) -> List[EmbeddingPlatform]:
         return [
             {
-            "platform": "huggingface",
+            "platform": enums.EmbeddingPlatform.HUGGINGFACE.value,
             "gdpr_compliant": True,
             "terms": "Text"
             },
             {
-            "platform": "cohere",
+            "platform": enums.EmbeddingPlatform.COHERE.value,
             "gdpr_compliant": False,
             "terms": "Text"
             }, 
             {
-            "platform": "openai",
+            "platform": enums.EmbeddingPlatform.OPENAI.value,
             "gdpr_compliant": False,
             "terms": "Text"
             },
             {
-            "platform": "python",
+            "platform": enums.EmbeddingPlatform.PYTHON.value,
             "gdpr_compliant": True,
             "terms": "Text"
             },
