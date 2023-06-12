@@ -4,7 +4,7 @@ import shutil
 import time
 import threading
 from typing import Any, Dict, List, Optional
-from controller.embedding.util import recreate_embedding
+from controller.embedding.manager import recreate_embeddings
 from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
@@ -387,7 +387,7 @@ def __update_project_for_gates_thread(
             request_save_tokenizer(project_item.tokenizer)
 
         session_token = __create_missing_embedding_pickles(
-            project_id, user_id, session_token
+            project_id, session_token
         )
         session_token = __create_missing_information_source_pickles(
             project_id, user_id, session_token
@@ -405,32 +405,11 @@ def __update_project_for_gates_thread(
 
 
 def __create_missing_embedding_pickles(
-    project_id: str, user_id: str, session_token: Any
+    project_id: str, session_token: Any
 ) -> Any:
     missing_emb_pickles = __get_missing_embedding_pickles(project_id)
-
-    for embedding_id in missing_emb_pickles:
-        embedding_item = embedding.get(project_id, embedding_id)
-        if embedding_item:
-            embedding_item.state = enums.EmbeddingState.FAILED.value
-    general.commit()
-
-    for embedding_id in missing_emb_pickles:
-        session_token = general.remove_and_refresh_session(
-            session_token, request_new=True
-        )
-        __create_embedding_pickle(project_id, embedding_id, user_id)
-        time.sleep(10)
-        while has_encoder_running(project_id):
-            time.sleep(1)
+    recreate_embeddings(project_id, missing_emb_pickles)
     return session_token
-
-def __create_embedding_pickle(project_id: str, embedding_id: str, user_id: str) -> None:
-    embedding_item = embedding.get(project_id, embedding_id)
-    if not embedding_item:
-        return
-
-    recreate_embedding(project_id, embedding_id)
 
 
 

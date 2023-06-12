@@ -8,6 +8,7 @@ from controller.embedding import util as embedding_util
 from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
+from controller.embedding.manager import recreate_embeddings
 from controller.embedding.util import recreate_embedding
 
 from controller.transfer.labelstudio import import_preperator
@@ -292,7 +293,7 @@ def file_import_error_handling(
 
 def __recalculate_missing_attributes_and_embeddings(project_id: str, user_id: str) -> None:
     __calculate_missing_attributes(project_id, user_id)
-    __recreate_embeddings(project_id)
+    recreate_embeddings(project_id)
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
@@ -386,60 +387,3 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
         )
         general.remove_and_refresh_session(ctx_token, False)
         
-
-def __recreate_embeddings(project_id: str) -> None:
-    ctx_token = general.get_ctx_token()
-    embeddings = embedding.get_all_embeddings_by_project_id(project_id)
-    if len(embeddings) == 0:
-        return
-    embedding_ids = [str(embed.id) for embed in embeddings]
-    for embedding_id in embedding_ids:
-        embedding.update_embedding_state_waiting(project_id, embedding_id)
-        notification.send_organization_update(
-                project_id,
-                f"embedding:{embedding_id}:progress:{0.0}",
-            )
-        notification.send_organization_update(
-                project_id,
-                f"embedding:{embedding_id}:state:{enums.EmbeddingState.WAITING.value}",
-            )
-    general.commit()
-    for embedding_id in embedding_ids:
-        new_id = None
-        try:
-            embedding_item = embedding.get(project_id, embedding_id)
-            if not embedding_item:
-                continue
-            embedding_item = recreate_embedding(project_id, embedding_id)
-            new_id = embedding_item.id
-            time.sleep(2)
-            while True:
-                embedding_item = general.refresh(embedding_item)
-                if not embedding_item:
-                    raise Exception("Embedding not found")
-                elif embedding_item.state == enums.EmbeddingState.FAILED.value or embedding_item.state == enums.EmbeddingState.FINISHED.value:
-                    break
-                else:
-                    time.sleep(1)
-        except Exception as e:
-            print(
-                f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}", flush=True
-            )
-            notification.send_organization_update(
-                project_id,
-                f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
-            )
-            old_embedding_item = embedding.get(project_id, embedding_id)
-            if old_embedding_item:
-                old_embedding_item.state = enums.EmbeddingState.FAILED.value
-            
-            if new_id:
-                new_embedding_item = embedding.get(project_id, new_id)
-                if new_embedding_item:
-                    new_embedding_item.state = enums.EmbeddingState.FAILED.value
-            general.commit()
-
-
-        notification.send_organization_update(
-            project_id=project_id, message="embedding:finished:all"
-        )

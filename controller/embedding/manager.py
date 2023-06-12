@@ -2,7 +2,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 from submodules.model import enums
-from util import daemon
+from submodules.model.models import Embedding
+from util import daemon, notification
 from . import util
 from . import connector
 from controller.model_provider import manager as model_manager
@@ -112,3 +113,100 @@ def get_embedding_name(
     
     return name
 
+
+def recreate_embeddings(project_id: str, embedding_ids: Optional[List[str]] = None) -> None:
+    if not embedding_ids:
+        embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+        if len(embeddings) == 0:
+            return
+        embedding_ids = [str(embed.id) for embed in embeddings]
+    for embedding_id in embedding_ids:
+        embedding.update_embedding_state_waiting(project_id, embedding_id)
+        notification.send_organization_update(
+                project_id,
+                f"embedding:{embedding_id}:progress:{0.0}",
+            )
+        notification.send_organization_update(
+                project_id,
+                f"embedding:{embedding_id}:state:{enums.EmbeddingState.WAITING.value}",
+            )
+    general.commit()
+    for embedding_id in embedding_ids:
+        new_id = None
+        try:
+            embedding_item = embedding.get(project_id, embedding_id)
+            if not embedding_item:
+                continue
+            embedding_item = __recreate_embedding(project_id, embedding_id)
+            new_id = embedding_item.id
+            time.sleep(2)
+            while True:
+                embedding_item = general.refresh(embedding_item)
+                if not embedding_item:
+                    raise Exception("Embedding not found")
+                elif embedding_item.state == enums.EmbeddingState.FAILED.value or embedding_item.state == enums.EmbeddingState.FINISHED.value:
+                    break
+                else:
+                    time.sleep(1)
+        except Exception as e:
+            print(
+                f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}", flush=True
+            )
+            notification.send_organization_update(
+                project_id,
+                f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
+            )
+            old_embedding_item = embedding.get(project_id, embedding_id)
+            if old_embedding_item:
+                old_embedding_item.state = enums.EmbeddingState.FAILED.value
+            
+            if new_id:
+                new_embedding_item = embedding.get(project_id, new_id)
+                if new_embedding_item:
+                    new_embedding_item.state = enums.EmbeddingState.FAILED.value
+            general.commit()
+
+
+        notification.send_organization_update(
+            project_id=project_id, message="embedding:finished:all"
+        )
+
+
+
+def __recreate_embedding(
+    project_id: str, embedding_id: str
+) -> Embedding:
+    old_embedding_item = embedding.get(project_id, embedding_id)
+    old_id = old_embedding_item.id
+    new_embedding_item = embedding.create(
+        project_id,
+        old_embedding_item.attribute_id,
+        old_embedding_item.name,
+        old_embedding_item.created_by,
+        enums.EmbeddingState.INITIALIZING.value,
+        type=old_embedding_item.type,
+        model=old_embedding_item.model,
+        platform=old_embedding_item.platform,
+        api_token=old_embedding_item.api_token,
+        with_commit=False
+    )
+    embedding.delete(project_id, embedding_id, with_commit=False)
+    embedding.delete_tensors(embedding_id, with_commit=False)
+    general.commit()
+
+    if new_embedding_item.platform == "openai" or new_embedding_item.platform == "cohere":
+        agreement_item = agreement.get_by_xfkey(project_id, old_id)
+        if not agreement_item:
+            new_embedding_item.state = enums.EmbeddingState.FAILED.value
+            general.commit()
+            raise Exception(f"No agreement found for embedding {new_embedding_item.name}")
+        agreement_item.xfkey = new_embedding_item.id
+        general.commit()
+
+    connector.request_deleting_embedding(project_id, old_id)
+    daemon.run(
+        connector.request_embedding,
+        project_id,
+        new_embedding_item.id
+    )
+    return new_embedding_item

@@ -865,10 +865,7 @@ def import_file(
     if not data.get(
         "embedding_tensors_data",
     ):  
-        embedding_manager.create_embeddings_one_by_one(
-            project_id,
-            embedding_ids.values()
-        )
+        embedding_manager.recreate_embeddings(project_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(
