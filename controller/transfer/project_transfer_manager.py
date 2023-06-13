@@ -23,11 +23,12 @@ from submodules.model.business_objects import (
     user,
     knowledge_term,
     weak_supervision,
+    task_queue,
     comments as comment,
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import notification
+from util import daemon, notification
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -860,8 +861,19 @@ def import_file(
             )
 
     general.commit()
+    daemon.run(__post_processing_import_threaded, project_id, task_id, embedding_ids, data)
 
-    # start thread after everything else is done so the service can access the db data
+
+def __post_processing_import_threaded(project_id: str, task_id: str,  embedding_ids: List[str], data: Dict[str, Any]) -> None:
+    time.sleep(5)
+    while True:
+        if task_queue.get_by_tokenization(project_id):
+            logger.info(f"Waiting for tokenization of project {project_id}")
+            time.sleep(5)
+        else:
+            logger.info(f"Tokenization finished, continue with embedding handling of project {project_id}")
+            break
+
     if not data.get(
         "embedding_tensors_data",
     ):  
@@ -873,7 +885,6 @@ def import_file(
             )
     send_progress_update(project_id, task_id, 100)
     logger.info(f"Finished import of project {project_id}")
-
 
 def get_project_export_dump(
     project_id: str, user_id: str, export_options: Dict[str, bool]
