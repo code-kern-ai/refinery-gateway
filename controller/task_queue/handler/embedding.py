@@ -58,7 +58,10 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
     )
     if platform == enums.EmbeddingPlatform.OPENAI.value or platform == enums.EmbeddingPlatform.COHERE.value:
-        agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted, xfkey=embedding_item.id, xftype=enums.AgreementType.EMBEDDING.value, with_commit=True)
+        agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted, xfkey=embedding_item.id, xftype=enums.AgreementType.EMBEDDING.value)
+
+    general.commit()
+    
     embedding_manager.create_embedding(
         project_id, str(embedding_item.id)
     )
