@@ -612,6 +612,19 @@ def import_file(
                 ),
             )
 
+    def __transform_embedding_by_name(embedding_name: str):
+        splitted_name = embedding_name.split("-")
+        attribute_name = splitted_name[0]
+        embedding_type = splitted_name[1]
+        model = "-".join(splitted_name[2:])
+        if "bag-of-words" == model or "bag-of-characters" == model or "tf-idf" == model: 
+            platform= enums.EmbeddingPlatform.PYTHON.value
+        else:
+            platform = enums.EmbeddingPlatform.HUGGINGFACE.value
+        name = f"{attribute_name}-{embedding_type}-{platform}-{model}"
+        return platform, model, name
+
+
     embedding_ids = {}
     if data.get(
         "embeddings_data",
@@ -620,6 +633,12 @@ def import_file(
         for embedding_item in data.get(
             "embeddings_data",
         ):
+            if not embedding_item.get("platform"):
+                platform, model, name = __transform_embedding_by_name(embedding_item.get("name"))
+                embedding_item["platform"] = platform
+                embedding_item["model"] = model
+                embedding_item["name"] = name
+            
             attribute_id = embedding_item.get("attribute_id")
             embedding_name = embedding_item.get("name")
             if attribute_id:
