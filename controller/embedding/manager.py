@@ -196,7 +196,7 @@ def __recreate_embedding(
     general.commit()
 
     if new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value:
-        agreement_item = agreement.get_by_xfkey(project_id, old_id)
+        agreement_item = agreement.get_by_xfkey(project_id, old_id, enums.AgreementType.EMBEDDING.value)
         if not agreement_item:
             new_embedding_item.state = enums.EmbeddingState.FAILED.value
             general.commit()
