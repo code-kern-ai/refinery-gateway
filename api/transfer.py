@@ -9,7 +9,6 @@ from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
-from controller.embedding.util import recreate_embedding
 
 from controller.transfer.labelstudio import import_preperator
 from submodules.s3 import controller as s3
@@ -239,7 +238,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         daemon.run(
             __recalculate_missing_attributes_and_embeddings,
             project_id,
-            task.user_id,
+            str(task.user_id),
         )
 
     elif "project" in task.file_type:

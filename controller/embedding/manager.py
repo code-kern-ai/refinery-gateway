@@ -121,17 +121,19 @@ def recreate_embeddings(project_id: str, embedding_ids: Optional[List[str]] = No
         if len(embeddings) == 0:
             return
         embedding_ids = [str(embed.id) for embed in embeddings]
+    
+    set_to_wait = False
     for embedding_id in embedding_ids:
+        set_to_wait = True
         embedding.update_embedding_state_waiting(project_id, embedding_id)
-        notification.send_organization_update(
-                project_id,
-                f"embedding:{embedding_id}:progress:{0.0}",
-            )
-        notification.send_organization_update(
-                project_id,
-                f"embedding:{embedding_id}:state:{enums.EmbeddingState.WAITING.value}",
-            )
     general.commit()
+
+    if set_to_wait:
+        notification.send_organization_update(
+                project_id,
+                f"embedding:{None}:state:{enums.EmbeddingState.WAITING.value}",
+            )
+        
     for embedding_id in embedding_ids:
         new_id = None
         try:

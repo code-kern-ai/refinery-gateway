@@ -429,10 +429,17 @@ def import_file(
 
     def __replace_embedding_name(soure_code: str, embedding_name_mapping: Dict[str, str]) -> str:
         for embedding_name in embedding_name_mapping.keys():
-            if embedding_name in soure_code:
+            double_quoted_name = f'"{embedding_name}"'
+            single_quoted_name = f"'{embedding_name}'"
+            if double_quoted_name in soure_code:
                 code =  soure_code.replace(
-                    embedding_name,
-                    embedding_name_mapping[embedding_name])
+                    double_quoted_name,
+                    f'"{embedding_name_mapping[embedding_name]}"')
+                return code
+            elif single_quoted_name in soure_code:
+                code =  soure_code.replace(
+                    single_quoted_name,
+                    f"'{embedding_name_mapping[embedding_name]}'")
                 return code
         return soure_code
 
@@ -440,10 +447,10 @@ def import_file(
     for information_source_item in data.get(
         "information_sources_data",
     ):
-        
-        information_source_item["source_code"] = __replace_embedding_name(information_source_item.get(
-                "source_code",
-            ), embedding_name_mapping)
+        if embedding_name_mapping:
+            information_source_item["source_code"] = __replace_embedding_name(information_source_item.get(
+                    "source_code",
+                ), embedding_name_mapping)
         information_source_object = information_source.create(
             name=information_source_item.get(
                 "name",
