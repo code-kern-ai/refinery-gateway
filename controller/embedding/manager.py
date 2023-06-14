@@ -110,7 +110,7 @@ def get_embedding_name(
         name += f"-{model}"
 
     if apiToken:
-        name += f"-{apiToken[:8]}...{apiToken[-4:]}"
+        name += f"-{apiToken[:3]}...{apiToken[-4:]}"
     
     return name
 
