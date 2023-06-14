@@ -58,22 +58,18 @@ class EmbeddingQuery(graphene.ObjectType):
         return [
             {
             "platform": enums.EmbeddingPlatform.HUGGINGFACE.value,
-            "gdpr_compliant": True,
-            "terms": "Text"
+            "terms": None
             },
             {
             "platform": enums.EmbeddingPlatform.COHERE.value,
-            "gdpr_compliant": False,
-            "terms": "Text"
+            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Order Processing Agreement. Please be aware that the Cohere API policies may conflict with your internal data and GDPR policies. For more information please check: https://cohere.com/terms-of-use. For questions you can contact us at security@kern.ai."
             }, 
             {
             "platform": enums.EmbeddingPlatform.OPENAI.value,
-            "gdpr_compliant": False,
-            "terms": "Text"
+            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Order Processing Agreement. Please be aware that the OpenAI API policies may conflict with your internal data and GDPR policies. For more information please check: https://openai.com/policies/api-data-usage-policies. For questions you can contact us at security@kern.ai."
             },
             {
             "platform": enums.EmbeddingPlatform.PYTHON.value,
-            "gdpr_compliant": True,
-            "terms": "Text"
+            "terms": None
             },
         ]
