@@ -58,18 +58,22 @@ class EmbeddingQuery(graphene.ObjectType):
         return [
             {
             "platform": enums.EmbeddingPlatform.HUGGINGFACE.value,
-            "terms": None
+            "terms": None,
+            "link": None
             },
             {
             "platform": enums.EmbeddingPlatform.COHERE.value,
-            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Data Processing Agreement. Please be aware that the Cohere API policies may conflict with your internal data and privacy policies. For more information please check: https://cohere.com/terms-of-use. For questions you can contact us at security@kern.ai."
+            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Data Processing Agreement. Please be aware that the Cohere API policies may conflict with your internal data and privacy policies. For more information please check: @@PLACEHOLDER@@. For questions you can contact us at security@kern.ai.",
+            "link": "https://openai.com/policies/api-data-usage-policies"
             }, 
             {
             "platform": enums.EmbeddingPlatform.OPENAI.value,
-            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Data Processing Agreement. Please be aware that the OpenAI API policies may conflict with your internal data and privacy policies. For more information please check: https://openai.com/policies/api-data-usage-policies. For questions you can contact us at security@kern.ai."
+            "terms": "Please note that by enabling this third-party API, you are stating that you accept its addition as a sub-processor under the terms of our Data Processing Agreement. Please be aware that the OpenAI API policies may conflict with your internal data and privacy policies. For more information please check: @@PLACEHOLDER@@. For questions you can contact us at security@kern.ai.",
+            "link": "https://openai.com/policies/api-data-usage-policies"
             },
             {
             "platform": enums.EmbeddingPlatform.PYTHON.value,
-            "terms": None
+            "terms": None,
+            "link": None
             },
         ]
