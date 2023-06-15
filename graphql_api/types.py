@@ -831,7 +831,7 @@ class Task(graphene.ObjectType):
 class EmbeddingPlatform(graphene.ObjectType):
     platform = graphene.String()
     terms = graphene.String()
-    gdpr_compliant = graphene.Boolean()
+    link = graphene.String()
 
 
 class TaskQueue(SQLAlchemyObjectType):
