@@ -18,6 +18,7 @@ class TransferQuery(graphene.ObjectType):
         file_type=graphene.String(required=True),
         file_import_options=graphene.String(required=False),
         upload_type=graphene.String(required=False),
+        password=graphene.String(required=False),
     )
 
     export = graphene.Field(
@@ -83,12 +84,13 @@ class TransferQuery(graphene.ObjectType):
         file_type: str,
         file_import_options: Optional[str] = "",
         upload_type: str = enums.UploadTypes.DEFAULT.value,
+        password: Optional[str] = None
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         return transfer_manager.get_upload_credentials_and_id(
-            project_id, user.id, file_name, file_type, file_import_options, upload_type
+            project_id, user.id, file_name, file_type, file_import_options, upload_type, password
         )
 
     def resolve_export(

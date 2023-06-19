@@ -57,9 +57,10 @@ def get_upload_credentials_and_id(
     file_type: str,
     file_import_options: str,
     upload_type: str,
+    password: str,
 ):
     task = upload_task_manager.create_upload_task(
-        str(user_id), project_id, file_name, file_type, file_import_options, upload_type
+        str(user_id), project_id, file_name, file_type, file_import_options, upload_type, password
     )
     org_id = organization.get_id_by_project_id(project_id)
     return s3.get_upload_credentials_and_id(org_id, project_id + "/" + str(task.id))
