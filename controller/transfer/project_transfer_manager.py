@@ -39,10 +39,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def extract_first_zip_data(local_file_name: str) -> Dict[str, Any]:
+def extract_first_zip_data(local_file_name: str, password: Optional[str] = None) -> Dict[str, Any]:
     zip_file = ZipFile(local_file_name)
     file_name = zip_file.namelist()[0]
-    return json.loads(zip_file.read(file_name).decode())
+    if password:
+        password = password.encode()
+    return json.loads(zip_file.read(file_name, password).decode())
 
 
 def import_file_by_task(project_id: str, task: UploadTask) -> None:
@@ -58,7 +60,7 @@ def import_file_by_task(project_id: str, task: UploadTask) -> None:
         file_name = s3.download_object(
             org_id, project_id + "/" + f"{task.id}/{task.file_name}", "zip"
         )
-        data = extract_first_zip_data(file_name)
+        data = extract_first_zip_data(file_name, task.password)
         if os.path.exists(file_name):
             os.remove(file_name)
     else:
