@@ -428,20 +428,19 @@ def import_file(
                 )
 
     def __replace_embedding_name(soure_code: str, embedding_name_mapping: Dict[str, str]) -> str:
+        code = source_code
         for embedding_name in embedding_name_mapping.keys():
             double_quoted_name = f'"{embedding_name}"'
             single_quoted_name = f"'{embedding_name}'"
-            if double_quoted_name in soure_code:
-                code =  soure_code.replace(
+            if double_quoted_name in code:
+                code =  code.replace(
                     double_quoted_name,
                     f'"{embedding_name_mapping[embedding_name]}"')
-                return code
-            elif single_quoted_name in soure_code:
-                code =  soure_code.replace(
+            if single_quoted_name in soure_code:
+                code =  code.replace(
                     single_quoted_name,
                     f"'{embedding_name_mapping[embedding_name]}'")
-                return code
-        return soure_code
+        return code 
 
     information_source_ids = {}
     for information_source_item in data.get(
