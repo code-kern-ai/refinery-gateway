@@ -39,12 +39,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def extract_first_zip_data(local_file_name: str, password: Optional[str] = None) -> Dict[str, Any]:
+def extract_first_zip_data(local_file_name: str, key: Optional[str] = None) -> Dict[str, Any]:
     zip_file = ZipFile(local_file_name)
     file_name = zip_file.namelist()[0]
-    if password:
-        password = password.encode()
-    return json.loads(zip_file.read(file_name, password).decode())
+    if key:
+        key = key.encode()
+    return json.loads(zip_file.read(file_name, key).decode())
 
 
 def import_file_by_task(project_id: str, task: UploadTask) -> None:

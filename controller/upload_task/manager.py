@@ -39,7 +39,7 @@ def create_upload_task(
     file_type: str,
     file_import_options: str,
     upload_type: str,
-    password: str
+    key: str
 ) -> UploadTask:
     task = upload_task.create(
         user_id,
@@ -48,7 +48,7 @@ def create_upload_task(
         file_type,
         file_import_options,
         upload_type,
-        password,
+        key,
         with_commit=True,
     )
     return task
