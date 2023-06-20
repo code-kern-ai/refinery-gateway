@@ -27,7 +27,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import notification
+from util import notification, security
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -43,7 +43,7 @@ def extract_first_zip_data(local_file_name: str, key: Optional[str] = None) -> D
     zip_file = ZipFile(local_file_name)
     file_name = zip_file.namelist()[0]
     if key:
-        key = key.encode()
+        key = security.decrypt(key)
     return json.loads(zip_file.read(file_name, key).decode())
 
 
@@ -60,7 +60,7 @@ def import_file_by_task(project_id: str, task: UploadTask) -> None:
         file_name = s3.download_object(
             org_id, project_id + "/" + f"{task.id}/{task.file_name}", "zip"
         )
-        data = extract_first_zip_data(file_name, task.password)
+        data = extract_first_zip_data(file_name, task.key)
         if os.path.exists(file_name):
             os.remove(file_name)
     else:

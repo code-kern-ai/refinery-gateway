@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import pyminizip
 import traceback
 from typing import Any, List, Optional, Dict
 import zipfile
@@ -36,7 +37,7 @@ from controller.upload_task import manager as upload_task_manager
 from submodules.s3 import controller as s3
 import pandas as pd
 from datetime import datetime
-from util import notification
+from util import notification, security
 from sqlalchemy.sql import text as sql_text
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
@@ -58,7 +59,8 @@ def get_upload_credentials_and_id(
     file_import_options: str,
     upload_type: str,
     key: str,
-):
+):  
+    key = security.ecrypt(key)
     task = upload_task_manager.create_upload_task(
         str(user_id), project_id, file_name, file_type, file_import_options, upload_type, key
     )
@@ -175,7 +177,7 @@ def export_records(
 
 
 def prepare_record_export(
-    project_id: str, user_id: str, export_options: Optional[Dict[str, Any]] = None
+    project_id: str, user_id: str, export_options: Optional[Dict[str, Any]] = None, key: Optional[str] = None
 ) -> None:
     records_by_options_query_data = get_records_by_options_query_data(
         project_id, export_options
@@ -188,7 +190,9 @@ def prepare_record_export(
     file_path, file_name = export_parser.parse(
         project_id, final_query, mapping_dict, extraction_appends, export_options
     )
-    zip_path, file_name = __write_file_to_zip(file_path)
+
+    key = "password"
+    zip_path, file_name = __write_file_to_zip(file_path, key)
     org_id = organization.get_id_by_project_id(project_id)
     prefixed_path = f"{project_id}/download/{user_id}/record_export_"
     file_name_download = prefixed_path + file_name
@@ -254,11 +258,15 @@ def prepare_project_export(
     return True
 
 
-def __write_file_to_zip(file_path: str) -> str:
+def __write_file_to_zip(file_path: str, key: str) -> str:
     base_name = os.path.basename(file_path)
     file_name = base_name + ".zip"
     zip_path = f"{file_path}.zip"
-    zipfile.ZipFile(zip_path, mode="w").write(file_path, base_name)
+    if not key:
+        zipfile.ZipFile(zip_path, mode="w").write(file_path, base_name)
+    else:
+        pyminizip.compress(base_name, None, zip_path, key, 0)
+    
     return zip_path, file_name
 
 
