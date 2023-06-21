@@ -39,7 +39,7 @@ def create_upload_task(
     file_type: str,
     file_import_options: str,
     upload_type: str,
-    key: ByteString
+    key: str
 ) -> UploadTask:
     task = upload_task.create(
         user_id,

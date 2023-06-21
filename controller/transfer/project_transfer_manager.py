@@ -27,7 +27,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import notification, security
+from util import file, notification, security
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -37,14 +37,6 @@ from sqlalchemy import sql
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def extract_first_zip_data(local_file_name: str, key: Optional[str] = None) -> Dict[str, Any]:
-    zip_file = ZipFile(local_file_name)
-    file_name = zip_file.namelist()[0]
-    if key:
-        key = security.decrypt(key)
-    return json.loads(zip_file.read(file_name, key).decode())
 
 
 def import_file_by_task(project_id: str, task: UploadTask) -> None:
@@ -60,7 +52,8 @@ def import_file_by_task(project_id: str, task: UploadTask) -> None:
         file_name = s3.download_object(
             org_id, project_id + "/" + f"{task.id}/{task.file_name}", "zip"
         )
-        data = extract_first_zip_data(file_name, task.key)
+        key = security.decrypt(task.key)
+        data = file.zip_to_json(file_name, key)
         if os.path.exists(file_name):
             os.remove(file_name)
     else:
@@ -123,7 +116,7 @@ def import_sample_project(
         notification.send_organization_update(
             project_item.id, f"project_update:{str(project_item.id)}", is_global=True
         )
-        data = extract_first_zip_data(file_name)
+        data = file.zip_to_json(file_name)
         import_file(project_item.id, user_id, data)
 
         general.commit()

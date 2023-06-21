@@ -60,7 +60,8 @@ def get_upload_credentials_and_id(
     upload_type: str,
     key: str,
 ):  
-    key = security.ecrypt(key)
+    key = security.encrypt(key)
+    print("key", key, flush=True)
     task = upload_task_manager.create_upload_task(
         str(user_id), project_id, file_name, file_type, file_import_options, upload_type, key
     )

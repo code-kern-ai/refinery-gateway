@@ -56,6 +56,5 @@ middleware = [Middleware(DatabaseSessionHandler)]
 
 app = Starlette(routes=routes, middleware=middleware)
 
-security.set_secret_key()
 init_task_queue()
 check_in_deletion_projects()

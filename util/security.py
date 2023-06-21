@@ -1,30 +1,30 @@
 
+import ast
 import os
 from typing import ByteString
-from cryptography.fernet import Fernet
+import rncryptor
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+__crypto_suite = None
 
 
-FERNET_SECRET_KEY = "FERNET_SECRET_KEY"
-__fernet = None
+def encrypt(value: str) -> ByteString:
+    if not value:
+        return None
+    global __crypto_suite
+    value = __get_crypto_suite().encrypt(value, SECRET_KEY)
+    return value
 
-def set_secret_key() -> None:
-    secret_key = Fernet.generate_key()
-    os.environ[FERNET_SECRET_KEY] = secret_key.decode()
+def decrypt(value: ByteString) -> str:
+    if not value:
+        return None
+    global __crypto_suite
+    value = __get_crypto_suite().decrypt(value, SECRET_KEY)
+    return value
 
-def ecrypt(value: str) -> ByteString:
-    global __fernet
-    return __get_fernet().encrypt(value.encode())
-
-def decrypt(token: ByteString) -> ByteString:
-    global __fernet
-    return __get_fernet().decrypt(token)
-
-def __get_fernet() -> Fernet:
-    if not os.getenv(FERNET_SECRET_KEY):
-        set_secret_key()
-
-    global __fernet
-    if not __fernet:
-        __fernet = Fernet(os.getenv(FERNET_SECRET_KEY))
-    return __fernet
-
+def __get_crypto_suite() -> rncryptor.RNCryptor:
+    global __crypto_suite
+    if not __crypto_suite:
+        __crypto_suite = rncryptor.RNCryptor()
+    return __crypto_suite

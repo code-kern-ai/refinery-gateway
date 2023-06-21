@@ -20,7 +20,7 @@ from submodules.model.business_objects import (
 from controller.user import manager as user_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
-from util import doc_ock
+from util import doc_ock, file, security
 from submodules.s3 import controller as s3
 from submodules.model import enums, events, UploadTask, Attribute
 from util import category
@@ -30,14 +30,6 @@ from controller.transfer.util import convert_to_record_dict
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 import os
-from zipfile import ZipFile
-
-
-def extract_first_zip_file(local_file_name: str) -> Dict[str, Any]:
-    zip_file = ZipFile(local_file_name)
-    file_name = zip_file.namelist()[0]
-    zip_file.extract(file_name, "")
-    return file_name
 
 
 def import_records_and_rlas(
@@ -103,7 +95,8 @@ def download_file(project_id: str, upload_task: UploadTask) -> str:
     )
     is_zip = file_type == "zip"
     if is_zip:
-        tmp_file_name = extract_first_zip_file(download_file_name)
+        key = security.decrypt(upload_task.key)
+        tmp_file_name = file.zip_to_json(download_file_name, key)
     else:
         tmp_file_name = download_file_name
 
