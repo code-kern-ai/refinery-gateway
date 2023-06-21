@@ -436,7 +436,7 @@ def import_file(
                 code =  code.replace(
                     double_quoted_name,
                     f'"{embedding_name_mapping[embedding_name]}"')
-            if single_quoted_name in soure_code:
+            if single_quoted_name in source_code:
                 code =  code.replace(
                     single_quoted_name,
                     f"'{embedding_name_mapping[embedding_name]}'")
