@@ -427,7 +427,7 @@ def import_file(
                     ),
                 )
 
-    def __replace_embedding_name(soure_code: str, embedding_name_mapping: Dict[str, str]) -> str:
+    def __replace_embedding_name(source_code: str, embedding_name_mapping: Dict[str, str]) -> str:
         code = source_code
         for embedding_name in embedding_name_mapping.keys():
             double_quoted_name = f'"{embedding_name}"'
