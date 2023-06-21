@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from controller.auth import manager as auth
 from controller.embedding import manager
 from controller.auth.manager import get_user_by_info
@@ -5,22 +6,30 @@ from util import notification
 import graphene
 
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType, EmbeddingType
+from submodules.model.enums import TaskType
 
 
-class CreateAttributeLevelEmbedding(graphene.Mutation):
+
+class CreateEmbedding(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
         attribute_id = graphene.ID(required=True)
-        embedding_handle = graphene.String()
+        config = graphene.JSONString()
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
+    def mutate(self, info, project_id: str, attribute_id: str, config: Dict[str, Any]):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = get_user_by_info(info)
-        embedding_type = EmbeddingType.ON_ATTRIBUTE.value
+        
+        embedding_type = config["embeddingType"] # should raise an exception if not present
+        platform = config.get("platform")
+        model = config.get("model")
+        api_token = config.get("apiToken")
+        terms_text = config.get("termsText")
+        terms_accepted = config.get("termsAccepted")
+
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
@@ -28,48 +37,21 @@ class CreateAttributeLevelEmbedding(graphene.Mutation):
             {
                 "embedding_type": embedding_type,
                 "attribute_id": attribute_id,
-                "embedding_handle": embedding_handle,
                 "embedding_name": manager.get_embedding_name(
-                    project_id, attribute_id, embedding_type, embedding_handle
+                    project_id, attribute_id, platform, embedding_type, model, api_token
                 ),
+                "platform": platform,
+                "model": model,
+                "api_token": api_token,
+                "terms_text": terms_text,
+                "terms_accepted": terms_accepted,
             },
         )
         notification.send_organization_update(
             project_id=project_id, message="embedding:queued"
         )
-        return CreateAttributeLevelEmbedding(ok=True)
+        return CreateEmbedding(ok=True)
 
-
-class CreateTokenLevelEmbedding(graphene.Mutation):
-    class Arguments:
-        project_id = graphene.ID(required=True)
-        attribute_id = graphene.ID(required=True)
-        embedding_handle = graphene.String()
-
-    ok = graphene.Boolean()
-
-    def mutate(self, info, project_id: str, attribute_id: str, embedding_handle: str):
-        auth.check_demo_access(info)
-        auth.check_project_access(info, project_id)
-        user = get_user_by_info(info)
-        embedding_type = EmbeddingType.ON_TOKEN.value
-        task_queue_manager.add_task(
-            project_id,
-            TaskType.EMBEDDING,
-            user.id,
-            {
-                "embedding_type": embedding_type,
-                "attribute_id": attribute_id,
-                "embedding_handle": embedding_handle,
-                "embedding_name": manager.get_embedding_name(
-                    project_id, attribute_id, embedding_type, embedding_handle
-                ),
-            },
-        )
-        notification.send_organization_update(
-            project_id=project_id, message="embedding:queued"
-        )
-        return CreateTokenLevelEmbedding(ok=True)
 
 
 class DeleteEmbedding(graphene.Mutation):
@@ -90,6 +72,5 @@ class DeleteEmbedding(graphene.Mutation):
 
 
 class EmbeddingMutation(graphene.ObjectType):
-    create_attribute_level_embedding = CreateAttributeLevelEmbedding.Field()
-    create_token_level_embedding = CreateTokenLevelEmbedding.Field()
+    create_embedding = CreateEmbedding.Field()
     delete_embedding = DeleteEmbedding.Field()

@@ -4,6 +4,7 @@ import shutil
 import time
 import threading
 from typing import Any, Dict, List, Optional
+from controller.embedding.manager import recreate_embeddings
 from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
@@ -30,11 +31,6 @@ from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
 from controller.tokenization.tokenization_service import request_save_tokenizer
-from controller.embedding.connector import (
-    request_creating_attribute_level_embedding,
-    request_creating_token_level_embedding,
-    request_deleting_embedding,
-)
 from controller.embedding.util import has_encoder_running
 from controller.payload.util import has_active_learner_running
 from controller.payload import manager as payload_manager
@@ -391,7 +387,7 @@ def __update_project_for_gates_thread(
             request_save_tokenizer(project_item.tokenizer)
 
         session_token = __create_missing_embedding_pickles(
-            project_id, user_id, session_token
+            project_id, session_token
         )
         session_token = __create_missing_information_source_pickles(
             project_id, user_id, session_token
@@ -409,48 +405,12 @@ def __update_project_for_gates_thread(
 
 
 def __create_missing_embedding_pickles(
-    project_id: str, user_id: str, session_token: Any
+    project_id: str, session_token: Any
 ) -> Any:
     missing_emb_pickles = __get_missing_embedding_pickles(project_id)
-
-    for embedding_id in missing_emb_pickles:
-        embedding_item = embedding.get(project_id, embedding_id)
-        if embedding_item:
-            embedding_item.state = enums.EmbeddingState.FAILED.value
-    general.commit()
-
-    for embedding_id in missing_emb_pickles:
-        session_token = general.remove_and_refresh_session(
-            session_token, request_new=True
-        )
-        __create_embedding_pickle(project_id, embedding_id, user_id)
-        time.sleep(10)
-        while has_encoder_running(project_id):
-            time.sleep(1)
+    recreate_embeddings(project_id, missing_emb_pickles)
     return session_token
 
-
-def __create_embedding_pickle(project_id: str, embedding_id: str, user_id: str) -> None:
-    embedding_item = embedding.get(project_id, embedding_id)
-    if not embedding_item:
-        return
-
-    request_deleting_embedding(project_id, embedding_id)
-
-    attribute_id = str(embedding_item.attribute_id)
-    attribute_name = attribute.get(project_id, attribute_id).name
-    if embedding_item.type == enums.EmbeddingType.ON_ATTRIBUTE.value:
-        prefix = f"{attribute_name}-classification-"
-        config_string = embedding_item.name[len(prefix) :]
-        request_creating_attribute_level_embedding(
-            project_id, attribute_id, user_id, config_string
-        )
-    else:
-        prefix = f"{attribute_name}-extraction-"
-        config_string = embedding_item.name[len(prefix) :]
-        request_creating_token_level_embedding(
-            project_id, attribute_id, user_id, config_string
-        )
 
 
 def __create_missing_information_source_pickles(

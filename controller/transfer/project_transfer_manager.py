@@ -23,11 +23,13 @@ from submodules.model.business_objects import (
     user,
     knowledge_term,
     weak_supervision,
+    task_queue,
     comments as comment,
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
 from util import file, notification, security
+from util import daemon, notification
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -282,11 +284,168 @@ def import_file(
         ] = label_object.id
 
     send_progress_update_throttle(project_id, task_id, 30)
+    
+    record_ids = {}
+    for record_item in data.get(
+        "records_data",
+    ):
+        record_object = record.create(
+            record_data=record_item.get(
+                "data",
+            ),
+            category=record_item.get(
+                "category",
+            ),
+            project_id=project_id,
+        )
+        record_ids[
+            record_item.get(
+                "id",
+            )
+        ] = record_object.id
+
+    for record_attribute_token_statistics_item in data.get(
+        "record_attribute_token_statistics_data",
+    ):
+        record.create_record_attribute_token_statistics(
+            project_id=project_id,
+            record_id=record_ids.get(
+                record_attribute_token_statistics_item.get(
+                    "record_id",
+                )
+            ),
+            attribute_id=attribute_ids_by_old_id.get(
+                record_attribute_token_statistics_item.get(
+                    "attribute_id",
+                )
+            ),
+            num_token=record_attribute_token_statistics_item.get(
+                "num_token",
+            ),
+        )
+
+    send_progress_update_throttle(project_id, task_id, 40)
+
+    def __transform_embedding_by_name(embedding_name: str):
+        splitted_name = embedding_name.split("-")
+        attribute_name = splitted_name[0]
+        embedding_type = splitted_name[1]
+        model = "-".join(splitted_name[2:])
+        if "bag-of-words" == model or "bag-of-characters" == model or "tf-idf" == model: 
+            platform= enums.EmbeddingPlatform.PYTHON.value
+        else:
+            platform = enums.EmbeddingPlatform.HUGGINGFACE.value
+        name = f"{attribute_name}-{embedding_type}-{platform}-{model}"
+        return platform, model, name
+    
+
+    embedding_ids = {}
+    embedding_name_mapping = {}
+    if data.get(
+        "embeddings_data",
+    ):
+        # if tensor data exists use that otherwise recreate embedding
+        for embedding_item in data.get(
+            "embeddings_data",
+        ):
+            if not embedding_item.get("platform"):
+                platform, model, name = __transform_embedding_by_name(embedding_item.get("name"))
+                embedding_item["platform"] = platform
+                embedding_item["model"] = model
+                embedding_name_mapping[embedding_item.get("name")] = name
+                embedding_item["name"] = name
+            
+            attribute_id = embedding_item.get("attribute_id")
+            embedding_name = embedding_item.get("name")
+            if attribute_id:
+                attribute_id = attribute_ids_by_old_id.get(attribute_id)
+            else:
+                attribute_name = __get_attribute_name_from_embedding_name(
+                    embedding_name
+                )
+                attribute_id = attribute_ids_by_old_name[attribute_name]
+
+            finished_at_str = "finished_at" in embedding_item
+            if not finished_at_str:
+                embedding_item["finished_at"] = sql.func.now()
+
+            embedding_object = embedding.create(
+                project_id=project_id,
+                attribute_id=attribute_id,
+                name=embedding_name,
+                state="FINISHED",
+                created_by=import_user_id,
+                custom=embedding_item.get(
+                    "custom",
+                ),
+                type=embedding_item.get(
+                    "type",
+                ),
+                started_at=embedding_item.get(
+                    "started_at",
+                ),
+                finished_at=embedding_item.get(
+                    "finished_at",
+                ),
+                platform=embedding_item.get(
+                    "platform",
+                ),
+                model=embedding_item.get(
+                    "model",
+                ),    
+            )
+            embedding_ids[
+                embedding_item.get(
+                    "id",
+                )
+            ] = embedding_object.id
+
+        if data.get(
+            "embedding_tensors_data",
+        ): 
+            for embedding_tensor_item in data.get(
+                "embedding_tensors_data",
+            ):
+                embedding.create_tensor(
+                    project_id=project_id,
+                    record_id=record_ids.get(
+                        embedding_tensor_item.get(
+                            "record_id",
+                        )
+                    ),
+                    embedding_id=embedding_ids.get(
+                        embedding_tensor_item.get(
+                            "embedding_id",
+                        )
+                    ),
+                    data=embedding_tensor_item.get(
+                        "data",
+                    ),
+                )
+
+    def __replace_embedding_name(source_code: str, embedding_name_mapping: Dict[str, str]) -> str:
+        code = source_code
+        for embedding_name in embedding_name_mapping.keys():
+            double_quoted_name = f'"{embedding_name}"'
+            single_quoted_name = f"'{embedding_name}'"
+            if double_quoted_name in code:
+                code =  code.replace(
+                    double_quoted_name,
+                    f'"{embedding_name_mapping[embedding_name]}"')
+            if single_quoted_name in source_code:
+                code =  code.replace(
+                    single_quoted_name,
+                    f"'{embedding_name_mapping[embedding_name]}'")
+        return code 
 
     information_source_ids = {}
     for information_source_item in data.get(
         "information_sources_data",
     ):
+        if embedding_name_mapping:
+            information_source_item["source_code"] = __replace_embedding_name(information_source_item.get(
+                    "source_code",
+                ), embedding_name_mapping)
         information_source_object = information_source.create(
             name=information_source_item.get(
                 "name",
@@ -341,47 +500,6 @@ def import_file(
                 "id",
             )
         ] = information_source_object.id
-
-    send_progress_update_throttle(project_id, task_id, 40)
-
-    record_ids = {}
-    for record_item in data.get(
-        "records_data",
-    ):
-        record_object = record.create(
-            record_data=record_item.get(
-                "data",
-            ),
-            category=record_item.get(
-                "category",
-            ),
-            project_id=project_id,
-        )
-        record_ids[
-            record_item.get(
-                "id",
-            )
-        ] = record_object.id
-
-    for record_attribute_token_statistics_item in data.get(
-        "record_attribute_token_statistics_data",
-    ):
-        record.create_record_attribute_token_statistics(
-            project_id=project_id,
-            record_id=record_ids.get(
-                record_attribute_token_statistics_item.get(
-                    "record_id",
-                )
-            ),
-            attribute_id=attribute_ids_by_old_id.get(
-                record_attribute_token_statistics_item.get(
-                    "attribute_id",
-                )
-            ),
-            num_token=record_attribute_token_statistics_item.get(
-                "num_token",
-            ),
-        )
 
     send_progress_update_throttle(project_id, task_id, 50)
 
@@ -513,6 +631,7 @@ def import_file(
                     project_id, import_user_id, data_slice_object.id, with_commit=False
                 )
 
+
     for information_source_payload_item in data.get(
         "information_source_payloads_data",
     ):
@@ -534,6 +653,8 @@ def import_file(
             iteration=information_source_payload_item.get(
                 "iteration",
             ),
+
+
             source_code=information_source_payload_item.get(
                 "source_code",
             ),
@@ -606,71 +727,6 @@ def import_file(
                 ),
             )
 
-    if data.get(
-        "embedding_tensors_data",
-    ):
-        # if tensor data exists use that otherwise recreate embedding
-        embedding_ids = {}
-        for embedding_item in data.get(
-            "embeddings_data",
-        ):
-            attribute_id = embedding_item.get("attribute_id")
-            embedding_name = embedding_item.get("name")
-            if attribute_id:
-                attribute_id = attribute_ids_by_old_id.get(attribute_id)
-            else:
-                attribute_name = __get_attribute_name_from_embedding_name(
-                    embedding_name
-                )
-                attribute_id = attribute_ids_by_old_name[attribute_name]
-
-            finished_at_str = "finished_at" in embedding_item
-            if not finished_at_str:
-                embedding_item["finished_at"] = sql.func.now()
-
-            embedding_object = embedding.create(
-                project_id=project_id,
-                attribute_id=attribute_id,
-                name=embedding_name,
-                state="FINISHED",
-                custom=embedding_item.get(
-                    "custom",
-                ),
-                type=embedding_item.get(
-                    "type",
-                ),
-                started_at=embedding_item.get(
-                    "started_at",
-                ),
-                finished_at=embedding_item.get(
-                    "finished_at",
-                ),
-            )
-            embedding_ids[
-                embedding_item.get(
-                    "id",
-                )
-            ] = embedding_object.id
-
-        for embedding_tensor_item in data.get(
-            "embedding_tensors_data",
-        ):
-            embedding.create_tensor(
-                project_id=project_id,
-                record_id=record_ids.get(
-                    embedding_tensor_item.get(
-                        "record_id",
-                    )
-                ),
-                embedding_id=embedding_ids.get(
-                    embedding_tensor_item.get(
-                        "embedding_id",
-                    )
-                ),
-                data=embedding_tensor_item.get(
-                    "data",
-                ),
-            )
 
     weak_supervision_ids = {}
     if data.get("weak_supervision_task_data"):
@@ -845,19 +901,23 @@ def import_file(
             )
 
     general.commit()
+    daemon.run(__post_processing_import_threaded, project_id, task_id, embedding_ids, data)
 
-    # start thread after everything else is done so the service can access the db data
+
+def __post_processing_import_threaded(project_id: str, task_id: str,  embedding_ids: List[str], data: Dict[str, Any]) -> None:
+    time.sleep(5)
+    while True:
+        if task_queue.get_by_tokenization(project_id):
+            logger.info(f"Waiting for tokenization of project {project_id}")
+            time.sleep(5)
+        else:
+            logger.info(f"Tokenization finished, continue with embedding handling of project {project_id}")
+            break
+
     if not data.get(
         "embedding_tensors_data",
-    ):
-        embedding_manager.create_embeddings_one_by_one(
-            project_id,
-            import_user_id,
-            data.get(
-                "embeddings_data",
-            ),
-            attribute_ids_by_old_name,
-        )
+    ):  
+        embedding_manager.recreate_embeddings(project_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(
@@ -865,7 +925,6 @@ def import_file(
             )
     send_progress_update(project_id, task_id, 100)
     logger.info(f"Finished import of project {project_id}")
-
 
 def get_project_export_dump(
     project_id: str, user_id: str, export_options: Dict[str, bool]
@@ -1101,6 +1160,8 @@ def get_project_export_dump(
             "type": embedding_item.type,
             "started_at": embedding_item.started_at,
             "finished_at": embedding_item.finished_at,
+            "platform": embedding_item.platform,
+            "model": embedding_item.model,
         }
         for embedding_item in embeddings
     ]

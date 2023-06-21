@@ -169,3 +169,4 @@ def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True, is_model_callback=True
     )
+
