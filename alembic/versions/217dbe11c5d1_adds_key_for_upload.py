@@ -1,8 +1,8 @@
-"""Key support for upload
+"""Adds key for upload
 
-Revision ID: d4f77b59f4a4
-Revises: 03d19eada266
-Create Date: 2023-06-21 11:30:41.032489
+Revision ID: 217dbe11c5d1
+Revises: 1a25c862801f
+Create Date: 2023-06-21 14:55:16.523327
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd4f77b59f4a4'
-down_revision = '03d19eada266'
+revision = '217dbe11c5d1'
+down_revision = '1a25c862801f'
 branch_labels = None
 depends_on = None
 
