@@ -16,6 +16,7 @@ from submodules.model.business_objects import (
     project,
     record,
     record_label_association,
+    upload_task,
 )
 from controller.user import manager as user_manager
 from controller.upload_task import manager as upload_task_manager
@@ -80,36 +81,37 @@ def import_records_and_rlas(
             )
 
 
-def download_file(project_id: str, upload_task: UploadTask) -> str:
+def download_file(project_id: str, task: UploadTask) -> str:
     # TODO is copied from import_file and can be refactored because atm its duplicated code
     upload_task_manager.update_task(
-        project_id, upload_task.id, state=enums.UploadStates.PENDING.value
+        project_id, task.id, state=enums.UploadStates.PENDING.value
     )
     org_id = organization.get_id_by_project_id(project_id)
 
-    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
+    file_type = task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
     download_file_name = s3.download_object(
         org_id,
-        project_id + "/" + f"{upload_task.id}/{upload_task.file_name}",
+        project_id + "/" + f"{task.id}/{task.file_name}",
         file_type,
     )
     is_zip = file_type == "zip"
     if is_zip:
-        key = security.decrypt(upload_task.key)
-        tmp_file_name = file.zip_to_json(download_file_name, key)
+        key = security.decrypt(task.key)
+        tmp_file_name = file.zip_to_json_file(download_file_name, key)
+        upload_task.update(project_id, task.id, key=None, with_commit=True)
+        file_type = "json"
     else:
         tmp_file_name = download_file_name
 
     if is_zip and os.path.exists(download_file_name):
         os.remove(download_file_name)
 
-    return tmp_file_name
+    return tmp_file_name, file_type
 
 
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
-    file_type = upload_task.file_name.rsplit("_", 1)[0].rsplit(".", 1)[1]
-    tmp_file_name = download_file(project_id, upload_task)
+    tmp_file_name, file_type = download_file(project_id, upload_task)
 
     upload_task_manager.update_task(
         project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value

@@ -24,6 +24,7 @@ from submodules.model.business_objects import (
     knowledge_term,
     weak_supervision,
     task_queue,
+    upload_task,
     comments as comment,
 )
 from submodules.model.enums import NotificationType
@@ -56,6 +57,7 @@ def import_file_by_task(project_id: str, task: UploadTask) -> None:
         )
         key = security.decrypt(task.key)
         data = file.zip_to_json(file_name, key)
+        upload_task.update(project_id, task.id, key=None, with_commit=True)
         if os.path.exists(file_name):
             os.remove(file_name)
     else:
