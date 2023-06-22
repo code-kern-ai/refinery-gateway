@@ -1,10 +1,8 @@
 import os
 import logging
 import json
-import pyminizip
 import traceback
 from typing import Any, List, Optional, Dict
-import zipfile
 
 from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
@@ -37,13 +35,14 @@ from controller.upload_task import manager as upload_task_manager
 from submodules.s3 import controller as s3
 import pandas as pd
 from datetime import datetime
-from util import notification, security
+from util import notification, security, file
 from sqlalchemy.sql import text as sql_text
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
 from submodules.model.business_objects import record_label_association as rla
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
+
 
 from util.notification import create_notification
 
@@ -191,9 +190,7 @@ def prepare_record_export(
     file_path, file_name = export_parser.parse(
         project_id, final_query, mapping_dict, extraction_appends, export_options
     )
-
-    key = "password"
-    zip_path, file_name = __write_file_to_zip(file_path, key)
+    zip_path, file_name = file.file_to_zip(file_path, key)
     org_id = organization.get_id_by_project_id(project_id)
     prefixed_path = f"{project_id}/download/{user_id}/record_export_"
     file_name_download = prefixed_path + file_name
@@ -239,7 +236,7 @@ def export_knowledge_base(project_id: str, base_id: str) -> str:
 
 
 def prepare_project_export(
-    project_id: str, user_id: str, export_options: Dict[str, bool]
+    project_id: str, user_id: str, export_options: Dict[str, bool], key: Optional[str] = None
 ) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     objects = s3.get_bucket_objects(org_id, project_id + "/download/project_export_")
@@ -248,39 +245,15 @@ def prepare_project_export(
 
     data = get_project_export_dump(project_id, user_id, export_options)
     file_name_base = "project_export_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    file_name_local = file_name_base + ".zip"
-    file_name_download = project_id + "/download/" + file_name_local
-    __write_json_data_to_zip(data, file_name_base)
-    s3.upload_object(org_id, file_name_download, file_name_local)
+    json_file_path = file.json_string_to_file(data, file_name_base)
+    zip_path, zip_name = file.file_to_zip(json_file_path, key)
+    file_name_download = f"{project_id}/download/{zip_name}"
+    s3.upload_object(org_id, file_name_download, zip_path)
     notification.send_organization_update(project_id, "project_export")
 
-    if os.path.exists(file_name_local):
-        os.remove(file_name_local)
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
     return True
-
-
-def __write_file_to_zip(file_path: str, key: str) -> str:
-    base_name = os.path.basename(file_path)
-    file_name = base_name + ".zip"
-    zip_path = f"{file_path}.zip"
-    if not key:
-        zipfile.ZipFile(zip_path, mode="w").write(file_path, base_name)
-    else:
-        pyminizip.compress(base_name, None, zip_path, key, 0)
-    
-    return zip_path, file_name
-
-
-def __write_json_data_to_zip(dumped_json: str, base_file_name: str) -> None:
-    with zipfile.ZipFile(
-        base_file_name + ".zip",
-        mode="w",
-        compression=zipfile.ZIP_DEFLATED,
-        compresslevel=9,
-    ) as zip_file:
-        zip_file.writestr(base_file_name + ".json", data=dumped_json)
-        zip_file.testzip()
-
 
 def last_project_export_credentials(project_id: str) -> str:
     return __get_last_export_credentials(project_id, "/download/project_export_")
