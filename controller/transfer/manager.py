@@ -250,6 +250,8 @@ def prepare_project_export(
     s3.upload_object(org_id, file_name_download, zip_path)
     notification.send_organization_update(project_id, "project_export")
 
+    if os.path.exists(json_file_path):
+        os.remove(json_file_path)
     if os.path.exists(zip_path):
         os.remove(zip_path)
     return True

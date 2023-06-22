@@ -21,7 +21,6 @@ def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:
         json.dump(json_data, f)
     return file_name
 
-
 def file_to_zip(file_path: str, key: Optional[str] = None) -> Tuple[str, str]:
     zip_path= f"{file_path}.zip"
     pyminizip.compress(file_path, None, zip_path, key, 0)
