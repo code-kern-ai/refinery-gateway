@@ -58,5 +58,6 @@ app = Starlette(routes=routes, middleware=middleware)
 
 init_task_queue()
 check_in_deletion_projects()
+security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()

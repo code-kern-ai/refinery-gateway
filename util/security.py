@@ -28,3 +28,7 @@ def __get_crypto_suite() -> rncryptor.RNCryptor:
     if not __crypto_suite:
         __crypto_suite = rncryptor.RNCryptor()
     return __crypto_suite
+
+def check_secret_key() -> None:
+    if not SECRET_KEY:
+        raise Exception("SECRET_KEY not set")
