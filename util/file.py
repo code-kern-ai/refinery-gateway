@@ -29,8 +29,8 @@ def file_to_zip(file_path: str, key: Optional[str] = None) -> Tuple[str, str]:
     zip_name = f"{base_name}.zip"
     return zip_path, zip_name
 
-def json_string_to_file(json_string: str, base_file_name: str, key: Optional[str] = None) -> str:
+def text_to_json_file(text: str, base_file_name: str) -> str:
     json_file_path = f"tmp/{base_file_name}.json"
     with open(json_file_path, 'w') as f:
-        json.dump(json_string, f)
+        f.write(text)
     return json_file_path

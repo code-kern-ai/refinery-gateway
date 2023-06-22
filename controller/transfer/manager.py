@@ -245,7 +245,7 @@ def prepare_project_export(
 
     data = get_project_export_dump(project_id, user_id, export_options)
     file_name_base = "project_export_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    json_file_path = file.json_string_to_file(data, file_name_base)
+    json_file_path = file.text_to_json_file(data, file_name_base)
     zip_path, zip_name = file.file_to_zip(json_file_path, key)
     file_name_download = f"{project_id}/download/{zip_name}"
     s3.upload_object(org_id, file_name_download, zip_path)
