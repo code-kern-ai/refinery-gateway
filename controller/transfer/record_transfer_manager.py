@@ -98,7 +98,7 @@ def download_file(project_id: str, task: UploadTask) -> str:
     if is_zip:
         key = security.decrypt(task.key)
         tmp_file_name = file.zip_to_json_file(download_file_name, key)
-        upload_task.update(project_id, task.id, key=None, with_commit=True)
+        upload_task.remove_key(project_id, task.id, with_commit=True)
         file_type = "json"
     else:
         tmp_file_name = download_file_name
