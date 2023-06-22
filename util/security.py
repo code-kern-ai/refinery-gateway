@@ -32,3 +32,5 @@ def __get_crypto_suite() -> rncryptor.RNCryptor:
 def check_secret_key() -> None:
     if not SECRET_KEY:
         raise Exception("SECRET_KEY not set")
+    if SECRET_KEY == "default":
+        print("CAUTION: SECRET_KEY is set to default value", flush=True)
