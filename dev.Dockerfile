@@ -4,9 +4,7 @@ WORKDIR /app
 
 VOLUME ["/app"]
 
-RUN apt-get update
-RUN apt-get install -y libc6-dev
-RUN apt-get install -y --no-install-recommends zlib1g gcc
+RUN apt-get update && apt-get install -y libc6-dev zlib1g gcc --no-install-recommends
 
 COPY requirements.txt .
 
