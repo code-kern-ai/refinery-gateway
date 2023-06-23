@@ -66,7 +66,6 @@ def convert_to_record_dict(
         else {}
     )
     try:
-        print("file_type", file_type, flush=True)
         if file_type in ["csv", "txt", "text"]:
             df = pd.read_csv(file_name, **file_import_options)
         elif file_type == "xlsx":
