@@ -20,3 +20,6 @@ class MissingArgumentsException(Exception):
 
 class NotAllowedInDemoError(Exception):
     pass
+
+class BadPasswordError(Exception):
+    pass

@@ -1,16 +1,15 @@
 import logging
 import traceback
 import time
-from typing import Any, List
+from typing import Optional
 
 from controller import organization
-from controller.embedding import util as embedding_util
-from controller.embedding import connector as embedding_connector
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
 from controller.transfer.labelstudio import import_preperator
+from exceptions.exceptions import BadPasswordError
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
@@ -69,6 +68,8 @@ class Notify(HTTPEndpoint):
         is_global_update = True if task.file_type == "project" else False
         try:
             init_file_import(task, project_id, is_global_update)
+        except BadPasswordError:
+            file_import_error_handling(task, project_id, is_global_update, enums.NotificationType.BAD_PASSWORD_DURING_IMPORT)
         except Exception:
             file_import_error_handling(task, project_id, is_global_update)
         notification.send_organization_update(
@@ -268,13 +269,15 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
 
 
 def file_import_error_handling(
-    task: UploadTask, project_id: str, is_global_update: bool
+    task: UploadTask, project_id: str, is_global_update: bool, notification_type: Optional[NotificationType] = None
 ) -> None:
     general.rollback()
     task.state = enums.UploadStates.ERROR.value
     general.commit()
+    if not notification_type:
+        notification_type = NotificationType.IMPORT_FAILED
     create_notification(
-        NotificationType.IMPORT_FAILED,
+        notification_type,
         task.user_id,
         task.project_id,
         task.file_type,

@@ -5,6 +5,8 @@ import pyminizip
 
 from typing import Any, Dict, Optional, Tuple
 from zipfile import ZipFile
+from exceptions.exceptions import BadPasswordError
+
 
 def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, Any]:
     zip_file = ZipFile(local_file_name)
@@ -12,8 +14,14 @@ def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, An
     if key:
         key = key.encode()
         zip_file.setpassword(key)
-    return json.loads(zip_file.read(file_name, key).decode())
-
+    
+    try:
+        data = json.loads(zip_file.read(file_name, key).decode())
+        return data
+    except RuntimeError as error:
+        if "password" in str(error):
+            raise BadPasswordError
+        
 def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:
     json_data = zip_to_json(zip_file_path, key)
     file_name = f"{zip_file_path}{random.randint(1,999)}.json" 
