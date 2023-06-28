@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import pyminizip
 
 from typing import Any, Dict, Optional, Tuple
@@ -14,30 +13,40 @@ def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, An
     if key:
         key = key.encode()
         zip_file.setpassword(key)
-    
+
     try:
         data = json.loads(zip_file.read(file_name, key).decode())
         return data
     except RuntimeError as error:
         if "password" in str(error):
             raise BadPasswordError
-        
+
+
 def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:
     json_data = zip_to_json(zip_file_path, key)
-    file_name = f"{zip_file_path}{random.randint(1,999)}.json" 
-    with open(file_name, 'w') as f:
+    file_name = __get_free_file_name(f"{zip_file_path}.json")
+    with open(file_name, "w") as f:
         json.dump(json_data, f)
     return file_name
 
+
 def file_to_zip(file_path: str, key: Optional[str] = None) -> Tuple[str, str]:
-    zip_path= f"{file_path}.zip"
+    zip_path = f"{file_path}.zip"
     pyminizip.compress(file_path, None, zip_path, key, 0)
     base_name = os.path.basename(file_path)
     zip_name = f"{base_name}.zip"
     return zip_path, zip_name
 
+
 def text_to_json_file(text: str, base_file_name: str) -> str:
     json_file_path = f"tmp/{base_file_name}.json"
-    with open(json_file_path, 'w') as f:
+    with open(json_file_path, "w") as f:
         f.write(text)
     return json_file_path
+
+
+def __get_free_file_name(path: str, increment: int = 1):
+    if os.path.exists(f"{path}/{file_name}"):
+        file_name = f"{file_name}_{increment}"
+        return __get_free_file_name(path, file_name, increment + 1)
+    return file_name

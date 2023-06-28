@@ -57,11 +57,17 @@ def get_upload_credentials_and_id(
     file_type: str,
     file_import_options: str,
     upload_type: str,
-    key: str,
-):  
+    key: Optional[str] = None,
+):
     key = security.encrypt(key)
     task = upload_task_manager.create_upload_task(
-        str(user_id), project_id, file_name, file_type, file_import_options, upload_type, key
+        str(user_id),
+        project_id,
+        file_name,
+        file_type,
+        file_import_options,
+        upload_type,
+        key,
     )
     org_id = organization.get_id_by_project_id(project_id)
     return s3.get_upload_credentials_and_id(org_id, project_id + "/" + str(task.id))
@@ -176,7 +182,10 @@ def export_records(
 
 
 def prepare_record_export(
-    project_id: str, user_id: str, export_options: Optional[Dict[str, Any]] = None, key: Optional[str] = None
+    project_id: str,
+    user_id: str,
+    export_options: Optional[Dict[str, Any]] = None,
+    key: Optional[str] = None,
 ) -> None:
     records_by_options_query_data = get_records_by_options_query_data(
         project_id, export_options
@@ -235,7 +244,10 @@ def export_knowledge_base(project_id: str, base_id: str) -> str:
 
 
 def prepare_project_export(
-    project_id: str, user_id: str, export_options: Dict[str, bool], key: Optional[str] = None
+    project_id: str,
+    user_id: str,
+    export_options: Dict[str, bool],
+    key: Optional[str] = None,
 ) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     objects = s3.get_bucket_objects(org_id, project_id + "/download/project_export_")
@@ -255,6 +267,7 @@ def prepare_project_export(
     if os.path.exists(zip_path):
         os.remove(zip_path)
     return True
+
 
 def last_project_export_credentials(project_id: str) -> str:
     return __get_last_export_credentials(project_id, "/download/project_export_")
