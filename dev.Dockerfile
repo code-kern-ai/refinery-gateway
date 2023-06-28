@@ -4,6 +4,7 @@ WORKDIR /app
 
 VOLUME ["/app"]
 
+# used for encryption and zipping of files
 RUN apt-get update && apt-get install -y libc6-dev zlib1g gcc --no-install-recommends
 
 COPY requirements.txt .

@@ -24,7 +24,7 @@ def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, An
 
 def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:
     json_data = zip_to_json(zip_file_path, key)
-    file_name = __get_free_file_name(f"{zip_file_path}.json")
+    file_name = __get_free_file_path(f"{zip_file_path}.json")
     with open(file_name, "w") as f:
         json.dump(json_data, f)
     return file_name
@@ -45,8 +45,8 @@ def text_to_json_file(text: str, base_file_name: str) -> str:
     return json_file_path
 
 
-def __get_free_file_name(path: str, increment: int = 1):
-    if os.path.exists(f"{path}/{file_name}"):
-        file_name = f"{file_name}_{increment}"
-        return __get_free_file_name(path, file_name, increment + 1)
-    return file_name
+def __get_free_file_path(file_path: str, increment: int = 1):
+    if os.path.exists(file_path):
+        file_path = f"{file_path}_{increment}"
+        return __get_free_file_path(file_path, increment + 1)
+    return file_path
