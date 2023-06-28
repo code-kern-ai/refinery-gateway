@@ -171,11 +171,12 @@ class Embedding(SQLAlchemyObjectType):
     def resolve_progress(self, info):
         if self.state == "FINISHED":
             return 1
-        num_records = len(self.project.records)  # can never be 0
-        progress = 0.1 if self.state != "INITIALIZING" else 0
-        return min(
-            progress + (Embedding.resolve_count(self, info) / num_records * 0.9), 0.99
-        )
+        elif self.state == "INITIALIZING" or self.state == "WAITING":
+            return 0.0
+        else:
+            return min(
+                0.1 + (Embedding.resolve_count(self, info) / len(self.project.records) * 0.9), 0.99
+            )
 
 
 class Project(SQLAlchemyObjectType):
@@ -664,7 +665,7 @@ class Encoder(graphene.ObjectType):
     description = graphene.String()
     tokenizers = graphene.List(graphene.String)
     applicability = graphene.JSONString()
-
+    platform = graphene.String()
 
 class UploadTask(SQLAlchemyObjectType):
     class Meta:
@@ -825,6 +826,12 @@ class Task(graphene.ObjectType):
     task_type = graphene.String()
     started_at = graphene.DateTime()
     finished_at = graphene.DateTime()
+
+
+class EmbeddingPlatform(graphene.ObjectType):
+    platform = graphene.String()
+    terms = graphene.String()
+    link = graphene.String()
 
 
 class TaskQueue(SQLAlchemyObjectType):
