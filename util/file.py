@@ -46,7 +46,9 @@ def text_to_json_file(text: str, base_file_name: str) -> str:
 
 
 def __get_free_file_path(file_path: str, increment: int = 1):
-    if os.path.exists(file_path):
-        file_path = f"{file_path}_{increment}"
-        return __get_free_file_path(file_path, increment + 1)
-    return file_path
+    check_path = file_path
+    counter = 0
+    while os.path.exists(check_path):
+        counter += increment
+        check_path = f"{file_path}_{counter}"
+    return check_path
