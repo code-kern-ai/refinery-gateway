@@ -121,6 +121,13 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.UPLOADING_DATA.value,
     },
+    enums.NotificationType.BAD_PASSWORD_DURING_IMPORT.value: {
+        "message_template": "Bad password for zip file",
+        "title": "Data import",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.OVERVIEW.value,
+        "docs": enums.DOCS.CREATING_PROJECTS.value,
+    },
     enums.NotificationType.INFORMATION_SOURCE_STARTED.value: {
         "message_template": "Started heuristic @@arg@@.",
         "title": "Heuristic execution",
