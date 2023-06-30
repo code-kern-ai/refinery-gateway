@@ -69,7 +69,13 @@ class Notify(HTTPEndpoint):
         try:
             init_file_import(task, project_id, is_global_update)
         except BadPasswordError:
-            file_import_error_handling(task, project_id, is_global_update, enums.NotificationType.BAD_PASSWORD_DURING_IMPORT)
+            file_import_error_handling(
+                task,
+                project_id,
+                is_global_update,
+                enums.NotificationType.BAD_PASSWORD_DURING_IMPORT,
+                print_traceback=False,
+            )
         except Exception:
             file_import_error_handling(task, project_id, is_global_update)
         notification.send_organization_update(
@@ -269,7 +275,11 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
 
 
 def file_import_error_handling(
-    task: UploadTask, project_id: str, is_global_update: bool, notification_type: Optional[NotificationType] = None
+    task: UploadTask,
+    project_id: str,
+    is_global_update: bool,
+    notification_type: Optional[NotificationType] = None,
+    print_traceback: bool = True,
 ) -> None:
     general.rollback()
     task.state = enums.UploadStates.ERROR.value
@@ -287,13 +297,17 @@ def file_import_error_handling(
             task,
         )
     )
-    print(traceback.format_exc(), flush=True)
+    if print_traceback:
+        print(traceback.format_exc(), flush=True)
+
     notification.send_organization_update(
         project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update
     )
 
 
-def __recalculate_missing_attributes_and_embeddings(project_id: str, user_id: str) -> None:
+def __recalculate_missing_attributes_and_embeddings(
+    project_id: str, user_id: str
+) -> None:
     __calculate_missing_attributes(project_id, user_id)
     recreate_embeddings(project_id)
 
@@ -387,4 +401,3 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             message="calculate_attribute:finished:all",
         )
         general.remove_and_refresh_session(ctx_token, False)
-        
