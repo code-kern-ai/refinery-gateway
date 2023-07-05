@@ -57,6 +57,7 @@ class UpdateVersionsToNewest(graphene.Mutation):
 
     def mutate(self, info):
         auth.check_demo_access(info)
+        auth.check_admin_access(info)
         manager.update_versions_to_newest()
         return UpdateVersionsToNewest(ok=True)
 

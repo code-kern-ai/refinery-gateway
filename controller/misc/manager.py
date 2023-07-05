@@ -47,6 +47,7 @@ def get_version_overview() -> List[ServiceVersionResult]:
 def has_updates() -> List[ServiceVersionResult]:
     return __updater_has_updates()
 
+# function only sets the versions in the database, not the actual update logic
 def update_versions_to_newest() -> None:
     return __update_versions_to_newest()
 
