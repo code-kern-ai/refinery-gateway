@@ -51,8 +51,18 @@ class PostDocOck(graphene.Mutation):
             setattr(event_instance, key, event_data[key])
         doc_ock.post_event(str(user.id), event_instance)
         return UpdateConfig(ok=True)
+    
+class UpdateVersionsToNewest(graphene.Mutation):
+    ok = graphene.Boolean()
+
+    def mutate(self, info):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+        manager.update_versions_to_newest()
+        return UpdateVersionsToNewest(ok=True)
 
 
 class MiscMutation(graphene.ObjectType):
     update_config = UpdateConfig.Field()
     post_event = PostDocOck.Field()
+    update_versions_to_newest = UpdateVersionsToNewest.Field()
