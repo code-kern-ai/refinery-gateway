@@ -10,6 +10,8 @@ from exceptions.exceptions import BadPasswordError
 def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, Any]:
     zip_file = ZipFile(local_file_name)
     file_name = zip_file.namelist()[0]
+    if key and not is_zip_password_protected(local_file_name):
+        raise BadPasswordError
     if key:
         key = key.encode()
         zip_file.setpassword(key)
@@ -20,6 +22,15 @@ def zip_to_json(local_file_name: str, key: Optional[str] = None) -> Dict[str, An
     except RuntimeError as error:
         if "password" in str(error):
             raise BadPasswordError
+
+
+def is_zip_password_protected(file_name: str) -> bool:
+    zf = ZipFile(file_name)
+    for zinfo in zf.infolist():
+        is_encrypted = zinfo.flag_bits & 0x1
+        if is_encrypted:
+            return True
+    return False
 
 
 def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:

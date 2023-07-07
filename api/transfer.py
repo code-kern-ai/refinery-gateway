@@ -76,6 +76,9 @@ class Notify(HTTPEndpoint):
                 enums.NotificationType.BAD_PASSWORD_DURING_IMPORT,
                 print_traceback=False,
             )
+            notification.send_organization_update(
+                project_id, f"bad_password:{project_id}", True
+            )
         except Exception:
             file_import_error_handling(task, project_id, is_global_update)
         notification.send_organization_update(
