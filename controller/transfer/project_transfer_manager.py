@@ -24,11 +24,12 @@ from submodules.model.business_objects import (
     knowledge_term,
     weak_supervision,
     task_queue,
+    upload_task,
     comments as comment,
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import daemon, notification
+from util import daemon, notification, file, notification, security
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -38,12 +39,6 @@ from sqlalchemy import sql
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def extract_first_zip_data(local_file_name: str) -> Dict[str, Any]:
-    zip_file = ZipFile(local_file_name)
-    file_name = zip_file.namelist()[0]
-    return json.loads(zip_file.read(file_name).decode())
 
 
 def import_file_by_task(project_id: str, task: UploadTask) -> None:
@@ -59,7 +54,9 @@ def import_file_by_task(project_id: str, task: UploadTask) -> None:
         file_name = s3.download_object(
             org_id, project_id + "/" + f"{task.id}/{task.file_name}", "zip"
         )
-        data = extract_first_zip_data(file_name)
+        key = security.decrypt(task.key)
+        data = file.zip_to_json(file_name, key)
+        upload_task.remove_key(project_id, task.id, with_commit=True)
         if os.path.exists(file_name):
             os.remove(file_name)
     else:
@@ -122,7 +119,7 @@ def import_sample_project(
         notification.send_organization_update(
             project_item.id, f"project_update:{str(project_item.id)}", is_global=True
         )
-        data = extract_first_zip_data(file_name)
+        data = file.zip_to_json(file_name)
         import_file(project_item.id, user_id, data)
 
         general.commit()
@@ -288,7 +285,7 @@ def import_file(
         ] = label_object.id
 
     send_progress_update_throttle(project_id, task_id, 30)
-    
+
     record_ids = {}
     for record_item in data.get(
         "records_data",
@@ -335,13 +332,12 @@ def import_file(
         attribute_name = splitted_name[0]
         embedding_type = splitted_name[1]
         model = "-".join(splitted_name[2:])
-        if "bag-of-words" == model or "bag-of-characters" == model or "tf-idf" == model: 
-            platform= enums.EmbeddingPlatform.PYTHON.value
+        if "bag-of-words" == model or "bag-of-characters" == model or "tf-idf" == model:
+            platform = enums.EmbeddingPlatform.PYTHON.value
         else:
             platform = enums.EmbeddingPlatform.HUGGINGFACE.value
         name = f"{attribute_name}-{embedding_type}-{platform}-{model}"
         return platform, model, name
-    
 
     embedding_ids = {}
     embedding_name_mapping = {}
@@ -353,12 +349,14 @@ def import_file(
             "embeddings_data",
         ):
             if not embedding_item.get("platform"):
-                platform, model, name = __transform_embedding_by_name(embedding_item.get("name"))
+                platform, model, name = __transform_embedding_by_name(
+                    embedding_item.get("name")
+                )
                 embedding_item["platform"] = platform
                 embedding_item["model"] = model
                 embedding_name_mapping[embedding_item.get("name")] = name
                 embedding_item["name"] = name
-            
+
             attribute_id = embedding_item.get("attribute_id")
             embedding_name = embedding_item.get("name")
             if attribute_id:
@@ -396,7 +394,7 @@ def import_file(
                 ),
                 model=embedding_item.get(
                     "model",
-                ),    
+                ),
             )
             embedding_ids[
                 embedding_item.get(
@@ -406,7 +404,7 @@ def import_file(
 
         if data.get(
             "embedding_tensors_data",
-        ): 
+        ):
             for embedding_tensor_item in data.get(
                 "embedding_tensors_data",
             ):
@@ -427,29 +425,34 @@ def import_file(
                     ),
                 )
 
-    def __replace_embedding_name(source_code: str, embedding_name_mapping: Dict[str, str]) -> str:
+    def __replace_embedding_name(
+        source_code: str, embedding_name_mapping: Dict[str, str]
+    ) -> str:
         code = source_code
         for embedding_name in embedding_name_mapping.keys():
             double_quoted_name = f'"{embedding_name}"'
             single_quoted_name = f"'{embedding_name}'"
             if double_quoted_name in code:
-                code =  code.replace(
-                    double_quoted_name,
-                    f'"{embedding_name_mapping[embedding_name]}"')
+                code = code.replace(
+                    double_quoted_name, f'"{embedding_name_mapping[embedding_name]}"'
+                )
             if single_quoted_name in source_code:
-                code =  code.replace(
-                    single_quoted_name,
-                    f"'{embedding_name_mapping[embedding_name]}'")
-        return code 
+                code = code.replace(
+                    single_quoted_name, f"'{embedding_name_mapping[embedding_name]}'"
+                )
+        return code
 
     information_source_ids = {}
     for information_source_item in data.get(
         "information_sources_data",
     ):
         if embedding_name_mapping:
-            information_source_item["source_code"] = __replace_embedding_name(information_source_item.get(
+            information_source_item["source_code"] = __replace_embedding_name(
+                information_source_item.get(
                     "source_code",
-                ), embedding_name_mapping)
+                ),
+                embedding_name_mapping,
+            )
         information_source_object = information_source.create(
             name=information_source_item.get(
                 "name",
@@ -635,7 +638,6 @@ def import_file(
                     project_id, import_user_id, data_slice_object.id, with_commit=False
                 )
 
-
     for information_source_payload_item in data.get(
         "information_source_payloads_data",
     ):
@@ -657,8 +659,6 @@ def import_file(
             iteration=information_source_payload_item.get(
                 "iteration",
             ),
-
-
             source_code=information_source_payload_item.get(
                 "source_code",
             ),
@@ -730,7 +730,6 @@ def import_file(
                     "outlier_score",
                 ),
             )
-
 
     weak_supervision_ids = {}
     if data.get("weak_supervision_task_data"):
@@ -905,30 +904,37 @@ def import_file(
             )
 
     general.commit()
-    daemon.run(__post_processing_import_threaded, project_id, task_id, embedding_ids, data)
+    daemon.run(
+        __post_processing_import_threaded, project_id, task_id, embedding_ids, data
+    )
+    send_progress_update(project_id, task_id, 100)
+    logger.info(f"Finished import of project {project_id}")
 
 
-def __post_processing_import_threaded(project_id: str, task_id: str,  embedding_ids: List[str], data: Dict[str, Any]) -> None:
+def __post_processing_import_threaded(
+    project_id: str, task_id: str, embedding_ids: List[str], data: Dict[str, Any]
+) -> None:
     time.sleep(5)
     while True:
         if task_queue.get_by_tokenization(project_id):
             logger.info(f"Waiting for tokenization of project {project_id}")
             time.sleep(5)
         else:
-            logger.info(f"Tokenization finished, continue with embedding handling of project {project_id}")
+            logger.info(
+                f"Tokenization finished, continue with embedding handling of project {project_id}"
+            )
             break
 
     if not data.get(
         "embedding_tensors_data",
-    ):  
+    ):
         embedding_manager.recreate_embeddings(project_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(
                 project_id, str(embedding_ids[old_id])
             )
-    send_progress_update(project_id, task_id, 100)
-    logger.info(f"Finished import of project {project_id}")
+
 
 def get_project_export_dump(
     project_id: str, user_id: str, export_options: Dict[str, bool]

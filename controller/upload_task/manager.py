@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import ByteString, Optional
 
 from controller.transfer.util import (
     get_upload_task_message as get_upload_task_message_orig,
@@ -39,6 +39,7 @@ def create_upload_task(
     file_type: str,
     file_import_options: str,
     upload_type: str,
+    key: str
 ) -> UploadTask:
     task = upload_task.create(
         user_id,
@@ -47,6 +48,7 @@ def create_upload_task(
         file_type,
         file_import_options,
         upload_type,
+        key,
         with_commit=True,
     )
     return task
