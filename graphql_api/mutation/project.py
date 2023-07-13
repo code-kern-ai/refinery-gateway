@@ -13,13 +13,15 @@ from submodules.model import enums
 
 class CreateProject(graphene.Mutation):
     class Arguments:
-        name = graphene.String(required=True)
+        name = graphene.String(required=False)
         description = graphene.String(required=False)
 
     ok = graphene.Boolean()
     project = graphene.Field(lambda: Project)
 
-    def mutate(self, info, name: str, description: Optional[str] = None):
+    def mutate(
+        self, info, name: Optional[str] = None, description: Optional[str] = None
+    ):
         auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)

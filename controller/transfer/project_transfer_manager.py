@@ -104,7 +104,6 @@ def import_sample_project(
         project_description = (
             "Once the project has been initialized, you'll be redirected into it."
         )
-        print("project name", project_name)
         project_item = project.create(
             organization_id,
             project_name,
@@ -151,11 +150,12 @@ def import_file(
     """
     send_progress_update_throttle(project_id, task_id, 0)
     project_item = project.get(project_id)
-    project_item.name = data.get(
-        "project_details_data",
-    ).get(
-        "name",
-    )
+    if not project_item.name:
+        project_item.name = data.get(
+            "project_details_data",
+        ).get(
+            "name",
+        )
     project_item.description = data.get(
         "project_details_data",
     ).get(
