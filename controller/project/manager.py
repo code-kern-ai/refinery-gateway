@@ -115,8 +115,12 @@ def __delete_project_data_from_inference_dir(project_id: str) -> None:
         shutil.rmtree(project_dir)
 
 
-def import_sample_project(user_id: str, organization_id: str, name: str) -> Project:
-    project_item = handler.import_sample_project(user_id, organization_id, name)
+def import_sample_project(
+    user_id: str, organization_id: str, name: str, project_type: str
+) -> Project:
+    project_item = handler.import_sample_project(
+        user_id, organization_id, name, project_type
+    )
     task_queue_manager.add_task(
         str(project_item.id),
         TaskType.TOKENIZATION,
@@ -282,7 +286,6 @@ projects_updating_lock = threading.Lock()
 
 
 def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
-
     project_item = project.get(project_id)
     if not project_item:
         raise GraphQLError("Project not found")
@@ -356,7 +359,6 @@ def __get_missing_information_source_pickles(project_id: str) -> List[str]:
 
 
 def update_project_for_gates(project_id: str, user_id: str) -> None:
-
     project_item = project.get(project_id)
     if not project_item:
         return
@@ -386,9 +388,7 @@ def __update_project_for_gates_thread(
         if not __tokenizer_pickle_exists(project_item.tokenizer):
             request_save_tokenizer(project_item.tokenizer)
 
-        session_token = __create_missing_embedding_pickles(
-            project_id, session_token
-        )
+        session_token = __create_missing_embedding_pickles(project_id, session_token)
         session_token = __create_missing_information_source_pickles(
             project_id, user_id, session_token
         )
@@ -404,13 +404,10 @@ def __update_project_for_gates_thread(
         general.remove_and_refresh_session(session_token)
 
 
-def __create_missing_embedding_pickles(
-    project_id: str, session_token: Any
-) -> Any:
+def __create_missing_embedding_pickles(project_id: str, session_token: Any) -> Any:
     missing_emb_pickles = __get_missing_embedding_pickles(project_id)
     recreate_embeddings(project_id, missing_emb_pickles)
     return session_token
-
 
 
 def __create_missing_information_source_pickles(
@@ -418,7 +415,6 @@ def __create_missing_information_source_pickles(
     user_id: str,
     session_token: Any,
 ) -> Any:
-
     missing_is_ids = __get_missing_information_source_pickles(project_id)
     for is_id in missing_is_ids:
         session_token = general.remove_and_refresh_session(

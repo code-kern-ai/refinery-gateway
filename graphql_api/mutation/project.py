@@ -39,15 +39,20 @@ class CreateProject(graphene.Mutation):
 class CreateSampleProject(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=False)
+        project_type = graphene.String(required=False)
 
     ok = graphene.Boolean()
     project = graphene.Field(lambda: Project)
 
-    def mutate(self, info, name: Optional[str] = None):
+    def mutate(
+        self, info, name: Optional[str] = None, project_type: Optional[str] = None
+    ):
         auth.check_demo_access(info)
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
-        project = manager.import_sample_project(user.id, organization.id, name)
+        project = manager.import_sample_project(
+            user.id, organization.id, name, project_type
+        )
         doc_ock.post_event(
             str(user.id),
             events.CreateProject(
