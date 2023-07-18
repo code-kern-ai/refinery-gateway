@@ -45,6 +45,8 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
     terms_text = task["task_info"]["terms_text"]
     terms_accepted = task["task_info"]["terms_accepted"]
+
+    filter_attributes = task["task_info"]["filter_attributes"]
     embedding_item = embedding_db_bo.create(
         project_id,
         attribute_id,
@@ -55,16 +57,24 @@ def __start_task(task: Dict[str, Any]) -> bool:
         model=model,
         platform=platform,
         api_token=api_token,
-
+        filter_attributes=filter_attributes,
     )
-    if platform == enums.EmbeddingPlatform.OPENAI.value or platform == enums.EmbeddingPlatform.COHERE.value:
-        agreement_db_bo.create(project_id, user_id, terms_text, terms_accepted, xfkey=embedding_item.id, xftype=enums.AgreementType.EMBEDDING.value)
+    if (
+        platform == enums.EmbeddingPlatform.OPENAI.value
+        or platform == enums.EmbeddingPlatform.COHERE.value
+    ):
+        agreement_db_bo.create(
+            project_id,
+            user_id,
+            terms_text,
+            terms_accepted,
+            xfkey=embedding_item.id,
+            xftype=enums.AgreementType.EMBEDDING.value,
+        )
 
     general.commit()
-    
-    embedding_manager.create_embedding(
-        project_id, str(embedding_item.id)
-    )
+
+    embedding_manager.create_embedding(project_id, str(embedding_item.id))
 
     return True
 
