@@ -84,17 +84,17 @@ def ensure_project_exists(project_id: str) -> None:
 def import_sample_project(
     user_id: str, organization_id: str, project_name: str, project_type: str
 ) -> Project:
-    if project_type == "Clickbait - initial":
+    if project_type == enums.SampleProjectType.CLICKBAIT_INITIAL.value:
         file_name = "sample_projects/clickbait_initial.zip"
-    elif project_type == "Clickbait":
+    elif project_type == enums.SampleProjectType.CLICKBAIT.value:
         file_name = "sample_projects/clickbait.zip"
-    elif project_type == "AG News - initial":
+    elif project_type == enums.SampleProjectType.AG_NEWS_INITIAL.value:
         file_name = "sample_projects/ag_news_initial.zip"
-    elif project_type == "AG News":
+    elif project_type == enums.SampleProjectType.AG_NEWS.value:
         file_name = "sample_projects/ag_news.zip"
-    elif project_type == "Conversational AI - initial":
+    elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI_INITIAL.value:
         file_name = "sample_projects/conversational_ai_initial.zip"
-    elif project_type == "Conversational AI":
+    elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI.value:
         file_name = "sample_projects/conversational_ai.zip"
     else:
         raise Exception("Unknown sample project")
@@ -121,7 +121,6 @@ def import_sample_project(
         )
         data = file.zip_to_json(file_name)
         import_file(project_item.id, user_id, data)
-        project_item = project.get(project_item.id)
         project_item = project.update(project_item.id, name=project_name)
 
         general.commit()
