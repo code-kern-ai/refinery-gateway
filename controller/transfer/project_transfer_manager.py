@@ -97,7 +97,7 @@ def import_sample_project(
     elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI.value:
         file_name = "sample_projects/conversational_ai.zip"
     else:
-        raise Exception("Unknown sample project")
+        raise Exception("Unknown sample project" + project_type)
     if not project_name:
         project_name = "Sample Project"
     if os.path.exists(file_name):
