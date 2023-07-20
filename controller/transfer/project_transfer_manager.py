@@ -82,22 +82,22 @@ def ensure_project_exists(project_id: str) -> None:
 
 
 def import_sample_project(
-    user_id: str, organization_id: str, project_name: str
+    user_id: str, organization_id: str, project_name: str, project_type: str
 ) -> Project:
-    if project_name == "Clickbait - initial":
+    if project_type == enums.SampleProjectType.CLICKBAIT_INITIAL.value:
         file_name = "sample_projects/clickbait_initial.zip"
-    elif project_name == "Clickbait":
+    elif project_type == enums.SampleProjectType.CLICKBAIT.value:
         file_name = "sample_projects/clickbait.zip"
-    elif project_name == "AG News - initial":
+    elif project_type == enums.SampleProjectType.AG_NEWS_INITIAL.value:
         file_name = "sample_projects/ag_news_initial.zip"
-    elif project_name == "AG News":
+    elif project_type == enums.SampleProjectType.AG_NEWS.value:
         file_name = "sample_projects/ag_news.zip"
-    elif project_name == "Conversational AI - initial":
+    elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI_INITIAL.value:
         file_name = "sample_projects/conversational_ai_initial.zip"
-    elif project_name == "Conversational AI":
+    elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI.value:
         file_name = "sample_projects/conversational_ai.zip"
     else:
-        raise Exception("Unknown sample project")
+        raise Exception("Unknown sample project" + project_type)
     if not project_name:
         project_name = "Sample Project"
     if os.path.exists(file_name):
@@ -121,6 +121,7 @@ def import_sample_project(
         )
         data = file.zip_to_json(file_name)
         import_file(project_item.id, user_id, data)
+        project_item = project.update(project_item.id, name=project_name)
 
         general.commit()
 
@@ -148,11 +149,12 @@ def import_file(
     """
     send_progress_update_throttle(project_id, task_id, 0)
     project_item = project.get(project_id)
-    project_item.name = data.get(
-        "project_details_data",
-    ).get(
-        "name",
-    )
+    if not project_item.name:
+        project_item.name = data.get(
+            "project_details_data",
+        ).get(
+            "name",
+        )
     project_item.description = data.get(
         "project_details_data",
     ).get(
