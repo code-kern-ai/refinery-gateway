@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from graphql_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
@@ -19,9 +19,10 @@ def get_records_by_similarity_search(
     user_id: str,
     embedding_id: str,
     record_id: str,
+    att_filter: Optional[List[Dict[str, Any]]] = None,
 ) -> ExtendedSearch:
     record_ids = neural_search_connector.request_most_similar_record_ids(
-        project_id, embedding_id, record_id, 100
+        project_id, embedding_id, record_id, 100, att_filter
     )
     if not len(record_ids):
         record_ids = [record_id]

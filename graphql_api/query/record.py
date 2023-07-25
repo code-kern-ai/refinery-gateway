@@ -45,6 +45,7 @@ class RecordQuery(graphene.ObjectType):
         project_id=graphene.ID(required=True),
         embedding_id=graphene.ID(required=True),
         record_id=graphene.ID(required=True),
+        att_filter=graphene.JSONString(required=False),
     )
 
     tokenize_record = graphene.Field(
@@ -101,13 +102,18 @@ class RecordQuery(graphene.ObjectType):
         )
 
     def resolve_search_records_by_similarity(
-        self, info, project_id: str, embedding_id: str, record_id: str
+        self,
+        info,
+        project_id: str,
+        embedding_id: str,
+        record_id: str,
+        att_filter: Optional[List[Dict[str, Any]]] = None,
     ) -> ExtendedSearch:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_by_info(info).id
         return manager.get_records_by_similarity_search(
-            project_id, user_id, embedding_id, record_id
+            project_id, user_id, embedding_id, record_id, att_filter
         )
 
     def resolve_tokenize_record(self, info, record_id: str) -> TokenizedRecord:
