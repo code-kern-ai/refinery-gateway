@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 from controller.auth import manager as auth
+from submodules.model.enums import CommentCategory
 from util import notification
 import graphene
 from controller.comment import manager
@@ -31,6 +32,8 @@ class CreateComment(graphene.Mutation):
         else:
             auth.check_admin_access(info)
         user_id = auth.get_user_id_by_info(info)
+        if xftype == CommentCategory.USER.value:
+            user_id = xfkey
         item = manager.create_comment(
             xfkey, xftype, comment, user_id, project_id, is_private
         )

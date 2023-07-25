@@ -13,7 +13,6 @@ def has_comments(
     project_id: Optional[str] = None,
     group_by_xfkey: bool = False,
 ) -> Union[bool, Dict[str, bool]]:
-
     try:
         xftype_parsed = enums.CommentCategory[xftype.upper()]
     except KeyError:
@@ -28,7 +27,6 @@ def get_comments(
     xfkey: Optional[str] = None,
     project_id: Optional[str] = None,
 ) -> List[CommentData]:
-
     try:
         xftype_parsed = enums.CommentCategory[xftype.upper()]
     except KeyError:
@@ -54,7 +52,6 @@ def get_add_info(
     project_id: Optional[str] = None,
     xfkey: Optional[str] = None,
 ) -> str:
-
     try:
         xftype_parsed = enums.CommentCategory[xftype.upper()]
     except KeyError:
@@ -126,3 +123,14 @@ def delete_comment(comment_id: str, user_id: str) -> CommentData:
 
 def get_record_comments(project_id: str, user_id: str, record_ids: List[str]):
     return comments.get_record_comments(project_id, user_id, record_ids)
+
+
+def get_unique_comments_keys_for(
+    xftype: str, project_id: Optional[str] = None
+) -> List[str]:
+    try:
+        xftype_parsed = enums.CommentCategory[xftype.upper()]
+    except KeyError:
+        raise ValueError(f"Invalid comment category: {xftype}")
+
+    return comments.get_unique_comments_keys_for(xftype_parsed, project_id)

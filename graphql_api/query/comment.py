@@ -4,10 +4,10 @@ import graphene
 
 from controller.auth import manager as auth
 from controller.comment import manager
+from submodules.model.enums import CommentCategory
 
 
 class CommentQuery(graphene.ObjectType):
-
     has_comments = graphene.Field(
         graphene.JSONString,
         xftype=graphene.String(required=True),
@@ -24,6 +24,13 @@ class CommentQuery(graphene.ObjectType):
 
     get_all_comments = graphene.Field(
         graphene.JSONString, requested=graphene.JSONString(required=True)
+    )
+
+    # returns a set like list of unique keys that have comments for a given xftype
+    get_unique_comments_keys_for = graphene.Field(
+        graphene.List(graphene.ID),
+        xftype=graphene.String(required=True),
+        project_id=graphene.ID(required=False),
     )
 
     def resolve_has_comments(
@@ -89,3 +96,11 @@ class CommentQuery(graphene.ObjectType):
                 "add_info": add_info,
             }
         return to_return
+
+    def resolve_get_unique_comments_keys_for(
+        self, info, xftype: str, project_id: Optional[str] = None
+    ) -> List[str]:
+        auth.check_demo_access(info)
+        if xftype in [CommentCategory.ORGANIZATION.value, CommentCategory.USER.value]:
+            auth.check_admin_access(info)
+        return manager.get_unique_comments_keys_for(xftype, project_id)
