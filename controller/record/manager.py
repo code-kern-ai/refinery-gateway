@@ -2,7 +2,12 @@ from typing import List, Dict, Any, Optional
 
 from graphql_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
-from submodules.model.business_objects import general, record, user_session, embedding
+from submodules.model.business_objects import (
+    record,
+    user_session,
+    embedding,
+    attribute,
+)
 from service.search import search
 
 from controller.record import neural_search_connector
@@ -103,3 +108,7 @@ def __reupload_embeddings(project_id: str) -> None:
     embeddings = embedding.get_finished_embeddings(project_id)
     for e in embeddings:
         embedding_manager.request_tensor_upload(project_id, str(e.id))
+
+
+def get_unique_values_by_attribute_id(project_id: str, attribute_id: str) -> List[str]:
+    return attribute.get_unique_values_by_attribute_id(project_id, attribute_id)
