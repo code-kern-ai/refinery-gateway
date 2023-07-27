@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from controller.auth import manager as auth
 from controller.embedding import manager
 from controller.auth.manager import get_user_by_info
@@ -79,6 +79,31 @@ class DeleteEmbedding(graphene.Mutation):
         return DeleteEmbedding(ok=True)
 
 
+class UpdateEmbeddingPayload(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        embedding_id = graphene.ID(required=True)
+        filter_attributes = graphene.JSONString(required=False)
+
+    ok = graphene.Boolean()
+
+    def mutate(
+        self,
+        info,
+        project_id: str,
+        embedding_id: str,
+        filter_attributes: Optional[List[str]] = None,
+    ):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.update_embedding_payload(project_id, embedding_id, filter_attributes)
+        notification.send_organization_update(
+            project_id, f"embedding_updated:{embedding_id}"
+        )
+        return UpdateEmbeddingPayload(ok=True)
+
+
 class EmbeddingMutation(graphene.ObjectType):
     create_embedding = CreateEmbedding.Field()
     delete_embedding = DeleteEmbedding.Field()
+    update_embedding_payload = UpdateEmbeddingPayload.Field()
