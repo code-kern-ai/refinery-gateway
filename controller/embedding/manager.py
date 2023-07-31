@@ -185,6 +185,7 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
         model=old_embedding_item.model,
         platform=old_embedding_item.platform,
         api_token=old_embedding_item.api_token,
+        filter_attributes=old_embedding_item.filter_attributes,
         with_commit=False,
     )
     embedding.delete(project_id, embedding_id, with_commit=False)
@@ -218,7 +219,4 @@ def update_embedding_payload(
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
     )
-    # connector.request_update_embedding_payload(project_id, embedding_id)
-
-    # TODO: This is added only for testing purposes, so that the endpoint does not break, remove later and uncomment the line above
-    daemon.run(connector.request_embedding, project_id, embedding_id)
+    __recreate_embedding(project_id, embedding_id)

@@ -110,5 +110,5 @@ def __reupload_embeddings(project_id: str) -> None:
         embedding_manager.request_tensor_upload(project_id, str(e.id))
 
 
-def get_unique_values_by_attribute_id(project_id: str, attribute_id: str) -> List[str]:
-    return attribute.get_unique_values_by_attribute_id(project_id, attribute_id)
+def get_unique_values_by_attributes(project_id: str) -> Dict[str, List[str]]:
+    return attribute.get_unique_values_by_attributes(project_id)

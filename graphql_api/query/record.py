@@ -60,10 +60,8 @@ class RecordQuery(graphene.ObjectType):
         record_ids=graphene.List(graphene.ID, required=True),
     )
 
-    unique_values_by_attribute_id = graphene.Field(
-        graphene.List(graphene.String),
-        project_id=graphene.ID(required=True),
-        attribute_id=graphene.ID(required=True),
+    unique_values_by_attributes = graphene.Field(
+        graphene.JSONString, project_id=graphene.ID(required=True)
     )
 
     def resolve_all_records(self, info, project_id: str) -> List[Record]:
@@ -140,9 +138,7 @@ class RecordQuery(graphene.ObjectType):
         user_id = auth.get_user_id_by_info(info)
         return comment_manager.get_record_comments(project_id, user_id, record_ids)
 
-    def resolve_unique_values_by_attribute_id(
-        self, info, project_id: str, attribute_id: str
-    ) -> List[str]:
+    def resolve_unique_values_by_attributes(self, info, project_id: str) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        return manager.get_unique_values_by_attribute_id(project_id, attribute_id)
+        return manager.get_unique_values_by_attributes(project_id)
