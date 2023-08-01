@@ -33,11 +33,6 @@ class CreateEmbedding(graphene.Mutation):
         terms_accepted = config.get("termsAccepted")
         filter_attributes = config.get("filterAttributes")
 
-        # prototyping logic, this will be part of config after ui integration
-        # relevant_attribute_list = attribute_do.get_all_possible_names_for_qdrant(
-        #     project_id
-        # )
-
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
