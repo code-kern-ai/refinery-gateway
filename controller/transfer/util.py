@@ -83,6 +83,7 @@ def convert_to_record_dict(
             )
             raise Exception("Upload conversion error", "Upload ran into errors")
         # ensure useable columns dont break the import
+        df = df.replace("\u0000", " ", regex=True)
         df.fillna(" ", inplace=True)
     except Exception as e:
         logger.error(traceback.format_exc())
