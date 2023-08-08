@@ -18,7 +18,6 @@ def get_task_functions() -> Tuple[Callable, Callable, int]:
 
 
 def __start_task(task: Dict[str, Any]) -> bool:
-
     # check task still relevant
     task_db_obj = task_queue_db_bo.get(task["id"])
     if task_db_obj is None or task_db_obj.is_active:
@@ -47,6 +46,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
     terms_accepted = task["task_info"]["terms_accepted"]
 
     filter_attributes = task["task_info"]["filter_attributes"]
+    additional_data = task["task_info"]["additional_data"]
     embedding_item = embedding_db_bo.create(
         project_id,
         attribute_id,
@@ -58,6 +58,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
         platform=platform,
         api_token=api_token,
         filter_attributes=filter_attributes,
+        additional_data=additional_data,
     )
     if (
         platform == enums.EmbeddingPlatform.OPENAI.value
@@ -80,7 +81,6 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
 
 def __check_finished(task: Dict[str, Any]) -> bool:
-
     embedding_item = embedding_db_bo.get_embedding_by_name(
         task["project_id"], task["task_info"]["embedding_name"]
     )

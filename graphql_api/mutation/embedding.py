@@ -31,12 +31,18 @@ class CreateEmbedding(graphene.Mutation):
         api_token = config.get("apiToken")
         terms_text = config.get("termsText")
         terms_accepted = config.get("termsAccepted")
+        additional_data = None
+        if config.get("base") is not None:
+            additional_data = {
+                "base": config.get("base"),
+                "type": config.get("type"),
+                "version": config.get("version"),
+            }
 
         # prototyping logic, this will be part of config after ui integration
         relevant_attribute_list = attribute_do.get_all_possible_names_for_qdrant(
             project_id
         )
-
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
@@ -53,6 +59,7 @@ class CreateEmbedding(graphene.Mutation):
                 "terms_text": terms_text,
                 "terms_accepted": terms_accepted,
                 "filter_attributes": relevant_attribute_list,
+                "additional_data": additional_data,
             },
         )
         notification.send_organization_update(
