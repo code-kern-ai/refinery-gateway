@@ -397,8 +397,9 @@ def import_file(
                 model=embedding_item.get(
                     "model",
                 ),
-                filter_attributes=embedding_item.get(
-                    "filter_attributes",
+                filter_attributes=embedding_item.get("filter_attributes"),
+                additional_data=embedding_item.get(
+                    "additional_data",
                 ),
             )
             embedding_ids[
@@ -1177,6 +1178,7 @@ def get_project_export_dump(
             "platform": embedding_item.platform,
             "model": embedding_item.model,
             "filter_attributes": embedding_item.filter_attributes,
+            "additional_data": embedding_item.additional_data,
         }
         for embedding_item in embeddings
     ]

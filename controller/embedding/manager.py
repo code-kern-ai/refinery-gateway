@@ -78,7 +78,7 @@ def get_embedding_name(
     platform: str,
     embedding_type: str,
     model: Optional[str] = None,
-    apiToken: Optional[str] = None,
+    api_token: Optional[str] = None,
 ) -> str:
     if embedding_type not in [
         enums.EmbeddingType.ON_ATTRIBUTE.value,
@@ -101,8 +101,8 @@ def get_embedding_name(
     if model:
         name += f"-{model}"
 
-    if apiToken:
-        name += f"-{apiToken[:3]}...{apiToken[-4:]}"
+    if api_token:
+        name += f"-{api_token[:3]}...{api_token[-4:]}"
 
     return name
 
@@ -186,6 +186,7 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
         platform=old_embedding_item.platform,
         api_token=old_embedding_item.api_token,
         filter_attributes=old_embedding_item.filter_attributes,
+        additional_data=old_embedding_item.additional_data,
         with_commit=False,
     )
     embedding.delete(project_id, embedding_id, with_commit=False)
@@ -195,6 +196,7 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
     if (
         new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value
         or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value
+        or new_embedding_item.platform == enums.EmbeddingPlatform.AZURE.value
     ):
         agreement_item = agreement.get_by_xfkey(
             project_id, old_id, enums.AgreementType.EMBEDDING.value
