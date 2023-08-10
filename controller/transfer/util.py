@@ -147,9 +147,15 @@ def check_and_convert_category_for_unknown(
 
 def check_and_covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
     for key in df.columns:
-        if [value for value in df[key].sample(10) if type(value) == dict]:
+        if [value for value in pick_sample(df, 10, key) if type(value) == dict]:
             df[key] = df[key].apply(lambda x: json.dumps(x))
     return df
+
+
+def pick_sample(df: pd.DataFrame, sample_size: int, key: str) -> pd.DataFrame:
+    if len(df[key]) <= sample_size:
+        return df[key]
+    return df[key].sample(sample_size)
 
 
 def string_to_import_option_dict(
