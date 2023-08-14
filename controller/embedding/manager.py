@@ -218,7 +218,12 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
 def update_embedding_payload(
     project_id: str, embedding_id: str, filter_attributes: List[str]
 ) -> None:
+    notification.send_organization_update(
+        project_id=project_id,
+        message=f"upload_embedding_payload:{str(embedding_id)}",
+    )
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
     )
-    __recreate_embedding(project_id, embedding_id)
+    connector.request_deleting_embedding(project_id, embedding_id)
+    connector.request_tensor_upload(project_id, embedding_id)
