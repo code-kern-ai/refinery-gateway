@@ -103,7 +103,7 @@ def convert_to_record_dict(
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)
 
-    df = check_and_covert_nested_attributes_to_text(df, project_id, user_id)
+    df = check_and_covert_nested_attributes_to_text(df)
     added_col = add_running_id_if_not_present(df, project_id)
     return df.to_dict("records"), added_col
 
