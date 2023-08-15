@@ -220,7 +220,7 @@ def update_embedding_payload(
 ) -> None:
     notification.send_organization_update(
         project_id=project_id,
-        message=f"upload_embedding_payload:{str(embedding_id)}",
+        message=f"upload_embedding_payload:{str(embedding_id)}:start",
     )
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
