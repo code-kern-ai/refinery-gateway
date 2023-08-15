@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from controller.auth import manager as auth
 from controller.embedding import manager
 from controller.auth.manager import get_user_by_info
@@ -31,6 +31,8 @@ class CreateEmbedding(graphene.Mutation):
         api_token = config.get("apiToken")
         terms_text = config.get("termsText")
         terms_accepted = config.get("termsAccepted")
+        filter_attributes = config.get("filterAttributes")
+
         additional_data = None
         if config.get("base") is not None:
             additional_data = {
@@ -39,10 +41,6 @@ class CreateEmbedding(graphene.Mutation):
                 "version": config.get("version"),
             }
 
-        # prototyping logic, this will be part of config after ui integration
-        relevant_attribute_list = attribute_do.get_all_possible_names_for_qdrant(
-            project_id
-        )
         task_queue_manager.add_task(
             project_id,
             TaskType.EMBEDDING,
@@ -58,7 +56,7 @@ class CreateEmbedding(graphene.Mutation):
                 "api_token": api_token,
                 "terms_text": terms_text,
                 "terms_accepted": terms_accepted,
-                "filter_attributes": relevant_attribute_list,
+                "filter_attributes": filter_attributes,
                 "additional_data": additional_data,
             },
         )
@@ -85,6 +83,31 @@ class DeleteEmbedding(graphene.Mutation):
         return DeleteEmbedding(ok=True)
 
 
+class UpdateEmbeddingPayload(graphene.Mutation):
+    class Arguments:
+        project_id = graphene.ID(required=True)
+        embedding_id = graphene.ID(required=True)
+        filter_attributes = graphene.JSONString(required=False)
+
+    ok = graphene.Boolean()
+
+    def mutate(
+        self,
+        info,
+        project_id: str,
+        embedding_id: str,
+        filter_attributes: Optional[List[str]] = None,
+    ):
+        auth.check_demo_access(info)
+        auth.check_project_access(info, project_id)
+        manager.update_embedding_payload(project_id, embedding_id, filter_attributes)
+        notification.send_organization_update(
+            project_id, f"embedding_updated:{embedding_id}"
+        )
+        return UpdateEmbeddingPayload(ok=True)
+
+
 class EmbeddingMutation(graphene.ObjectType):
     create_embedding = CreateEmbedding.Field()
     delete_embedding = DeleteEmbedding.Field()
+    update_embedding_payload = UpdateEmbeddingPayload.Field()

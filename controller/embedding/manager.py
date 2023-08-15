@@ -185,6 +185,7 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
         model=old_embedding_item.model,
         platform=old_embedding_item.platform,
         api_token=old_embedding_item.api_token,
+        filter_attributes=old_embedding_item.filter_attributes,
         additional_data=old_embedding_item.additional_data,
         with_commit=False,
     )
@@ -212,3 +213,17 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
     connector.request_deleting_embedding(project_id, old_id)
     daemon.run(connector.request_embedding, project_id, new_embedding_item.id)
     return new_embedding_item
+
+
+def update_embedding_payload(
+    project_id: str, embedding_id: str, filter_attributes: List[str]
+) -> None:
+    notification.send_organization_update(
+        project_id=project_id,
+        message=f"upload_embedding_payload:{str(embedding_id)}:start",
+    )
+    embedding.update_embedding_filter_attributes(
+        project_id, embedding_id, filter_attributes, with_commit=True
+    )
+    connector.request_deleting_embedding(project_id, embedding_id)
+    connector.request_tensor_upload(project_id, embedding_id)
