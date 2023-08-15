@@ -10,9 +10,8 @@ def request_listing_recommended_encoders() -> Any:
     url = f"{BASE_URI}/classification/recommend/TEXT"  # TODO does here have to be a data type?
     return service_requests.get_call_or_raise(url)
 
-def request_embedding(
-    project_id: str, embedding_id: str
-) -> Any:
+
+def request_embedding(project_id: str, embedding_id: str) -> Any:
     url = f"{BASE_URI}/embed"
     data = {
         "project_id": str(project_id),

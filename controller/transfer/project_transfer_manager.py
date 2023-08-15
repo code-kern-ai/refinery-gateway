@@ -397,6 +397,7 @@ def import_file(
                 model=embedding_item.get(
                     "model",
                 ),
+                filter_attributes=embedding_item.get("filter_attributes"),
                 additional_data=embedding_item.get(
                     "additional_data",
                 ),
@@ -929,7 +930,6 @@ def __post_processing_import_threaded(
                 f"Tokenization finished, continue with embedding handling of project {project_id}"
             )
             break
-
     if not data.get(
         "embedding_tensors_data",
     ):
@@ -1177,6 +1177,7 @@ def get_project_export_dump(
             "finished_at": embedding_item.finished_at,
             "platform": embedding_item.platform,
             "model": embedding_item.model,
+            "filter_attributes": embedding_item.filter_attributes,
             "additional_data": embedding_item.additional_data,
         }
         for embedding_item in embeddings
