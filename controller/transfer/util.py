@@ -153,14 +153,14 @@ def covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def check_sample_has_dict_values(sample: List[Any]) -> pd.DataFrame:
+def check_sample_has_dict_values(sample: List[Any]) -> bool:
     for value in sample:
         if isinstance(value, dict):
             return True
     return False
 
 
-def pick_sample(df: pd.DataFrame, key: str, sample_size: int = 10) -> pd.DataFrame:
+def pick_sample(df: pd.DataFrame, key: str, sample_size: int = 10) -> pd.Series:
     column_size = len(df[key])
     if column_size <= sample_size:
         return df[key].sample(column_size)
