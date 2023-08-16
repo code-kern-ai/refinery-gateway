@@ -1,5 +1,6 @@
 import datetime
-from typing import List, Dict, Tuple, Union, Optional
+import json
+from typing import Any, List, Dict, Tuple, Union, Optional
 
 from submodules.model import enums
 from .checks import check_argument_allowed, run_checks, run_limit_checks
@@ -83,6 +84,7 @@ def convert_to_record_dict(
             )
             raise Exception("Upload conversion error", "Upload ran into errors")
         # ensure useable columns dont break the import
+        df = df.replace("\u0000", " ", regex=True)
         df.fillna(" ", inplace=True)
     except Exception as e:
         logger.error(traceback.format_exc())
@@ -100,6 +102,8 @@ def convert_to_record_dict(
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)
+
+    df = covert_nested_attributes_to_text(df)
     added_col = add_running_id_if_not_present(df, project_id)
     return df.to_dict("records"), added_col
 
@@ -139,6 +143,29 @@ def check_and_convert_category_for_unknown(
             project_id,
             ", ".join(changed_keys),
         )
+
+
+def covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
+    for key in df.columns:
+        sample = pick_sample(df, key)
+        if check_sample_has_dict_values(sample):
+            df[key] = df[key].apply(lambda x: json.dumps(x))
+    return df
+
+
+def check_sample_has_dict_values(sample: List[Any]) -> bool:
+    for value in sample:
+        if isinstance(value, dict):
+            return True
+    return False
+
+
+def pick_sample(df: pd.DataFrame, key: str, sample_size: int = 10) -> pd.Series:
+    column_size = len(df[key])
+    if column_size <= sample_size:
+        return df[key].sample(column_size)
+
+    return df[key].sample(sample_size)
 
 
 def string_to_import_option_dict(
