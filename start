@@ -76,6 +76,7 @@ docker run -d --rm \
 -e PRIORITY_TASK_QUEUE_SLOTS=1 \
 -e INFERENCE_DIR=$INFERENCE_DIR \
 -e SECRET_KEY=default \
+-e POSTGRES_POOL_USE_LIFO=x \
 -v "$INFERENCE_DIR":/inference \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
