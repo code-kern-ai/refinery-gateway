@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import List, Dict, Tuple, Union, Optional
+from typing import Any, List, Dict, Tuple, Union, Optional
 
 from submodules.model import enums
 from .checks import check_argument_allowed, run_checks, run_limit_checks
@@ -103,7 +103,7 @@ def convert_to_record_dict(
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)
 
-    df = check_and_covert_nested_attributes_to_text(df)
+    df = covert_nested_attributes_to_text(df)
     added_col = add_running_id_if_not_present(df, project_id)
     return df.to_dict("records"), added_col
 
@@ -145,11 +145,19 @@ def check_and_convert_category_for_unknown(
         )
 
 
-def check_and_covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
+def covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
     for key in df.columns:
-        if [value for value in pick_sample(df, key) if type(value) == dict]:
+        sample = pick_sample(df, key)
+        if check_sample_has_dict_values(sample):
             df[key] = df[key].apply(lambda x: json.dumps(x))
     return df
+
+
+def check_sample_has_dict_values(sample: List[Any]) -> pd.DataFrame:
+    for value in sample:
+        if isinstance(value, dict):
+            return True
+    return False
 
 
 def pick_sample(df: pd.DataFrame, key: str, sample_size: int = 10) -> pd.DataFrame:
