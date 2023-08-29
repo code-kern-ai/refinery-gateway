@@ -150,30 +150,20 @@ def import_file(
     send_progress_update_throttle(project_id, task_id, 0)
     project_item = project.get(project_id)
     if not project_item.name:
-        project_item.name = data.get(
-            "project_details_data",
-        ).get(
+        project_item.name = data.get("project_details_data",).get(
             "name",
         )
-    project_item.description = data.get(
-        "project_details_data",
-    ).get(
+    project_item.description = data.get("project_details_data",).get(
         "description",
     )
-    project_item.tokenizer = data.get(
-        "project_details_data",
-    ).get(
+    project_item.tokenizer = data.get("project_details_data",).get(
         "tokenizer",
     )
-    spacy_language = data.get(
-        "project_details_data",
-    ).get(
+    spacy_language = data.get("project_details_data",).get(
         "tokenizer",
     )[:2]
     project_item.tokenizer_blank = spacy_language
-    project_item.status = data.get(
-        "project_details_data",
-    ).get(
+    project_item.status = data.get("project_details_data",).get(
         "status",
     )
     old_project_id = data.get(
@@ -428,6 +418,9 @@ def import_file(
                     ),
                     data=embedding_tensor_item.get(
                         "data",
+                    ),
+                    sub_key=embedding_tensor_item.get(
+                        "sub_key",
                     ),
                 )
 
@@ -1278,6 +1271,7 @@ def get_project_export_dump(
             "embedding_id": str(embedding_tensor_item[0]),
             "record_id": str(embedding_tensor_item[1]),
             "data": embedding_tensor_item[2],
+            "sub_key": embedding_tensor_item[3],
         }
         for embedding_tensor_item in embedding_tensors
     ]
