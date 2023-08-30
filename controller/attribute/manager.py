@@ -370,6 +370,9 @@ def calculate_user_attribute_sample_records(
         attribute.get(project_id, attribute_id).data_type
         == DataTypes.EMBEDDING_LIST.value
     ):
+        # values are json serialized so they can be easily transferred to the frontend.
+        # Since the return type is a list of strings, without json.dumps a str(xxxx) will be called
+        # which can't be easily deserialized if special characters are in the string
         values = [json.dumps(v) for v in list(calculated_attributes.values())]
     else:
         values = list(calculated_attributes.values())
