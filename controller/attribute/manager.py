@@ -2,6 +2,7 @@ from typing import List, Tuple
 from controller.tokenization.tokenization_service import (
     request_reupload_docbins,
 )
+import json
 from submodules.model.business_objects import (
     attribute,
     record,
@@ -9,7 +10,12 @@ from submodules.model.business_objects import (
     general,
 )
 from submodules.model.models import Attribute
-from submodules.model.enums import AttributeState, DataTypes, RecordTokenizationScope
+from submodules.model.enums import (
+    AttributeState,
+    DataTypes,
+    RecordTokenizationScope,
+    AttributeVisibility,
+)
 from util import daemon, notification
 
 from controller.task_queue import manager as task_queue_manager
@@ -68,6 +74,9 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
         relative_position = 1
     else:
         relative_position = prev_relative_position + 1
+    visibility = None  # default
+    if data_type == DataTypes.EMBEDDING_LIST.value:
+        visibility = AttributeVisibility.HIDE.value
 
     attribute_item: Attribute = attribute.create(
         project_id,
@@ -77,6 +86,7 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
         is_primary_key=False,
         user_created=True,
         state=AttributeState.INITIAL.value,
+        visibility=visibility,
         with_commit=True,
     )
     notification.send_organization_update(
@@ -355,4 +365,15 @@ def calculate_user_attribute_sample_records(
     calculated_attributes = util.run_attribute_calculation_exec_env(
         attribute_id=attribute_id, project_id=project_id, doc_bin=doc_bin_samples
     )
-    return list(calculated_attributes.keys()), list(calculated_attributes.values())
+    values = None
+    if (
+        attribute.get(project_id, attribute_id).data_type
+        == DataTypes.EMBEDDING_LIST.value
+    ):
+        # values are json serialized so they can be easily transferred to the frontend.
+        # Since the return type is a list of strings, without json.dumps a str(xxxx) will be called
+        # which can't be easily deserialized if special characters are in the string
+        values = [json.dumps(v) for v in list(calculated_attributes.values())]
+    else:
+        values = list(calculated_attributes.values())
+    return list(calculated_attributes.keys()), values
