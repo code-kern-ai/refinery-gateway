@@ -113,3 +113,7 @@ def __reupload_embeddings(project_id: str) -> None:
 
 def get_unique_values_by_attributes(project_id: str) -> Dict[str, List[str]]:
     return attribute.get_unique_values_by_attributes(project_id)
+
+
+def edit_records(project_id: str, changes: Dict[str, Any]) -> None:
+    print(changes,flush=True)
