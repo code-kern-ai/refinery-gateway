@@ -28,6 +28,7 @@ def upgrade():
     sa.Column('refinery_relevance_project_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
+    sa.Column('color', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
