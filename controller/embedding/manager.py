@@ -225,5 +225,5 @@ def update_embedding_payload(
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
     )
-    connector.request_deleting_embedding(project_id, embedding_id)
-    connector.request_tensor_upload(project_id, embedding_id)
+    connector.delete_embedding_from_neural_search(embedding_id)
+    connector.post_embedding_to_neural_search(project_id, embedding_id)

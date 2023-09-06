@@ -27,11 +27,15 @@ class EditRecords(graphene.Mutation):
         changes = graphene.JSONString()
 
     ok = graphene.Boolean()
+    errors = graphene.List(graphene.String, required=False)
 
-    def mutate(self, info, project_id: str, changes: Dict[str,Any]):
+    def mutate(self, info, project_id: str, changes: Dict[str, Any]):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.edit_records(project_id, changes)
+        user_id = auth.get_user_id_by_info(info)
+        errors = manager.edit_records(user_id, project_id, changes)
+        if errors and len(errors) > 0:
+            return EditRecords(ok=False, errors=errors)
 
         # somewhat global atm since record specific might result in a lot of notifications
         notification.send_organization_update(project_id, f"records_changed")
