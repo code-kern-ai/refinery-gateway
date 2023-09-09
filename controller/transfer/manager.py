@@ -115,6 +115,7 @@ def import_records_from_json(
     record_data: Dict[str, Any],
     request_uuid: str,
     is_last: bool,
+    key: Optional[str] = None,
 ) -> None:
     request_df = pd.DataFrame(record_data)
     file_path = "tmp_" + request_uuid + ".csv_SCALE"
@@ -132,6 +133,7 @@ def import_records_from_json(
             "records",
             "",
             upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
+            key=key,
         )
         upload_path = f"{project_id}/{str(upload_task.id)}/{file_path}"
         s3.upload_object(organization_id, upload_path, file_path)
