@@ -42,9 +42,6 @@ def request_re_embed_records(
     service_requests.post_call_or_raise(url, {"changes": changes})
 
 
-MODEL_PROVIDER_BASE_URI = os.getenv("MODEL_PROVIDER")
-
-
 def post_embedding_to_neural_search(project_id: str, embedding_id: str) -> None:
     url = f"{NEURAL_SEARCH_BASE_URI}/recreate_collection"
     params = {

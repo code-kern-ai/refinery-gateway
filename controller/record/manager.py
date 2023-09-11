@@ -197,7 +197,7 @@ def __check_and_prep_edit_records(
     # key example: <record_id>@<attribute_name>[@<sub_key>]
 
     errors_found = []  # list of strings
-    useable_embeddings = {}  # dict of UUID(attribute_id): embedding_item
+    useable_embeddings = {}  # dict of UUID(attribute_id): [embedding_item]
     attributes = None  # dict of attribute_name: attribute_item
     records = None  # dict of str(record_id): record_item
     record_data_backup = None  # dict of str(record_id): record_data
@@ -249,7 +249,9 @@ def __check_and_prep_edit_records(
                 f"can't find embedding PCA for {embedding_item.name}. Try rebuilding or removing the embeddings on settings page."
             )
             continue
-        useable_embeddings[embedding_item.attribute_id] = embedding_item
+        if not embedding_item.attribute_id in useable_embeddings:
+            useable_embeddings[embedding_item.attribute_id] = []
+        useable_embeddings[embedding_item.attribute_id].append(embedding_item)
 
     if tokenization.is_doc_bin_creation_running(project_id):
         errors_found.append(
@@ -277,16 +279,17 @@ def __check_and_prep_edit_records(
             attribute_id = attributes[change["attributeName"]].id
             if attribute_id not in useable_embeddings:
                 continue
-            embedding_id = str(useable_embeddings[attribute_id].id)
-            if embedding_id not in embedding_rebuilds:
-                embedding_rebuilds[embedding_id] = []
-            changed_record_info = {
-                "record_id": change["recordId"],
-                "attribute_name": change["attributeName"],
-            }
-            if "subKey" in change:
-                changed_record_info["sub_key"] = change["subKey"]
-            embedding_rebuilds[embedding_id].append(changed_record_info)
+            for embedding_item in useable_embeddings[attribute_id]:
+                embedding_id = str(embedding_item.id)
+                if embedding_id not in embedding_rebuilds:
+                    embedding_rebuilds[embedding_id] = []
+                changed_record_info = {
+                    "record_id": change["recordId"],
+                    "attribute_name": change["attributeName"],
+                }
+                if "subKey" in change:
+                    changed_record_info["sub_key"] = change["subKey"]
+                embedding_rebuilds[embedding_id].append(changed_record_info)
 
     return {
         "records": records,
