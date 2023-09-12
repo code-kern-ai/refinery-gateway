@@ -19,6 +19,7 @@ from submodules.model.business_objects import (
 from submodules.model.models import Attribute
 from submodules.s3 import controller as s3
 from util import daemon, notification
+from controller.knowledge_base import util as knowledge_base
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -83,6 +84,7 @@ def run_attribute_calculation_exec_env(
 
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
+    prefixed_knowledge_base = f"{attribute_id}_knowledge"
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
 
@@ -91,9 +93,15 @@ def run_attribute_calculation_exec_env(
         project_id + "/" + prefixed_function_name,
         attribute_item.source_code,
     )
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_knowledge_base,
+        knowledge_base.build_knowledge_base_from_project(project_id),
+    )
     command = [
         s3.create_access_link(org_id, project_id + "/" + doc_bin),
         s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
+        s3.create_access_link(org_id, project_id + "/" + prefixed_knowledge_base),
         project_item.tokenizer_blank,
         s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
         attribute_item.data_type,
@@ -170,7 +178,6 @@ def read_container_logs_thread(
     attribute_id: str,
     docker_container: Any,
 ) -> None:
-
     ctx_token = general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     attribute_item = attribute.get(project_id, attribute_id)
