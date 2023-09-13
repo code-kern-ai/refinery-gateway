@@ -6,7 +6,8 @@ import traceback
 from controller.auth import manager as auth
 from controller.weak_supervision import manager as ws_manager
 from controller.payload import manager as pl_manager
-from submodules.model import events, enums
+from controller.embedding import manager as embedding_manager
+from submodules.model import enums
 from submodules.model.business_objects import (
     project,
     labeling_task,
@@ -23,7 +24,7 @@ from submodules.model.business_objects.labeling_task import (
     get_selected_labeling_task_names,
 )
 from submodules.model.enums import NotificationType
-from util import daemon, doc_ock
+from util import daemon
 from util import notification
 from controller.weak_supervision.weak_supervision_service import (
     initiate_weak_supervision,
@@ -80,6 +81,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task_id, project_id
                 )
+                embedding_manager.upload_weak_supervision_labels_to_qdrant(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user_id,
@@ -168,6 +170,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task.id, project_id
                 )
+                embedding_manager.upload_weak_supervision_labels_to_qdrant(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user.id,

@@ -227,3 +227,13 @@ def update_embedding_payload(
     )
     connector.delete_embedding_from_neural_search(embedding_id)
     connector.post_embedding_to_neural_search(project_id, embedding_id)
+
+
+def upload_weak_supervision_labels_to_qdrant(project_id: str) -> None:
+    relevant_embeddings = embedding.get_finished_embeddings_by_started_at(project_id)
+
+    # neural search collects weak supervision labels on creation so currently via recreating all
+    for e in relevant_embeddings:
+        embedding_id = str(e.id)
+        connector.delete_embedding_from_neural_search(embedding_id)
+        connector.post_embedding_to_neural_search(project_id, embedding_id)
