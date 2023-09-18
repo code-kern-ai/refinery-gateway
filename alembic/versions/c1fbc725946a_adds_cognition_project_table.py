@@ -41,6 +41,7 @@ def upgrade():
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("color", sa.String(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("operator_routing_source_code", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
@@ -129,6 +130,8 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("role", sa.String(), nullable=True),
         sa.Column("content", sa.String(), nullable=True),
+        sa.Column("query_type", sa.String(), nullable=True),
+        sa.Column("query_type_confidence", sa.Float(), nullable=True),
         sa.Column("facts", sa.ARRAY(sa.JSON), nullable=True),
         sa.ForeignKeyConstraint(
             ["conversation_id"], ["cognition.conversation.id"], ondelete="CASCADE"
