@@ -361,6 +361,13 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.CREATING_PROJECTS.value,
     },
+    enums.NotificationType.RECREATION_OF_EMBEDDINGS_ERROR.value: {
+        "message_template": "Recreation of embeddings failed. Third party embeddings must be recreated manually.",
+        "title": "Embedding creation",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.CREATE_EMBEDDINGS.value,
+    },
 }
 
 
