@@ -126,12 +126,11 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("conversation_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("strategy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("role", sa.String(), nullable=True),
         sa.Column("content", sa.String(), nullable=True),
-        sa.Column("query_type", sa.String(), nullable=True),
-        sa.Column("query_type_confidence", sa.Float(), nullable=True),
         sa.Column("facts", sa.ARRAY(sa.JSON), nullable=True),
         sa.ForeignKeyConstraint(
             ["conversation_id"], ["cognition.conversation.id"], ondelete="CASCADE"
@@ -160,6 +159,13 @@ def upgrade():
         op.f("ix_message_project_id"),
         "message",
         ["project_id"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_message_strategy_id"),
+        "message",
+        ["strategy_id"],
         unique=False,
         schema="cognition",
     )
@@ -331,6 +337,9 @@ def downgrade():
     )
     op.drop_index(
         op.f("ix_message_conversation_id"), table_name="message", schema="cognition"
+    )
+    op.drop_index(
+        op.f("ix_message_strategy_id"), table_name="message", schema="cognition"
     )
     op.drop_table("message")
 
