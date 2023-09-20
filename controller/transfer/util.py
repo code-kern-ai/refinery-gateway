@@ -103,7 +103,7 @@ def convert_to_record_dict(
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)
 
-    df = covert_nested_attributes_to_text(df)
+    covert_nested_attributes_to_text(df)
     added_col = add_running_id_if_not_present(df, project_id)
     return df.to_dict("records"), added_col
 
@@ -148,14 +148,13 @@ def check_and_convert_category_for_unknown(
 def covert_nested_attributes_to_text(df: pd.DataFrame) -> pd.DataFrame:
     for key in df.columns:
         sample = pick_sample(df, key)
-        if check_sample_has_dict_values(sample):
+        if check_sample_has_dict_or_list_values(sample):
             df[key] = df[key].apply(lambda x: json.dumps(x))
-    return df
 
 
-def check_sample_has_dict_values(sample: List[Any]) -> bool:
+def check_sample_has_dict_or_list_values(sample: List[Any]) -> bool:
     for value in sample:
-        if isinstance(value, dict):
+        if isinstance(value, dict) or isinstance(value, list):
             return True
     return False
 
