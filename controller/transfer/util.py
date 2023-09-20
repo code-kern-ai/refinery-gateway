@@ -46,6 +46,7 @@ def convert_to_record_dict(
     user_id: str,
     file_import_options: str,
     project_id: str,
+    column_mapping: Optional[Dict[str, str]] = None,
 ) -> Tuple[List, str]:
     if not file_type:
         notification.create_notification(
@@ -86,6 +87,8 @@ def convert_to_record_dict(
         # ensure useable columns dont break the import
         df = df.replace("\u0000", " ", regex=True)
         df.fillna(" ", inplace=True)
+        if column_mapping:
+            df.rename(columns=column_mapping, inplace=True)
     except Exception as e:
         logger.error(traceback.format_exc())
         notification.create_notification(
