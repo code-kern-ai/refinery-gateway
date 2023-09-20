@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Tuple, Callable
+from typing import Any, List, Dict, Tuple, Callable, Union
 
 from submodules.model import enums
 
@@ -10,6 +10,7 @@ from .handler import (
     information_source as information_source_handler,
     tokenization as tokenization_handler,
     attribute_calculation as attribute_calculation_handler,
+    task_queue as task_queue_handler,
 )
 import copy
 
@@ -20,9 +21,14 @@ def add_task(
     project_id: str,
     task_type: enums.TaskType,
     user_id: str,
-    task_info: Dict[str, str],
+    task_info: Union[Dict[str, str], List[Dict[str, str]]],
     priority: bool = False,
 ) -> str:
+    if task_type == enums.TaskType.TASK_QUEUE and not isinstance(task_info, list):
+        raise ValueError("Task queues only work with list of singular task items")
+    elif task_type != enums.TaskType.TASK_QUEUE and not isinstance(task_info, dict):
+        raise ValueError("Queue entries only accept dicts")
+
     task_item = task_queue_db_bo.add(
         project_id, task_type, user_id, task_info, priority, with_commit=True
     )
@@ -62,12 +68,19 @@ def get_task_function_by_type(task_type: str) -> Tuple[Callable, Callable, int]:
         return tokenization_handler.get_task_functions()
     if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
         return attribute_calculation_handler.get_task_functions()
+    if task_type == enums.TaskType.TASK_QUEUE.value:
+        return task_queue_handler.get_task_functions()
     raise ValueError(f"Task type {task_type} not supported yet")
 
 
 def add_task_to_task_queue(task: TaskQueueDBObj) -> None:
     start_func, check_func, check_every = get_task_function_by_type(task.task_type)
-    task_queue.get_task_queue().add_task(task, start_func, check_func, check_every)
+    queue = None
+    if task.task_type == enums.TaskType.TASK_QUEUE.value:
+        queue = task_queue.get_task_queue_queue()
+    else:
+        queue = task_queue.get_task_queue()
+    queue.add_task(task, start_func, check_func, check_every)
 
 
 def remove_task_from_queue(project_id: str, task_id: str) -> None:
