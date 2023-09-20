@@ -191,7 +191,8 @@ def init_task_queues() -> CustomTaskQueue:
     max_normal = int(os.getenv("TASK_QUEUE_SLOTS", "2"))
     max_priority = int(os.getenv("PRIORITY_TASK_QUEUE_SLOTS", "1"))
     task_queue = CustomTaskQueue(max_normal, max_priority)
-    task_queue_queue = CustomTaskQueue(2, 0)
+    # same amount as normal so multiple queues can be handled simultaneously if the server can handle it
+    task_queue_queue = CustomTaskQueue(max_normal, 0)
     # reset old tasks that weren't finished properly
     task_queue_db_bo.set_all_tasks_inactive(True)
 

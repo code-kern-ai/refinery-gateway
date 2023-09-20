@@ -32,7 +32,6 @@ class AddDependingTaskQueueElements(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        # print(task_entries, flush=True)
         manager.add_task(project_id, TaskType.TASK_QUEUE, user_id, task_entries)
         return DeleteFromTaskQueue(ok=True)
 
