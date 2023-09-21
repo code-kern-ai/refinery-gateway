@@ -24,17 +24,19 @@ def build_knowledge_base_from_project(project_id: str) -> str:
     for knowledge_base_item in knowledge_base.get_all_by_project_id(project_id):
         knowledge_bases_dict[resolve_name_as_variable(knowledge_base_item.name)] = []
 
-    for term, knowledge_base_item in knowledge_term.get_terms_with_base_names(
+    for term, knowledge_base_name in knowledge_term.get_terms_with_base_names(
         project_id
     ):
-        knowledge_bases_dict[resolve_name_as_variable(knowledge_base_item)].append(
-            term
-        )  # use here knowledge base name in standard format (underscore and )
+        # use here knowledge base name in standard format (underscore and )
+        knowledge_bases_dict[resolve_name_as_variable(knowledge_base_name)].append(term)
 
     for knowledge_base_item, values in knowledge_bases_dict.items():
         knowledge_base_source += f"\n{knowledge_base_item} = [\n"
         for value in values:
-            value: str = value.replace("'", "\\'")  # e.g. "You're too good to me"
+            # e.g. "You're too good to me"
+            value: str = value.replace("'", "\\'")
+            # safety net: knowledge entries are single line, linebreaks can only come through extraction task auto generation which now should remove linebreaks
+            value = value.replace("\n", " ").replace("\r", "")
             knowledge_base_source += f"\t'{value}',\n"
         knowledge_base_source += "]"
     return knowledge_base_source

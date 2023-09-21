@@ -72,6 +72,8 @@ def create_term_in_named_knowledge_base(project_id: str, name: str, value: str) 
     if not base:
         base = knowledge_base.create(project_id, name)
     try:
+        # ensure linebreaks aren't part of the entry
+        value = value.replace("\n", " ").replace("\r", "")
         knowledge_term.create(project_id, base.id, value, None, with_commit=True)
     except EntityAlreadyExistsException:
         pass  # TODO EXCEPTION HANDLING
