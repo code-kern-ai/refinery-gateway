@@ -397,7 +397,6 @@ def import_file(
                     "id",
                 )
             ] = embedding_object.id
-
         if data.get(
             "embedding_tensors_data",
         ):
@@ -904,14 +903,14 @@ def import_file(
 
     general.commit()
     daemon.run(
-        __post_processing_import_threaded, project_id, task_id, embedding_ids, data
+        __post_processing_import_threaded, project_id, task_id, embedding_ids, data, import_user_id
     )
     send_progress_update(project_id, task_id, 100)
     logger.info(f"Finished import of project {project_id}")
 
 
 def __post_processing_import_threaded(
-    project_id: str, task_id: str, embedding_ids: List[str], data: Dict[str, Any]
+    project_id: str, task_id: str, embedding_ids: List[str], data: Dict[str, Any], user_id: str
 ) -> None:
     time.sleep(5)
     while True:
@@ -926,7 +925,7 @@ def __post_processing_import_threaded(
     if not data.get(
         "embedding_tensors_data",
     ):
-        embedding_manager.recreate_embeddings(project_id)
+        embedding_manager.recreate_embeddings(project_id,user_id=user_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(

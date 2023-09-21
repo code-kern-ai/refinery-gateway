@@ -23,3 +23,6 @@ class NotAllowedInDemoError(Exception):
 
 class BadPasswordError(Exception):
     pass
+
+class ApiTokenImportError(Exception):
+    pass

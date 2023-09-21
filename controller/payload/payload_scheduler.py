@@ -149,7 +149,6 @@ def create_payload(
             information_source_item.type
             == enums.InformationSourceType.ACTIVE_LEARNING.value
         ):
-
             # for active learning, we can not evaluate on all records that are used for training
             # as otherwise, we would retrieve a false understanding of the accuracy!
             add_information_source_statistics_exclusion(
@@ -211,7 +210,6 @@ def create_payload(
         add_file_name: str,
         input_data: Dict[str, Any],
     ) -> None:
-
         if (
             information_source_item.type
             == enums.InformationSourceType.LABELING_FUNCTION.value
@@ -469,7 +467,6 @@ def read_container_logs_thread(
     payload_id: str,
     docker_container: Any,
 ):
-
     ctx_token = general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     information_source_payload = information_source.get_payload(project_id, payload_id)
@@ -782,6 +779,14 @@ def __get_embedding_id_from_function(
         re.IGNORECASE,
     )
     if not embedding_name:
+        # newer bricks modules
+        embedding_name = re.search(
+            r'EMBEDDING: str = "([\w\W]+?)"',
+            source_item.source_code,
+            re.IGNORECASE,
+        )
+    if not embedding_name:
+        # older bricks modules
         embedding_name = re.search(
             r'YOUR_EMBEDDING: str = "([\w\W]+?)"',
             source_item.source_code,
@@ -863,7 +868,6 @@ def prepare_sample_records_doc_bin(
 def run_labeling_function_exec_env(
     project_id: str, information_source_id: str, prefixed_doc_bin: str
 ) -> Tuple[List[str], List[List[str]], bool]:
-
     information_source_item = information_source.get(project_id, information_source_id)
 
     prefixed_function_name = f"{information_source_id}_fn"
