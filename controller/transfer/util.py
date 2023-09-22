@@ -40,6 +40,55 @@ def get_upload_task_message(
     return message
 
 
+def read_file_to_df(
+    file_type: str,
+    file_path: str,
+    user_id: str,
+    file_import_options: str,
+    project_id: str,
+) -> pd.DataFrame:
+    if not os.path.exists(file_path):
+        raise Exception("Couldn't locate file")
+
+    file_type = file_type.lower()
+    if file_type in ["xls", "xlsm", "xlsb", "odf", "ods", "odt"]:
+        file_type = "xlsx"
+
+    file_import_options = (
+        string_to_import_option_dict(file_import_options, user_id, project_id)
+        if file_import_options
+        else {}
+    )
+    try:
+        if file_type in ["csv", "txt", "text"]:
+            df = pd.read_csv(file_path, **file_import_options)
+        elif file_type == "xlsx":
+            df = pd.read_excel(file_path, **file_import_options)
+        elif file_type == "json":
+            df = pd.read_json(file_path, **file_import_options)
+        else:
+            notification.create_notification(
+                NotificationType.INVALID_FILE_TYPE,
+                user_id,
+                project_id,
+                file_type,
+            )
+            raise Exception("Upload conversion error", "Upload ran into errors")
+        # ensure useable columns dont break the import
+        df = df.replace("\u0000", " ", regex=True)
+        df.fillna(" ", inplace=True)
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        notification.create_notification(
+            NotificationType.UPLOAD_CONVERSION_FAILED,
+            user_id,
+            project_id,
+            str(e),
+        )
+        raise Exception("Upload conversion error", "Upload ran into errors")
+    return df
+
+
 def convert_to_record_dict(
     file_type: str,
     file_name: str,
@@ -58,50 +107,19 @@ def convert_to_record_dict(
         if os.path.exists(file_name):
             os.remove(file_name)
         raise Exception("Upload conversion error", "Upload ran into errors")
-    file_type = file_type.lower()
-    if file_type in ["xls", "xlsm", "xlsb", "odf", "ods", "odt"]:
-        file_type = "xlsx"
-
-    file_import_options = (
-        string_to_import_option_dict(file_import_options, user_id, project_id)
-        if file_import_options
-        else {}
-    )
     try:
-        if file_type in ["csv", "txt", "text"]:
-            df = pd.read_csv(file_name, **file_import_options)
-        elif file_type == "xlsx":
-            df = pd.read_excel(file_name, **file_import_options)
-        elif file_type == "html":
-            df = pd.read_html(file_name, **file_import_options)
-        elif file_type == "json":
-            df = pd.read_json(file_name, **file_import_options)
-        else:
-            notification.create_notification(
-                NotificationType.INVALID_FILE_TYPE,
-                user_id,
-                project_id,
-                file_type,
-            )
-            raise Exception("Upload conversion error", "Upload ran into errors")
-        # ensure useable columns dont break the import
-        df = df.replace("\u0000", " ", regex=True)
-        df.fillna(" ", inplace=True)
-        if column_mapping:
-            df.rename(columns=column_mapping, inplace=True)
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        notification.create_notification(
-            NotificationType.UPLOAD_CONVERSION_FAILED,
-            user_id,
-            project_id,
-            str(e),
+        df = read_file_to_df(
+            file_type, file_name, user_id, file_import_options, project_id
         )
+    except Exception as e:
         if os.path.exists(file_name):
             os.remove(file_name)
-        raise Exception("Upload conversion error", "Upload ran into errors")
+        raise e
     if os.path.exists(file_name):
         os.remove(file_name)
+
+    if column_mapping:
+        df.rename(columns=column_mapping, inplace=True)
     run_limit_checks(df, project_id, user_id)
     run_checks(df, project_id, user_id)
     check_and_convert_category_for_unknown(df, project_id, user_id)

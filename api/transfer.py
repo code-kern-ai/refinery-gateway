@@ -9,6 +9,7 @@ from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
 from controller.transfer.labelstudio import import_preperator
+from controller.transfer.cognition import import_preparator as cognition_preparator
 from exceptions.exceptions import BadPasswordError
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
@@ -187,6 +188,30 @@ class JSONImport(HTTPEndpoint):
         return JSONResponse({"success": True})
 
 
+class CognitionImport(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        project_id = request.path_params["project_id"]
+        task_id = request.path_params["task_id"]
+        task = upload_task_manager.get_upload_task(
+            task_id=task_id,
+            project_id=project_id,
+        )
+        if task.upload_type != enums.UploadTypes.COGNITION.value:
+            return PlainTextResponse("OK")
+        task.upload_type = enums.UploadTypes.DEFAULT.value
+        if task.state != enums.UploadStates.PREPARED.value:
+            return PlainTextResponse("Bad upload task", status_code=400)
+        try:
+            # make this threaded!!
+            init_file_import(task, project_id, False)
+        except Exception:
+            file_import_error_handling(task, project_id, False)
+        notification.send_organization_update(
+            project_id, f"project_update:{project_id}", True
+        )
+        return PlainTextResponse("OK")
+
+
 class AssociationsImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
         project_id = request.path_params["project_id"]
@@ -241,7 +266,10 @@ class UploadTask(HTTPEndpoint):
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     task_state = task.state
     if "records" in task.file_type:
-        if task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
+        if task.upload_type == enums.UploadTypes.COGNITION.value:
+            cognition_preparator.prepare_cognition_import(project_id, task)
+        elif task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
+            # deprecated
             import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)

@@ -112,7 +112,6 @@ def download_file(project_id: str, task: UploadTask) -> str:
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
     tmp_file_name, file_type = download_file(project_id, upload_task)
-
     upload_task_manager.update_task(
         project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
