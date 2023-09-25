@@ -112,18 +112,22 @@ def download_file(project_id: str, task: UploadTask) -> str:
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
     tmp_file_name, file_type = download_file(project_id, upload_task)
-
     upload_task_manager.update_task(
         project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
     record_category = category.infer_category(upload_task.file_name)
-
+    column_mappings = upload_task.mappings
+    if column_mappings:
+        # basic implementations without change of column type
+        column_mappings = json.loads(column_mappings)
+        column_mappings = column_mappings.get("columns")
     data, added_col = convert_to_record_dict(
         file_type,
         tmp_file_name,
         upload_task.user_id,
         upload_task.file_import_options,
         project_id,
+        column_mappings,
     )
     number_records = len(data)
     import_records_and_rlas(
