@@ -12,6 +12,7 @@ from api.transfer import (
     PrepareFileImport,
     UploadTask,
     CognitionImport,
+    CognitionPrepareProject,
 )
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -49,6 +50,10 @@ routes = [
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route(
         "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
+    ),
+    Route(
+        "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/{project_type:str}",
+        CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
     Route("/project", ProjectCreationFromWorkflow),

@@ -6,28 +6,33 @@ from submodules.model.business_objects import general
 from controller.upload_task import manager as upload_task_manager
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as label_manager
+from controller.information_source import manager as information_source_manager
 from controller.attribute import manager as attribute_manager
-from .wizard_function_templates import LANGUAGE_DETECTION, REFERENCE_CHUNKS
+from .wizard_function_templates import REFERENCE_CHUNKS
+from .bricks_loader import get_bricks_code_from_group, get_bricks_code_from_endpoint
 
 
 def finalize_reference_setup(
     cognition_project_id: str, project_id: str, task_id: str
 ) -> None:
-    # task = upload_task_manager.get_upload_task(
-    #     task_id=task_id,
-    #     project_id=project_id,
-    # )
+    task = upload_task_manager.get_upload_task(
+        task_id=task_id,
+        project_id=project_id,
+    )
+    user_id = str(task.user_id)
 
-    # creation, no wait needed
     labeling_task_id = __create_task_and_labels_for(
         project_id, "Reference Quality", ["Good", "Needs fix"]
     )
-    __load_bricks_from_group("some group", labeling_task_id)
+    # needs new group
+    __load_bricks_from_group(
+        project_id, labeling_task_id, user_id, "sentiment", name_prefix="RQ_"
+    )
 
     labeling_task_id = __create_task_and_labels_for(
         project_id, "Reference Complexity", ["Low", "Medium", "High"]
     )
-    __load_bricks_from_group("some group", labeling_task_id)
+    # __load_bricks_from_group("some group", labeling_task_id)
 
     labeling_task_id = __create_task_and_labels_for(
         project_id, "Reference Type", ["Unknown"]
@@ -38,10 +43,15 @@ def finalize_reference_setup(
         "Personal Identifiable Information (PII)",
         ["Person", "Countries", "Date", "Time", "Organization"],
     )
-    __load_bricks_from_group("some group", labeling_task_id)
+    # __load_bricks_from_group("some group", labeling_task_id)
 
     __create_attribute_with(
-        project_id, LANGUAGE_DETECTION, "Language", enums.DataTypes.CATEGORY.value
+        project_id,
+        get_bricks_code_from_endpoint(
+            "language_detection", {"for_ac": True, "ATTRIBUTE": "reference"}
+        ),
+        "Language",
+        enums.DataTypes.CATEGORY.value,
     )
     __create_attribute_with(
         project_id,
@@ -49,7 +59,7 @@ def finalize_reference_setup(
         "reference_chunks",
         enums.DataTypes.EMBEDDING_LIST.value,
     )
-    # websocket 10 %
+    # websocket +1 item done (every "long" action is one item + setup of each project is one item)
 
     # wait for tokenization to finish
 
@@ -80,8 +90,27 @@ def __create_task_and_labels_for(
     return str(task_item.id)
 
 
-def __load_bricks_from_group(group_key: str, target_task_id) -> List[str]:
-    print("can't load bricks from group", flush=True)
+def __load_bricks_from_group(
+    target_project_id: str,
+    target_task_id: str,
+    user_id: str,
+    group_key: str,
+    language_key: Optional[str] = None,
+    name_prefix: Optional[str] = None,
+) -> List[str]:
+    bricks_in_group = get_bricks_code_from_group(
+        group_key, language_key, {"ATTRIBUTE": "reference"}, name_prefix
+    )
+    for name in bricks_in_group:
+        information_source_manager.create_information_source(
+            target_project_id,
+            user_id,
+            target_task_id,
+            name,
+            bricks_in_group[name],
+            "",
+            enums.LabelSource.INFORMATION_SOURCE.value,
+        )
 
 
 def __create_attribute_with(project_id: str, code: str, name: str, attribute_type: str):
@@ -90,3 +119,13 @@ def __create_attribute_with(project_id: str, code: str, name: str, attribute_typ
     )
     attribute_item.source_code = code
     general.commit()
+
+
+def dummy():
+    # print(
+    #     get_bricks_code_from_endpoint(
+    #         "language_detection", {"for_ac": True, "ATTRIBUTE": "reference"}
+    #     ),
+    #     flush=True,
+    # )
+    get_bricks_code_from_group("sentiment", "de", {"ATTRIBUTE": "reference"})

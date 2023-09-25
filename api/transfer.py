@@ -9,7 +9,10 @@ from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
 from controller.transfer.labelstudio import import_preperator
-from controller.transfer.cognition import import_preparator as cognition_preparator
+from controller.transfer.cognition import (
+    import_preparator as cognition_preparator,
+    import_wizard as cognition_import_wizard,
+)
 from exceptions.exceptions import BadPasswordError
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
@@ -19,6 +22,8 @@ from submodules.model.business_objects import (
     organization,
     tokenization,
 )
+
+from submodules.model.cognition_objects import project as cognition_project
 
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
@@ -209,6 +214,35 @@ class CognitionImport(HTTPEndpoint):
         notification.send_organization_update(
             project_id, f"project_update:{project_id}", True
         )
+        return PlainTextResponse("OK")
+
+
+class CognitionPrepareProject(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        cognition_project_id = request.path_params["cognition_project_id"]
+
+        cognition_project_item = cognition_project.get(cognition_project_id)
+        if not cognition_project_item:
+            return PlainTextResponse("Bad project id", status_code=400)
+
+        task_id = request.path_params["task_id"]
+
+        project_type = request.path_params["project_type"]
+
+        if project_type == "REFERENCE":
+            daemon.run(
+                cognition_import_wizard.finalize_reference_setup,
+                cognition_project_id=cognition_project_id,
+                project_id=str(cognition_project_item.refinery_references_project_id),
+                task_id=task_id,
+            )
+        elif project_type == "QUERY":
+            pass
+        elif project_type == "RELEVANCE":
+            pass
+        else:
+            return PlainTextResponse("Bad project type", status_code=400)
+
         return PlainTextResponse("OK")
 
 
