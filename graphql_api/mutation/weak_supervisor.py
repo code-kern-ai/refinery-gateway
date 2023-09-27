@@ -9,7 +9,6 @@ from controller.payload import manager as pl_manager
 from controller.embedding import manager as embedding_manager
 from submodules.model import enums
 from submodules.model.business_objects import (
-    project,
     labeling_task,
     general,
     record_label_association,
@@ -20,7 +19,6 @@ from submodules.model.business_objects.information_source import (
     get_task_information_sources,
 )
 from submodules.model.business_objects.labeling_task import (
-    get,
     get_selected_labeling_task_names,
 )
 from submodules.model.enums import NotificationType
@@ -81,7 +79,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task_id, project_id
                 )
-                embedding_manager.upload_weak_supervision_labels_to_qdrant(project_id)
+                embedding_manager.update_label_payloads_for_neural_search(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user_id,
@@ -170,7 +168,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task.id, project_id
                 )
-                embedding_manager.upload_weak_supervision_labels_to_qdrant(project_id)
+                embedding_manager.update_label_payloads_for_neural_search(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user.id,

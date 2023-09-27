@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 from exceptions.exceptions import ApiTokenImportError
 
 from submodules.model import enums
@@ -150,35 +150,42 @@ def recreate_embeddings(
                 else:
                     time.sleep(1)
         except ApiTokenImportError as e:
-            notification.create_notification(enums.NotificationType.RECREATION_OF_EMBEDDINGS_ERROR, user_id, project_id)
-            __handle_failed_embedding(project_id,embedding_id, new_id,e)
-            
+            notification.create_notification(
+                enums.NotificationType.RECREATION_OF_EMBEDDINGS_ERROR,
+                user_id,
+                project_id,
+            )
+            __handle_failed_embedding(project_id, embedding_id, new_id, e)
+
         except Exception as e:
-            __handle_failed_embedding(project_id,embedding_id, new_id,e)
+            __handle_failed_embedding(project_id, embedding_id, new_id, e)
 
         notification.send_organization_update(
             project_id=project_id, message="embedding:finished:all"
         )
 
-def __handle_failed_embedding(project_id: str, embedding_id: str,new_id: str, e: Exception) -> None:
-        print(
-            f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}",
-            flush=True,
-        )
-        
-        notification.send_organization_update(
-            project_id,
-            f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
-        )
-        old_embedding_item = embedding.get(project_id, embedding_id)
-        if old_embedding_item:
-            old_embedding_item.state = enums.EmbeddingState.FAILED.value
 
-        if new_id:
-            new_embedding_item = embedding.get(project_id, new_id)
-            if new_embedding_item:
-                new_embedding_item.state = enums.EmbeddingState.FAILED.value
-        general.commit()
+def __handle_failed_embedding(
+    project_id: str, embedding_id: str, new_id: str, e: Exception
+) -> None:
+    print(
+        f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}",
+        flush=True,
+    )
+
+    notification.send_organization_update(
+        project_id,
+        f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
+    )
+    old_embedding_item = embedding.get(project_id, embedding_id)
+    if old_embedding_item:
+        old_embedding_item.state = enums.EmbeddingState.FAILED.value
+
+    if new_id:
+        new_embedding_item = embedding.get(project_id, new_id)
+        if new_embedding_item:
+            new_embedding_item.state = enums.EmbeddingState.FAILED.value
+    general.commit()
 
 
 def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
@@ -234,15 +241,15 @@ def update_embedding_payload(
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
     )
-    connector.delete_embedding_from_neural_search(embedding_id)
-    connector.post_embedding_to_neural_search(project_id, embedding_id)
+    connector.update_attribute_payloads_for_neural_search(project_id, embedding_id)
 
 
-def upload_weak_supervision_labels_to_qdrant(project_id: str) -> None:
+def update_label_payloads_for_neural_search(
+    project_id: str, record_ids: Optional[List[str]] = None
+) -> None:
     relevant_embeddings = embedding.get_finished_embeddings_by_started_at(project_id)
-
-    # neural search collects weak supervision labels on creation so currently via recreating all
-    for e in relevant_embeddings:
-        embedding_id = str(e.id)
-        connector.delete_embedding_from_neural_search(embedding_id)
-        connector.post_embedding_to_neural_search(project_id, embedding_id)
+    connector.update_label_payloads_for_neural_search(
+        project_id=project_id,
+        embedding_ids=[str(e.id) for e in relevant_embeddings],
+        record_ids=record_ids,
+    )
