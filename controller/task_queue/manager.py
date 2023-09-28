@@ -3,7 +3,10 @@ from typing import Any, List, Dict, Tuple, Callable, Union
 from submodules.model import enums
 
 
-from submodules.model.business_objects import task_queue as task_queue_db_bo
+from submodules.model.business_objects import (
+    task_queue as task_queue_db_bo,
+    embedding as embedding_db_bo,
+)
 from submodules.model.models import TaskQueue as TaskQueueDBObj
 from .handler import (
     embedding as embedding_handler,
@@ -15,6 +18,7 @@ from .handler import (
 import copy
 
 from controller.task_queue import task_queue
+from controller.data_slice import manager as data_slice_manager
 
 
 def add_task(
@@ -26,8 +30,15 @@ def add_task(
 ) -> str:
     if task_type == enums.TaskType.TASK_QUEUE and not isinstance(task_info, list):
         raise ValueError("Task queues only work with list of singular task items")
+    elif task_type == enums.TaskType.TASK_QUEUE and not len(task_info):
+        raise ValueError("Task queues need at least one item")
     elif task_type != enums.TaskType.TASK_QUEUE and not isinstance(task_info, dict):
         raise ValueError("Queue entries only accept dicts")
+
+    if task_type == enums.TaskType.TASK_QUEUE_ACTION:
+        # just execute the action
+        __execute_action(project_id, user_id, task_info)
+        return
 
     task_item = task_queue_db_bo.add(
         project_id, task_type, user_id, task_info, priority, with_commit=True
@@ -86,3 +97,20 @@ def add_task_to_task_queue(task: TaskQueueDBObj) -> None:
 def remove_task_from_queue(project_id: str, task_id: str) -> None:
     task_queue_db_bo.remove_task_from_queue(project_id, task_id, with_commit=True)
     # no need to dequeue from tasks since the initial check should handle it
+
+
+def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
+    action_type = action.get("action_type")
+    if action_type == "CREATE_OUTLIER_SLICE":
+        embedding_name = action.get("embedding_name")
+        embedding_item = embedding_db_bo.get_embedding_by_name(
+            project_id, embedding_name
+        )
+        if not embedding_item:
+            raise ValueError(f"Unknown embedding {embedding_name}")
+
+        data_slice_manager.create_outlier_slice(
+            project_id, user_id, str(embedding_item.id)
+        )
+    else:
+        raise ValueError(f"Invalid action type: {action_type}")

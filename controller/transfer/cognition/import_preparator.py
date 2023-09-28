@@ -27,7 +27,11 @@ def prepare_cognition_import(project_id: str, task: UploadTask) -> None:
             project_id,
         )
         file_additional_info["columns"] = [
-            {"name": key, "type": category.infer_category_enum(df, key)}
+            {
+                "name": key,
+                "type": category.infer_category_enum(df, key),
+                "unique_count": df[key].nunique(),
+            }
             for key in df.columns
         ]
     except Exception as e:

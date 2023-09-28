@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from exceptions.exceptions import ApiTokenImportError
 
 from submodules.model import enums
@@ -7,8 +7,30 @@ from submodules.model.models import Embedding
 from util import daemon, notification
 from . import util
 from . import connector
+from .terms import TERMS_INFO
 from controller.model_provider import manager as model_manager
 from submodules.model.business_objects import attribute, embedding, agreement, general
+
+
+def get_terms_info(
+    platform: Optional[enums.EmbeddingPlatform] = None,
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    if platform:
+        return TERMS_INFO[platform.value]
+    return list(TERMS_INFO.values())
+
+
+def get_current_terms_text(
+    platform: str,
+) -> Optional[str]:
+    terms = TERMS_INFO[platform]
+    term_text = terms.get("terms")
+    if not term_text:
+        return None
+    link = terms.get("link")
+    if link:
+        term_text = term_text.replace("@@PLACEHOLDER@@", link)
+    return term_text
 
 
 def get_recommended_encoders(is_managed: bool) -> List[Any]:
@@ -150,35 +172,42 @@ def recreate_embeddings(
                 else:
                     time.sleep(1)
         except ApiTokenImportError as e:
-            notification.create_notification(enums.NotificationType.RECREATION_OF_EMBEDDINGS_ERROR, user_id, project_id)
-            __handle_failed_embedding(project_id,embedding_id, new_id,e)
-            
+            notification.create_notification(
+                enums.NotificationType.RECREATION_OF_EMBEDDINGS_ERROR,
+                user_id,
+                project_id,
+            )
+            __handle_failed_embedding(project_id, embedding_id, new_id, e)
+
         except Exception as e:
-            __handle_failed_embedding(project_id,embedding_id, new_id,e)
+            __handle_failed_embedding(project_id, embedding_id, new_id, e)
 
         notification.send_organization_update(
             project_id=project_id, message="embedding:finished:all"
         )
 
-def __handle_failed_embedding(project_id: str, embedding_id: str,new_id: str, e: Exception) -> None:
-        print(
-            f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}",
-            flush=True,
-        )
-        
-        notification.send_organization_update(
-            project_id,
-            f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
-        )
-        old_embedding_item = embedding.get(project_id, embedding_id)
-        if old_embedding_item:
-            old_embedding_item.state = enums.EmbeddingState.FAILED.value
 
-        if new_id:
-            new_embedding_item = embedding.get(project_id, new_id)
-            if new_embedding_item:
-                new_embedding_item.state = enums.EmbeddingState.FAILED.value
-        general.commit()
+def __handle_failed_embedding(
+    project_id: str, embedding_id: str, new_id: str, e: Exception
+) -> None:
+    print(
+        f"Error while recreating embedding for {project_id} with id {embedding_id} - {e}",
+        flush=True,
+    )
+
+    notification.send_organization_update(
+        project_id,
+        f"embedding:{embedding_id}:state:{enums.EmbeddingState.FAILED.value}",
+    )
+    old_embedding_item = embedding.get(project_id, embedding_id)
+    if old_embedding_item:
+        old_embedding_item.state = enums.EmbeddingState.FAILED.value
+
+    if new_id:
+        new_embedding_item = embedding.get(project_id, new_id)
+        if new_embedding_item:
+            new_embedding_item.state = enums.EmbeddingState.FAILED.value
+    general.commit()
 
 
 def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:

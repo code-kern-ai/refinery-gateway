@@ -39,6 +39,7 @@ class CreatePayload(graphene.Mutation):
             user.id,
             {
                 "information_source_id": information_source_id,
+                "source_type":information_source_item.type
             },
             priority=priority,
         )

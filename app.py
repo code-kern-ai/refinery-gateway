@@ -52,7 +52,7 @@ routes = [
         "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
     ),
     Route(
-        "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/{project_type:str}",
+        "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
         CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),

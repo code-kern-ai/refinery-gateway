@@ -207,7 +207,6 @@ class CognitionImport(HTTPEndpoint):
         if task.state != enums.UploadStates.PREPARED.value:
             return PlainTextResponse("Bad upload task", status_code=400)
         try:
-            # make this threaded!!
             init_file_import(task, project_id, False)
         except Exception:
             file_import_error_handling(task, project_id, False)
@@ -227,21 +226,11 @@ class CognitionPrepareProject(HTTPEndpoint):
 
         task_id = request.path_params["task_id"]
 
-        project_type = request.path_params["project_type"]
-
-        if project_type == "REFERENCE":
-            daemon.run(
-                cognition_import_wizard.finalize_reference_setup,
-                cognition_project_id=cognition_project_id,
-                project_id=str(cognition_project_item.refinery_references_project_id),
-                task_id=task_id,
-            )
-        elif project_type == "QUERY":
-            pass
-        elif project_type == "RELEVANCE":
-            pass
-        else:
-            return PlainTextResponse("Bad project type", status_code=400)
+        daemon.run(
+            cognition_import_wizard.finalize_setup,
+            cognition_project_id=cognition_project_id,
+            task_id=task_id,
+        )
 
         return PlainTextResponse("OK")
 
