@@ -97,7 +97,7 @@ def __get_bricks_config_by_endpoint_name(endpoint: str) -> Dict:
 
 def __light_parse_bricks_code(bricks_info: dict, target_data: Dict[str, str]) -> str:
     for_ac = target_data.get("for_ac", False)
-    cognition_mapping = bricks_info.get("cognition_init_mapping")
+    cognition_mapping = json.loads(bricks_info.get("cognitionInitMapping", "null"))
 
     target_name = "ac" if for_ac else "lf"
 
