@@ -358,8 +358,8 @@ def upgrade():
         sa.Column("step_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("has_error", sa.Boolean(), nullable=True),
-        sa.Column("content", sa.String(), nullable=True),
-        sa.Column("time_elapsed", sa.Integer(), nullable=True),
+        sa.Column("content", sa.ARRAY(sa.String()), nullable=True),
+        sa.Column("time_elapsed", sa.Float(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["message_id"], ["cognition.message.id"], ondelete="CASCADE"
