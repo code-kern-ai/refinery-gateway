@@ -24,7 +24,7 @@ from controller.weak_supervision import weak_supervision_service as weak_supervi
 from controller.knowledge_term import manager as term_manager
 from controller.information_source import manager as information_source_manager
 from controller.payload import manager as payload_manager
-from controller.data_slice import manager as data_slice_manager
+from controller.embedding import manager as embedding_manager
 
 
 def get_last_annotated_record_id(
@@ -148,6 +148,12 @@ def create_manual_classification_label(
             user_id,
             label_ids,
         )
+    daemon.run(
+        __update_label_payloads_for_neural_search,
+        project_id,
+        record_id,
+    )
+
     return record_item
 
 
@@ -159,6 +165,10 @@ def __check_label_duplication_classification_and_react(
     ):
 
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
+
+
+def __update_label_payloads_for_neural_search(project_id: str, record_id: str):
+    embedding_manager.update_label_payloads_for_neural_search(project_id, [record_id])
 
 
 def create_manual_extraction_label(
@@ -257,7 +267,14 @@ def create_gold_star_association(
     else:
         raise ValueError(f"Can't set gold star for task_type {task_type}")
 
-    update_is_relevant_manual_label(project_id, labeling_task_id, record_id)
+    update_is_relevant_manual_label(
+        project_id, labeling_task_id, record_id, with_commit=True
+    )
+    daemon.run(
+        __update_label_payloads_for_neural_search,
+        project_id,
+        record_id,
+    )
     return task_type
 
 
@@ -284,6 +301,11 @@ def delete_record_label_association(
     if source_ids:
         for s_id in source_ids:
             update_annotator_progress(project_id, s_id, user_id)
+    daemon.run(
+        __update_label_payloads_for_neural_search,
+        project_id,
+        record_id,
+    )
 
 
 def delete_gold_star_association(
@@ -295,4 +317,9 @@ def delete_gold_star_association(
     )
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
+    )
+    daemon.run(
+        __update_label_payloads_for_neural_search,
+        project_id,
+        record_id,
     )
