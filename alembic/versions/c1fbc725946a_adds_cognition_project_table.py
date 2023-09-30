@@ -358,6 +358,7 @@ def upgrade():
         sa.Column("step_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("has_error", sa.Boolean(), nullable=True),
+        sa.Column("record_dict_diff_previous", sa.JSON(), nullable=True),
         sa.Column("content", sa.ARRAY(sa.String()), nullable=True),
         sa.Column("time_elapsed", sa.Float(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
