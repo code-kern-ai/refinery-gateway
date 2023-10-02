@@ -7,6 +7,7 @@ from submodules.model.business_objects import (
 from controller.tokenization import tokenization_service
 from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
 from submodules.model.enums import RecordTokenizationScope
+from ..util import if_task_queue_send_websocket
 
 
 def get_task_functions() -> Tuple[Callable, Callable, int]:
@@ -14,7 +15,6 @@ def get_task_functions() -> Tuple[Callable, Callable, int]:
 
 
 def __start_task(task: Dict[str, Any]) -> bool:
-
     # check task still relevant
     task_db_obj = task_queue_db_bo.get(task["id"])
     if task_db_obj is None or task_db_obj.is_active:
@@ -30,6 +30,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
             return False
     task_db_obj.is_active = True
     general.commit()
+    if_task_queue_send_websocket(task["task_info"], f"TOKENIZATION")
 
     if task["task_info"]["scope"] == RecordTokenizationScope.PROJECT.value:
         tokenization_service.request_tokenize_project(

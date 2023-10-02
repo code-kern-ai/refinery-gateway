@@ -9,6 +9,7 @@ from submodules.model.business_objects import (
     attribute as attribute_db_bo,
     tokenization as tokenization_db_bo,
     project as project_db_bo,
+    notification as notification_db_bo,
 )
 from submodules.model.cognition_objects import project as cognition_project
 
@@ -93,13 +94,16 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         task_list,
         ctx_token,
     )
+    __add_start_gates_for(reference_project_id, task_list)
+    __add_start_gates_for(query_project_id, task_list)
+    __add_start_gates_for(relevance_project_id, task_list)
 
     task_list.append(
         {
             "project_id": reference_project_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": {
-                "action_type": enums.TaskQueueAction.START_GATES.value,
+                "action_type": enums.TaskQueueAction.FINISH_COGNITION_SETUP.value,
                 "cognition_project_id": cognition_project_id,
             },
         }
@@ -125,6 +129,75 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         organization_id=organization_id,
     )
     general.remove_and_refresh_session(ctx_token, False)
+
+
+# function called from queue as last entry
+def finish_cognition_setup(
+    cognition_project_id: str,
+) -> None:
+    ctx_token = general.get_ctx_token()
+    cognition_project_item = cognition_project.get(cognition_project_id)
+    if not cognition_project_item:
+        general.remove_and_refresh_session(ctx_token, False)
+        return
+    user_id = str(cognition_project_item.created_by)
+    notification_db_bo.set_notifications_to_not_initial(
+        str(cognition_project_item.refinery_references_project_id), user_id
+    )
+    notification_db_bo.set_notifications_to_not_initial(
+        str(cognition_project_item.refinery_query_project_id), user_id
+    )
+    notification_db_bo.set_notifications_to_not_initial(
+        str(cognition_project_item.refinery_relevance_project_id), user_id
+    )
+
+    cognition_project_item.wizard_running = False
+    organization_id = str(cognition_project_item.organization_id)
+    general.commit()
+    general.remove_and_refresh_session(ctx_token, False)
+    notification.send_organization_update(
+        cognition_project_id,
+        f"cognition_prep:state:DONE",
+        organization_id=organization_id,
+    )
+
+
+def __add_websocket_message_queue_item(
+    sender_project_id: str,
+    msg: str,
+    task_list: List[Dict[str, str]],
+    organization_id: Optional[str] = None,  # needs to be set for cognition project ids
+) -> None:
+    action = {
+        "action_type": enums.TaskQueueAction.START_GATES.value,
+        "project_id": sender_project_id,
+    }
+    if organization_id:
+        action["organization_id"] = organization_id
+    task_list.append(
+        {
+            "project_id": sender_project_id,
+            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
+            "message": msg,
+            "action": action,
+        }
+    )
+
+
+def __add_start_gates_for(
+    project_id: str,
+    task_list: List[Dict[str, str]],
+) -> None:
+    task_list.append(
+        {
+            "project_id": project_id,
+            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
+            "action": {
+                "action_type": enums.TaskQueueAction.START_GATES.value,
+                "project_id": project_id,
+            },
+        }
+    )
 
 
 # task_list is appended with post processing steps for the task queue

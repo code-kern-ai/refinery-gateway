@@ -1,4 +1,5 @@
 from typing import Any, List, Dict, Tuple, Callable, Union
+import copy
 
 from submodules.model import enums
 
@@ -15,11 +16,13 @@ from .handler import (
     attribute_calculation as attribute_calculation_handler,
     task_queue as task_queue_handler,
 )
-import copy
+from .util import if_task_queue_send_websocket
 
 from controller.task_queue import task_queue
 from controller.data_slice import manager as data_slice_manager
 from controller.gates import manager as gates_manager
+from controller.transfer.cognition.import_wizard import finish_cognition_setup
+from util import notification, daemon
 
 
 def add_task(
@@ -114,10 +117,19 @@ def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
             project_id, user_id, str(embedding_item.id)
         )
     elif action_type == enums.TaskQueueAction.START_GATES.value:
-        cognition_project_id = action.get("cognition_project_id")
-        if not cognition_project_id:
-            raise ValueError("Missing cognition project id")
-        # this starts a thread so things after in the task queue will start directly (without waiting for the gates to finish)
-        gates_manager.start_gates_for_cognition_project(cognition_project_id)
+        project_id = action.get("project_id")
+        if not project_id:
+            raise ValueError("Missing project id")
+        if_task_queue_send_websocket(
+            action, f"{enums.TaskQueueAction.START_GATES.value}:{project_id}"
+        )
+        gates_manager.start_gates_container(project_id)
+    elif action_type == enums.TaskQueueAction.SEND_WEBSOCKET.value:
+        org_id = action.get("organization_id")
+        notification.send_organization_update(
+            project_id, action.get("message", ""), organization_id=org_id
+        )
+    elif action_type == enums.TaskQueueAction.FINISH_COGNITION_SETUP.value:
+        daemon.run(finish_cognition_setup, action.get("cognition_project_id"))
     else:
         raise ValueError(f"Invalid action type: {action_type}")

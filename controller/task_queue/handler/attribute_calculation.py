@@ -6,6 +6,10 @@ from submodules.model.business_objects import (
     attribute as attribute_db_bo,
 )
 from submodules.model.enums import AttributeState, DataTypes
+from ..util import if_task_queue_send_websocket
+from controller.tokenization.tokenization_service import (
+    request_reupload_docbins,
+)
 
 
 def get_task_functions() -> Tuple[Callable, Callable, int]:
@@ -26,6 +30,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
         return False
     task_db_obj.is_active = True
     general.commit()
+    if_task_queue_send_websocket(task["task_info"], f"ATTRIBUTE:{attribute_id}")
 
     attribute_manager.calculate_user_attribute_all_records(
         project_id, task["created_by"], attribute_id
@@ -42,8 +47,10 @@ def __check_finished(task: Dict[str, Any]) -> bool:
     if attribute_item.state == AttributeState.FAILED.value:
         return True
     if attribute_item.state == AttributeState.USABLE.value:
-        if attribute_item.data_type != DataTypes.EMBEDDING_LIST.value:
+        if attribute_item.data_type == DataTypes.TEXT.value:
             return attribute_db_bo.is_attribute_tokenization_finished(
                 project_id, attribute_id
             )
+        else:
+            request_reupload_docbins(project_id)
         return True

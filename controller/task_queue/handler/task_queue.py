@@ -81,6 +81,7 @@ def __start_sub_task(task: Dict[str, Any]) -> str:
         )
     elif task_type_parsed == TaskType.TASK_QUEUE_ACTION:
         next_entry = next_entry.get("action")
+    next_entry["parent_task_queue_id"] = task["id"]
     task_id = manager.add_task(
         project_id, task_type_parsed, user_id, next_entry, priority
     )

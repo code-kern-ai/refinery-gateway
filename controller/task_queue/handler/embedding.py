@@ -3,12 +3,12 @@ from controller.embedding import manager as embedding_manager
 from submodules.model import enums
 from submodules.model.business_objects import (
     agreement as agreement_db_bo,
-    attribute as attribute_db_bo,
     task_queue as task_queue_db_bo,
     embedding as embedding_db_bo,
     general,
 )
-from submodules.model.enums import EmbeddingState, EmbeddingType
+from submodules.model.enums import EmbeddingState
+from ..util import if_task_queue_send_websocket
 
 TASK_DONE_STATES = [EmbeddingState.FINISHED.value, EmbeddingState.FAILED.value]
 
@@ -63,6 +63,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
     if (
         platform == enums.EmbeddingPlatform.OPENAI.value
         or platform == enums.EmbeddingPlatform.COHERE.value
+        or platform == enums.EmbeddingPlatform.AZURE.value
     ):
         agreement_db_bo.create(
             project_id,
@@ -74,8 +75,10 @@ def __start_task(task: Dict[str, Any]) -> bool:
         )
 
     general.commit()
+    embedding_id = str(embedding_item.id)
+    if_task_queue_send_websocket(task["task_info"], f"EMBEDDING:{embedding_id}")
 
-    embedding_manager.create_embedding(project_id, str(embedding_item.id))
+    embedding_manager.create_embedding(project_id, embedding_id)
 
     return True
 
