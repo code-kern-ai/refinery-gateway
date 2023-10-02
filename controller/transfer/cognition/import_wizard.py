@@ -30,6 +30,8 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     ctx_token = general.get_ctx_token()
 
     cognition_project_item = cognition_project.get(cognition_project_id)
+    cognition_project_item.wizard_running = True
+    general.commit()
     # unbind to prevent session issues
     organization_id = str(cognition_project_item.organization_id)
 
@@ -92,6 +94,17 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         ctx_token,
     )
 
+    task_list.append(
+        {
+            "project_id": reference_project_id,
+            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
+            "action": {
+                "action_type": enums.TaskQueueAction.START_GATES.value,
+                "cognition_project_id": cognition_project_id,
+            },
+        }
+    )
+
     # wait for initial tokenization to finish
     c = 0
     while True:
@@ -111,6 +124,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         f"cognition_wizard:task_queue:{task_id}:{len(task_list)}",
         organization_id=organization_id,
     )
+    general.remove_and_refresh_session(ctx_token, False)
 
 
 # task_list is appended with post processing steps for the task queue
@@ -353,7 +367,7 @@ def __add_embedding(
                 "project_id": target_project_id,
                 "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
                 "action": {
-                    "action_type": "CREATE_OUTLIER_SLICE",
+                    "action_type": enums.TaskQueueAction.CREATE_OUTLIER_SLICE.value,
                     "embedding_name": embedding_name,
                 },
             }

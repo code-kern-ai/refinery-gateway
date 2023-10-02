@@ -71,6 +71,7 @@ docker run -d --rm \
 -e ZERO_SHOT=http://refinery-zero-shot:80 \
 -e TOKENIZER=http://refinery-tokenizer:80 \
 -e DOC_OCK=http://refinery-doc-ock:80 \
+-e GATES_URI=http://gates-gateway:80 \
 -e KRATOS_ADMIN_URL=http://kratos:4434 \
 -e TASK_QUEUE_SLOTS=1 \
 -e PRIORITY_TASK_QUEUE_SLOTS=1 \

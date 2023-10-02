@@ -19,6 +19,7 @@ import copy
 
 from controller.task_queue import task_queue
 from controller.data_slice import manager as data_slice_manager
+from controller.gates import manager as gates_manager
 
 
 def add_task(
@@ -38,7 +39,7 @@ def add_task(
     if task_type == enums.TaskType.TASK_QUEUE_ACTION:
         # just execute the action
         __execute_action(project_id, user_id, task_info)
-        return
+        return enums.TaskType.TASK_QUEUE_ACTION.value
 
     task_item = task_queue_db_bo.add(
         project_id, task_type, user_id, task_info, priority, with_commit=True
@@ -101,7 +102,7 @@ def remove_task_from_queue(project_id: str, task_id: str) -> None:
 
 def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
     action_type = action.get("action_type")
-    if action_type == "CREATE_OUTLIER_SLICE":
+    if action_type == enums.TaskQueueAction.CREATE_OUTLIER_SLICE.value:
         embedding_name = action.get("embedding_name")
         embedding_item = embedding_db_bo.get_embedding_by_name(
             project_id, embedding_name
@@ -112,5 +113,11 @@ def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
         data_slice_manager.create_outlier_slice(
             project_id, user_id, str(embedding_item.id)
         )
+    elif action_type == enums.TaskQueueAction.START_GATES.value:
+        cognition_project_id = action.get("cognition_project_id")
+        if not cognition_project_id:
+            raise ValueError("Missing cognition project id")
+        # this starts a thread so things after in the task queue will start directly (without waiting for the gates to finish)
+        gates_manager.start_gates_for_cognition_project(cognition_project_id)
     else:
         raise ValueError(f"Invalid action type: {action_type}")

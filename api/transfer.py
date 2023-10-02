@@ -223,7 +223,6 @@ class CognitionPrepareProject(HTTPEndpoint):
         cognition_project_item = cognition_project.get(cognition_project_id)
         if not cognition_project_item:
             return PlainTextResponse("Bad project id", status_code=400)
-
         task_id = request.path_params["task_id"]
 
         daemon.run(
@@ -378,6 +377,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
         ],
     )
     if len(attributes_usable) == 0:
+        general.remove_and_refresh_session(ctx_token, False)
         return
 
     # stored as list so connection results do not affect

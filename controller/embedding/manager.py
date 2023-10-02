@@ -88,11 +88,17 @@ def delete_embedding(project_id: str, embedding_id: str) -> None:
 
 
 def __embed_one_by_one_helper(project_id: str, embeddings_ids: List[str]) -> None:
+    ctx_token = general.get_ctx_token()
     for embedding_id in embeddings_ids:
         connector.request_embedding(project_id, embedding_id)
         time.sleep(5)
+        c = 1
         while util.has_encoder_running(project_id):
+            c += 1
+            if c > 12:
+                ctx_token = general.remove_and_refresh_session(ctx_token, True)
             time.sleep(5)
+    general.remove_and_refresh_session(ctx_token, False)
 
 
 def get_embedding_name(

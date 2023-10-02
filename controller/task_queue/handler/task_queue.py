@@ -40,10 +40,11 @@ def __check_finished(task: Dict[str, Any]) -> bool:
         # no sub task yet
         __start_sub_task(task)
         return False
-    sub_task_item = task_queue_db_bo.get(sub_task_id)
-    if sub_task_item:
-        # current sub task still running
-        return False
+    if sub_task_id != TaskType.TASK_QUEUE_ACTION.value:
+        sub_task_item = task_queue_db_bo.get(sub_task_id)
+        if sub_task_item:
+            # current sub task still running
+            return False
 
     if len(task["task_info"]) > 0:
         # still further sub task items

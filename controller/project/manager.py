@@ -436,6 +436,7 @@ def check_in_deletion_projects() -> None:
 def __check_in_deletion_projects() -> None:
     # wait for startup to finish
     time.sleep(2)
+    ctx_token = general.get_ctx_token()
     to_be_deleted = []
     orgs = organization.get_all()
     for org_item in orgs:
@@ -445,3 +446,4 @@ def __check_in_deletion_projects() -> None:
                 to_be_deleted.append(str(project_item.id))
     for project_id in to_be_deleted:
         delete_project(project_id)
+    general.remove_and_refresh_session(ctx_token)

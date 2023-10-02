@@ -117,9 +117,11 @@ def delete_all_records(project_id: str) -> None:
 
 
 def __reupload_embeddings(project_id: str) -> None:
+    ctx_token = general.get_ctx_token()
     embeddings = embedding.get_finished_embeddings(project_id)
     for e in embeddings:
         embedding_manager.request_tensor_upload(project_id, str(e.id))
+    general.remove_and_refresh_session(ctx_token)
 
 
 def get_unique_values_by_attributes(project_id: str) -> Dict[str, List[str]]:

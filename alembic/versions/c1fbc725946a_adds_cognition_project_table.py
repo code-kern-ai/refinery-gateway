@@ -42,6 +42,7 @@ def upgrade():
         sa.Column("color", sa.String(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("operator_routing_source_code", sa.String(), nullable=True),
+        sa.Column("wizard_running", sa.Boolean(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"

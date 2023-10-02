@@ -103,7 +103,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                 )
                 raise e
             finally:
-                general.reset_ctx_token(ctx_token, True)
+                general.reset_ctx_token(ctx_token)
 
         daemon.run(
             execution_pipeline, project_id, str(user.id), str(weak_supervision_task.id)

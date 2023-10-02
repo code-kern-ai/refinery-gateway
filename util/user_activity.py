@@ -1,7 +1,7 @@
 import time
 from typing import Dict, Union, Any, List
 from graphql_api.types import UserActivityWrapper
-from submodules.model.business_objects import user_activity
+from submodules.model.business_objects import user_activity, general
 from util import daemon
 import os
 from datetime import datetime
@@ -17,7 +17,9 @@ def add_user_activity_entry(
     if isinstance(activity, str):
         activity = {**caller_dict, "activity": activity}
     else:
-        activity.update(caller_dict, )
+        activity.update(
+            caller_dict,
+        )
 
     global __thread_running
     if not __thread_running:
@@ -67,6 +69,7 @@ def resolve_all_users_activity() -> List[UserActivityWrapper]:
 
 def __start_thread_db_write() -> None:
     time.sleep(300)  # only write every 5 min to db to prevent overuse
+    ctx_token = general.get_ctx_token()
 
     if not os.path.exists(BACKUP_FILE_PATH):
         # for multi container environment
@@ -81,3 +84,4 @@ def __start_thread_db_write() -> None:
         os.remove(BACKUP_FILE_PATH)
     global __thread_running
     __thread_running = False
+    general.remove_and_refresh_session(ctx_token)

@@ -305,6 +305,7 @@ def generate_labelstudio_template(
 
 
 def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
+    ctx_token = general.get_ctx_token()
     try:
         if attribute.get_all(project_id):
             project_update_manager.manage_data_import(project_id, upload_task_id)
@@ -344,3 +345,5 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
         )
+    finally:
+        general.remove_and_refresh_session(ctx_token)
