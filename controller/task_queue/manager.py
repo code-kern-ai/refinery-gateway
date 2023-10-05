@@ -123,7 +123,11 @@ def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
         if_task_queue_send_websocket(
             action, f"{enums.TaskQueueAction.START_GATES.value}:{project_id}"
         )
-        gates_manager.start_gates_container(project_id)
+        state = enums.PayloadState.FINISHED.value
+        if not gates_manager.start_gates_container(project_id):
+            state = enums.PayloadState.FAILED.value
+        notification.send_organization_update(project_id, f"gates:startup:{state}")
+
     elif action_type == enums.TaskQueueAction.SEND_WEBSOCKET.value:
         org_id = action.get("organization_id")
         notification.send_organization_update(

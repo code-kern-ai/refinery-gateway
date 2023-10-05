@@ -30,7 +30,9 @@ def __start_task(task: Dict[str, Any]) -> bool:
         return False
     task_db_obj.is_active = True
     general.commit()
-    if_task_queue_send_websocket(task["task_info"], f"ATTRIBUTE:{attribute_id}")
+    if_task_queue_send_websocket(
+        task["task_info"], f"ATTRIBUTE:{attribute_id}:{attribute_item.name}"
+    )
 
     attribute_manager.calculate_user_attribute_all_records(
         project_id, task["created_by"], attribute_id

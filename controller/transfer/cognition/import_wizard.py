@@ -63,6 +63,11 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         task_list,
         ctx_token,
     )
+    notification.send_organization_update(
+        cognition_project_id,
+        f"cognition_wizard:prep:REFERENCE:COMPLETE",
+        organization_id=organization_id,
+    )
 
     ctx_token = __finalize_setup_for(
         CognitionProjects.QUERY,
@@ -72,6 +77,11 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         file_additional_info,
         task_list,
         ctx_token,
+    )
+    notification.send_organization_update(
+        cognition_project_id,
+        f"cognition_wizard:prep:QUERY:COMPLETE",
+        organization_id=organization_id,
     )
 
     ## additional query task creation
@@ -93,6 +103,11 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         file_additional_info,
         task_list,
         ctx_token,
+    )
+    notification.send_organization_update(
+        cognition_project_id,
+        f"cognition_wizard:prep:RELEVANCE:COMPLETE",
+        organization_id=organization_id,
     )
     __add_start_gates_for(reference_project_id, task_list)
     __add_start_gates_for(query_project_id, task_list)

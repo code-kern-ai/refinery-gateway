@@ -31,18 +31,20 @@ def __start_task(task: Dict[str, Any]) -> bool:
     task_db_obj.is_active = True
     general.commit()
     user_id = task["created_by"]
+    payload_id = None
     if is_item.type == InformationSourceType.ZERO_SHOT.value:
         payload_id = zero_shot_manager.start_zero_shot_for_project_thread(
             project_id, information_source_id, user_id
         )
-        task["task_info"]["payload_id"] = payload_id
     else:
         payload = payload_manager.create_payload(
             project_id, information_source_id, user_id
         )
-        task["task_info"]["payload_id"] = str(payload.id)
+        payload_id = str(payload.id)
+    task["task_info"]["payload_id"] = payload_id
     if_task_queue_send_websocket(
-        task["task_info"], f"INFORMATION_SOURCE:{information_source_id}:{payload_id}"
+        task["task_info"],
+        f"INFORMATION_SOURCE:{information_source_id}:{payload_id}:{is_item.name}",
     )
     return True
 

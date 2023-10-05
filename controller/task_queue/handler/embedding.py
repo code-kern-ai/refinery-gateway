@@ -76,7 +76,9 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
     general.commit()
     embedding_id = str(embedding_item.id)
-    if_task_queue_send_websocket(task["task_info"], f"EMBEDDING:{embedding_id}")
+    if_task_queue_send_websocket(
+        task["task_info"], f"EMBEDDING:{embedding_id}:{embedding_name}"
+    )
 
     embedding_manager.create_embedding(project_id, embedding_id)
 
