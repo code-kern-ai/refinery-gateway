@@ -33,10 +33,6 @@ def get_last_annotated_record_id(
     return record_label_association.get_latest(project_id, top_n)
 
 
-def is_any_record_manually_labeled(project_id: str):
-    return record_label_association.is_any_record_manually_labeled(project_id)
-
-
 def __infer_source_type(source_id: str, project_id: str):
     if source_id is not None:
         source = information_source_manager.get_information_source(

@@ -126,6 +126,8 @@ def create_outlier_slice(project_id: str, user_id: str, embedding_id: str) -> Da
     outlier_ids, outlier_scores = neural_search_connector.request_outlier_detection(
         project_id, embedding_id, 100
     )
+    if len(outlier_ids) == 0:
+        return None
     filter_data = [
         {
             "RELATION": "NONE",
