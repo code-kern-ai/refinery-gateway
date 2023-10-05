@@ -25,6 +25,7 @@ from controller.embedding import manager as embedding_manager
 
 from .bricks_loader import get_bricks_code_from_group, get_bricks_code_from_endpoint
 from .constants import CognitionProjects, DEFAULT_MODEL
+from .util import send_log_message
 
 
 def finalize_setup(cognition_project_id: str, task_id: str) -> None:
@@ -184,8 +185,9 @@ def __add_websocket_message_queue_item(
     organization_id: Optional[str] = None,  # needs to be set for cognition project ids
 ) -> None:
     action = {
-        "action_type": enums.TaskQueueAction.START_GATES.value,
+        "action_type": enums.TaskQueueAction.SEND_WEBSOCKET.value,
         "project_id": sender_project_id,
+        "message": msg,
     }
     if organization_id:
         action["organization_id"] = organization_id
@@ -193,7 +195,6 @@ def __add_websocket_message_queue_item(
         {
             "project_id": sender_project_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
-            "message": msg,
             "action": action,
         }
     )
@@ -225,28 +226,7 @@ def __finalize_setup_for(
     task_list: List[Dict[str, str]],
     ctx_token: Token,
 ) -> Token:
-    # tasks + functions
     target_data = {"TARGET_LANGUAGE": project_language}
-    labeling_tasks = project_type.get_labeling_tasks()
-    if labeling_tasks:
-        for task in labeling_tasks:
-            labeling_task_id = __create_task_and_labels_for(
-                project_id, task["name"], task["labels"]
-            )
-            bricks = task.get("bricks")
-            if bricks:
-                target_attribute = bricks.get("target_attribute", "reference")
-                target_data["ATTRIBUTE"] = target_attribute
-
-                __load_lf_from_bricks_group(
-                    project_id,
-                    labeling_task_id,
-                    user_id,
-                    bricks["group"],
-                    target_data,
-                    task_list,
-                    name_prefix=bricks.get("function_prefix"),
-                )
     # attributes
     attributes = project_type.get_attributes()
     target_data["for_ac"] = True
@@ -261,6 +241,7 @@ def __finalize_setup_for(
                 __load_ac_from_bricks_group(
                     project_id,
                     bricks["group"],
+                    bricks.get("type", "generator"),
                     bricks.get("type_lookup", {}),
                     target_data,
                     task_list,
@@ -313,6 +294,50 @@ def __finalize_setup_for(
                 task_list,
             )
 
+    # tasks + functions
+    labeling_tasks = project_type.get_labeling_tasks()
+    target_data["for_ac"] = False
+    if labeling_tasks:
+        for task in labeling_tasks:
+            task_type = task.get("task_type")
+            task_attribute = task.get("target_attribute")
+            if (
+                task_type == enums.LabelingTaskType.INFORMATION_EXTRACTION.value
+                and not task_attribute
+            ):
+                send_log_message(
+                    project_id,
+                    "Can't create extraction task without target attribute",
+                    True,
+                )
+                continue
+            if task_attribute:
+                task_attribute = str(
+                    attribute_db_bo.get_by_name(project_id, task_attribute).id
+                )
+            labeling_task_id = __create_task_and_labels_for(
+                project_id,
+                task["name"],
+                task["labels"],
+                task_type,
+                target_attribute_id=task_attribute,
+            )
+            bricks = task.get("bricks")
+            if bricks:
+                target_attribute = bricks.get("target_attribute", "reference")
+                target_data["ATTRIBUTE"] = target_attribute
+
+                __load_lf_from_bricks_group(
+                    project_id,
+                    labeling_task_id,
+                    user_id,
+                    bricks["group"],
+                    bricks.get("type", "classifier"),
+                    target_data,
+                    task_list,
+                    name_prefix=bricks.get("function_prefix"),
+                )
+
     return general.remove_and_refresh_session(ctx_token, True)
 
 
@@ -344,6 +369,7 @@ def __load_lf_from_bricks_group(
     target_task_id: str,
     user_id: str,
     group_key: str,
+    bricks_type: str,
     target_data: Dict[str, str],
     task_list: List[Dict[str, str]],
     language_key: Optional[str] = None,
@@ -351,7 +377,12 @@ def __load_lf_from_bricks_group(
     append_to_task_list: bool = True,
 ) -> None:
     bricks_in_group = get_bricks_code_from_group(
-        group_key, language_key, target_data, name_prefix
+        target_project_id,
+        group_key,
+        bricks_type,
+        language_key,
+        target_data,
+        name_prefix,
     )
     for name in bricks_in_group:
         item = information_source_manager.create_information_source(
@@ -377,6 +408,7 @@ def __load_lf_from_bricks_group(
 def __load_ac_from_bricks_group(
     target_project_id: str,
     group_key: str,
+    bricks_type: str,
     data_type_lookup: Dict[str, str],
     target_data: Dict[str, str],
     task_list: List[Dict[str, str]],
@@ -385,7 +417,12 @@ def __load_ac_from_bricks_group(
     append_to_task_list: bool = True,
 ) -> None:
     bricks_in_group = get_bricks_code_from_group(
-        group_key, language_key, target_data, name_prefix
+        target_project_id,
+        group_key,
+        bricks_type,
+        language_key,
+        target_data,
+        name_prefix,
     )
     for name in bricks_in_group:
         code = bricks_in_group[name]["code"]
@@ -490,9 +527,7 @@ def __create_attribute_with(
 def dummy():
     print(
         get_bricks_code_from_endpoint(
-            "language_detection", {"for_ac": True, "ATTRIBUTE": "reference"}
+            "chunked_sentence_complexity", {"ATTRIBUTE": "reference"}
         ),
         flush=True,
     )
-    # get_bricks_code_from_endpoint("")
-    # get_bricks_code_from_group("sentiment", "de", {"ATTRIBUTE": "reference"})

@@ -1,5 +1,5 @@
 from enum import Enum
-from submodules.model.enums import DataTypes, EmbeddingPlatform
+from submodules.model.enums import DataTypes, EmbeddingPlatform, LabelingTaskType
 from .wizard_function_templates import REFERENCE_CHUNKS
 
 
@@ -25,29 +25,32 @@ TASK_INFO = {
                 "name": "Reference Quality",
                 "labels": ["Good", "Needs fix"],
                 "bricks": {
-                    "group": "sentiment",
-                    "function_prefix": "RQ_",
+                    "group": "reference_quality",
+                    # "function_prefix": "RQ_",
                 },
             },
             {
                 "name": "Reference Complexity",
                 "labels": ["Low", "Medium", "High"],
-                # "bricks": {
-                #     "group": "sentiment",
-                # },
+                "bricks": {
+                    "group": "reference_complexity",
+                },
             },
             {
                 "name": "Reference Type",
                 "labels": ["Unknown"],
                 # "bricks": {
-                #     "group": "sentiment",
+                #     "group": "reference_type",
                 # },
             },
             {
                 "name": "Personal Identifiable Information (PII)",
                 "labels": ["Person", "Countries", "Date", "Time", "Organization"],
+                "task_type": LabelingTaskType.INFORMATION_EXTRACTION.value,
+                "target_attribute": "reference",
                 # "bricks": {
-                #     "group": "sentiment",
+                #     "group": "personal_identifiers",
+                #     "type": "extractor",
                 # },
             },
         ],

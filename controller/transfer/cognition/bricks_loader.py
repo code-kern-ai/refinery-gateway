@@ -1,14 +1,17 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import requests
 import json
 import re
 from .wizard_function_templates import MAPPING_WRAPPER
+from .util import send_log_message
 
 # this is a light implementation of the bricks loader, some variables etc. will error out
 
 BASE_URL = "https://cms.bricks.kern.ai/api/modules/?pagination[pageSize]=500"
 
-FUNCTION_REGEX = re.compile(r"^def\s(\w+)(\([a-zA-Z0-9_:\[\]=, ]*\)):$", re.MULTILINE)
+FUNCTION_REGEX = re.compile(
+    r"^def\s(\w+)(\([a-zA-Z0-9_:\[\]=, ]*\)):\s*$", re.MULTILINE
+)
 VARIABLE_REGEX = re.compile(
     r"""^(([A-Z_]+):\s*(\w+)\s*=\s*(['"])*([\w\_\-\<\>]+)(['"])*)""", re.MULTILINE
 )
@@ -17,7 +20,9 @@ VARIABLE_REGEX = re.compile(
 # language not yet supported by bricks
 # returns a dict of "name": "code"
 def get_bricks_code_from_group(
+    project_id: str,
     group_key: str,
+    bricks_type: str,  # "classifier" or "extractor" or "generator"
     language_key: str,
     target_data: Dict[str, str],
     name_prefix: Optional[str] = None,
@@ -26,9 +31,9 @@ def get_bricks_code_from_group(
         name_prefix = ""
 
     bricks_infos = __get_bricks_config_by_group(
+        project_id,
         group_key,
-        # "classifier",
-        # True,
+        bricks_type,
         language_key=language_key,
     )
 
@@ -43,6 +48,7 @@ def get_bricks_code_from_group(
 
 
 def __get_bricks_config_by_group(
+    project_id: str,
     group_key: str,
     module_type: str = "classifier",
     only_python: bool = True,
@@ -62,7 +68,9 @@ def __get_bricks_config_by_group(
     bricks_info = response.json()
     data = bricks_info["data"]
     if len(data) == 0:
-        raise Exception(f"Found no entries from group {group_key}")
+        send_log_message(
+            project_id, f"Found no entries from bricks group {group_key}", True
+        )
     for bricks_info in data:
         bricks_info["attributes"]["integratorInputs"] = json.loads(
             bricks_info["attributes"]["integratorInputs"]
@@ -95,9 +103,11 @@ def __get_bricks_config_by_endpoint_name(endpoint: str) -> Dict:
     return bricks_info
 
 
-def __light_parse_bricks_code(bricks_info: dict, target_data: Dict[str, str]) -> str:
+def __light_parse_bricks_code(
+    bricks_info: Dict[str, Any], target_data: Dict[str, str]
+) -> str:
     for_ac = target_data.get("for_ac", False)
-    cognition_mapping = json.loads(bricks_info.get("cognitionInitMapping", "null"))
+    cognition_mapping = __parse_cognition_mapping(bricks_info, target_data)
 
     target_name = "ac" if for_ac else "lf"
 
@@ -111,6 +121,25 @@ def __light_parse_bricks_code(bricks_info: dict, target_data: Dict[str, str]) ->
         code = __extend_code_by_mapping(code, cognition_mapping)
 
     return code
+
+
+def __parse_cognition_mapping(
+    bricks_info: Dict[str, Any], target_data: Dict[str, str]
+) -> Optional[Dict[str, str]]:
+    mapping_string = bricks_info["attributes"].get("cognitionInitMapping")
+    if not mapping_string:
+        return None
+    cognition_mapping = json.loads(mapping_string)
+    if cognition_mapping:
+        keys = list(cognition_mapping.keys())
+        for key in keys:
+            if cognition_mapping[key] == "null":
+                cognition_mapping[key] = None
+            # items with @@<name>@@ are default values not actual mapping
+            if key.startswith("@@") and key.endswith("@@"):
+                target_data[key[2:-2]] = cognition_mapping[key]
+                del cognition_mapping[key]
+    return cognition_mapping
 
 
 def __replace_function_name_in_code(
