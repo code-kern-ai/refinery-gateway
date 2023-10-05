@@ -130,8 +130,10 @@ def upgrade():
         sa.Column("strategy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("role", sa.String(), nullable=True),
-        sa.Column("content", sa.String(), nullable=True),
+        sa.Column("query", sa.String(), nullable=True),
+        sa.Column("answer", sa.String(), nullable=True),
+        sa.Column("positive_feedback", sa.Boolean(), nullable=True),
+        sa.Column("feedback_message", sa.String(), nullable=True),
         sa.Column("facts", sa.ARRAY(sa.JSON), nullable=True),
         sa.ForeignKeyConstraint(
             ["conversation_id"], ["cognition.conversation.id"], ondelete="CASCADE"
