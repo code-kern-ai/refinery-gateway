@@ -159,11 +159,6 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
         pl_manager.create_payload(
             project_id, information_source_id, user.id, asynchronous=False
         )
-        ws_overwrite = None
-        if overwrite_weak_supervision is not None:
-            ws_overwrite = overwrite_weak_supervision
-        else:
-            ws_overwrite = overwrite_default_precision
 
         source_names = []
         labeling_task_item = labeling_task.get(project_id, labeling_task_id)
@@ -178,7 +173,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                 source_names.append(information_source.name)
         general.commit()
 
-        if len(source_names) > 0 or ws_overwrite is not None:
+        if len(source_names) > 0:
             create_notification(
                 NotificationType.WEAK_SUPERVISION_TASK_STARTED,
                 user.id,
@@ -204,7 +199,7 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                     labeling_task_id,
                     user.id,
                     weak_supervision_task.id,
-                    ws_overwrite,
+                    overwrite_weak_supervision or overwrite_default_precision,
                 )
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task.id, project_id
