@@ -166,19 +166,19 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
         else:
             ws_overwrite = overwrite_default_precision
 
+        source_names = []
         labeling_task_item = labeling_task.get(project_id, labeling_task_id)
         for information_source in labeling_task_item.information_sources:
             information_source.is_selected = (
-                any(
-                    source_statistic.true_positives > 0
-                    for source_statistic in information_source.source_statistics
-                    if source_statistic.true_positives is not None
-                )
-                or ws_overwrite is not None
+                information_source.payloads[0].state
+                == enums.PayloadState.FINISHED.value
+                if len(information_source.payloads) > 0
+                else False
             )
+            if information_source.is_selected:
+                source_names.append(information_source.name)
         general.commit()
 
-        source_names = get_task_information_sources(project_id, labeling_task_id)
         if len(source_names) > 0 or ws_overwrite is not None:
             create_notification(
                 NotificationType.WEAK_SUPERVISION_TASK_STARTED,
