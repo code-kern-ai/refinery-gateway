@@ -17,7 +17,6 @@ from submodules.model.business_objects import (
 )
 from submodules.model.business_objects.information_source import (
     get_selected_information_sources,
-    get_task_information_sources,
 )
 from submodules.model.business_objects.labeling_task import (
     get_selected_labeling_task_names,
