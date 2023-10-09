@@ -72,7 +72,8 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
             project_id: str,
             user_id: str,
             weak_supervision_task_id: str,
-            overwrite_weak_supervision: Optional[Union[float, Dict[str, Any]]] = None,
+            overwrite_default_precision: Optional[float] = None,
+            overwrite_weak_supervision: Optional[Dict[str, float]] = None,
         ):
             ctx_token = general.get_ctx_token()
             try:
@@ -80,14 +81,11 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                     project_id
                 )
                 for labeling_task_item in labeling_tasks:
-                    overwrite_ws = None
+                    overwrite_ws = overwrite_default_precision
                     if overwrite_weak_supervision is not None:
-                        if isinstance(overwrite_weak_supervision, float):
-                            overwrite_ws = overwrite_weak_supervision
-                        else:
-                            overwrite_ws = overwrite_weak_supervision.get(
-                                str(labeling_task_item.id)
-                            )
+                        overwrite_ws = overwrite_weak_supervision.get(
+                            str(labeling_task_item.id)
+                        )
                     initiate_weak_supervision(
                         project_id,
                         labeling_task_item.id,
@@ -129,7 +127,8 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
             project_id,
             str(user.id),
             str(weak_supervision_task.id),
-            overwrite_weak_supervision or overwrite_default_precision,
+            overwrite_default_precision,
+            overwrite_weak_supervision,
         )
         return InitiateWeakSupervisionByProjectId(ok=True)
 
