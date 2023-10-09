@@ -2,7 +2,7 @@ import logging
 
 import graphene
 import traceback
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Dict
 
 from controller.auth import manager as auth
 from controller.weak_supervision import manager as ws_manager
