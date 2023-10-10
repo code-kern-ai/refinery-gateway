@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Optional, Union, Dict
 
 from util import notification, service_requests
 from util.decorator import debounce
@@ -8,7 +8,11 @@ BASE_URI = os.getenv("WEAK_SUPERVISION")
 
 
 def initiate_weak_supervision(
-    project_id: str, labeling_task_id: str, user_id: str, weak_supervision_task_id: str
+    project_id: str,
+    labeling_task_id: str,
+    user_id: str,
+    weak_supervision_task_id: str,
+    overwrite_weak_supervision: Optional[Union[float, Dict[str, float]]] = None,
 ) -> Any:
     url = f"{BASE_URI}/fit_predict"
     data = {
@@ -16,6 +20,7 @@ def initiate_weak_supervision(
         "labeling_task_id": str(labeling_task_id),
         "user_id": str(user_id),
         "weak_supervision_task_id": str(weak_supervision_task_id),
+        "overwrite_weak_supervision": overwrite_weak_supervision,
     }
     return service_requests.post_call_or_raise(url, data)
 
