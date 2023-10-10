@@ -45,7 +45,7 @@ TASK_INFO = {
             },
             {
                 "name": "Personal Identifiable Information (PII)",
-                "labels": ["Person", "Countries", "Date", "Time", "Organization"],
+                "labels": ["Person", "Countries", "Date", "Time", "Organization", "IP address", "Phone number", "URL", "E-Mail", "Zip code", "Location"],
                 "task_type": LabelingTaskType.INFORMATION_EXTRACTION.value,
                 "target_attribute": "reference",
                 # "bricks": {
