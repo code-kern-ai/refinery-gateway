@@ -155,9 +155,13 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        pl_manager.create_payload(
+        payload = pl_manager.create_payload(
             project_id, information_source_id, user.id, asynchronous=False
         )
+        if not payload.state == enums.PayloadState.FINISHED.value:
+            return RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(
+                ok=True
+            )
 
         source_names = []
         labeling_task_item = labeling_task.get(project_id, labeling_task_id)
