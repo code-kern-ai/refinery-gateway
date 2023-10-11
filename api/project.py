@@ -31,9 +31,11 @@ class ProjectDetails(HTTPEndpoint):
         except exceptions.AccessDeniedException:
             return JSONResponse({"error": "Access denied"}, status_code=403)
         project = project_manager.get_project(project_id)
+        max_running_id = project_manager.get_max_running_id(project_id)
         attributes = attribute_manager.get_all_attributes(project_id, ["ALL"])
         result = {
             "name": project.name,
+            "max_running_id": max_running_id,
             "description": project.description,
             "tokenizer": project.tokenizer,
             "attributes": [
