@@ -45,7 +45,6 @@ from submodules.model.models import (
     InformationSourceStatisticsExclusion,
     RecordLabelAssociation,
     InformationSourcePayload,
-    User,
 )
 from util import daemon, doc_ock, notification
 from submodules.s3 import controller as s3
@@ -54,7 +53,6 @@ from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
-from controller.user import manager as user_manager
 import time
 import uuid
 
@@ -99,8 +97,10 @@ def create_payload(
         payload_id: str,
         project_id: str,
         information_source_item: InformationSource,
+        in_thread: bool = False,
     ) -> None:
-        ctx_token = general.get_ctx_token()
+        if in_thread:
+            ctx_token = general.get_ctx_token()
         try:
             add_file_name, input_data = prepare_input_data_for_payload(
                 information_source_item
@@ -125,7 +125,8 @@ def create_payload(
                 information_source_item.name,
             )
         finally:
-            general.reset_ctx_token(ctx_token, True)
+            if in_thread:
+                general.reset_ctx_token(ctx_token, True)
 
     def prepare_input_data_for_payload(
         information_source_item: InformationSource,
@@ -327,6 +328,7 @@ def create_payload(
             payload.id,
             project_id,
             information_source_item,
+            in_thread=True,
         )
     else:
         prepare_and_run_execution_pipeline(
