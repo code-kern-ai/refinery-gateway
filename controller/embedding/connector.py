@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Union, List, Optional
 
 from util import service_requests
 import requests
@@ -40,6 +40,32 @@ def request_re_embed_records(
     # note that sub_key is optional and only for embedding lists relevant
     url = f"{BASE_URI}/re_embed_records/{project_id}"
     service_requests.post_call_or_raise(url, {"changes": changes})
+
+
+def update_attribute_payloads_for_neural_search(
+    project_id: str, embedding_id: str, record_ids: Optional[List[str]] = None
+) -> None:
+    url = f"{NEURAL_SEARCH_BASE_URI}/update_attribute_payloads"
+    data = {
+        "project_id": project_id,
+        "embedding_id": embedding_id,
+    }
+    if record_ids:
+        data["record_ids"] = record_ids
+    service_requests.post_call_or_raise(url, data)
+
+
+def update_label_payloads_for_neural_search(
+    project_id: str, embedding_ids: List[str], record_ids: Optional[List[str]] = None
+) -> None:
+    url = f"{NEURAL_SEARCH_BASE_URI}/update_label_payloads"
+    data = {
+        "project_id": project_id,
+        "embedding_ids": embedding_ids,
+    }
+    if record_ids:
+        data["record_ids"] = record_ids
+    service_requests.post_call_or_raise(url, data)
 
 
 def post_embedding_to_neural_search(project_id: str, embedding_id: str) -> None:

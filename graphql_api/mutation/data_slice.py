@@ -112,9 +112,17 @@ class CreateOutlierSlice(graphene.Mutation):
         data_slice_item = manager.create_outlier_slice(
             project_id, user_id, embedding_id
         )
-        notification.send_organization_update(
-            project_id, f"data_slice_created:{str(data_slice_item.id)}"
-        )
+        if not data_slice_item:
+            notification.create_notification(
+                NotificationType.CUSTOM,
+                user_id,
+                project_id,
+                "All records labeled. No outliers found.",
+            )
+        else:
+            notification.send_organization_update(
+                project_id, f"data_slice_created:{str(data_slice_item.id)}"
+            )
         return CreateOutlierSlice(ok=True)
 
 

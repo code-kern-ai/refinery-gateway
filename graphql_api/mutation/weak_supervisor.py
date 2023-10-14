@@ -2,13 +2,14 @@ import logging
 
 import graphene
 import traceback
+from typing import Optional, Dict
 
 from controller.auth import manager as auth
 from controller.weak_supervision import manager as ws_manager
 from controller.payload import manager as pl_manager
-from submodules.model import events, enums
+from controller.embedding import manager as embedding_manager
+from submodules.model import enums
 from submodules.model.business_objects import (
-    project,
     labeling_task,
     general,
     record_label_association,
@@ -16,15 +17,12 @@ from submodules.model.business_objects import (
 )
 from submodules.model.business_objects.information_source import (
     get_selected_information_sources,
-    get_task_information_sources,
 )
 from submodules.model.business_objects.labeling_task import (
-    get,
     get_selected_labeling_task_names,
 )
 from submodules.model.enums import NotificationType
-from util import daemon, doc_ock
-from util import notification
+from util import daemon, notification
 from controller.weak_supervision.weak_supervision_service import (
     initiate_weak_supervision,
 )
@@ -37,10 +35,18 @@ logger.setLevel(logging.INFO)
 class InitiateWeakSupervisionByProjectId(graphene.Mutation):
     class Arguments:
         project_id = graphene.ID(required=True)
+        overwrite_default_precision = graphene.Float(required=False)
+        overwrite_weak_supervision = graphene.JSONString(required=False)
 
     ok = graphene.Boolean()
 
-    def mutate(self, info, project_id: str):
+    def mutate(
+        self,
+        info,
+        project_id: str,
+        overwrite_default_precision: Optional[float] = None,
+        overwrite_weak_supervision: Optional[Dict[str, float]] = None,
+    ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
@@ -50,7 +56,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
             project_id,
             "Weak Supervision Task",
         )
-        notification.send_organization_update(project_id, f"weak_supervision_started")
+        notification.send_organization_update(project_id, "weak_supervision_started")
 
         weak_supervision_task = ws_manager.create_task(
             project_id=project_id,
@@ -63,7 +69,11 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
         )
 
         def execution_pipeline(
-            project_id: str, user_id: str, weak_supervision_task_id: str
+            project_id: str,
+            user_id: str,
+            weak_supervision_task_id: str,
+            overwrite_default_precision: Optional[float] = None,
+            overwrite_weak_supervision: Optional[Dict[str, float]] = None,
         ):
             ctx_token = general.get_ctx_token()
             try:
@@ -71,15 +81,22 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                     project_id
                 )
                 for labeling_task_item in labeling_tasks:
+                    overwrite_ws = overwrite_default_precision
+                    if overwrite_weak_supervision is not None:
+                        overwrite_ws = overwrite_weak_supervision.get(
+                            str(labeling_task_item.id)
+                        )
                     initiate_weak_supervision(
                         project_id,
                         labeling_task_item.id,
                         user_id,
                         weak_supervision_task_id,
+                        overwrite_ws,
                     )
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task_id, project_id
                 )
+                embedding_manager.update_label_payloads_for_neural_search(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user_id,
@@ -87,7 +104,7 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                     "Weak Supervision Task",
                 )
                 notification.send_organization_update(
-                    project_id, f"weak_supervision_finished"
+                    project_id, "weak_supervision_finished"
                 )
             except Exception as e:
                 print(traceback.format_exc(), flush=True)
@@ -99,14 +116,19 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
                     with_commit=True,
                 )
                 notification.send_organization_update(
-                    project_id, f"weak_supervision_finished"
+                    project_id, "weak_supervision_finished"
                 )
                 raise e
             finally:
                 general.reset_ctx_token(ctx_token)
 
         daemon.run(
-            execution_pipeline, project_id, str(user.id), str(weak_supervision_task.id)
+            execution_pipeline,
+            project_id,
+            str(user.id),
+            str(weak_supervision_task.id),
+            overwrite_default_precision,
+            overwrite_weak_supervision,
         )
         return InitiateWeakSupervisionByProjectId(ok=True)
 
@@ -116,28 +138,44 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
         project_id = graphene.ID(required=True)
         information_source_id = graphene.ID(required=True)
         labeling_task_id = graphene.ID(required=True)
+        overwrite_default_precision = graphene.Float(required=False)
+        overwrite_weak_supervision = graphene.JSONString(required=False)
 
     ok = graphene.Boolean()
 
     def mutate(
-        self, info, project_id: str, information_source_id: str, labeling_task_id: str
+        self,
+        info,
+        project_id: str,
+        information_source_id: str,
+        labeling_task_id: str,
+        overwrite_default_precision: Optional[float] = None,
+        overwrite_weak_supervision: Optional[Dict[str, float]] = None,
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
-        pl_manager.create_payload(
+        payload = pl_manager.create_payload(
             project_id, information_source_id, user.id, asynchronous=False
         )
+        if not payload.state == enums.PayloadState.FINISHED.value:
+            return RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(
+                ok=True
+            )
+
+        source_names = []
         labeling_task_item = labeling_task.get(project_id, labeling_task_id)
         for information_source in labeling_task_item.information_sources:
-            information_source.is_selected = any(
-                source_statistic.true_positives > 0
-                for source_statistic in information_source.source_statistics
-                if source_statistic.true_positives is not None
+            information_source.is_selected = (
+                information_source.payloads[0].state
+                == enums.PayloadState.FINISHED.value
+                if len(information_source.payloads) > 0
+                else False
             )
+            if information_source.is_selected:
+                source_names.append(information_source.name)
         general.commit()
 
-        source_names = get_task_information_sources(project_id, labeling_task_id)
         if len(source_names) > 0:
             create_notification(
                 NotificationType.WEAK_SUPERVISION_TASK_STARTED,
@@ -164,10 +202,12 @@ class RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(graphene.Mu
                     labeling_task_id,
                     user.id,
                     weak_supervision_task.id,
+                    overwrite_weak_supervision or overwrite_default_precision,
                 )
                 ws_manager.update_weak_supervision_task_stats(
                     weak_supervision_task.id, project_id
                 )
+                embedding_manager.update_label_payloads_for_neural_search(project_id)
                 create_notification(
                     NotificationType.WEAK_SUPERVISION_TASK_DONE,
                     user.id,

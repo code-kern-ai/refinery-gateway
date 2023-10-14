@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union, Dict
 from exceptions.exceptions import ApiTokenImportError
 
 from submodules.model import enums
@@ -269,5 +269,15 @@ def update_embedding_payload(
     embedding.update_embedding_filter_attributes(
         project_id, embedding_id, filter_attributes, with_commit=True
     )
-    connector.delete_embedding_from_neural_search(embedding_id)
-    connector.post_embedding_to_neural_search(project_id, embedding_id)
+    connector.update_attribute_payloads_for_neural_search(project_id, embedding_id)
+
+
+def update_label_payloads_for_neural_search(
+    project_id: str, record_ids: Optional[List[str]] = None
+) -> None:
+    relevant_embeddings = embedding.get_finished_embeddings_by_started_at(project_id)
+    connector.update_label_payloads_for_neural_search(
+        project_id=project_id,
+        embedding_ids=[str(e.id) for e in relevant_embeddings],
+        record_ids=record_ids,
+    )
