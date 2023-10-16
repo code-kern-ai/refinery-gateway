@@ -1,6 +1,6 @@
 from enum import Enum
 from submodules.model.enums import DataTypes, EmbeddingPlatform, LabelingTaskType
-from .wizard_function_templates import REFERENCE_CHUNKS
+from .wizard_function_templates import REFERENCE_CHUNKS_SPLIT
 
 
 class CognitionProjects(Enum):
@@ -45,13 +45,25 @@ TASK_INFO = {
             },
             {
                 "name": "Personal Identifiable Information (PII)",
-                "labels": ["Person", "Countries", "Date", "Time", "Organization", "IP address", "Phone number", "URL", "E-Mail", "Zip code", "Location"],
+                "labels": [
+                    "Person",
+                    "Countries",
+                    "Date",
+                    "Time",
+                    "Organization",
+                    "IP address",
+                    "Phone number",
+                    "URL",
+                    "E-Mail",
+                    "Zip code",
+                    "Location",
+                ],
                 "task_type": LabelingTaskType.INFORMATION_EXTRACTION.value,
                 "target_attribute": "reference",
-                # "bricks": {
-                #     "group": "personal_identifiers",
-                #     "type": "extractor",
-                # },
+                "bricks": {
+                    "group": "personal_identifiers",
+                    "type": "extractor",
+                },
             },
         ],
         "attributes": [
@@ -63,7 +75,9 @@ TASK_INFO = {
             {
                 "name": "reference_chunks",
                 "type": DataTypes.EMBEDDING_LIST.value,
-                "code": REFERENCE_CHUNKS.replace("@@target_attribute@@", "reference"),
+                "code": REFERENCE_CHUNKS_SPLIT.replace(
+                    "@@target_attribute@@", "reference"
+                ),
             },
         ],
         "embeddings": [
@@ -77,7 +91,11 @@ TASK_INFO = {
                     },
                 },
                 "filter": "FROM_WIZARD",
-                "outlier_slice": False,
+                "outlier_slice": True,
+                "bricks": {
+                    "group": "reference_quality",
+                    "target_task_name": "Reference Quality",
+                },
             },
             {
                 "target": {
@@ -89,7 +107,11 @@ TASK_INFO = {
                     },
                 },
                 "filter": "FROM_WIZARD",
-                "outlier_slice": False,  # no manual labels yet
+                "outlier_slice": True,
+                "bricks": {
+                    "group": "reference_complexity",
+                    "target_task_name": "Reference Complexity",
+                },
             },
         ],
     },
@@ -136,7 +158,7 @@ TASK_INFO = {
             {
                 "name": "search_queries",
                 "type": DataTypes.EMBEDDING_LIST.value,
-                "code": REFERENCE_CHUNKS.replace("@@target_attribute@@", "query"),
+                "code": REFERENCE_CHUNKS_SPLIT.replace("@@target_attribute@@", "query"),
             },
         ],
         "embeddings": [
