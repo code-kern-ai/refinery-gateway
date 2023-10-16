@@ -294,6 +294,92 @@ def upgrade():
     )
 
     op.create_table(
+        "python_step",
+        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("strategy_step_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("description", sa.String(), nullable=True),
+        sa.Column("source_code", sa.String(), nullable=True),
+        sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["project_id"], ["cognition.project.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["strategy_step_id"], ["cognition.strategy_step.id"], ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_python_step_created_by"),
+        "python_step",
+        ["created_by"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_python_step_project_id"),
+        "python_step",
+        ["project_id"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_python_step_strategy_step_id"),
+        "python_step",
+        ["strategy_step_id"],
+        unique=False,
+        schema="cognition",
+    )
+
+    op.create_table(
+        "llm_step",
+        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("strategy_step_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("description", sa.String(), nullable=True),
+        sa.Column("llm_key", sa.String(), nullable=True),
+        sa.Column("llm_config", sa.JSON(), nullable=True),
+        sa.Column("template_prompt", sa.String(), nullable=True),
+        sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["project_id"], ["cognition.project.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["strategy_step_id"], ["cognition.strategy_step.id"], ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_llm_step_created_by"),
+        "llm_step",
+        ["created_by"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_llm_step_project_id"),
+        "llm_step",
+        ["project_id"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_llm_step_strategy_step_id"),
+        "llm_step",
+        ["strategy_step_id"],
+        unique=False,
+        schema="cognition",
+    )
+
+    op.create_table(
         "environment_variable",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
@@ -573,6 +659,40 @@ def downgrade():
         schema="cognition",
     )
     op.drop_table("environment_variable", schema="cognition")
+
+    op.drop_index(
+        op.f("ix_llm_step_strategy_step_id"),
+        table_name="llm_step",
+        schema="cognition",
+    )
+    op.drop_index(
+        op.f("ix_llm_step_project_id"),
+        table_name="llm_step",
+        schema="cognition",
+    )
+    op.drop_index(
+        op.f("ix_llm_step_created_by"),
+        table_name="llm_step",
+        schema="cognition",
+    )
+    op.drop_table("llm_step", schema="cognition")
+
+    op.drop_index(
+        op.f("ix_python_step_strategy_step_id"),
+        table_name="python_step",
+        schema="cognition",
+    )
+    op.drop_index(
+        op.f("ix_python_step_project_id"),
+        table_name="python_step",
+        schema="cognition",
+    )
+    op.drop_index(
+        op.f("ix_python_step_created_by"),
+        table_name="python_step",
+        schema="cognition",
+    )
+    op.drop_table("python_step", schema="cognition")
 
     op.drop_index(
         op.f("ix_retriever_strategy_step_id"),
