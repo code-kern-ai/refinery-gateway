@@ -300,8 +300,6 @@ def upgrade():
         sa.Column("strategy_step_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("name", sa.String(), nullable=True),
-        sa.Column("description", sa.String(), nullable=True),
         sa.Column("source_code", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
@@ -342,9 +340,12 @@ def upgrade():
         sa.Column("strategy_step_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("name", sa.String(), nullable=True),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.Column("llm_key", sa.String(), nullable=True),
+        sa.Column(
+            "environment_variable_id_api_key",
+            postgresql.UUID(as_uuid=True),
+            nullable=True,
+        ),
+        sa.Column("llm_identifier", sa.String(), nullable=True),
         sa.Column("llm_config", sa.JSON(), nullable=True),
         sa.Column("template_prompt", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
@@ -375,6 +376,13 @@ def upgrade():
         op.f("ix_llm_step_strategy_step_id"),
         "llm_step",
         ["strategy_step_id"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_llm_step_environment_variable_id_api_key"),
+        "llm_step",
+        ["environment_variable_id_api_key"],
         unique=False,
         schema="cognition",
     )
@@ -660,6 +668,11 @@ def downgrade():
     )
     op.drop_table("environment_variable", schema="cognition")
 
+    op.drop_index(
+        op.f("ix_llm_step_environment_variable_id_api_key"),
+        table_name="llm_step",
+        schema="cognition",
+    )
     op.drop_index(
         op.f("ix_llm_step_strategy_step_id"),
         table_name="llm_step",
