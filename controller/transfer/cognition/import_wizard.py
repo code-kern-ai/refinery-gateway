@@ -66,7 +66,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
     notification.send_organization_update(
         cognition_project_id,
-        f"cognition_wizard:prep:REFERENCE:COMPLETE",
+        "cognition_wizard:prep:REFERENCE:COMPLETE",
         organization_id=organization_id,
     )
 
@@ -81,7 +81,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
     notification.send_organization_update(
         cognition_project_id,
-        f"cognition_wizard:prep:QUERY:COMPLETE",
+        "cognition_wizard:prep:QUERY:COMPLETE",
         organization_id=organization_id,
     )
 
@@ -107,7 +107,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
     notification.send_organization_update(
         cognition_project_id,
-        f"cognition_wizard:prep:RELEVANCE:COMPLETE",
+        "cognition_wizard:prep:RELEVANCE:COMPLETE",
         organization_id=organization_id,
     )
     __add_start_gates_for(reference_project_id, task_list)
@@ -173,7 +173,7 @@ def finish_cognition_setup(
     general.remove_and_refresh_session(ctx_token, False)
     notification.send_organization_update(
         cognition_project_id,
-        f"cognition_prep:state:DONE",
+        "cognition_prep:state:DONE",
         organization_id=organization_id,
     )
 
@@ -229,7 +229,7 @@ def __finalize_setup_for(
     target_data = {"TARGET_LANGUAGE": project_language}
     # attributes
     attributes = project_type.get_attributes()
-    target_data["for_ac"] = True
+    target_data["target_type"] = "ac"
     if attributes:
         for attribute in attributes:
             if not attribute:
@@ -269,34 +269,10 @@ def __finalize_setup_for(
                     run_code,
                 )
 
-    # embeddings
-    selected_filter_attributes = [
-        c["name"]
-        for c in file_additional_info.get("qdrant_filter", [])
-        if c["type"] == "ATTRIBUTE"
-    ]
-
-    embeddings = project_type.get_embeddings()
-
-    if embeddings:
-        for embedding in embeddings:
-            filter_columns = embedding.get("filter")
-            if filter_columns == "FROM_WIZARD":
-                filter_columns = selected_filter_attributes
-            else:
-                filter_columns = []
-            __add_embedding(
-                project_id,
-                embedding.get("target", {}),
-                project_language,
-                filter_columns,
-                embedding.get("outlier_slice", False),
-                task_list,
-            )
-
     # tasks + functions
     labeling_tasks = project_type.get_labeling_tasks()
-    target_data["for_ac"] = False
+    task_lookup = {}  # name -> id
+    target_data["target_type"] = "lf"
     if labeling_tasks:
         for task in labeling_tasks:
             task_type = task.get("task_type")
@@ -322,11 +298,11 @@ def __finalize_setup_for(
                 task_type,
                 target_attribute_id=task_attribute,
             )
+            task_lookup[task["name"]] = labeling_task_id
             bricks = task.get("bricks")
             if bricks:
                 target_attribute = bricks.get("target_attribute", "reference")
                 target_data["ATTRIBUTE"] = target_attribute
-
                 __load_lf_from_bricks_group(
                     project_id,
                     labeling_task_id,
@@ -335,6 +311,51 @@ def __finalize_setup_for(
                     bricks.get("type", "classifier"),
                     target_data,
                     task_list,
+                    name_prefix=bricks.get("function_prefix"),
+                )
+
+    # embeddings
+    selected_filter_attributes = [
+        c["name"]
+        for c in file_additional_info.get("qdrant_filter", [])
+        if c["type"] == "ATTRIBUTE"
+    ]
+
+    embeddings = project_type.get_embeddings()
+    target_data["target_type"] = "al"
+    if embeddings:
+        for embedding in embeddings:
+            filter_columns = embedding.get("filter")
+            if filter_columns == "FROM_WIZARD":
+                filter_columns = selected_filter_attributes
+            else:
+                filter_columns = []
+            embedding_name = __add_embedding(
+                project_id,
+                embedding.get("target", {}),
+                project_language,
+                filter_columns,
+                embedding.get("outlier_slice", False),
+                task_list,
+            )
+            bricks = embedding.get("bricks")
+            if bricks:
+                target_data["EMBEDDING"] = embedding_name
+                labeling_task_id = task_lookup.get(bricks.get("target_task_name"))
+                if not labeling_task_id:
+                    send_log_message(
+                        project_id,
+                        "Can't create active learner without task name",
+                        True,
+                    )
+                    continue
+                __load_active_learner_from_bricks_group(
+                    project_id,
+                    labeling_task_id,
+                    user_id,
+                    bricks["group"],
+                    bricks.get("type", "classifier"),
+                    target_data,
                     name_prefix=bricks.get("function_prefix"),
                 )
 
@@ -357,8 +378,8 @@ def __create_task_and_labels_for(
             project_id, task_name, task_type, target_attribute_id
         )
     else:
-        existing = set([l.name for l in task_item.labels])
-        labels = [l for l in labels if l not in existing]
+        existing = set([label.name for label in task_item.labels])
+        labels = [label for label in labels if label not in existing]
 
     label_manager.create_labels(project_id, str(task_item.id), labels)
     return str(task_item.id)
@@ -377,12 +398,12 @@ def __load_lf_from_bricks_group(
     append_to_task_list: bool = True,
 ) -> None:
     bricks_in_group = get_bricks_code_from_group(
-        target_project_id,
         group_key,
         bricks_type,
         language_key,
         target_data,
         name_prefix,
+        project_id=target_project_id,
     )
     for name in bricks_in_group:
         item = information_source_manager.create_information_source(
@@ -405,6 +426,38 @@ def __load_lf_from_bricks_group(
             )
 
 
+def __load_active_learner_from_bricks_group(
+    target_project_id: str,
+    target_task_id: str,
+    user_id: str,
+    group_key: str,
+    bricks_type: str,
+    target_data: Dict[str, str],
+    language_key: Optional[str] = None,
+    name_prefix: Optional[str] = None,
+) -> None:
+    bricks_in_group = get_bricks_code_from_group(
+        group_key,
+        bricks_type,
+        language_key,
+        target_data,
+        name_prefix,
+        project_id=target_project_id,
+    )
+    for name in bricks_in_group:
+        information_source_manager.create_information_source(
+            target_project_id,
+            user_id,
+            target_task_id,
+            name.replace("_", " ")
+            .title()
+            .replace(" ", ""),  # to pascal case (e.g. random_forest -> RandomForest)
+            bricks_in_group[name]["code"],
+            "",
+            enums.InformationSourceType.ACTIVE_LEARNING.value,
+        )
+
+
 def __load_ac_from_bricks_group(
     target_project_id: str,
     group_key: str,
@@ -417,12 +470,12 @@ def __load_ac_from_bricks_group(
     append_to_task_list: bool = True,
 ) -> None:
     bricks_in_group = get_bricks_code_from_group(
-        target_project_id,
         group_key,
         bricks_type,
         language_key,
         target_data,
         name_prefix,
+        project_id=target_project_id,
     )
     for name in bricks_in_group:
         code = bricks_in_group[name]["code"]
@@ -446,7 +499,7 @@ def __add_embedding(
     filter_columns: List[str],
     create_outlier_slice: bool,
     task_list: List[Dict[str, str]],
-):
+) -> str:
     target_attribute = target_info.get("attribute", "reference")
     target_platform = target_info.get("platform", "huggingface")
     target_model = None
@@ -497,6 +550,7 @@ def __add_embedding(
                 },
             }
         )
+    return embedding_name
 
 
 def __create_attribute_with(
@@ -525,9 +579,23 @@ def __create_attribute_with(
 
 
 def dummy():
+    # print(
+    #     get_bricks_code_from_endpoint(
+    #         "chunked_sentence_complexity", {"ATTRIBUTE": "reference"}
+    #     ),
+    #     flush=True,
+    # )
     print(
-        get_bricks_code_from_endpoint(
-            "chunked_sentence_complexity", {"ATTRIBUTE": "reference"}
-        ),
+        get_bricks_code_from_group(
+            group_key="personal_identifiers",
+            bricks_type="extractor",
+            language_key=None,
+            target_data={"target_type": "lf"},
+        )["person_extraction"]["code"],
         flush=True,
     )
+    # from .wizard_function_templates import REFERENCE_CHUNKS_SPLIT
+
+    # print(
+    #     REFERENCE_CHUNKS_SPLIT.replace("@@target_attribute@@", "reference"), flush=True
+    # )
