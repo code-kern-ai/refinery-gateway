@@ -7,6 +7,7 @@ from submodules.model import enums
 from submodules.model.business_objects import (
     task_queue as task_queue_db_bo,
     embedding as embedding_db_bo,
+    information_source as information_source_db_bo
 )
 from submodules.model.models import TaskQueue as TaskQueueDBObj
 from .handler import (
@@ -21,6 +22,7 @@ from .util import if_task_queue_send_websocket
 from controller.task_queue import task_queue
 from controller.data_slice import manager as data_slice_manager
 from controller.gates import manager as gates_manager
+from controller.weak_supervision import manager as weak_supervision_manager
 from controller.transfer.cognition.import_wizard import finish_cognition_setup
 from util import notification, daemon
 
@@ -135,5 +137,10 @@ def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
         )
     elif action_type == enums.TaskQueueAction.FINISH_COGNITION_SETUP.value:
         daemon.run(finish_cognition_setup, action.get("cognition_project_id"))
+    elif action_type == enums.TaskQueueAction.RUN_WEAK_SUPERVISION.value:
+
+        information_source_db_bo.update_is_selected_for_project(project_id,False)
+        information_source_db_bo.update_is_selected_for_project(project_id,True,with_commit=True,only_with_state=enums.PayloadState.FINISHED)
+        weak_supervision_manager.run_weak_supervision(project_id,user_id)
     else:
         raise ValueError(f"Invalid action type: {action_type}")

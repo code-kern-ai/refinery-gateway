@@ -85,14 +85,14 @@ def update_task(
         with_commit=True,
     )
 
+    if state != enums.UploadStates.DONE.value:
+        notification.send_organization_update(
+            project_id, f"file_upload:{str(task_id)}:progress:{progress}"
+        )
     if state:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task_id)}:state:{state}"
         )
-
-    notification.send_organization_update(
-        project_id, f"file_upload:{str(task_id)}:progress:{progress}"
-    )
     task = get_upload_task(project_id, task_id)
     logger.info(get_upload_task_message(task))
 

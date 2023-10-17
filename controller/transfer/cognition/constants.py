@@ -17,13 +17,12 @@ class CognitionProjects(Enum):
     def get_embeddings(self):
         return TASK_INFO[self].get("embeddings")
 
-
 TASK_INFO = {
     CognitionProjects.REFERENCE: {
         "labeling_tasks": [
             {
                 "name": "Reference Quality",
-                "labels": ["Good", "Needs fix"],
+                "labels": ["Sufficient", "Needs fix"],
                 "bricks": {
                     "group": "reference_quality",
                     # "function_prefix": "RQ_",
@@ -47,7 +46,6 @@ TASK_INFO = {
                 "name": "Personal Identifiable Information (PII)",
                 "labels": [
                     "Person",
-                    "Countries",
                     "Date",
                     "Time",
                     "Organization",
@@ -120,38 +118,50 @@ TASK_INFO = {
             {
                 "name": "Communication Style",
                 "labels": [
-                    "action-seeking",
-                    "fact-oriented",
-                    "information-seeking",
-                    "self-revealing",
+                    "Action-seeking",
+                    "Fact-oriented",
+                    "Information-seeking",
+                    "Self-revealing",
                 ],
-                # "bricks": {
-                #     "group": "sentiment",
-                # },
+                "bricks": {
+                    "group": "communication_style",
+                    "target_attribute":"query"
+                },
             },
             {
                 "name": "Question Type",
-                "labels": ["keyword-query", "interrogative-query", "statement-query"],
-                # "bricks": {
-                #     "group": "sentiment",
-                # },
+                "labels": ["Keyword-question", "Interrogative-question", "Statement-question"],
+                "bricks": {
+                    "group": "question_type",
+                    "target_attribute":"query"
+                },
             },
             {
                 "name": "Question Quality",
                 "labels": ["Good", "Bad"],
-                # "bricks": {
-                #     "group": "sentiment",
-                # },
+                "bricks": {
+                    "group": "question_quality",
+                    "target_attribute":"query"
+                },
+            },
+            {
+                "name": "Question Complexity",
+                "labels": ["Low", "Medium", "High"],
+                "bricks": {
+                    "group": "question_complexity",
+                    "target_attribute":"query"
+                },
             },
         ],
         "attributes": [
             {
                 "bricks": {
-                    "group": "sentiment",
-                    "type_lookup": {
-                        # defaults to text
-                        "euclidean_distance": DataTypes.FLOAT.value,
-                    },
+                    "group": "rephrased_query",
+                    "target_attribute":"query"
+                    # "type_lookup": {
+                    #     # defaults to text
+                    #     "euclidean_distance": DataTypes.FLOAT.value,
+                    # },
                 },
                 "run_code": False,
             },
@@ -183,21 +193,22 @@ TASK_INFO = {
                     "Yes",
                     "No",
                 ],
-                # "bricks": {
-                #     "group": "sentiment",
-                # },
+                "bricks": {
+                    "group": "fact_is_relevant",
+                },
             },
         ],
         "attributes": [
             {
-                # "bricks": {
-                #     "group": "sentiment",
-                #     "type_lookup": {
-                #         # defaults to text
-                #         "euclidean_distance": DataTypes.FLOAT.value,
-                #     },
-                # },
-                # "run_code": False,
+                "bricks": {
+                    "group": "argumentation_llm",
+                    "target_attribute":"query"
+                    # "type_lookup": {
+                    #     # defaults to text
+                    #     "euclidean_distance": DataTypes.FLOAT.value,
+                    # },
+                },
+                "run_code": False,
             },
         ],
         "embeddings": [

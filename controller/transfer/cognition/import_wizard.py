@@ -110,6 +110,19 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         "cognition_wizard:prep:RELEVANCE:COMPLETE",
         organization_id=organization_id,
     )
+
+    task_list.append(
+        {
+            "project_id": reference_project_id,
+            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
+            "action": {
+                "action_type": enums.TaskQueueAction.FINISH_COGNITION_SETUP.value,
+                "cognition_project_id": cognition_project_id,
+            },
+        }
+    )
+
+
     __add_start_gates_for(reference_project_id, task_list)
     __add_start_gates_for(query_project_id, task_list)
     __add_start_gates_for(relevance_project_id, task_list)
@@ -199,6 +212,19 @@ def __add_websocket_message_queue_item(
         }
     )
 
+def __add_weakly_supervise_all_valid(
+    project_id: str,
+    task_list: List[Dict[str, str]],
+) -> None:
+    task_list.append(
+        {
+            "project_id": project_id,
+            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
+            "action": {
+                "action_type": enums.TaskQueueAction.RUN_WEAK_SUPERVISION.value,
+            },
+        }
+    )
 
 def __add_start_gates_for(
     project_id: str,
@@ -358,7 +384,7 @@ def __finalize_setup_for(
                     target_data,
                     name_prefix=bricks.get("function_prefix"),
                 )
-
+    __add_weakly_supervise_all_valid(project_id,task_list)
     return general.remove_and_refresh_session(ctx_token, True)
 
 
