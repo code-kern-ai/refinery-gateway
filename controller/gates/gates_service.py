@@ -20,10 +20,15 @@ def start_gates_project(
     return response.status_code == 200
 
 
-def stop_gates_project(project_id: str) -> bool:
+def stop_gates_project(project_id: str, ignore_404: bool = False) -> bool:
     url = BASE_URI + "/stop-inference-api/" + str(project_id)
     response = requests.post(url)
-    return response.status_code == 200
+    if response.ok:
+        return True
+
+    if ignore_404 and response.status_code == 404:
+        return True
+    return False
 
 
 def call_gates_project(
