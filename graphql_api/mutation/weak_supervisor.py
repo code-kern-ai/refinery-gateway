@@ -16,7 +16,7 @@ from submodules.model.business_objects import (
     weak_supervision,
 )
 from submodules.model.enums import NotificationType
-from util import  notification
+from util import notification
 from controller.weak_supervision.weak_supervision_service import (
     initiate_weak_supervision,
 )
@@ -44,8 +44,10 @@ class InitiateWeakSupervisionByProjectId(graphene.Mutation):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
-        ws_manager.run_weak_supervision(project_id,user_id,overwrite_default_precision,overwrite_weak_supervision)
-        
+        ws_manager.run_weak_supervision(
+            project_id, user_id, overwrite_default_precision, overwrite_weak_supervision
+        )
+
         return InitiateWeakSupervisionByProjectId(ok=True)
 
 

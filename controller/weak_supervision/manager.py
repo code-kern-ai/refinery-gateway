@@ -1,16 +1,14 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from submodules.model import enums, WeakSupervisionTask
 from submodules.model.business_objects import weak_supervision
 import traceback
-from typing import Optional, Dict
+
 from controller.embedding import manager as embedding_manager
-from submodules.model import enums
 from submodules.model.business_objects import (
     labeling_task,
     general,
     record_label_association,
-    weak_supervision,
 )
 from submodules.model.business_objects.information_source import (
     get_selected_information_sources,
@@ -27,10 +25,11 @@ from util.notification import create_notification
 
 
 def run_weak_supervision(
-        project_id: str,
-        user_id:str,
-        overwrite_default_precision: Optional[float] = None,
-        overwrite_weak_supervision: Optional[Dict[str, float]] = None,):
+    project_id: str,
+    user_id: str,
+    overwrite_default_precision: Optional[float] = None,
+    overwrite_weak_supervision: Optional[Dict[str, float]] = None,
+):
     create_notification(
         NotificationType.WEAK_SUPERVISION_TASK_STARTED,
         user_id,
@@ -74,9 +73,7 @@ def run_weak_supervision(
                     weak_supervision_task_id,
                     overwrite_ws,
                 )
-            update_weak_supervision_task_stats(
-                weak_supervision_task_id, project_id
-            )
+            update_weak_supervision_task_stats(weak_supervision_task_id, project_id)
             embedding_manager.update_label_payloads_for_neural_search(project_id)
             create_notification(
                 NotificationType.WEAK_SUPERVISION_TASK_DONE,

@@ -17,6 +17,7 @@ class CognitionProjects(Enum):
     def get_embeddings(self):
         return TASK_INFO[self].get("embeddings")
 
+
 TASK_INFO = {
     CognitionProjects.REFERENCE: {
         "labeling_tasks": [
@@ -123,41 +124,33 @@ TASK_INFO = {
                     "Information-seeking",
                     "Self-revealing",
                 ],
-                "bricks": {
-                    "group": "communication_style",
-                    "target_attribute":"query"
-                },
+                "bricks": {"group": "communication_style", "target_attribute": "query"},
             },
             {
                 "name": "Question Type",
-                "labels": ["Keyword-question", "Interrogative-question", "Statement-question"],
-                "bricks": {
-                    "group": "question_type",
-                    "target_attribute":"query"
-                },
+                "labels": [
+                    "Keyword-question",
+                    "Interrogative-question",
+                    "Statement-question",
+                ],
+                "bricks": {"group": "question_type", "target_attribute": "query"},
             },
             {
                 "name": "Question Quality",
                 "labels": ["Good", "Bad"],
-                "bricks": {
-                    "group": "question_quality",
-                    "target_attribute":"query"
-                },
+                "bricks": {"group": "question_quality", "target_attribute": "query"},
             },
             {
                 "name": "Question Complexity",
                 "labels": ["Low", "Medium", "High"],
-                "bricks": {
-                    "group": "question_complexity",
-                    "target_attribute":"query"
-                },
+                "bricks": {"group": "question_complexity", "target_attribute": "query"},
             },
         ],
         "attributes": [
             {
                 "bricks": {
                     "group": "rephrased_query",
-                    "target_attribute":"query"
+                    "target_attribute": "query"
                     # "type_lookup": {
                     #     # defaults to text
                     #     "euclidean_distance": DataTypes.FLOAT.value,
@@ -202,7 +195,7 @@ TASK_INFO = {
             {
                 "bricks": {
                     "group": "argumentation_llm",
-                    "target_attribute":"query"
+                    "target_attribute": "query"
                     # "type_lookup": {
                     #     # defaults to text
                     #     "euclidean_distance": DataTypes.FLOAT.value,
