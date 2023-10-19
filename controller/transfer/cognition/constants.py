@@ -5,7 +5,7 @@ from .wizard_function_templates import REFERENCE_CHUNKS_SPLIT
 
 class CognitionProjects(Enum):
     REFERENCE = "REFERENCE"
-    QUERY = "QUERY"
+    QUESTION = "QUESTION"
     RELEVANCE = "RELEVANCE"
 
     def get_labeling_tasks(self):
@@ -92,7 +92,7 @@ TASK_INFO = {
                 "filter": "FROM_WIZARD",
                 "outlier_slice": True,
                 "bricks": {
-                    "group": "reference_quality",
+                    "group": "active_learner",
                     "target_task_name": "Reference Quality",
                 },
             },
@@ -108,13 +108,13 @@ TASK_INFO = {
                 "filter": "FROM_WIZARD",
                 "outlier_slice": True,
                 "bricks": {
-                    "group": "reference_complexity",
+                    "group": "active_learner",
                     "target_task_name": "Reference Complexity",
                 },
             },
         ],
     },
-    CognitionProjects.QUERY: {
+    CognitionProjects.QUESTION: {
         "labeling_tasks": [
             {
                 "name": "Communication Style",
@@ -124,7 +124,10 @@ TASK_INFO = {
                     "Information-seeking",
                     "Self-revealing",
                 ],
-                "bricks": {"group": "communication_style", "target_attribute": "query"},
+                "bricks": {
+                    "group": "communication_style",
+                    "target_attribute": "question",
+                },
             },
             {
                 "name": "Question Type",
@@ -133,24 +136,27 @@ TASK_INFO = {
                     "Interrogative-question",
                     "Statement-question",
                 ],
-                "bricks": {"group": "question_type", "target_attribute": "query"},
+                "bricks": {"group": "question_type", "target_attribute": "question"},
             },
             {
                 "name": "Question Quality",
                 "labels": ["Good", "Bad"],
-                "bricks": {"group": "question_quality", "target_attribute": "query"},
+                "bricks": {"group": "question_quality", "target_attribute": "question"},
             },
             {
                 "name": "Question Complexity",
                 "labels": ["Low", "Medium", "High"],
-                "bricks": {"group": "question_complexity", "target_attribute": "query"},
+                "bricks": {
+                    "group": "question_complexity",
+                    "target_attribute": "question",
+                },
             },
         ],
         "attributes": [
             {
                 "bricks": {
                     "group": "rephrased_query",
-                    "target_attribute": "query"
+                    "target_attribute": "question"
                     # "type_lookup": {
                     #     # defaults to text
                     #     "euclidean_distance": DataTypes.FLOAT.value,
@@ -161,13 +167,15 @@ TASK_INFO = {
             {
                 "name": "search_queries",
                 "type": DataTypes.EMBEDDING_LIST.value,
-                "code": REFERENCE_CHUNKS_SPLIT.replace("@@target_attribute@@", "query"),
+                "code": REFERENCE_CHUNKS_SPLIT.replace(
+                    "@@target_attribute@@", "question"
+                ),
             },
         ],
         "embeddings": [
             {
                 "target": {
-                    "attribute": "query",
+                    "attribute": "question",
                     "platform": "huggingface",
                     "model": {
                         "de": "bert-base-german-cased",
@@ -195,7 +203,7 @@ TASK_INFO = {
             {
                 "bricks": {
                     "group": "argumentation_llm",
-                    "target_attribute": "query"
+                    "target_attribute": "question"
                     # "type_lookup": {
                     #     # defaults to text
                     #     "euclidean_distance": DataTypes.FLOAT.value,
@@ -207,7 +215,7 @@ TASK_INFO = {
         "embeddings": [
             {
                 "target": {
-                    "attribute": "query",
+                    "attribute": "question",
                     "platform": "huggingface",
                     "model": {
                         "de": "bert-base-german-cased",

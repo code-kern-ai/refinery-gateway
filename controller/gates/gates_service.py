@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Tuple, Optional
 import requests
 import os
 
-BASE_URI = os.getenv("GATES_URI")
+BASE_URI = os.getenv("GATES")
 
 
 def start_gates_project(

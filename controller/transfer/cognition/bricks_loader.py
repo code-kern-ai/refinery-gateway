@@ -14,7 +14,7 @@ FUNCTION_REGEX = re.compile(
 )
 CLASS_REGEX = re.compile(r"^class ([\w]+)\(([^)]+)\):$", re.MULTILINE)
 VARIABLE_REGEX = re.compile(
-    r"""^(([A-Z_]+):\s*(\w+)\s*=\s*(['"])*([\w\_\-\<\>]+)(['"])*)""", re.MULTILINE
+    r"""^(([A-Z_]+):\s*(\w+)\s*=\s*(['"])*([ \w\_\-\<\>]+)(['"])*)""", re.MULTILINE
 )
 
 AL_BACKEND_NAME = "ATLClassifier"

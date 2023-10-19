@@ -38,7 +38,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     organization_id = str(cognition_project_item.organization_id)
 
     reference_project_id = str(cognition_project_item.refinery_references_project_id)
-    query_project_id = str(cognition_project_item.refinery_query_project_id)
+    question_project_id = str(cognition_project_item.refinery_question_project_id)
     relevance_project_id = str(cognition_project_item.refinery_relevance_project_id)
 
     project_language = str(project_db_bo.get(reference_project_id).tokenizer_blank)
@@ -71,8 +71,8 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
 
     ctx_token = __finalize_setup_for(
-        CognitionProjects.QUERY,
-        query_project_id,
+        CognitionProjects.QUESTION,
+        question_project_id,
         user_id,
         project_language,
         file_additional_info,
@@ -81,11 +81,11 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
     notification.send_organization_update(
         cognition_project_id,
-        "cognition_wizard:prep:QUERY:COMPLETE",
+        "cognition_wizard:prep:QUESTION:COMPLETE",
         organization_id=organization_id,
     )
 
-    ## additional query task creation
+    ## additional question task creation
     qdrant_filter = file_additional_info.get("qdrant_filter", [])
 
     for item in qdrant_filter:
@@ -94,7 +94,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
             labels = attribute_db_bo.get_unique_values(
                 reference_project_id, item["name"]
             )
-        __create_task_and_labels_for(query_project_id, item["name"], labels)
+        __create_task_and_labels_for(question_project_id, item["name"], labels)
 
     ctx_token = __finalize_setup_for(
         CognitionProjects.RELEVANCE,
@@ -123,7 +123,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     )
 
     __add_start_gates_for(reference_project_id, task_list)
-    __add_start_gates_for(query_project_id, task_list)
+    __add_start_gates_for(question_project_id, task_list)
     __add_start_gates_for(relevance_project_id, task_list)
 
     task_list.append(
@@ -173,7 +173,7 @@ def finish_cognition_setup(
         str(cognition_project_item.refinery_references_project_id), user_id
     )
     notification_db_bo.set_notifications_to_not_initial(
-        str(cognition_project_item.refinery_query_project_id), user_id
+        str(cognition_project_item.refinery_question_project_id), user_id
     )
     notification_db_bo.set_notifications_to_not_initial(
         str(cognition_project_item.refinery_relevance_project_id), user_id

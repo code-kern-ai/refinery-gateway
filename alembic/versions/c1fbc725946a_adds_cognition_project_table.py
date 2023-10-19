@@ -30,7 +30,7 @@ def upgrade():
             nullable=True,
         ),
         sa.Column(
-            "refinery_query_project_id", postgresql.UUID(as_uuid=True), nullable=True
+            "refinery_question_project_id", postgresql.UUID(as_uuid=True), nullable=True
         ),
         sa.Column(
             "refinery_relevance_project_id",
@@ -51,7 +51,7 @@ def upgrade():
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(
-            ["refinery_query_project_id"], ["project.id"], ondelete="CASCADE"
+            ["refinery_question_project_id"], ["project.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(
             ["refinery_references_project_id"], ["project.id"], ondelete="CASCADE"
@@ -77,9 +77,9 @@ def upgrade():
         schema="cognition",
     )
     op.create_index(
-        op.f("ix_cognition_project_refinery_query_project_id"),
+        op.f("ix_cognition_project_refinery_question_project_id"),
         "project",
-        ["refinery_query_project_id"],
+        ["refinery_question_project_id"],
         unique=False,
         schema="cognition",
     )
@@ -134,7 +134,7 @@ def upgrade():
         sa.Column("strategy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("query", sa.String(), nullable=True),
+        sa.Column("question", sa.String(), nullable=True),
         sa.Column("answer", sa.String(), nullable=True),
         sa.Column("positive_feedback", sa.Boolean(), nullable=True),
         sa.Column("feedback_message", sa.String(), nullable=True),
@@ -765,7 +765,7 @@ def downgrade():
         schema="cognition",
     )
     op.drop_index(
-        op.f("ix_cognition_project_refinery_query_project_id"),
+        op.f("ix_cognition_project_refinery_question_project_id"),
         table_name="project",
         schema="cognition",
     )
