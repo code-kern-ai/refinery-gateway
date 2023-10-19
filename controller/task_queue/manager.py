@@ -33,7 +33,7 @@ def add_task(
     user_id: str,
     task_info: Union[Dict[str, str], List[Dict[str, str]]],
     priority: bool = False,
-) -> str:
+) -> Tuple[str, int]:
     if task_type == enums.TaskType.TASK_QUEUE and not isinstance(task_info, list):
         raise ValueError("Task queues only work with list of singular task items")
     elif task_type == enums.TaskType.TASK_QUEUE and not len(task_info):
@@ -44,14 +44,14 @@ def add_task(
     if task_type == enums.TaskType.TASK_QUEUE_ACTION:
         # just execute the action
         __execute_action(project_id, user_id, task_info)
-        return enums.TaskType.TASK_QUEUE_ACTION.value
+        return enums.TaskType.TASK_QUEUE_ACTION.value, 0
 
     task_item = task_queue_db_bo.add(
         project_id, task_type, user_id, task_info, priority, with_commit=True
     )
     task_id = str(task_item.id)
-    add_task_to_task_queue(task_item)
-    return task_id
+    queue_position = add_task_to_task_queue(task_item)
+    return task_id, queue_position
 
 
 def get_all_waiting_by_type(project_id: str, task_type: str) -> List[TaskQueueDBObj]:
@@ -90,14 +90,14 @@ def get_task_function_by_type(task_type: str) -> Tuple[Callable, Callable, int]:
     raise ValueError(f"Task type {task_type} not supported yet")
 
 
-def add_task_to_task_queue(task: TaskQueueDBObj) -> None:
+def add_task_to_task_queue(task: TaskQueueDBObj) -> int:
     start_func, check_func, check_every = get_task_function_by_type(task.task_type)
     queue = None
     if task.task_type == enums.TaskType.TASK_QUEUE.value:
         queue = task_queue.get_task_queue_queue()
     else:
         queue = task_queue.get_task_queue()
-    queue.add_task(task, start_func, check_func, check_every)
+    return queue.add_task(task, start_func, check_func, check_every)
 
 
 def remove_task_from_queue(project_id: str, task_id: str) -> None:

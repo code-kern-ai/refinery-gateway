@@ -1,7 +1,6 @@
 import graphene
 
 from controller.auth import manager as auth
-from util import notification
 from controller.task_queue import manager
 from typing import List, Dict
 from submodules.model.enums import TaskType

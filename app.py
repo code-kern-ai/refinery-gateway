@@ -10,7 +10,7 @@ from api.transfer import (
     KnowledgeBaseExport,
     Notify,
     PrepareFileImport,
-    UploadTask,
+    UploadTaskInfo,
     CognitionImport,
     CognitionPrepareProject,
 )
@@ -55,7 +55,7 @@ routes = [
         "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
         CognitionPrepareProject,
     ),
-    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
+    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),

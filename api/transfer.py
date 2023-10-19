@@ -3,7 +3,6 @@ import traceback
 import time
 from typing import Optional
 
-from controller import organization
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
@@ -17,7 +16,6 @@ from exceptions.exceptions import BadPasswordError
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
-    embedding,
     general,
     organization,
     tokenization,
@@ -28,7 +26,6 @@ from submodules.model.cognition_objects import project as cognition_project
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
-from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
@@ -172,15 +169,15 @@ class JSONImport(HTTPEndpoint):
 
         project = project_manager.get_project(project_id)
         num_project_records = len(project.records)
-        for attribute in project.attributes:
-            if attribute.is_primary_key:
+        for att in project.attributes:
+            if att.is_primary_key:
                 for idx, record in enumerate(records):
-                    if attribute.name not in record:
-                        if attribute.name == "running_id":
-                            records[idx][attribute.name] = num_project_records + idx + 1
+                    if att.name not in record:
+                        if att.name == "running_id":
+                            records[idx][att.name] = num_project_records + idx + 1
                         else:
                             raise exceptions.InvalidInputException(
-                                f"Non-running-id, primary key {attribute.name} missing in record"
+                                f"Non-running-id, primary key {att.name} missing in record"
                             )
 
         transfer_manager.import_records_from_json(
@@ -259,7 +256,7 @@ class AssociationsImport(HTTPEndpoint):
         return JSONResponse(new_associations_added)
 
 
-class UploadTask(HTTPEndpoint):
+class UploadTaskInfo(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
         auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]

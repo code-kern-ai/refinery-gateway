@@ -74,7 +74,8 @@ class CustomTaskQueue:
         start_function: Callable[[Dict[str, Any]], bool],
         check_finished_function: Callable[[Dict[str, Any]], bool],
         check_every: int = 1,
-    ) -> None:
+    ) -> int:
+        # return queue position or 0 if directly started
         with self._lock:
             active = self._active_priority if task.priority else self._active_normal
             max = self._max_priority if task.priority else self._max_normal
@@ -94,8 +95,9 @@ class CustomTaskQueue:
                         else self._fifo_queue_normal
                     )
                     append_to.append(task_info)
-                    return
+                    return append_to.length()
             self.__start_task(task_info, add_to_prio)
+            return 0
 
     def __start_task(self, task_info: TaskInfo, to_prio: bool) -> bool:
         if not task_info:
@@ -191,8 +193,9 @@ def init_task_queues() -> CustomTaskQueue:
     max_normal = int(os.getenv("TASK_QUEUE_SLOTS", "2"))
     max_priority = int(os.getenv("PRIORITY_TASK_QUEUE_SLOTS", "1"))
     task_queue = CustomTaskQueue(max_normal, max_priority)
-    # same amount as normal so multiple queues can be handled simultaneously if the server can handle it
-    task_queue_queue = CustomTaskQueue(max_normal, 0)
+    # double amount as normal so multiple queues can be handled simultaneously if the server can handle it
+    # tested locally with two wizards which resulted in reasonable performance (ping pong between the queues)
+    task_queue_queue = CustomTaskQueue(max_normal * 2, 0)
     # reset old tasks that weren't finished properly
     task_queue_db_bo.set_all_tasks_inactive(True)
 

@@ -7,7 +7,6 @@ from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 from submodules.model import exceptions
 
-from controller.tokenization import tokenization_service
 from submodules.model import events
 from submodules.s3.controller import bucket_exists, create_bucket
 from util import doc_ock, notification, adapter

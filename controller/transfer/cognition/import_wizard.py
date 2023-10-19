@@ -36,7 +36,6 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     general.commit()
     # unbind to prevent session issues
     organization_id = str(cognition_project_item.organization_id)
-
     reference_project_id = str(cognition_project_item.refinery_references_project_id)
     question_project_id = str(cognition_project_item.refinery_question_project_id)
     relevance_project_id = str(cognition_project_item.refinery_relevance_project_id)
@@ -152,7 +151,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
             continue
         break
 
-    task_id = task_queue_manager.add_task(
+    task_id, position = task_queue_manager.add_task(
         reference_project_id, enums.TaskType.TASK_QUEUE, user_id, task_list
     )
 
@@ -161,6 +160,12 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         f"cognition_wizard:task_queue:{task_id}:{len(task_list)}",
         organization_id=organization_id,
     )
+    if position:
+        notification.send_organization_update(
+            cognition_project_id,
+            f"task_queue:{str(task_id)}:QUEUE_POSITION:{position}",
+            organization_id=organization_id,
+        )
     general.remove_and_refresh_session(ctx_token, False)
 
 
