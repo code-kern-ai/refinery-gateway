@@ -144,8 +144,13 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         c += 1
         if c > 120:
             ctx_token = general.remove_and_refresh_session(ctx_token, True)
-        if not tokenization_db_bo.is_doc_bin_creation_running(reference_project_id):
-            break
+        if tokenization_db_bo.is_doc_bin_creation_running(reference_project_id):
+            continue
+        if tokenization_db_bo.is_doc_bin_creation_running(question_project_id):
+            continue
+        if tokenization_db_bo.is_doc_bin_creation_running(relevance_project_id):
+            continue
+        break
 
     task_id = task_queue_manager.add_task(
         reference_project_id, enums.TaskType.TASK_QUEUE, user_id, task_list

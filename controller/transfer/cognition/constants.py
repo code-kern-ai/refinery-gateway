@@ -107,10 +107,10 @@ TASK_INFO = {
                 },
                 "filter": "FROM_WIZARD",
                 "outlier_slice": True,
-                "bricks": {
-                    "group": "active_learner",
-                    "target_task_name": "Reference Complexity",
-                },
+                # "bricks": {
+                #     "group": "active_learner",
+                #     "target_task_name": "Reference Complexity",
+                # },
             },
         ],
     },
