@@ -90,7 +90,7 @@ def create_payload(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id, f"payload_created:{information_source_item.id}:{payload.id}"
+        project_id, f"payload_created:{information_source_item.id}:{str(payload.id)}"
     )
 
     def prepare_and_run_execution_pipeline(
@@ -243,9 +243,10 @@ def create_payload(
                 add_file_name,
                 input_data,
             )
+            # recollect to prevent detached instance error
+            payload_item = information_source.get_payload(project_id, payload_id)
             has_error = update_records(payload_item, project_id)
             if has_error:
-                payload_item = information_source.get_payload(project_id, payload_id)
                 tmp_log_store = payload_item.logs
                 berlin_now = datetime.datetime.now(__tz)
                 tmp_log_store.append(
@@ -273,15 +274,11 @@ def create_payload(
             )
             notification.send_organization_update(
                 project_id,
-                f"payload_finished:{information_source_item.id}:{payload.id}",
+                f"payload_finished:{information_source_item.id}:{payload_id}",
             )
-        except Exception as e:
+        except Exception:
             general.rollback()
-            print(information_source_item.name, "=====================================================", flush=True)
             print(traceback.format_exc(), flush=True)
-            print( "=====================================================", flush=True)
-            # if not type(e) == ValueError:
-            #     print(traceback.format_exc(), flush=True)
             payload_item.state = enums.PayloadState.FAILED.value
             general.commit()
             create_notification(
@@ -303,11 +300,11 @@ def create_payload(
         if payload_item.state == enums.PayloadState.FINISHED.value:
             try:
                 weak_supervision.calculate_stats_after_source_run(
-                    project_id, payload.source_id, user_id
+                    project_id, payload_item.source_id, user_id
                 )
                 notification.send_organization_update(
                     project_id,
-                    f"payload_update_statistics:{information_source_item.id}:{payload.id}",
+                    f"payload_update_statistics:{information_source_item.id}:{payload_id}",
                 )
                 general.commit()
             except:
@@ -328,14 +325,14 @@ def create_payload(
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
-            payload.id,
+            str(payload.id),
             project_id,
             information_source_item,
             in_thread=True,
         )
     else:
         prepare_and_run_execution_pipeline(
-            payload.id,
+            str(payload.id),
             project_id,
             information_source_item,
         )
@@ -407,7 +404,7 @@ def run_container(
         read_container_logs_thread,
         project_id,
         container_name,
-        str(information_source_payload.id),
+        payload_id,
         container,
     )
     container.start()
