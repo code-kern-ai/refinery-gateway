@@ -1,6 +1,6 @@
 from enum import Enum
 from submodules.model.enums import DataTypes, EmbeddingPlatform, LabelingTaskType
-from .wizard_function_templates import REFERENCE_CHUNKS_SPLIT
+from .wizard_function_templates import REFERENCE_CHUNKS_SENT
 
 
 class CognitionProjects(Enum):
@@ -74,7 +74,7 @@ TASK_INFO = {
             {
                 "name": "reference_chunks",
                 "type": DataTypes.EMBEDDING_LIST.value,
-                "code": REFERENCE_CHUNKS_SPLIT.replace(
+                "code": REFERENCE_CHUNKS_SENT.replace(
                     "@@target_attribute@@", "reference"
                 ),
             },
@@ -167,7 +167,7 @@ TASK_INFO = {
             {
                 "name": "search_queries",
                 "type": DataTypes.EMBEDDING_LIST.value,
-                "code": REFERENCE_CHUNKS_SPLIT.replace(
+                "code": REFERENCE_CHUNKS_SENT.replace(
                     "@@target_attribute@@", "question"
                 ),
             },
@@ -235,3 +235,10 @@ DEFAULT_MODEL = {
     EmbeddingPlatform.OPENAI.value: "text-embedding-ada-002",
     EmbeddingPlatform.PYTHON.value: "bag-of-words",
 }
+
+MODEL_DOC2QUERY = {
+    "de": "doc2query/msmarco-german-mt5-base-v1",
+    "en": "doc2query/msmarco-t5-base-v1",
+}
+
+FREE_API_REQUEST_URL = "https://free.api.kern.ai/inference"

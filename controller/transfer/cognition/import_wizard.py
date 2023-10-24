@@ -2,6 +2,8 @@ from contextvars import Token
 from typing import List, Optional, Dict, Any
 import json
 import time
+import requests
+from uuid import uuid4
 
 from submodules.model import enums
 from submodules.model.business_objects import (
@@ -10,6 +12,7 @@ from submodules.model.business_objects import (
     tokenization as tokenization_db_bo,
     project as project_db_bo,
     notification as notification_db_bo,
+    record as record_db_bo,
 )
 from submodules.model.cognition_objects import project as cognition_project
 
@@ -24,7 +27,12 @@ from controller.task_queue import manager as task_queue_manager
 from controller.embedding import manager as embedding_manager
 
 from .bricks_loader import get_bricks_code_from_group, get_bricks_code_from_endpoint
-from .constants import CognitionProjects, DEFAULT_MODEL
+from .constants import (
+    CognitionProjects,
+    DEFAULT_MODEL,
+    MODEL_DOC2QUERY,
+    FREE_API_REQUEST_URL,
+)
 from .util import send_log_message
 
 
@@ -51,6 +59,18 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     file_additional_info = json.loads(task.file_additional_info)
 
     user_id = str(task.user_id)
+
+    # first add actual records to question & relevance
+    __add_records_to_question_and_relevance(
+        reference_project_id,
+        question_project_id,
+        relevance_project_id,
+        user_id,
+        project_language,
+        32,
+    )
+
+    # then add additional tasks to queue
 
     task_list = []
 
@@ -618,6 +638,86 @@ def __create_attribute_with(
     return attribute_id
 
 
+def __add_records_to_question_and_relevance(
+    reference_project_id: str,
+    question_project_id: str,
+    relevance_project_id: str,
+    user_id: str,
+    language: str,
+    amount: int,
+) -> None:
+    sample_facts = record_db_bo.get_sample_data_of(
+        reference_project_id,
+        "reference",
+        amount,
+        "LENGTH(data->>'reference') BETWEEN 5 AND 1024",
+    )
+
+    if len(sample_facts) < amount:
+        raise ValueError("Not enough sample data")
+
+    questions = __call_doc_2_query_free(language, sample_facts)
+
+    if len(questions) != amount:
+        raise ValueError("Not enough query data")
+
+    max_running_id_qu = record_db_bo.get_max_running_id(question_project_id) + 1
+    max_running_id_re = record_db_bo.get_max_running_id(relevance_project_id) + 1
+    final_json_to_add_questions = []
+    final_json_to_add_relevance = []
+    for idx, (reference, question) in enumerate(zip(sample_facts, questions)):
+        message_id = "mr-" + str(idx)
+        final_json_to_add_questions.append(
+            {
+                "running_id": max_running_id_qu + idx,
+                "message_id": message_id,
+                "question": question,
+            }
+        )
+        max_running_id_re += 1
+        final_json_to_add_relevance.append(
+            {
+                "running_id": max_running_id_re + idx,
+                "question": question,
+                "message_id": message_id,
+                "reference": reference,
+                "__Fact is relevant": "Yes",
+            }
+        ),
+    __post_to_refinery_project(
+        question_project_id, user_id, final_json_to_add_questions
+    )
+    __post_to_refinery_project(
+        relevance_project_id, user_id, final_json_to_add_relevance
+    )
+
+
+def __post_to_refinery_project(
+    project_id: str, user_id: str, records: List[Dict[str, str]]
+) -> None:
+    requests.post(
+        f"http://refinery-gateway:80/project/{project_id}/import_json",
+        json={
+            "user_id": user_id,
+            "records": records,
+            "request_uuid": str(uuid4()),
+            "is_last": True,  # or False
+        },
+    )
+
+
+def __call_doc_2_query_free(language: str, texts_to_query: List[str]) -> List[str]:
+    if language not in MODEL_DOC2QUERY:
+        raise ValueError("Language not yet supported")
+
+    response = requests.post(
+        FREE_API_REQUEST_URL,
+        json={"model_name": MODEL_DOC2QUERY.get(language), "text": texts_to_query},
+    )
+    response.raise_for_status()
+    return [r["generated_text"] for r in response.json()]
+
+
 def dummy():
     # print(
     #     get_bricks_code_from_endpoint(
@@ -639,7 +739,14 @@ def dummy():
     # # print(
     # #     REFERENCE_CHUNKS_SPLIT.replace("@@target_attribute@@", "reference"), flush=True
     # # )
-    from submodules.model.business_objects import record
 
     # print(record.get_sample_data_of("adaf5adc-1103-4be4-b871-776ca62b2be2","reference",32,"LENGTH(data->>'reference') BETWEEN 5 AND 5000"),flush=True)
-    print(record.get_sample_data_of("c6d41c13-92e3-4bb7-8e87-30c8945a5b26","question",32,"LENGTH(data->>'question') BETWEEN 5 AND 5000"),flush=True)
+    print(
+        record_db_bo.get_sample_data_of(
+            "c6d41c13-92e3-4bb7-8e87-30c8945a5b26",
+            "running_id",
+            32,
+            "LENGTH(data->>'question') BETWEEN 5 AND 5000",
+        ),
+        flush=True,
+    )
