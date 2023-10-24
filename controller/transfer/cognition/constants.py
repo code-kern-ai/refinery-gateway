@@ -141,7 +141,7 @@ TASK_INFO = {
             {
                 "name": "Question Quality",
                 "labels": ["Good", "Bad"],
-                "bricks": {"group": "question_quality", "target_attribute": "question"},
+                # "bricks": {"group": "question_quality", "target_attribute": "question"},
             },
             {
                 "name": "Question Complexity",
@@ -153,17 +153,17 @@ TASK_INFO = {
             },
         ],
         "attributes": [
-            {
-                "bricks": {
-                    "group": "rephrased_query",
-                    "target_attribute": "question"
-                    # "type_lookup": {
-                    #     # defaults to text
-                    #     "euclidean_distance": DataTypes.FLOAT.value,
-                    # },
-                },
-                "run_code": False,
-            },
+            # {
+            #     "bricks": {
+            #         "group": "rephrased_query",
+            #         "target_attribute": "question"
+            #         # "type_lookup": {
+            #         #     # defaults to text
+            #         #     "euclidean_distance": DataTypes.FLOAT.value,
+            #         # },
+            #     },
+            #     "run_code": False,
+            # },
             {
                 "name": "search_queries",
                 "type": DataTypes.EMBEDDING_LIST.value,
@@ -194,23 +194,23 @@ TASK_INFO = {
                     "Yes",
                     "No",
                 ],
-                "bricks": {
-                    "group": "fact_is_relevant",
-                },
+                # "bricks": {
+                #     "group": "reference_relevance",
+                # },
             },
         ],
         "attributes": [
-            {
-                "bricks": {
-                    "group": "argumentation_llm",
-                    "target_attribute": "question"
-                    # "type_lookup": {
-                    #     # defaults to text
-                    #     "euclidean_distance": DataTypes.FLOAT.value,
-                    # },
-                },
-                "run_code": False,
-            },
+            # {
+            #     "bricks": {
+            #         "group": "argumentation_llm",
+            #         "target_attribute": "question"
+            #         # "type_lookup": {
+            #         #     # defaults to text
+            #         #     "euclidean_distance": DataTypes.FLOAT.value,
+            #         # },
+            #     },
+            #     "run_code": False,
+            # },
         ],
         "embeddings": [
             {

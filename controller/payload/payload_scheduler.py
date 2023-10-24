@@ -277,8 +277,11 @@ def create_payload(
             )
         except Exception as e:
             general.rollback()
-            if not type(e) == ValueError:
-                print(traceback.format_exc())
+            print(information_source_item.name, "=====================================================", flush=True)
+            print(traceback.format_exc(), flush=True)
+            print( "=====================================================", flush=True)
+            # if not type(e) == ValueError:
+            #     print(traceback.format_exc(), flush=True)
             payload_item.state = enums.PayloadState.FAILED.value
             general.commit()
             create_notification(
