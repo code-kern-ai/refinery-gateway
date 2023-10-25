@@ -112,7 +112,7 @@ def create_payload(
                 add_file_name,
                 input_data,
             )
-        except:
+        except Exception:
             general.rollback()
             print(traceback.format_exc(), flush=True)
             payload_item = get(project_id, payload_id)
@@ -307,7 +307,7 @@ def create_payload(
                     f"payload_update_statistics:{information_source_item.id}:{payload_id}",
                 )
                 general.commit()
-            except:
+            except Exception:
                 print(traceback.format_exc())
 
         project_item = project.get(project_id)
@@ -452,7 +452,7 @@ def extend_logs(
     if not information_source_payload.logs:
         information_source_payload.logs = logs
     else:
-        all_logs = [l for l in information_source_payload.logs]
+        all_logs = [log for log in information_source_payload.logs]
         all_logs += logs
         information_source_payload.logs = all_logs
     general.commit()
@@ -483,7 +483,7 @@ def read_container_logs_thread(
             information_source_payload = information_source.get_payload(
                 project_id, payload_id
             )
-        if not name in __containers_running:
+        if name not in __containers_running:
             break
         try:
             log_lines = docker_container.logs(
@@ -492,11 +492,13 @@ def read_container_logs_thread(
                 timestamps=True,
                 since=last_timestamp,
             )
-        except:
+        except Exception:
             # failsafe for containers that shut down during the read
             break
         current_logs = [
-            l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
+            log
+            for log in str(log_lines.decode("utf-8")).split("\n")
+            if len(log.strip()) > 0
         ]
 
         if len(current_logs) == 0:
@@ -506,8 +508,8 @@ def read_container_logs_thread(
         last_timestamp = parser.parse(last_timestamp_str).replace(
             tzinfo=None
         ) + datetime.timedelta(seconds=1)
-        non_progress_logs = [l for l in current_logs if "progress" not in l]
-        progress_logs = [l for l in current_logs if "progress" in l]
+        non_progress_logs = [log for log in current_logs if "progress" not in log]
+        progress_logs = [log for log in current_logs if "progress" in log]
         if len(non_progress_logs) > 0:
             extend_logs(project_id, information_source_payload, non_progress_logs)
         if len(progress_logs) == 0:
