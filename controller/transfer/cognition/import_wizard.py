@@ -60,15 +60,30 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
 
     user_id = str(task.user_id)
 
+    send_log_message(
+        question_project_id,
+        "Generating questions based on references",
+    )
     # first add actual records to question & relevance
-    __add_records_to_question_and_relevance(
+    if __add_records_to_question_and_relevance(
         reference_project_id,
         question_project_id,
         relevance_project_id,
         user_id,
         project_language,
         32,
-    )
+    ):
+        send_log_message(
+            question_project_id,
+            "Generating questions based on references - complete",
+        )
+    else:
+        send_log_message(
+            question_project_id,
+            "Couldn't generate enough question data - stopping wizard",
+            True,
+        )
+        return
 
     # then add additional tasks to queue
 
@@ -645,7 +660,7 @@ def __add_records_to_question_and_relevance(
     user_id: str,
     language: str,
     amount: int,
-) -> None:
+) -> bool:
     sample_facts = record_db_bo.get_sample_data_of(
         reference_project_id,
         "reference",
@@ -654,31 +669,44 @@ def __add_records_to_question_and_relevance(
     )
 
     if len(sample_facts) < amount:
-        raise ValueError("Not enough sample data")
+        send_log_message(
+            question_project_id,
+            "Not enough sample data - we need at least 32 references between 5 and 1024 characters",
+            True,
+        )
+        return False
 
     questions = __call_doc_2_query_free(language, sample_facts)
 
     if len(questions) != amount:
-        raise ValueError("Not enough query data")
+        send_log_message(
+            question_project_id,
+            "Not enough query data - this shouldn't happen - contact support",
+            True,
+        )
+        return False
 
     max_running_id_qu = record_db_bo.get_max_running_id(question_project_id) + 1
     max_running_id_re = record_db_bo.get_max_running_id(relevance_project_id) + 1
     final_json_to_add_questions = []
     final_json_to_add_relevance = []
     for idx, (reference, question) in enumerate(zip(sample_facts, questions)):
+        final_question = question
+        if "?" not in final_question:
+            final_question += "?"
         message_id = "mr-" + str(idx)
         final_json_to_add_questions.append(
             {
                 "running_id": max_running_id_qu + idx,
                 "message_id": message_id,
-                "question": question,
+                "question": final_question,
             }
         )
         max_running_id_re += 1
         final_json_to_add_relevance.append(
             {
                 "running_id": max_running_id_re + idx,
-                "question": question,
+                "question": final_question,
                 "message_id": message_id,
                 "reference": reference,
                 "__Fact is relevant": "Yes",
@@ -690,6 +718,7 @@ def __add_records_to_question_and_relevance(
     __post_to_refinery_project(
         relevance_project_id, user_id, final_json_to_add_relevance
     )
+    return True
 
 
 def __post_to_refinery_project(
