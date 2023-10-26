@@ -75,7 +75,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     ):
         send_log_message(
             question_project_id,
-            "Generating questions based on references - complete",
+            "Generating questions based on references - finished",
         )
     else:
         send_log_message(
