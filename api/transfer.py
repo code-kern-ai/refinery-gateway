@@ -200,6 +200,8 @@ class CognitionImport(HTTPEndpoint):
         )
         if task.upload_type != enums.UploadTypes.COGNITION.value:
             return PlainTextResponse("OK")
+        # since upload type is set to COGNITION for the first step of the upload (file upload / mapping prep)
+        # this / the continuation of the import should only be done once so we set it back to default to prevent this & differentiate between the steps
         task.upload_type = enums.UploadTypes.DEFAULT.value
         if task.state != enums.UploadStates.PREPARED.value:
             return PlainTextResponse("Bad upload task", status_code=400)
