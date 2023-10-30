@@ -257,10 +257,8 @@ def upgrade():
         sa.Column("strategy_step_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("name", sa.String(), nullable=True),
-        sa.Column("description", sa.String(), nullable=True),
-        sa.Column("source_code", sa.String(), nullable=True),
-        sa.Column("enabled", sa.Boolean(), nullable=True),
+        sa.Column("search_input_field", sa.String(), nullable=True),
+        sa.Column("meta_data", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["project_id"], ["cognition.project.id"], ondelete="CASCADE"
@@ -289,6 +287,37 @@ def upgrade():
         op.f("ix_retriever_strategy_step_id"),
         "retriever",
         ["strategy_step_id"],
+        unique=False,
+        schema="cognition",
+    )
+
+    op.create_table(
+        "retriever_part",
+        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("retriever_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("embedding_name", sa.String(), nullable=True),
+        sa.Column("number_records", sa.Integer(), nullable=True),
+        sa.Column("enabled", sa.Boolean(), nullable=True),
+        sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["retriever_id"], ["cognition.retriever.id"], ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_retriever_part_created_by"),
+        "retriever_part",
+        ["created_by"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_retriever_part_retriever_id"),
+        "retriever_part",
+        ["retriever_id"],
         unique=False,
         schema="cognition",
     )
