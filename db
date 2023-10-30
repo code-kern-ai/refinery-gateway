@@ -41,6 +41,7 @@ if [ "$1" == "commit" ]; then
     then echo "Please provide a commit message"; 
     else commit "$2";
     fi
+    exit 0
 fi
 
 if [ "$1" == "migrate" ]; then
