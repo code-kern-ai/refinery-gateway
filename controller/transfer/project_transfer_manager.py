@@ -4,7 +4,6 @@ import logging
 import time
 import re
 from typing import Dict, Any, List, Optional
-from zipfile import ZipFile
 
 from submodules.model import enums, UploadTask, Project
 from submodules.model.business_objects import (
@@ -29,7 +28,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import daemon, notification, file, notification, security
+from util import daemon, notification, file, security
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -150,20 +149,30 @@ def import_file(
     send_progress_update_throttle(project_id, task_id, 0)
     project_item = project.get(project_id)
     if not project_item.name:
-        project_item.name = data.get("project_details_data",).get(
+        project_item.name = data.get(
+            "project_details_data",
+        ).get(
             "name",
         )
-    project_item.description = data.get("project_details_data",).get(
+    project_item.description = data.get(
+        "project_details_data",
+    ).get(
         "description",
     )
-    project_item.tokenizer = data.get("project_details_data",).get(
+    project_item.tokenizer = data.get(
+        "project_details_data",
+    ).get(
         "tokenizer",
     )
-    spacy_language = data.get("project_details_data",).get(
+    spacy_language = data.get(
+        "project_details_data",
+    ).get(
         "tokenizer",
     )[:2]
     project_item.tokenizer_blank = spacy_language
-    project_item.status = data.get("project_details_data",).get(
+    project_item.status = data.get(
+        "project_details_data",
+    ).get(
         "status",
     )
     old_project_id = data.get(
@@ -903,22 +912,32 @@ def import_file(
 
     general.commit()
     daemon.run(
-        __post_processing_import_threaded, project_id, task_id, embedding_ids, data, import_user_id
+        __post_processing_import_threaded,
+        project_id,
+        task_id,
+        embedding_ids,
+        data,
+        import_user_id,
     )
     send_progress_update(project_id, task_id, 100)
     logger.info(f"Finished import of project {project_id}")
 
 
 def __post_processing_import_threaded(
-    project_id: str, task_id: str, embedding_ids: List[str], data: Dict[str, Any], user_id: str
+    project_id: str,
+    task_id: str,
+    embedding_ids: List[str],
+    data: Dict[str, Any],
+    user_id: str,
 ) -> None:
     time.sleep(5)
     ctx_token = general.get_ctx_token()
     c = 1
     while True:
-        c+=1
-        if c >12:
-            ctx_token = general.remove_and_refresh_session(ctx_token,True)
+        c += 1
+        if c > 12:
+            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            c = 1
         if task_queue.get_by_tokenization(project_id):
             logger.info(f"Waiting for tokenization of project {project_id}")
             time.sleep(5)
@@ -930,7 +949,7 @@ def __post_processing_import_threaded(
     if not data.get(
         "embedding_tensors_data",
     ):
-        embedding_manager.recreate_embeddings(project_id,user_id=user_id)
+        embedding_manager.recreate_embeddings(project_id, user_id=user_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(

@@ -16,7 +16,7 @@ def prepare_cognition_import(project_id: str, task: UploadTask) -> None:
     file_additional_info = __get_blank_file_additional_info()
     project_item = project.get(project_id)
     if not project_item:
-        file_additional_info["errors"].append("Can't find project".format(e))
+        file_additional_info["errors"].append("Can't find project")
     try:
         tmp_file_name, file_type = download_file(project_id, task)
         df = read_file_to_df(

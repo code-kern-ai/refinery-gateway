@@ -105,7 +105,7 @@ def remove_task_from_queue(project_id: str, task_id: str) -> None:
     # no need to dequeue from tasks since the initial check should handle it
 
 
-def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
+def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]) -> None:
     action_type = action.get("action_type")
     if action_type == enums.TaskQueueAction.CREATE_OUTLIER_SLICE.value:
         embedding_name = action.get("embedding_name")
@@ -119,6 +119,7 @@ def __execute_action(project_id: str, user_id: str, action: Dict[str, Any]):
             project_id, user_id, str(embedding_item.id)
         )
     elif action_type == enums.TaskQueueAction.START_GATES.value:
+        # id overwrite since a queue can hold different project ids (e.g. wizard)
         project_id = action.get("project_id")
         if not project_id:
             raise ValueError("Missing project id")

@@ -97,6 +97,7 @@ def __embed_one_by_one_helper(project_id: str, embeddings_ids: List[str]) -> Non
             c += 1
             if c > 12:
                 ctx_token = general.remove_and_refresh_session(ctx_token, True)
+                c = 1
             time.sleep(5)
     general.remove_and_refresh_session(ctx_token, False)
 

@@ -15,11 +15,11 @@ def start_gates_container(
 ) -> bool:
     heuristics, embeddings = [], []
     if select_available_heuristics:
-        heuristics, embeddings = __get_relevant_gate_ids(project_id)
+        heuristics, embeddings = __get_relevant_gates_ids(project_id)
     return gates_service.start_gates_project(project_id, heuristics, embeddings)
 
 
-def __get_relevant_gate_ids(project_id: str) -> Tuple[List[str], List[str]]:
+def __get_relevant_gates_ids(project_id: str) -> Tuple[List[str], List[str]]:
     embeddings = [
         str(e.id)
         for e in refinery_embedding.get_all_embeddings_by_project_id(project_id)
