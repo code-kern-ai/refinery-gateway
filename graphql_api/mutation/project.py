@@ -25,7 +25,7 @@ class CreateProject(graphene.Mutation):
         user = auth.get_user_by_info(info)
         organization = auth.get_organization_id_by_info(info)
         project = manager.create_project(
-            organization.id, name, description, str(user.id)
+            str(organization.id), name, description, str(user.id)
         )
         notification.send_organization_update(
             project.id, f"project_created:{str(project.id)}", True
