@@ -11,7 +11,6 @@ from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
-    attribute,
     labeling_task,
     organization,
     project,
@@ -20,23 +19,21 @@ from submodules.model.business_objects import (
     embedding,
     information_source,
     general,
-    organization,
 )
 from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
-from controller.misc import config_service
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
 from controller.tokenization.tokenization_service import request_save_tokenizer
-from controller.embedding.util import has_encoder_running
 from controller.payload.util import has_active_learner_running
 from controller.payload import manager as payload_manager
 from controller.transfer.record_transfer_manager import import_records_and_rlas
 from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
+from controller.gates import gates_service
 
 
 def get_project(project_id: str) -> Project:
@@ -71,6 +68,10 @@ def get_project_size(project_id: str) -> List[ProjectSize]:
     ]
 
 
+def get_max_running_id(project_id: str) -> int:
+    return project.get_max_running_id(project_id)
+
+
 def is_rats_tokenization_still_running(project_id: str) -> bool:
     return project.is_rats_tokenization_still_running(project_id)
 
@@ -78,6 +79,9 @@ def is_rats_tokenization_still_running(project_id: str) -> bool:
 def create_project(
     organization_id: str, name: str, description: str, user_id: str
 ) -> Project:
+    if not s3.bucket_exists(organization_id):
+        s3.create_bucket(organization_id)
+
     project_item = project.create(
         organization_id, name, description, user_id, with_commit=True
     )
@@ -98,9 +102,13 @@ def delete_project(project_id: str) -> None:
     org_id = organization.get_id_by_project_id(project_id)
     project.delete_by_id(project_id, with_commit=True)
 
-    daemon.run(__delete_project_data_from_minio, org_id, project_id)
-    if config_service.get_config_value("is_managed"):
-        daemon.run(__delete_project_data_from_inference_dir, project_id)
+    daemon.run(__background_cleanup, org_id, project_id)
+
+
+def __background_cleanup(org_id: str, project_id: str) -> None:
+    __delete_project_data_from_minio(org_id, project_id)
+    __delete_project_data_from_inference_dir(project_id)
+    gates_service.stop_gates_project(project_id, ignore_404=True)
 
 
 def __delete_project_data_from_minio(org_id, project_id: str) -> None:
@@ -436,6 +444,7 @@ def check_in_deletion_projects() -> None:
 def __check_in_deletion_projects() -> None:
     # wait for startup to finish
     time.sleep(2)
+    ctx_token = general.get_ctx_token()
     to_be_deleted = []
     orgs = organization.get_all()
     for org_item in orgs:
@@ -445,3 +454,4 @@ def __check_in_deletion_projects() -> None:
                 to_be_deleted.append(str(project_item.id))
     for project_id in to_be_deleted:
         delete_project(project_id)
+    general.remove_and_refresh_session(ctx_token)

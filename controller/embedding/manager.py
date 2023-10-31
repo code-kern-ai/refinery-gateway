@@ -1,5 +1,5 @@
 import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union, Dict
 from exceptions.exceptions import ApiTokenImportError
 
 from submodules.model import enums
@@ -7,8 +7,30 @@ from submodules.model.models import Embedding
 from util import daemon, notification
 from . import util
 from . import connector
+from .terms import TERMS_INFO
 from controller.model_provider import manager as model_manager
 from submodules.model.business_objects import attribute, embedding, agreement, general
+
+
+def get_terms_info(
+    platform: Optional[enums.EmbeddingPlatform] = None,
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    if platform:
+        return TERMS_INFO[platform.value]
+    return list(TERMS_INFO.values())
+
+
+def get_current_terms_text(
+    platform: str,
+) -> Optional[str]:
+    terms = TERMS_INFO[platform]
+    term_text = terms.get("terms")
+    if not term_text:
+        return None
+    link = terms.get("link")
+    if link:
+        term_text = term_text.replace("@@PLACEHOLDER@@", link)
+    return term_text
 
 
 def get_recommended_encoders(is_managed: bool) -> List[Any]:
@@ -66,11 +88,18 @@ def delete_embedding(project_id: str, embedding_id: str) -> None:
 
 
 def __embed_one_by_one_helper(project_id: str, embeddings_ids: List[str]) -> None:
+    ctx_token = general.get_ctx_token()
     for embedding_id in embeddings_ids:
         connector.request_embedding(project_id, embedding_id)
         time.sleep(5)
+        c = 1
         while util.has_encoder_running(project_id):
+            c += 1
+            if c > 12:
+                ctx_token = general.remove_and_refresh_session(ctx_token, True)
+                c = 1
             time.sleep(5)
+    general.remove_and_refresh_session(ctx_token, False)
 
 
 def get_embedding_name(

@@ -10,7 +10,9 @@ from api.transfer import (
     KnowledgeBaseExport,
     Notify,
     PrepareFileImport,
-    UploadTask,
+    UploadTaskInfo,
+    CognitionImport,
+    CognitionPrepareProject,
 )
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -19,7 +21,7 @@ from starlette.middleware import Middleware
 from starlette.routing import Route
 
 from graphql_api import schema
-from controller.task_queue.task_queue import init_task_queue
+from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from util import security, clean_up
 
@@ -46,7 +48,14 @@ routes = [
     Route("/project/{project_id:str}/export", FileExport),
     Route("/project/{project_id:str}/import_file", PrepareFileImport),
     Route("/project/{project_id:str}/import_json", JSONImport),
-    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTask),
+    Route(
+        "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
+    ),
+    Route(
+        "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
+        CognitionPrepareProject,
+    ),
+    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
@@ -56,7 +65,7 @@ middleware = [Middleware(DatabaseSessionHandler)]
 
 app = Starlette(routes=routes, middleware=middleware)
 
-init_task_queue()
+init_task_queues()
 check_in_deletion_projects()
 security.check_secret_key()
 clean_up.clean_up_database()

@@ -1,12 +1,10 @@
 import graphene
 from controller.auth import manager as auth
 from controller.auth.manager import get_user_by_info
-from controller.payload import manager
-from graphql_api.types import InformationSourcePayload
 
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType
-from submodules.model.business_objects import information_source, payload
+from submodules.model.business_objects import information_source
 from submodules.model import enums
 
 
@@ -33,12 +31,13 @@ class CreatePayload(graphene.Mutation):
             information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
         )
 
-        queue_id = task_queue_manager.add_task(
+        queue_id, _ = task_queue_manager.add_task(
             project_id,
             TaskType.INFORMATION_SOURCE,
             user.id,
             {
                 "information_source_id": information_source_id,
+                "source_type": information_source_item.type,
             },
             priority=priority,
         )

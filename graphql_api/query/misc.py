@@ -9,7 +9,6 @@ from controller.misc import config_service, manager
 
 
 class MiscQuery(graphene.ObjectType):
-
     tooltip = graphene.Field(
         ToolTip,
         key=graphene.String(required=True),
@@ -60,7 +59,7 @@ class MiscQuery(graphene.ObjectType):
         return manager.has_updates()
 
     def resolve_helper(self, info) -> bool:
-        import controller.transfer.export_parser as export_parser
+        import controller.transfer.cognition.import_wizard as w
 
-        export_parser.query_builder_dummy()
+        w.dummy()
         return True

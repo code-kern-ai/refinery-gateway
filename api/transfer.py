@@ -3,26 +3,29 @@ import traceback
 import time
 from typing import Optional
 
-from controller import organization
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
 from controller.transfer.labelstudio import import_preperator
+from controller.transfer.cognition import (
+    import_preparator as cognition_preparator,
+    import_wizard as cognition_import_wizard,
+)
 from exceptions.exceptions import BadPasswordError
 from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
-    embedding,
     general,
     organization,
     tokenization,
 )
 
+from submodules.model.cognition_objects import project as cognition_project
+
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
-from controller.transfer import manager as transfer_manager
 from controller.transfer import association_transfer_manager
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
@@ -166,15 +169,15 @@ class JSONImport(HTTPEndpoint):
 
         project = project_manager.get_project(project_id)
         num_project_records = len(project.records)
-        for attribute in project.attributes:
-            if attribute.is_primary_key:
+        for att in project.attributes:
+            if att.is_primary_key:
                 for idx, record in enumerate(records):
-                    if attribute.name not in record:
-                        if attribute.name == "running_id":
-                            records[idx][attribute.name] = num_project_records + idx + 1
+                    if att.name not in record:
+                        if att.name == "running_id":
+                            records[idx][att.name] = num_project_records + idx + 1
                         else:
                             raise exceptions.InvalidInputException(
-                                f"Non-running-id, primary key {attribute.name} missing in record"
+                                f"Non-running-id, primary key {att.name} missing in record"
                             )
 
         transfer_manager.import_records_from_json(
@@ -185,6 +188,49 @@ class JSONImport(HTTPEndpoint):
             request_body["is_last"],
         )
         return JSONResponse({"success": True})
+
+
+class CognitionImport(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        project_id = request.path_params["project_id"]
+        task_id = request.path_params["task_id"]
+        task = upload_task_manager.get_upload_task(
+            task_id=task_id,
+            project_id=project_id,
+        )
+        if task.upload_type != enums.UploadTypes.COGNITION.value:
+            return PlainTextResponse("OK")
+        # since upload type is set to COGNITION for the first step of the upload (file upload / mapping prep)
+        # this / the continuation of the import should only be done once so we set it back to default to prevent this & differentiate between the steps
+        task.upload_type = enums.UploadTypes.DEFAULT.value
+        if task.state != enums.UploadStates.PREPARED.value:
+            return PlainTextResponse("Bad upload task", status_code=400)
+        try:
+            init_file_import(task, project_id, False)
+        except Exception:
+            file_import_error_handling(task, project_id, False)
+        notification.send_organization_update(
+            project_id, f"project_update:{project_id}", True
+        )
+        return PlainTextResponse("OK")
+
+
+class CognitionPrepareProject(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        cognition_project_id = request.path_params["cognition_project_id"]
+
+        cognition_project_item = cognition_project.get(cognition_project_id)
+        if not cognition_project_item:
+            return PlainTextResponse("Bad project id", status_code=400)
+        task_id = request.path_params["task_id"]
+
+        daemon.run(
+            cognition_import_wizard.finalize_setup,
+            cognition_project_id=cognition_project_id,
+            task_id=task_id,
+        )
+
+        return PlainTextResponse("OK")
 
 
 class AssociationsImport(HTTPEndpoint):
@@ -212,7 +258,7 @@ class AssociationsImport(HTTPEndpoint):
         return JSONResponse(new_associations_added)
 
 
-class UploadTask(HTTPEndpoint):
+class UploadTaskInfo(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
         auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
@@ -241,7 +287,10 @@ class UploadTask(HTTPEndpoint):
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     task_state = task.state
     if "records" in task.file_type:
-        if task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
+        if task.upload_type == enums.UploadTypes.COGNITION.value:
+            cognition_preparator.prepare_cognition_import(project_id, task)
+        elif task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
+            # deprecated
             import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
@@ -327,6 +376,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
         ],
     )
     if len(attributes_usable) == 0:
+        general.remove_and_refresh_session(ctx_token, False)
         return
 
     # stored as list so connection results do not affect

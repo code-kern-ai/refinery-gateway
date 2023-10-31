@@ -8,7 +8,6 @@ from submodules.model import enums, events
 from controller.project import manager
 from util import doc_ock, notification
 from submodules.model.business_objects import notification as notification_model
-from submodules.model import enums
 
 
 class CreateProject(graphene.Mutation):

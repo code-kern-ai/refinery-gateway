@@ -7,7 +7,6 @@ import graphene
 
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType
-from submodules.model.business_objects import attribute as attribute_do
 
 
 class CreateEmbedding(graphene.Mutation):

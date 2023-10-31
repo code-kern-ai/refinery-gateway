@@ -6,6 +6,7 @@ from submodules.model.models import TaskQueue as TaskQueueDBObj
 from . import manager
 from submodules.model.business_objects import general, task_queue as task_queue_db_bo
 import traceback
+from submodules.model.enums import TaskType
 
 
 # custom class wrapping a list in order to make it thread safe
@@ -73,7 +74,8 @@ class CustomTaskQueue:
         start_function: Callable[[Dict[str, Any]], bool],
         check_finished_function: Callable[[Dict[str, Any]], bool],
         check_every: int = 1,
-    ) -> None:
+    ) -> int:
+        # return queue position or 0 if directly started
         with self._lock:
             active = self._active_priority if task.priority else self._active_normal
             max = self._max_priority if task.priority else self._max_normal
@@ -93,8 +95,9 @@ class CustomTaskQueue:
                         else self._fifo_queue_normal
                     )
                     append_to.append(task_info)
-                    return
+                    return append_to.length()
             self.__start_task(task_info, add_to_prio)
+            return 0
 
     def __start_task(self, task_info: TaskInfo, to_prio: bool) -> bool:
         if not task_info:
@@ -177,16 +180,22 @@ class CustomTaskQueue:
         return None, False
 
 
+# global task queue
 task_queue = None
 
+# thread wrapper for tasks item of type TASK_QUEUE so the queue doesn't block an actual calculation slot
+task_queue_queue = None
 
-def init_task_queue() -> CustomTaskQueue:
-    global task_queue
+
+def init_task_queues() -> CustomTaskQueue:
+    global task_queue, task_queue_queue
     # init task queue class
     max_normal = int(os.getenv("TASK_QUEUE_SLOTS", "2"))
     max_priority = int(os.getenv("PRIORITY_TASK_QUEUE_SLOTS", "1"))
     task_queue = CustomTaskQueue(max_normal, max_priority)
-
+    # double amount as normal so multiple queues can be handled simultaneously if the server can handle it
+    # tested locally with two wizards which resulted in reasonable performance (ping pong between the queues)
+    task_queue_queue = CustomTaskQueue(max_normal * 2, 0)
     # reset old tasks that weren't finished properly
     task_queue_db_bo.set_all_tasks_inactive(True)
 
@@ -196,7 +205,10 @@ def init_task_queue() -> CustomTaskQueue:
         start_func, check_func, check_every = manager.get_task_function_by_type(
             task.task_type
         )
-        task_queue.add_task(task, start_func, check_func, check_every)
+        if task.task_type == TaskType.TASK_QUEUE.value:
+            task_queue_queue.add_task(task, start_func, check_func, check_every)
+        else:
+            task_queue.add_task(task, start_func, check_func, check_every)
     return task_queue
 
 
@@ -206,3 +218,11 @@ def get_task_queue() -> CustomTaskQueue:
         raise Exception("Task queue not initialized")
 
     return task_queue
+
+
+def get_task_queue_queue() -> CustomTaskQueue:
+    global task_queue_queue
+    if task_queue_queue is None:
+        raise Exception("Task queue not initialized")
+
+    return task_queue_queue

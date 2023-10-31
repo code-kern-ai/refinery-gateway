@@ -7,9 +7,7 @@ from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 from submodules.model import exceptions
 
-from controller.tokenization import tokenization_service
 from submodules.model import events
-from submodules.s3.controller import bucket_exists, create_bucket
 from util import doc_ock, notification, adapter
 
 from controller.task_queue import manager as task_queue_manager
@@ -31,9 +29,11 @@ class ProjectDetails(HTTPEndpoint):
         except exceptions.AccessDeniedException:
             return JSONResponse({"error": "Access denied"}, status_code=403)
         project = project_manager.get_project(project_id)
+        max_running_id = project_manager.get_max_running_id(project_id)
         attributes = attribute_manager.get_all_attributes(project_id, ["ALL"])
         result = {
             "name": project.name,
+            "max_running_id": max_running_id,
             "description": project.description,
             "tokenizer": project.tokenizer,
             "attributes": [
@@ -62,9 +62,6 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
 
         user = auth_manager.get_user_by_id(user_id)
         organization = auth_manager.get_organization_by_user_id(user.id)
-
-        if not bucket_exists(str(organization.id)):
-            create_bucket(str(organization.id))
 
         project = project_manager.create_project(
             organization.id, name, description, user.id

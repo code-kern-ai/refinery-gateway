@@ -115,6 +115,7 @@ def import_records_from_json(
     record_data: Dict[str, Any],
     request_uuid: str,
     is_last: bool,
+    key: Optional[str] = None,
 ) -> None:
     request_df = pd.DataFrame(record_data)
     file_path = "tmp_" + request_uuid + ".csv_SCALE"
@@ -132,6 +133,7 @@ def import_records_from_json(
             "records",
             "",
             upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
+            key=key,
         )
         upload_path = f"{project_id}/{str(upload_task.id)}/{file_path}"
         s3.upload_object(organization_id, upload_path, file_path)
@@ -303,6 +305,7 @@ def generate_labelstudio_template(
 
 
 def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
+    ctx_token = general.get_ctx_token()
     try:
         if attribute.get_all(project_id):
             project_update_manager.manage_data_import(project_id, upload_task_id)
@@ -342,3 +345,5 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
         notification.send_organization_update(
             project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
         )
+    finally:
+        general.remove_and_refresh_session(ctx_token)

@@ -90,7 +90,7 @@ def create_payload(
         with_commit=True,
     )
     notification.send_organization_update(
-        project_id, f"payload_created:{information_source_item.id}:{payload.id}"
+        project_id, f"payload_created:{information_source_item.id}:{str(payload.id)}"
     )
 
     def prepare_and_run_execution_pipeline(
@@ -112,7 +112,7 @@ def create_payload(
                 add_file_name,
                 input_data,
             )
-        except:
+        except Exception:
             general.rollback()
             print(traceback.format_exc(), flush=True)
             payload_item = get(project_id, payload_id)
@@ -243,9 +243,10 @@ def create_payload(
                 add_file_name,
                 input_data,
             )
+            # recollect to prevent detached instance error
+            payload_item = information_source.get_payload(project_id, payload_id)
             has_error = update_records(payload_item, project_id)
             if has_error:
-                payload_item = information_source.get_payload(project_id, payload_id)
                 tmp_log_store = payload_item.logs
                 berlin_now = datetime.datetime.now(__tz)
                 tmp_log_store.append(
@@ -273,12 +274,11 @@ def create_payload(
             )
             notification.send_organization_update(
                 project_id,
-                f"payload_finished:{information_source_item.id}:{payload.id}",
+                f"payload_finished:{information_source_item.id}:{payload_id}",
             )
-        except Exception as e:
+        except Exception:
             general.rollback()
-            if not type(e) == ValueError:
-                print(traceback.format_exc())
+            print(traceback.format_exc(), flush=True)
             payload_item.state = enums.PayloadState.FAILED.value
             general.commit()
             create_notification(
@@ -300,14 +300,14 @@ def create_payload(
         if payload_item.state == enums.PayloadState.FINISHED.value:
             try:
                 weak_supervision.calculate_stats_after_source_run(
-                    project_id, payload.source_id, user_id
+                    project_id, payload_item.source_id, user_id
                 )
                 notification.send_organization_update(
                     project_id,
-                    f"payload_update_statistics:{information_source_item.id}:{payload.id}",
+                    f"payload_update_statistics:{information_source_item.id}:{payload_id}",
                 )
                 general.commit()
-            except:
+            except Exception:
                 print(traceback.format_exc())
 
         project_item = project.get(project_id)
@@ -325,14 +325,14 @@ def create_payload(
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
-            payload.id,
+            str(payload.id),
             project_id,
             information_source_item,
             in_thread=True,
         )
     else:
         prepare_and_run_execution_pipeline(
-            payload.id,
+            str(payload.id),
             project_id,
             information_source_item,
         )
@@ -404,7 +404,7 @@ def run_container(
         read_container_logs_thread,
         project_id,
         container_name,
-        str(information_source_payload.id),
+        payload_id,
         container,
     )
     container.start()
@@ -452,7 +452,7 @@ def extend_logs(
     if not information_source_payload.logs:
         information_source_payload.logs = logs
     else:
-        all_logs = [l for l in information_source_payload.logs]
+        all_logs = [log for log in information_source_payload.logs]
         all_logs += logs
         information_source_payload.logs = all_logs
     general.commit()
@@ -483,7 +483,7 @@ def read_container_logs_thread(
             information_source_payload = information_source.get_payload(
                 project_id, payload_id
             )
-        if not name in __containers_running:
+        if name not in __containers_running:
             break
         try:
             log_lines = docker_container.logs(
@@ -492,11 +492,13 @@ def read_container_logs_thread(
                 timestamps=True,
                 since=last_timestamp,
             )
-        except:
+        except Exception:
             # failsafe for containers that shut down during the read
             break
         current_logs = [
-            l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
+            log
+            for log in str(log_lines.decode("utf-8")).split("\n")
+            if len(log.strip()) > 0
         ]
 
         if len(current_logs) == 0:
@@ -506,8 +508,8 @@ def read_container_logs_thread(
         last_timestamp = parser.parse(last_timestamp_str).replace(
             tzinfo=None
         ) + datetime.timedelta(seconds=1)
-        non_progress_logs = [l for l in current_logs if "progress" not in l]
-        progress_logs = [l for l in current_logs if "progress" in l]
+        non_progress_logs = [log for log in current_logs if "progress" not in log]
+        progress_logs = [log for log in current_logs if "progress" in log]
         if len(non_progress_logs) > 0:
             extend_logs(project_id, information_source_payload, non_progress_logs)
         if len(progress_logs) == 0:

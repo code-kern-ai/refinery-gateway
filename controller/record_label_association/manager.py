@@ -156,11 +156,12 @@ def create_manual_classification_label(
 def __check_label_duplication_classification_and_react(
     project_id: str, record_id: str, user_id: str, label_ids: List[str]
 ):
+    ctx_token = general.get_ctx_token()
     if check_label_duplication_classification(
         project_id, record_id, user_id, label_ids
     ):
-
         notification.send_organization_update(project_id, f"rla_deleted:{record_id}")
+    general.remove_and_refresh_session(ctx_token)
 
 
 def __update_label_payloads_for_neural_search(project_id: str, record_id: str):

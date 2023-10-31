@@ -202,14 +202,15 @@ def start_zero_shot_for_project_thread(
 def __start_zero_shot_for_project(
     project_id: str, information_source_id: str, user_id: str, payload_id: str
 ) -> None:
-
     zs_service.start_zero_shot_for_project(project_id, payload_id)
+    ctx_token = general.get_ctx_token()
 
     # refetch after service call
     new_payload = payload.get(project_id, payload_id)
     if new_payload.state == enums.PayloadState.FINISHED.value:
         new_payload.finished_at = datetime.datetime.now()
         general.commit()
+    general.remove_and_refresh_session(ctx_token)
     try:
         weak_supervision.calculate_stats_after_source_run(
             project_id, information_source_id, user_id
