@@ -46,7 +46,7 @@ def upgrade():
     sa.Column('value', sa.String(), nullable=True),
     sa.Column('is_secret', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['project_id'], ['project.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
     )
