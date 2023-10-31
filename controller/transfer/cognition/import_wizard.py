@@ -751,34 +751,4 @@ def __call_doc_2_query_free(language: str, texts_to_query: List[str]) -> List[st
 
 
 def dummy():
-    # print(
-    #     get_bricks_code_from_endpoint(
-    #         "chunked_sentence_complexity", {"ATTRIBUTE": "reference"}
-    #     ),
-    #     flush=True,
-    # )
-    # print(
-    #     get_bricks_code_from_group(
-    #         group_key="personal_identifiers",
-    #         bricks_type="extractor",
-    #         language_key=None,
-    #         target_data={"target_type": "lf"},
-    #     )["person_extraction"]["code"],
-    #     flush=True,
-    # )
-    # # from .wizard_function_templates import REFERENCE_CHUNKS_SPLIT
-
-    # # print(
-    # #     REFERENCE_CHUNKS_SPLIT.replace("@@target_attribute@@", "reference"), flush=True
-    # # )
-
-    # print(record.get_sample_data_of("adaf5adc-1103-4be4-b871-776ca62b2be2","reference",32,"LENGTH(data->>'reference') BETWEEN 5 AND 5000"),flush=True)
-    print(
-        record_db_bo.get_sample_data_of(
-            "c6d41c13-92e3-4bb7-8e87-30c8945a5b26",
-            "running_id",
-            32,
-            "LENGTH(data->>'question') BETWEEN 5 AND 5000",
-        ),
-        flush=True,
-    )
+    pass
