@@ -36,13 +36,14 @@ TASK_INFO = {
                     "group": "reference_complexity",
                 },
             },
-            {
-                "name": "Reference Type",
-                "labels": ["Unknown"],
-                # "bricks": {
-                #     "group": "reference_type",
-                # },
-            },
+            # currently removed since not part of initial offering
+            # {
+            #     "name": "Reference Type",
+            #     "labels": ["Unknown"],
+            #     # "bricks": {
+            #     #     "group": "reference_type",
+            #     # },
+            # },
             {
                 "name": "Personal Identifiable Information (PII)",
                 "labels": [

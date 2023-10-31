@@ -161,7 +161,9 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
 
     __add_start_gates_for(reference_project_id, task_list)
     __add_start_gates_for(question_project_id, task_list)
-    __add_start_gates_for(relevance_project_id, task_list)
+
+    # currently disabled since not part of initial offering
+    # __add_start_gates_for(relevance_project_id, task_list)
 
     task_list.append(
         {
