@@ -79,6 +79,9 @@ def is_rats_tokenization_still_running(project_id: str) -> bool:
 def create_project(
     organization_id: str, name: str, description: str, user_id: str
 ) -> Project:
+    if not s3.bucket_exists(organization_id):
+        s3.create_bucket(organization_id)
+
     project_item = project.create(
         organization_id, name, description, user_id, with_commit=True
     )
