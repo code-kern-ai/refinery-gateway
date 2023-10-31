@@ -64,7 +64,7 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
         organization = auth_manager.get_organization_by_user_id(user.id)
 
         project = project_manager.create_project(
-            organization.id, name, description, user.id
+            str(organization.id), name, description, user.id
         )
         project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
         data = adapter.get_records_from_store(store_id)
