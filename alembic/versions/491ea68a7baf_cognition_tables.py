@@ -35,23 +35,7 @@ def upgrade():
     schema='cognition'
     )
     op.create_index(op.f('ix_cognition_markdown_file_created_by'), 'markdown_file', ['created_by'], unique=False, schema='cognition')
-    op.create_index(op.f('ix_cognition_markdown_file_organization_id'), 'markdown_file', ['organization_id'], unique=False, schema='cognition')
-    op.create_table('environment_variable',
-    sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('description', sa.String(), nullable=True),
-    sa.Column('value', sa.String(), nullable=True),
-    sa.Column('is_secret', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    schema='cognition'
-    )
-    op.create_index(op.f('ix_cognition_environment_variable_created_by'), 'environment_variable', ['created_by'], unique=False, schema='cognition')
-    op.create_index(op.f('ix_cognition_environment_variable_project_id'), 'environment_variable', ['project_id'], unique=False, schema='cognition')
+    op.create_index(op.f('ix_cognition_markdown_file_organization_id'), 'markdown_file', ['organization_id'], unique=False, schema='cognition')    
     op.create_table('project',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('organization_id', postgresql.UUID(as_uuid=True), nullable=True),
@@ -74,6 +58,22 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
     )
+    op.create_table('environment_variable',
+    sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('description', sa.String(), nullable=True),
+    sa.Column('value', sa.String(), nullable=True),
+    sa.Column('is_secret', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    schema='cognition'
+    )
+    op.create_index(op.f('ix_cognition_environment_variable_created_by'), 'environment_variable', ['created_by'], unique=False, schema='cognition')
+    op.create_index(op.f('ix_cognition_environment_variable_project_id'), 'environment_variable', ['project_id'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_project_created_by'), 'project', ['created_by'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_project_organization_id'), 'project', ['organization_id'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_project_refinery_question_project_id'), 'project', ['refinery_question_project_id'], unique=False, schema='cognition')
