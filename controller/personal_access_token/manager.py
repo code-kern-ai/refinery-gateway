@@ -43,7 +43,7 @@ def create_personal_access_token(
     token, token_hex_dig = get_token_and_hash()
     personal_access_token.create(
         project_id=project_id,
-        user_id=user_id,
+        created_by=user_id,
         name=name,
         scope=scope,
         expires_at=expires_at,
