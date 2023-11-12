@@ -26,6 +26,7 @@ def upgrade():
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at",sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
+        sa.Column("tokenizer", sa.String(), nullable=True),
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("category_origin", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(
@@ -83,7 +84,7 @@ def downgrade():
 
     op.drop_constraint(None, "markdown_file", type_="foreignkey", schema="cognition")
     op.drop_column("markdown_file", "dataset_id", schema="cognition")
-    
+
     op.drop_index(
         op.f("ix_cognition_markdown_dataset_created_by"),
         table_name="markdown_dataset",
