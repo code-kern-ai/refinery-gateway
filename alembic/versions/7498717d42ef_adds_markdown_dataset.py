@@ -23,6 +23,7 @@ def upgrade():
         "markdown_dataset",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("refinery_project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at",sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
@@ -34,17 +35,6 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="cognition",
-    )
-    
-    op.create_foreign_key(
-        None,
-        "markdown_file", 
-        "markdown_dataset",
-        ["dataset_id"],
-        ["id"], 
-        ondelete="CASCADE", 
-        source_schema="cognition",
-        referent_schema="cognition"
     )
     
     op.create_index(
@@ -70,6 +60,15 @@ def upgrade():
         unique=False,
         schema="cognition",
     )
+
+    op.create_index(
+        op.f("ix_cognition_markdown_dataset_refinery_project_id"),
+        "markdown_dataset",
+        ["refinery_project_id"],
+        unique=False,
+        schema="cognition",
+    )
+
     # ### end Alembic commands ###
 
 
@@ -82,7 +81,6 @@ def downgrade():
         schema="cognition",
     )
 
-    op.drop_constraint(None, "markdown_file", type_="foreignkey", schema="cognition")
     op.drop_column("markdown_file", "dataset_id", schema="cognition")
 
     op.drop_index(
@@ -96,6 +94,13 @@ def downgrade():
         table_name="markdown_dataset",
         schema="cognition",
     )
+
+    op.drop_index(
+        op.f("ix_cognition_markdown_dataset_refinery_project_id"),
+        table_name="markdown_dataset",
+        schema="cognition",
+    )
+    
     op.drop_table("markdown_dataset", schema="cognition")
 
     # ### end Alembic commands ###

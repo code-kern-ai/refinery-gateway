@@ -231,6 +231,24 @@ class CognitionPrepareProject(HTTPEndpoint):
         )
 
         return PlainTextResponse("OK")
+    
+
+class CognitionParseMarkdownFile(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        # cognition_project_id = request.path_params["cognition_project_id"]
+
+        # cognition_project_item = cognition_project.get(cognition_project_id)
+        # if not cognition_project_item:
+        #     return PlainTextResponse("Bad project id", status_code=400)
+        # task_id = request.path_params["task_id"]
+
+        # daemon.run(
+        #     cognition_import_wizard.finalize_setup,
+        #     cognition_project_id=cognition_project_id,
+        #     task_id=task_id,
+        # )
+
+        return PlainTextResponse("OK")
 
 
 class AssociationsImport(HTTPEndpoint):
