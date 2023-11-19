@@ -19,6 +19,7 @@ from submodules.model.business_objects import (
     general,
     organization,
     tokenization,
+    project as refinery_project,
 )
 
 from submodules.model.cognition_objects import project as cognition_project
@@ -38,8 +39,8 @@ from submodules.model.models import UploadTask
 from util import daemon, notification
 
 from controller.task_queue import manager as task_queue_manager
-from submodules.model.enums import TaskType, RecordTokenizationScope
-
+from submodules.model.enums import TaskType, RecordTokenizationScope, TaskQueueAction
+import requests
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -234,19 +235,24 @@ class CognitionPrepareProject(HTTPEndpoint):
     
 
 class CognitionParseMarkdownFile(HTTPEndpoint):
-    def put(self, request) -> PlainTextResponse:
-        # cognition_project_id = request.path_params["cognition_project_id"]
+    def post(self, request) -> PlainTextResponse:
+        refinery_project_id = request.path_params["project_id"]
+        refinery_project_item = refinery_project.get(refinery_project_id)
+        if not refinery_project_item:
+            return PlainTextResponse("Bad project id", status_code=400)
+        
+        dataset_id = request.path_params["dataset_id"]
+        file_id = request.path_params["file_id"]
 
-        # cognition_project_item = cognition_project.get(cognition_project_id)
-        # if not cognition_project_item:
-        #     return PlainTextResponse("Bad project id", status_code=400)
-        # task_id = request.path_params["task_id"]
-
-        # daemon.run(
-        #     cognition_import_wizard.finalize_setup,
-        #     cognition_project_id=cognition_project_id,
-        #     task_id=task_id,
-        # )
+        task_queue_manager.add_task(
+            refinery_project_id,
+            TaskType.PARSE_MARKDOWN_FILE,
+            refinery_project_item.created_by,
+            {
+                "dataset_id": dataset_id,
+                "file_id": file_id,
+            },
+        )
 
         return PlainTextResponse("OK")
 
