@@ -693,6 +693,13 @@ def __add_records_to_question_and_relevance(
                 "running_id": max_running_id_qu + idx,
                 "message_id": message_id,
                 "question": final_question,
+                "question_prev_3": None,
+                "answer_prev_3": None,
+                "question_prev_2": None,
+                "answer_prev_2": None,
+                "question_prev_1": None,
+                "answer_prev_1": None,
+                "conversation_id": None,
             }
         )
         max_running_id_re += 1
