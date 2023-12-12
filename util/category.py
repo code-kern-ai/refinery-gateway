@@ -24,6 +24,8 @@ def infer_category_enum(df: pd.DataFrame, df_col: str) -> str:
     elif type_name == "bool":
         return enums.DataTypes.BOOLEAN.value
     elif type_name == "object":
+        # if the number of unique values is less than 20% of the number of rows
+        # & no value is longer than 50 characters then we assume category
         if (
             df[df_col].nunique() <= df[df_col].count() * 0.2
             and df[df_col].str.len().max() < 50
