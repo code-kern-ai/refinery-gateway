@@ -1,8 +1,8 @@
 """extends cognition markdown tables
 
-Revision ID: 40553c1abd45
+Revision ID: 2334730f58f6
 Revises: 3d0e01981f06
-Create Date: 2023-12-19 10:37:16.582123
+Create Date: 2023-12-19 13:23:12.254756
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "40553c1abd45"
+revision = "2334730f58f6"
 down_revision = "3d0e01981f06"
 branch_labels = None
 depends_on = None
@@ -22,6 +22,7 @@ def upgrade():
         "markdown_dataset",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("refinery_project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
@@ -31,6 +32,9 @@ def upgrade():
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["refinery_project_id"], ["project.id"], ondelete="SET NULL"
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="cognition",
@@ -49,12 +53,20 @@ def upgrade():
         unique=False,
         schema="cognition",
     )
+    op.create_index(
+        op.f("ix_cognition_markdown_dataset_refinery_project_id"),
+        "markdown_dataset",
+        ["refinery_project_id"],
+        unique=False,
+        schema="cognition",
+    )
     op.create_table(
         "markdown_llm_logs",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("markdown_file_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("finished_at", sa.DateTime(), nullable=True),
+        sa.Column("model_used", sa.String(), nullable=True),
         sa.Column("input", sa.String(), nullable=True),
         sa.Column("output", sa.String(), nullable=True),
         sa.Column("error", sa.String(), nullable=True),
@@ -99,6 +111,11 @@ def upgrade():
     )
     op.add_column(
         "markdown_file",
+        sa.Column("started_at", sa.DateTime(), nullable=True),
+        schema="cognition",
+    )
+    op.add_column(
+        "markdown_file",
         sa.Column("finished_at", sa.DateTime(), nullable=True),
         schema="cognition",
     )
@@ -137,6 +154,7 @@ def downgrade():
     )
     op.drop_column("markdown_file", "state", schema="cognition")
     op.drop_column("markdown_file", "finished_at", schema="cognition")
+    op.drop_column("markdown_file", "started_at", schema="cognition")
     op.drop_column("markdown_file", "dataset_id", schema="cognition")
     op.drop_constraint(
         None, "environment_variable", schema="cognition", type_="foreignkey"
@@ -153,6 +171,11 @@ def downgrade():
         schema="cognition",
     )
     op.drop_table("markdown_llm_logs", schema="cognition")
+    op.drop_index(
+        op.f("ix_cognition_markdown_dataset_refinery_project_id"),
+        table_name="markdown_dataset",
+        schema="cognition",
+    )
     op.drop_index(
         op.f("ix_cognition_markdown_dataset_organization_id"),
         table_name="markdown_dataset",
