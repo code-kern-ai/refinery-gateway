@@ -19,6 +19,7 @@ from submodules.model.business_objects import (
     general,
     organization,
     tokenization,
+    project as refinery_project,
 )
 
 from submodules.model.cognition_objects import project as cognition_project
@@ -228,6 +229,30 @@ class CognitionPrepareProject(HTTPEndpoint):
             cognition_import_wizard.finalize_setup,
             cognition_project_id=cognition_project_id,
             task_id=task_id,
+        )
+
+        return PlainTextResponse("OK")
+
+
+class CognitionParseMarkdownFile(HTTPEndpoint):
+    def post(self, request) -> PlainTextResponse:
+        refinery_project_id = request.path_params["project_id"]
+        refinery_project_item = refinery_project.get(refinery_project_id)
+        if not refinery_project_item:
+            return PlainTextResponse("Bad project id", status_code=400)
+
+        dataset_id = request.path_params["dataset_id"]
+        file_id = request.path_params["file_id"]
+
+        task_queue_manager.add_task(
+            refinery_project_id,
+            TaskType.PARSE_MARKDOWN_FILE,
+            refinery_project_item.created_by,
+            {
+                "org_id": str(refinery_project_item.organization_id),
+                "dataset_id": dataset_id,
+                "file_id": file_id,
+            },
         )
 
         return PlainTextResponse("OK")
