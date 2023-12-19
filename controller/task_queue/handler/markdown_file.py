@@ -40,7 +40,6 @@ def __check_finished(task: Dict[str, Any]) -> bool:
     action = task["task_info"]
     org_id = action["org_id"]
     file_id = action["file_id"]
-    print(org_id, file_id, flush=True)
     markdown_file_entity = markdown_file_db_bo.get(org_id=org_id, md_file_id=file_id)
 
     if (
