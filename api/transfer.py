@@ -244,7 +244,10 @@ class CognitionParseMarkdownFile(HTTPEndpoint):
         dataset_id = request.path_params["dataset_id"]
         file_id = request.path_params["file_id"]
 
-        task_queue_manager.add_task(
+        # via thread to ensure the endpoint returns immediately
+
+        daemon.run(
+            task_queue_manager.add_task,
             refinery_project_id,
             TaskType.PARSE_MARKDOWN_FILE,
             refinery_project_item.created_by,

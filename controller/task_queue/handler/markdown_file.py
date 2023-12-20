@@ -48,4 +48,6 @@ def __check_finished(task: Dict[str, Any]) -> bool:
     org_id = action["org_id"]
     file_id = action["file_id"]
     markdown_file_entity = markdown_file_db_bo.get(org_id=org_id, md_file_id=file_id)
+    if markdown_file_entity is None:
+        return True
     return markdown_file_entity.state in TASK_DONE_STATES
