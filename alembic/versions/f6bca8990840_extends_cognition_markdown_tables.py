@@ -1,8 +1,8 @@
 """extends cognition markdown tables
 
-Revision ID: 2334730f58f6
+Revision ID: f6bca8990840
 Revises: 3d0e01981f06
-Create Date: 2023-12-19 13:23:12.254756
+Create Date: 2023-12-20 10:54:14.354971
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "2334730f58f6"
+revision = "f6bca8990840"
 down_revision = "3d0e01981f06"
 branch_labels = None
 depends_on = None
@@ -23,6 +23,9 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("refinery_project_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column(
+            "environment_variable_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
@@ -30,6 +33,11 @@ def upgrade():
         sa.Column("tokenizer", sa.String(), nullable=True),
         sa.Column("category_origin", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["environment_variable_id"],
+            ["cognition.environment_variable.id"],
+            ondelete="SET NULL",
+        ),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
         ),
@@ -43,6 +51,13 @@ def upgrade():
         op.f("ix_cognition_markdown_dataset_created_by"),
         "markdown_dataset",
         ["created_by"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_cognition_markdown_dataset_environment_variable_id"),
+        "markdown_dataset",
+        ["environment_variable_id"],
         unique=False,
         schema="cognition",
     )
@@ -178,6 +193,11 @@ def downgrade():
     )
     op.drop_index(
         op.f("ix_cognition_markdown_dataset_organization_id"),
+        table_name="markdown_dataset",
+        schema="cognition",
+    )
+    op.drop_index(
+        op.f("ix_cognition_markdown_dataset_environment_variable_id"),
         table_name="markdown_dataset",
         schema="cognition",
     )
