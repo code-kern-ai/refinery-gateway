@@ -117,7 +117,7 @@ class CreateOutlierSlice(graphene.Mutation):
                 NotificationType.CUSTOM,
                 user_id,
                 project_id,
-                "All records labeled. No outliers found.",
+                "Not enough unlabeled records. No outliers detected.",
             )
         else:
             notification.send_organization_update(

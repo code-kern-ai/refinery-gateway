@@ -148,17 +148,6 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         organization_id=organization_id,
     )
 
-    task_list.append(
-        {
-            "project_id": reference_project_id,
-            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
-            "action": {
-                "action_type": enums.TaskQueueAction.FINISH_COGNITION_SETUP.value,
-                "cognition_project_id": cognition_project_id,
-            },
-        }
-    )
-
     __add_start_gates_for(reference_project_id, task_list)
     __add_start_gates_for(question_project_id, task_list)
 
@@ -697,12 +686,20 @@ def __add_records_to_question_and_relevance(
         final_question = question
         if "?" not in final_question:
             final_question += "?"
+        final_question = final_question[0].title() + final_question[1:]
         message_id = "mr-" + str(idx)
         final_json_to_add_questions.append(
             {
                 "running_id": max_running_id_qu + idx,
                 "message_id": message_id,
                 "question": final_question,
+                "question_prev_3": None,
+                "answer_prev_3": None,
+                "question_prev_2": None,
+                "answer_prev_2": None,
+                "question_prev_1": None,
+                "answer_prev_1": None,
+                "conversation_id": None,
             }
         )
         max_running_id_re += 1
