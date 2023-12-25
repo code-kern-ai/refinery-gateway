@@ -31,6 +31,10 @@ def upgrade():
 
     op.add_column('project', sa.Column('interface_type', sa.String(), nullable=True), schema='cognition')
     op.add_column('project', sa.Column('execute_query_enrichment_if_source_code', sa.String(), nullable=True), schema='cognition')
+    op.add_column('project', sa.Column('interface_type', sa.String(), nullable=True), schema='cognition')
+    op.add_column('project', sa.Column('customer_logo_uri', sa.String(), nullable=True), schema='cognition')
+    op.add_column('project', sa.Column('customer_color_primary', sa.String(), nullable=True), schema='cognition')
+    op.add_column('project', sa.Column('customer_color_secondary', sa.String(), nullable=True), schema='cognition')
 
     op.drop_column('message', 'positive_feedback', schema='cognition')
     
@@ -44,6 +48,9 @@ def downgrade():
 
     op.drop_column('project', 'execute_query_enrichment_if_source_code', schema='cognition')
     op.drop_column('project', 'interface_type', schema='cognition')
+    op.drop_column('project', 'customer_logo_uri', schema='cognition')
+    op.drop_column('project', 'customer_color_primary', schema='cognition')
+    op.drop_column('project', 'customer_color_secondary', schema='cognition')
 
     op.drop_column('pipeline_logs', 'skipped_step', schema='cognition')
     
