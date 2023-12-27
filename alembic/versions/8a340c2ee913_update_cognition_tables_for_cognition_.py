@@ -62,5 +62,6 @@ def downgrade():
 
     op.drop_column('message', 'feedback_category', schema='cognition')
     op.drop_column('message', 'feedback_value', schema='cognition')
+    op.drop_column('message', 'selection_widget', schema='cognition')
 
     # ### end Alembic commands ###
