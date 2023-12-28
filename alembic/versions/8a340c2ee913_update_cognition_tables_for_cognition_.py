@@ -22,8 +22,8 @@ def upgrade():
     op.add_column('message', sa.Column('feedback_value', sa.String(), nullable=True), schema='cognition')
     op.add_column('message', sa.Column('feedback_category', sa.String(), nullable=True), schema='cognition')
     op.add_column('message', sa.Column('selection_widget', sa.ARRAY(sa.JSON()), nullable=True), schema='cognition')
-    op.add_column('message', sa.Column('header', sa.String(), nullable=True), schema='cognition')
-
+    
+    op.add_column('conversation', sa.Column('header', sa.String(), nullable=True), schema='cognition')
 
     op.add_column('strategy_step', sa.Column('progress_text', sa.String(), nullable=True), schema='cognition')
     op.add_column('strategy_step', sa.Column('enable_emissions', sa.Boolean(), nullable=True), schema='cognition')
@@ -62,7 +62,8 @@ def downgrade():
     op.drop_column('strategy_step', 'enable_emissions', schema='cognition')
     op.drop_column('strategy_step', 'progress_text', schema='cognition')
 
-    op.drop_column('message', 'header', schema='cognition')
+    op.drop_column('conversation', 'header', schema='cognition')
+    
     op.drop_column('message', 'feedback_category', schema='cognition')
     op.drop_column('message', 'feedback_value', schema='cognition')
     op.drop_column('message', 'selection_widget', schema='cognition')
