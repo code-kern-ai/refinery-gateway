@@ -1,6 +1,5 @@
 from typing import Any, Dict
 import graphene
-from graphql import GraphQLError
 
 from controller.auth import manager as auth
 from controller.misc import config_service
@@ -8,7 +7,6 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 from graphql_api.types import Organization
 from submodules.model import events
-from graphql_api import types
 from util import doc_ock
 
 
@@ -46,6 +44,21 @@ class ChangeUserRole(graphene.Mutation):
 
         user_manager.update_user_role(user_id, role)
         return ChangeUserRole(ok=True)
+
+
+class ChangeUserLanguageDisplay(graphene.Mutation):
+    class Arguments:
+        user_id = graphene.ID()
+        language_display = graphene.String()
+
+    ok = graphene.Boolean()
+
+    def mutate(self, info, user_id: str, language_display: str):
+        auth.check_demo_access(info)
+        auth.check_admin_access(info)
+
+        user_manager.update_user_language_display(user_id, language_display)
+        return ChangeUserLanguageDisplay(ok=True)
 
 
 class RemoveUserFromOrganization(graphene.Mutation):
@@ -109,6 +122,7 @@ class OrganizationMutation(graphene.ObjectType):
     add_user_to_organization = AddUserToOrganization.Field()
     remove_user_from_organization = RemoveUserFromOrganization.Field()
     change_user_role = ChangeUserRole.Field()
+    change_user_language_display = ChangeUserLanguageDisplay.Field()
     create_organization = CreateOrganization.Field()
     delete_organization = DeleteOrganization.Field()
     change_organization = ChangeOrganization.Field()

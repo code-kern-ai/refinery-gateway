@@ -69,6 +69,15 @@ def update_user_role(user_id: str, role: str) -> User:
     return user_item
 
 
+def update_user_language_display(user_id: str, language_display: str) -> User:
+    user_item = user.get(user_id)
+    if not user_item:
+        raise ValueError("User not found")
+    user_item.language_display = language_display
+    general.commit()
+    return user_item
+
+
 def remove_organization_from_user(user_mail: str) -> None:
     user_id = kratos.get_userid_from_mail(user_mail)
     if user_id is None:
