@@ -274,7 +274,7 @@ def create_payload(
             )
             notification.send_organization_update(
                 project_id,
-                f"payload_finished:{information_source_item.id}:{payload_id}",
+                f"payload_finished:{information_source_item.id}:{payload_id}:{information_source_item.type}",
             )
         except Exception:
             general.rollback()
@@ -289,7 +289,7 @@ def create_payload(
             )
             notification.send_organization_update(
                 project_id,
-                f"payload_failed:{information_source_item.id}:{payload_item.id}",
+                f"payload_failed:{information_source_item.id}:{payload_item.id}:{information_source_item.type}",
             )
         stop = timeit.default_timer()
         general.commit()
@@ -304,7 +304,7 @@ def create_payload(
                 )
                 notification.send_organization_update(
                     project_id,
-                    f"payload_update_statistics:{information_source_item.id}:{payload_id}",
+                    f"payload_update_statistics:{information_source_item.id}:{payload_id}:{information_source_item.type}",
                 )
                 general.commit()
             except Exception:
