@@ -444,6 +444,7 @@ def __finalize_setup_for(
                     target_data,
                     name_prefix=bricks.get("function_prefix"),
                 )
+    __add_weakly_supervise_all_valid(project_id, task_list)
     token_ref.request_new()
 
 
