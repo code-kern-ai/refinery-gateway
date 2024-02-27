@@ -1,7 +1,7 @@
 import logging
 import traceback
 import time
-from typing import Optional
+from typing import Optional, Dict
 
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
@@ -226,7 +226,7 @@ class CognitionPrepareProject(HTTPEndpoint):
         task_id = request.path_params["task_id"]
 
         daemon.run(
-            cognition_import_wizard.finalize_setup,
+            cognition_import_wizard.prepare_and_finalize_setup,
             cognition_project_id=cognition_project_id,
             task_id=task_id,
         )
@@ -247,10 +247,9 @@ class CognitionParseMarkdownFile(HTTPEndpoint):
         # via thread to ensure the endpoint returns immediately
 
         daemon.run(
-            task_queue_manager.add_task,
+            __add_parse_markdown_file_thread,
             refinery_project_id,
-            TaskType.PARSE_MARKDOWN_FILE,
-            refinery_project_item.created_by,
+            str(refinery_project_item.created_by),
             {
                 "org_id": str(refinery_project_item.organization_id),
                 "dataset_id": dataset_id,
@@ -481,4 +480,17 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             project_id=project_id,
             message="calculate_attribute:finished:all",
         )
+        general.remove_and_refresh_session(ctx_token, False)
+
+
+def __add_parse_markdown_file_thread(
+    project_id: str, user_id: str, task_info: Dict[str, str]
+):
+
+    ctx_token = general.get_ctx_token()
+    try:
+        task_queue_manager.add_task(
+            project_id, TaskType.PARSE_MARKDOWN_FILE, user_id, task_info
+        )
+    finally:
         general.remove_and_refresh_session(ctx_token, False)
