@@ -36,9 +36,30 @@ from .constants import (
 from .util import send_log_message
 
 
-def finalize_setup(cognition_project_id: str, task_id: str) -> None:
-    ctx_token = general.get_ctx_token()
+class TokenRef:
+    def __init__(self):
+        self._token = general.get_ctx_token()
 
+    def request_new(self):
+        self._token = general.remove_and_refresh_session(self._token, True)
+
+    def cleanup(self):
+        general.remove_and_refresh_session(self._token, False)
+
+
+def prepare_and_finalize_setup(cognition_project_id: str, task_id: str) -> None:
+    token_ref = TokenRef()
+    try:
+        __finalize_setup(token_ref, cognition_project_id, task_id)
+    except Exception as e:
+        print(f"Error during wizard setup: {str(e)}", flush=True)
+    finally:
+        token_ref.cleanup()
+
+
+def __finalize_setup(
+    token_ref: TokenRef, cognition_project_id: str, task_id: str
+) -> None:
     cognition_project_item = cognition_project.get(cognition_project_id)
     cognition_project_item.wizard_running = True
     general.commit()
@@ -88,15 +109,14 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
     # then add additional tasks to queue
 
     task_list = []
-
-    ctx_token = __finalize_setup_for(
+    __finalize_setup_for(
         CognitionProjects.REFERENCE,
         reference_project_id,
         user_id,
         project_language,
         file_additional_info,
         task_list,
-        ctx_token,
+        token_ref,
     )
     notification.send_organization_update(
         cognition_project_id,
@@ -104,14 +124,14 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         organization_id=organization_id,
     )
 
-    ctx_token = __finalize_setup_for(
+    __finalize_setup_for(
         CognitionProjects.QUESTION,
         question_project_id,
         user_id,
         project_language,
         file_additional_info,
         task_list,
-        ctx_token,
+        token_ref,
     )
 
     # sample data from references & send to doc to query
@@ -133,14 +153,14 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
             )
         __create_task_and_labels_for(question_project_id, item["name"], labels)
 
-    ctx_token = __finalize_setup_for(
+    __finalize_setup_for(
         CognitionProjects.RELEVANCE,
         relevance_project_id,
         user_id,
         project_language,
         file_additional_info,
         task_list,
-        ctx_token,
+        token_ref,
     )
     notification.send_organization_update(
         cognition_project_id,
@@ -171,7 +191,7 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
         time.sleep(1)
         c += 1
         if c > 120:
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            token_ref.request_new()
             c = 0
         if tokenization_db_bo.is_doc_bin_creation_running(reference_project_id):
             continue
@@ -196,7 +216,6 @@ def finalize_setup(cognition_project_id: str, task_id: str) -> None:
             f"task_queue:{str(task_id)}:QUEUE_POSITION:{position}",
             organization_id=organization_id,
         )
-    general.remove_and_refresh_session(ctx_token, False)
 
 
 # function called from queue as last entry
@@ -291,7 +310,7 @@ def __finalize_setup_for(
     project_language: str,
     file_additional_info: Dict[str, Any],
     task_list: List[Dict[str, str]],
-    ctx_token: Token,
+    token_ref: TokenRef,
 ) -> Token:
     target_data = {"TARGET_LANGUAGE": project_language}
     # attributes
@@ -426,7 +445,7 @@ def __finalize_setup_for(
                     name_prefix=bricks.get("function_prefix"),
                 )
     __add_weakly_supervise_all_valid(project_id, task_list)
-    return general.remove_and_refresh_session(ctx_token, True)
+    token_ref.request_new()
 
 
 def __create_task_and_labels_for(
