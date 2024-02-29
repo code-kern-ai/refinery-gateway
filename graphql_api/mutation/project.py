@@ -83,7 +83,7 @@ class DeleteProject(graphene.Mutation):
         notification_model.remove_project_connection_for_last_x(project_id)
         manager.delete_project(project_id)
         notification.send_organization_update(
-            project_id, f"project_deleted:{project_id}", True, organization_id
+            project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
         )
         return DeleteProject(ok=True)
 
