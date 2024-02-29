@@ -1,7 +1,7 @@
 """Adds global websocket table
 
 Revision ID: 754dd15f2c9c
-Revises: 6b7c123b3e52
+Revises: 7de3c19cddcf
 Create Date: 2024-02-16 06:33:18.628812
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "754dd15f2c9c"
-down_revision = "6b7c123b3e52"
+down_revision = "7de3c19cddcf"
 branch_labels = None
 depends_on = None
 
