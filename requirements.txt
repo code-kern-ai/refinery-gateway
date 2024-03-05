@@ -8,7 +8,7 @@ alembic==1.7.1
     # via -r requirements/requirements.in
 aniso8601==7.0.0
     # via graphene
-anyio==4.0.0
+anyio==4.3.0
     # via -r requirements/common-requirements.txt
 blis==0.7.9
     # via thinc
@@ -24,12 +24,12 @@ catalogue==2.0.8
     #   spacy
     #   srsly
     #   thinc
-certifi==2023.7.22
+certifi==2024.2.2
     # via
     #   -r requirements/common-requirements.txt
     #   minio
     #   requests
-charset-normalizer==3.2.0
+charset-normalizer==3.3.2
     # via
     #   -r requirements/common-requirements.txt
     #   requests
@@ -49,7 +49,7 @@ docker==5.0.0
     # via -r requirements/requirements.in
 et-xmlfile==1.1.0
     # via openpyxl
-exceptiongroup==1.1.3
+exceptiongroup==1.2.0
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
@@ -70,7 +70,7 @@ h11==0.14.0
     # via
     #   -r requirements/common-requirements.txt
     #   uvicorn
-idna==3.4
+idna==3.6
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
@@ -121,7 +121,7 @@ promise==2.3
     #   graphene-sqlalchemy
     #   graphql-core
     #   graphql-relay
-psycopg2-binary==2.9.4
+psycopg2-binary==2.9.9
     # via -r requirements/common-requirements.txt
 pycryptodome==3.18.0
     # via rncryptor
@@ -142,7 +142,7 @@ python-dateutil==2.8.2
     #   -r requirements/common-requirements.txt
     #   botocore
     #   pandas
-pytz==2023.3.post1
+pytz==2024.1
     # via
     #   -r requirements/common-requirements.txt
     #   pandas
@@ -173,7 +173,7 @@ six==1.16.0
     #   singledispatch
 smart-open==5.2.1
     # via pathy
-sniffio==1.3.0
+sniffio==1.3.1
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
@@ -211,9 +211,10 @@ typer==0.4.2
     # via
     #   pathy
     #   spacy
-typing-extensions==4.7.1
+typing-extensions==4.10.0
     # via
     #   -r requirements/common-requirements.txt
+    #   anyio
     #   pydantic
 urllib3==1.26.18
     # via
