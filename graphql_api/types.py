@@ -26,6 +26,7 @@ from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
+from controller.embedding.connector import collection_on_qdrant
 
 
 class User(SQLAlchemyObjectType):
@@ -152,6 +153,7 @@ class Embedding(SQLAlchemyObjectType):
     dimension = graphene.Int()
     count = graphene.Int()
     progress = graphene.Float()
+    on_qdrant = graphene.Boolean()
 
     def resolve_count(self, info):
         return embedding.get_tensor_count(self.id)
@@ -175,8 +177,17 @@ class Embedding(SQLAlchemyObjectType):
             return 0.0
         else:
             return min(
-                0.1 + (Embedding.resolve_count(self, info) / len(self.project.records) * 0.9), 0.99
+                0.1
+                + (
+                    Embedding.resolve_count(self, info)
+                    / len(self.project.records)
+                    * 0.9
+                ),
+                0.99,
             )
+
+    def resolve_on_qdrant(self, info):
+        return collection_on_qdrant(str(self.project_id), str(self.id))
 
 
 class Project(SQLAlchemyObjectType):
@@ -666,6 +677,7 @@ class Encoder(graphene.ObjectType):
     tokenizers = graphene.List(graphene.String)
     applicability = graphene.JSONString()
     platform = graphene.String()
+
 
 class UploadTask(SQLAlchemyObjectType):
     class Meta:

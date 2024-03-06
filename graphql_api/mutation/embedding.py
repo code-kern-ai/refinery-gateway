@@ -99,11 +99,14 @@ class UpdateEmbeddingPayload(graphene.Mutation):
     ):
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
-        manager.update_embedding_payload(project_id, embedding_id, filter_attributes)
-        notification.send_organization_update(
-            project_id, f"embedding_updated:{embedding_id}"
+        went_through = manager.update_embedding_payload(
+            project_id, embedding_id, filter_attributes
         )
-        return UpdateEmbeddingPayload(ok=True)
+        if went_through:
+            notification.send_organization_update(
+                project_id, f"embedding_updated:{embedding_id}"
+            )
+        return UpdateEmbeddingPayload(ok=went_through)
 
 
 class EmbeddingMutation(graphene.ObjectType):

@@ -262,15 +262,17 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
 
 def update_embedding_payload(
     project_id: str, embedding_id: str, filter_attributes: List[str]
-) -> None:
+) -> bool:
     notification.send_organization_update(
         project_id=project_id,
         message=f"upload_embedding_payload:{str(embedding_id)}:start",
     )
-    embedding.update_embedding_filter_attributes(
-        project_id, embedding_id, filter_attributes, with_commit=True
-    )
-    connector.update_attribute_payloads_for_neural_search(project_id, embedding_id)
+    if connector.update_attribute_payloads_for_neural_search(project_id, embedding_id):
+        embedding.update_embedding_filter_attributes(
+            project_id, embedding_id, filter_attributes, with_commit=True
+        )
+        return True
+    return False
 
 
 def update_label_payloads_for_neural_search(
