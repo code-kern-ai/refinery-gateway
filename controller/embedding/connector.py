@@ -3,6 +3,7 @@ from typing import Any, Dict, Union, List, Optional
 
 from util import service_requests
 import requests
+from graphql import GraphQLError
 
 BASE_URI = os.getenv("EMBEDDING_SERVICE")
 NEURAL_SEARCH_BASE_URI = os.getenv("NEURAL_SEARCH")
@@ -44,7 +45,7 @@ def request_re_embed_records(
 
 def update_attribute_payloads_for_neural_search(
     project_id: str, embedding_id: str, record_ids: Optional[List[str]] = None
-) -> None:
+) -> bool:
     url = f"{NEURAL_SEARCH_BASE_URI}/update_attribute_payloads"
     data = {
         "project_id": project_id,
@@ -52,7 +53,21 @@ def update_attribute_payloads_for_neural_search(
     }
     if record_ids:
         data["record_ids"] = record_ids
-    service_requests.post_call_or_raise(url, data)
+    try:
+        service_requests.post_call_or_raise(url, data)
+        return True
+    except GraphQLError:
+        print("couldn't update attribute payloads for neural search", flush=True)
+        return False
+
+
+def collection_on_qdrant(project_id: str, embedding_id: str) -> bool:
+    url = f"{NEURAL_SEARCH_BASE_URI}/collection/exist"
+    data = {
+        "project_id": project_id,
+        "embedding_id": embedding_id,
+    }
+    return service_requests.get_call_or_raise(url, data)["exists"]
 
 
 def update_label_payloads_for_neural_search(
