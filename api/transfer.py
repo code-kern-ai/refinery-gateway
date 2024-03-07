@@ -247,7 +247,7 @@ class CognitionParseMarkdownFile(HTTPEndpoint):
         # via thread to ensure the endpoint returns immediately
 
         daemon.run(
-            __add_parse_markdown_file_thread,
+            CognitionParseMarkdownFile.__add_parse_markdown_file_thread,
             refinery_project_id,
             str(refinery_project_item.created_by),
             {
@@ -258,6 +258,18 @@ class CognitionParseMarkdownFile(HTTPEndpoint):
         )
 
         return PlainTextResponse("OK")
+
+    def __add_parse_markdown_file_thread(
+        project_id: str, user_id: str, task_info: Dict[str, str]
+    ):
+
+        ctx_token = general.get_ctx_token()
+        try:
+            task_queue_manager.add_task(
+                project_id, TaskType.PARSE_MARKDOWN_FILE, user_id, task_info
+            )
+        finally:
+            general.remove_and_refresh_session(ctx_token, False)
 
 
 class AssociationsImport(HTTPEndpoint):
@@ -480,17 +492,4 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             project_id=project_id,
             message="calculate_attribute:finished:all",
         )
-        general.remove_and_refresh_session(ctx_token, False)
-
-
-def __add_parse_markdown_file_thread(
-    project_id: str, user_id: str, task_info: Dict[str, str]
-):
-
-    ctx_token = general.get_ctx_token()
-    try:
-        task_queue_manager.add_task(
-            project_id, TaskType.PARSE_MARKDOWN_FILE, user_id, task_info
-        )
-    finally:
         general.remove_and_refresh_session(ctx_token, False)
