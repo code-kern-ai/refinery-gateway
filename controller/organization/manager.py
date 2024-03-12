@@ -80,6 +80,9 @@ def can_create_local(org: bool = True) -> bool:
         return False
     return True
 
+
 def __check_notification(org_id: str, key: str, value: Any):
     if key in ["gdpr_compliant"]:
-        notification.send_organization_update(None, f"gdpr_compliant:{value}" , True, org_id)
+        notification.send_organization_update(
+            None, f"gdpr_compliant:{value}", True, org_id
+        )

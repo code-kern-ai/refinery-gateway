@@ -1,4 +1,6 @@
 import logging
+
+from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from api.misc import IsDemoRest, IsManagedRest
 import graphene
@@ -15,11 +17,12 @@ from api.transfer import (
     CognitionPrepareProject,
     CognitionParseMarkdownFile,
 )
+from fast_api.routes.organization import router as organization_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
 from starlette.middleware import Middleware
-from starlette.routing import Route
+from starlette.routing import Route, Mount
 
 from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queues
@@ -30,6 +33,14 @@ from util import security, clean_up
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+PREFIX = "/api/v1"
+PREFIX_ORGANIZATION = PREFIX + "/organization"
+
+fastapi_app = FastAPI()
+
+fastapi_app.include_router(
+    organization_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
+)
 
 routes = [
     Route(
@@ -64,6 +75,7 @@ routes = [
     Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
+    Mount("/api", app=fastapi_app, name="REST API"),
 ]
 
 middleware = [Middleware(DatabaseSessionHandler)]
