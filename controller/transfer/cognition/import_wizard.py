@@ -61,7 +61,7 @@ def __finalize_setup(
     token_ref: TokenRef, cognition_project_id: str, task_id: str
 ) -> None:
     cognition_project_item = cognition_project.get(cognition_project_id)
-    cognition_project_item.wizard_running = True
+    cognition_project_item.state = enums.CognitionProjectState.WIZARD_RUNNING.value
     general.commit()
     # unbind to prevent session issues
     organization_id = str(cognition_project_item.organization_id)
@@ -238,7 +238,7 @@ def finish_cognition_setup(
         str(cognition_project_item.refinery_relevance_project_id), user_id
     )
 
-    cognition_project_item.wizard_running = False
+    cognition_project_item.state = enums.CognitionProjectState.DEVELOPMENT.value
     organization_id = str(cognition_project_item.organization_id)
     general.commit()
     general.remove_and_refresh_session(ctx_token, False)
