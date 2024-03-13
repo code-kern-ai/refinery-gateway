@@ -33,14 +33,16 @@ from util import security, clean_up
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-PREFIX = "/api/v1"
+PREFIX = "/v1"
 PREFIX_ORGANIZATION = PREFIX + "/organization"
 
-fastapi_app = FastAPI()
+# fastapi_app = FastAPI()
 
-fastapi_app.include_router(
-    organization_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
-)
+# fastapi_app.include_router(
+#     organization_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
+# )
+
+middleware = [Middleware(DatabaseSessionHandler)]
 
 routes = [
     Route(
@@ -75,10 +77,9 @@ routes = [
     Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
-    Mount("/api", app=fastapi_app, name="REST API"),
+    # Mount("/api", app=fastapi_app, name="REST API"),
 ]
 
-middleware = [Middleware(DatabaseSessionHandler)]
 
 app = Starlette(routes=routes, middleware=middleware)
 
