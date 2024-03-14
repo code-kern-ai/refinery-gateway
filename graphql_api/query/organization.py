@@ -53,7 +53,6 @@ class OrganizationQuery(graphene.ObjectType):
         auth_manager.check_admin_access(info)
         return manager.get_all_organizations()
 
-    # TODO: check resolved via gql
     def resolve_overview_stats(
         self,
         info,
