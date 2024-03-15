@@ -55,7 +55,6 @@ class ChangeUserLanguageDisplay(graphene.Mutation):
 
     def mutate(self, info, user_id: str, language_display: str):
         auth.check_demo_access(info)
-        auth.check_admin_access(info)
 
         user_manager.update_user_language_display(user_id, language_display)
         return ChangeUserLanguageDisplay(ok=True)
