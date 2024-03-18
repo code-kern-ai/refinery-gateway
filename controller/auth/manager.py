@@ -110,14 +110,14 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_demo_access(info: ResolveInfo) -> None:
+def check_demo_access(info: Any) -> None:
     if not check_is_admin(info.context["request"]) and config_service.get_config_value(
         "is_demo"
     ):
         check_black_white(info)
 
 
-def check_black_white(info: ResolveInfo):
+def check_black_white(info: Any):
     black_white = misc_manager.get_black_white_demo()
     if str(info.parent_type) == "Mutation":
         if info.field_name not in black_white["mutations"]:
