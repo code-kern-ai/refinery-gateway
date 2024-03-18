@@ -17,8 +17,9 @@ from api.transfer import (
     CognitionPrepareProject,
     CognitionParseMarkdownFile,
 )
-from fast_api.routes.organization import router as organization_router
+from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
+from fast_api.routes.misc import router as misc_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -35,16 +36,15 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 PREFIX = "/v1"
-PREFIX_ORGANIZATION = PREFIX + "/organization"
+PREFIX_ORG = PREFIX + "/organization"
 PREFIX_PROJECT = PREFIX + "/project"
+PREFIX_MISC = PREFIX + "/misc"
 
 fastapi_app = FastAPI()
 
-fastapi_app.include_router(
-    organization_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
-)
-
+fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
+fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
 
 routes = [
     Route(

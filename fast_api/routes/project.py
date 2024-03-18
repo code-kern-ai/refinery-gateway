@@ -11,6 +11,7 @@ router = APIRouter()
 @router.get("/project-by-project-id/{project_id}")
 async def get_project_by_project_id(request: Request, project_id: str) -> Dict:
 
+    # TODO: Implement auth checks
     # auth.check_demo_access(info)
     # auth.check_project_access(info, project_id)
 
