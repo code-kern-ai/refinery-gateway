@@ -48,6 +48,10 @@ def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
 
 
+def get_all_projects_by_user(user_id) -> List[Project]:
+    return project.get_all_by_user(user_id)
+
+
 def get_project_size(project_id: str) -> List[ProjectSize]:
     # might need some better logic for default true false (e.g. switch case for table names)
     disabled_default = [
