@@ -32,3 +32,11 @@ def resolve_user_name_by_id(user_id: str) -> str:
     if res.status_code == 200 and data["traits"]:
         return data["traits"]["name"]
     return None
+
+
+def resolve_user_name_and_email_by_id(user_id: str) -> dict:
+    res: Response = requests.get("{}/identities/{}".format(KRATOS_ADMIN_URL, user_id))
+    data: Any = res.json()
+    if res.status_code == 200 and data["traits"]:
+        return data["traits"]["name"], data["traits"]["email"]
+    return None
