@@ -20,6 +20,7 @@ from api.transfer import (
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.misc import router as misc_router
+from fast_api.routes.zero_shot import router as zero_shot_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -39,12 +40,16 @@ PREFIX = "/v1"
 PREFIX_ORG = PREFIX + "/organization"
 PREFIX_PROJECT = PREFIX + "/project"
 PREFIX_MISC = PREFIX + "/misc"
+PREFIX_ZERO_SHOT = PREFIX + "/zero-shot"
 
 fastapi_app = FastAPI()
 
 fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
+fastapi_app.include_router(
+    zero_shot_router, prefix=PREFIX_ZERO_SHOT, tags=["zero-shot"]
+)
 
 routes = [
     Route(
