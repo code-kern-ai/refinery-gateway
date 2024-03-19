@@ -4,6 +4,7 @@ from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from fastapi import APIRouter, Request
 from controller.auth import manager as auth_manager
 
+
 router = APIRouter()
 
 

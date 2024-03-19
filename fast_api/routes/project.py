@@ -9,6 +9,7 @@ from submodules.model.business_objects.project import get_project_by_project_id_
 from controller.project import manager
 from submodules.model.util import sql_alchemy_to_dict, pack_as_graphql
 
+
 router = APIRouter()
 
 
@@ -29,7 +30,7 @@ def get_project_by_project_id(request: Request, project_id: str) -> Dict:
 
 
 @router.get("/all-projects")
-def get_all_projects(request: Request, userId: str) -> Dict:
+def get_all_projects(request: Request) -> Dict:
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="ProjectQuery",
