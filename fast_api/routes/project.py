@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict
@@ -40,3 +42,29 @@ async def get_all_projects(request: Request, userId: str) -> Dict:
     projects = manager.get_all_projects_by_user(organization.id)
     projects_graphql = pack_as_graphql(projects, "allProjects")
     return pack_json_result(projects_graphql)
+
+
+@router.get("/{project_id}/general-project-stats")
+def resolve_general_project_stats(
+    request: Request,
+    project_id: str,
+    labeling_task_id: Optional[str] = None,
+    slice_id: Optional[str] = None,
+) -> Dict:
+    info = FastAPIResolveInfo(
+        context={"request": request},
+        field_name="ProjectQuery",
+        parent_type="Query",
+    )
+    auth_manager.check_demo_access(info)
+    auth_manager.check_project_access(info, project_id)
+    return pack_json_result(
+        {
+            "data": {
+                "generalProjectStats": manager.get_general_project_stats(
+                    project_id, labeling_task_id, slice_id
+                )
+            }
+        },
+        wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
