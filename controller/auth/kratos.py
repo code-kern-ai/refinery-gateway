@@ -1,4 +1,4 @@
-from typing import Union, Any
+from typing import Union, Any, List, Optional, Dict
 from requests import Response
 import os
 import requests
@@ -32,3 +32,27 @@ def resolve_user_name_by_id(user_id: str) -> str:
     if res.status_code == 200 and data["traits"]:
         return data["traits"]["name"]
     return None
+
+
+def resolve_all_user_ids(
+    relevant_ids: List[str], as_list: bool = True
+) -> List[Dict[str, str]]:
+    final = [] if as_list else {}
+    for id in relevant_ids:
+        r = requests.get(f"{KRATOS_ADMIN_URL}/identities/{id}").json()
+        d = {
+            "id": id,
+            "mail": None,
+            "firstName": None,
+            "lastName": None,
+        }
+        if "traits" in r:
+            traits = r["traits"]
+            d["mail"] = traits["email"]
+            d["firstName"] = traits["name"]["first"]
+            d["lastName"] = traits["name"]["last"]
+        if as_list:
+            final.append(d)
+        else:
+            final[id] = d
+    return final
