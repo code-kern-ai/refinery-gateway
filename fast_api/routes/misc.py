@@ -8,6 +8,6 @@ router = APIRouter()
 
 
 @router.get("/is-admin")
-async def get_is_admin(request: Request) -> Dict:
+def get_is_admin(request: Request) -> Dict:
     data = auth.check_is_admin(request)
     return pack_json_result({"data": {"isAdmin": data}})

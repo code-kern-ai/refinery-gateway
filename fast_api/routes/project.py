@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/project-by-project-id/{project_id}")
-async def get_project_by_project_id(request: Request, project_id: str) -> Dict:
+def get_project_by_project_id(request: Request, project_id: str) -> Dict:
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="ProjectQuery",
@@ -29,7 +29,7 @@ async def get_project_by_project_id(request: Request, project_id: str) -> Dict:
 
 
 @router.get("/all-projects")
-async def get_all_projects(request: Request, userId: str) -> Dict:
+def get_all_projects(request: Request, userId: str) -> Dict:
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="ProjectQuery",

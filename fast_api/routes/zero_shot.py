@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/zero-shot-recommendations/{project_id}")
-async def get_zero_shot_recommendations(request: Request, project_id: str):
+def get_zero_shot_recommendations(request: Request, project_id: str):
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="ZeroShotQuery",

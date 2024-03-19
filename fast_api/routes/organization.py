@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/overview-stats")
-async def get_overview_stats(request: Request):
+def get_overview_stats(request: Request):
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="OrganizationQuery",
@@ -23,7 +23,7 @@ async def get_overview_stats(request: Request):
 
 
 @router.get("/user-info")
-async def get_user_info(request: Request):
+def get_user_info(request: Request):
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="OrganizationQuery",
