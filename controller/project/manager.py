@@ -34,6 +34,7 @@ from controller.transfer.record_transfer_manager import import_records_and_rlas
 from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
 from controller.gates import gates_service
+from controller.auth import kratos
 
 
 def get_project(project_id: str) -> Project:
@@ -48,8 +49,21 @@ def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
 
 
-def get_all_projects_by_user(user_id) -> List[Project]:
-    return project.get_all_by_user(user_id)
+def get_all_projects_by_user(organization_id) -> List[Project]:
+    project_dicts = project.get_all_by_user_organization_id(organization_id)
+
+    for p in project_dicts:
+        user_id = p["created_by"]
+        names, mail = kratos.resolve_user_name_and_email_by_id(user_id)
+        last_name = names.get("last", "")
+        first_name = names.get("first", "")
+        p["user"] = {
+            "mail": mail,
+            "first_name": first_name,
+            "last_name": last_name,
+        }
+
+    return project_dicts
 
 
 def get_project_size(project_id: str) -> List[ProjectSize]:

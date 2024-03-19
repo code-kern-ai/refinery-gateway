@@ -15,11 +15,12 @@ from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_extraction,
 )
 
+
 router = APIRouter()
 
 
 @router.get("/project-by-project-id/{project_id}")
-async def get_project_by_project_id(request: Request, project_id: str) -> Dict:
+def get_project_by_project_id(request: Request, project_id: str) -> Dict:
     info = FastAPIResolveInfo(
         context={"request": request},
         field_name="ProjectQuery",
@@ -35,9 +36,17 @@ async def get_project_by_project_id(request: Request, project_id: str) -> Dict:
 
 
 @router.get("/all-projects")
-async def get_all_projects(request: Request, userId: str) -> Dict:
+def get_all_projects(request: Request) -> Dict:
+    info = FastAPIResolveInfo(
+        context={"request": request},
+        field_name="ProjectQuery",
+        parent_type="Query",
+    )
 
-    projects = manager.get_all_projects_by_user(userId)
+    auth_manager.check_demo_access(info)
+    organization = auth_manager.get_organization_id_by_info(info)
+
+    projects = manager.get_all_projects_by_user(organization.id)
     projects_graphql = pack_as_graphql(projects, "allProjects")
     return pack_json_result(projects_graphql)
 
