@@ -3,12 +3,17 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
-from route_prefix import PREFIX_PROJECT
+from route_prefix import PREFIX_ATTRIBUTE, PREFIX_PROJECT
 from submodules.model.business_objects import general
 from controller.auth import manager as auth_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+project_access_prefix = [
+    PREFIX_PROJECT,
+    PREFIX_ATTRIBUTE,
+]
 
 
 class DatabaseSessionHandler(BaseHTTPMiddleware):
@@ -37,13 +42,15 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
     def _check_access(self, request, info):
         try:
             auth_manager.check_demo_access(info)
-            if PREFIX_PROJECT in request.url.path:
-                most_likely_url_part: str = request.url.path.replace(PREFIX_PROJECT, "")
-                url_split = most_likely_url_part.split("/")
-                project_id = url_split[0]
-                most_likely_url_part = url_split[1]
-                if project_id:
-                    auth_manager.check_project_access(info, project_id)
+            for prefix in project_access_prefix:
+                if prefix in request.url.path:
+                    most_likely_url_part: str = request.url.path.replace(prefix, "")
+                    url_split = most_likely_url_part.split("/")
+                    project_id = url_split[0]
+                    most_likely_url_part = url_split[1]
+                    if project_id:
+                        auth_manager.check_project_access(info, project_id)
+                    break
         finally:
             general.remove_and_refresh_session(request.state.session_token)
 
