@@ -132,3 +132,24 @@ def confidence_distribution(
         },
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
+
+
+@router.get("/{project_id}/label-distribution")
+def label_distribution(
+    request: Request,
+    project_id: str,
+    labeling_task_id: Optional[str] = None,
+    slice_id: Optional[str] = None,
+) -> str:
+    auth_manager.check_demo_access(request.state.info)
+    auth_manager.check_project_access(request.state.info, project_id)
+    return pack_json_result(
+        {
+            "data": {
+                "labelDistribution": manager.get_label_distribution(
+                    project_id, labeling_task_id, slice_id
+                )
+            }
+        },
+        wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
