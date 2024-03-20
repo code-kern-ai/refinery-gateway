@@ -7,6 +7,8 @@ from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
 from util import notification
+from controller.auth import kratos
+from submodules.model.util import sql_alchemy_to_dict
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
@@ -39,7 +41,14 @@ def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List
             parsed = enums.UserRoles[user_role.upper()]
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
-    return user.get_all(organization_id, parsed)
+    all_users = user.get_all(organization_id, parsed)
+    all_users_dict = sql_alchemy_to_dict(all_users)
+    attr = ["id", "role"]
+    all_users_dict_filtered = [
+        {key: user[key] for key in user if key in attr} for user in all_users_dict
+    ]
+    all_users_expanded = kratos.expand_user_mail_name(all_users_dict_filtered)
+    return all_users_expanded
 
 
 def get_all_users_with_record_count(

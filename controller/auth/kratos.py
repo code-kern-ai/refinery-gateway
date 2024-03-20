@@ -58,6 +58,25 @@ def resolve_all_user_ids(
     return final
 
 
+def expand_user_mail_name(users: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    final = []
+    for user in users:
+        r = requests.get(f"{KRATOS_ADMIN_URL}/identities/{user['id']}").json()
+        d = {
+            "mail": None,
+            "firstName": None,
+            "lastName": None,
+        }
+        if "traits" in r:
+            traits = r["traits"]
+            d["mail"] = traits["email"]
+            d["firstName"] = traits["name"]["first"]
+            d["lastName"] = traits["name"]["last"]
+        user = {**user, **d}
+        final.append(user)
+    return final
+
+
 def resolve_user_name_and_email_by_id(user_id: str) -> dict:
     res: Response = requests.get("{}/identities/{}".format(KRATOS_ADMIN_URL, user_id))
     data: Any = res.json()

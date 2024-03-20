@@ -41,6 +41,16 @@ def get_user_info(request: Request):
     return {"data": {"userInfo": data}}
 
 
+@router.get("/all-users")
+def get_all_user(request: Request):
+    auth_manager.check_demo_access(request.state.info)
+    organization_id = str(
+        auth_manager.get_user_by_info(request.state.info).organization.id
+    )
+    data = manager.get_all_users(organization_id)
+    return {"data": {"allUsers": data}}
+
+
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     auth_manager.check_demo_access(request.state.info)
