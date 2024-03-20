@@ -34,6 +34,14 @@ def get_organization_by_name(name: str) -> Organization:
     return organization.get_by_name(name)
 
 
+def get_organization_by_id(org_id: str) -> Organization:
+    org = organization.get(org_id)
+    org_dict = sql_alchemy_to_dict(org)
+    attr = ["id", "name", "max_rows", "max_cols", "max_char_count", "gdpr_compliant"]
+    organization_filtered = [{key: org_dict[key] for key in org_dict if key in attr}]
+    return organization_filtered
+
+
 def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
     parsed = None
     if user_role:
