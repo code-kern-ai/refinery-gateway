@@ -21,6 +21,7 @@ from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.zero_shot import router as zero_shot_router
+from fast_api.routes.attribute import router as attribute_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -30,7 +31,13 @@ from starlette.routing import Route, Mount
 from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
-from route_prefix import PREFIX_ORG, PREFIX_PROJECT, PREFIX_MISC, PREFIX_ZERO_SHOT
+from route_prefix import (
+    PREFIX_ORG,
+    PREFIX_PROJECT,
+    PREFIX_MISC,
+    PREFIX_ZERO_SHOT,
+    PREFIX_ATTRIBUTE,
+)
 from util import security, clean_up
 
 logging.basicConfig(level=logging.DEBUG)
@@ -43,6 +50,9 @@ fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
 fastapi_app.include_router(
     zero_shot_router, prefix=PREFIX_ZERO_SHOT, tags=["zero-shot"]
+)
+fastapi_app.include_router(
+    attribute_router, prefix=PREFIX_ATTRIBUTE, tags=["attribute"]
 )
 
 routes = [
