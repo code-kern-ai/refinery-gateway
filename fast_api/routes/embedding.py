@@ -5,6 +5,7 @@ from controller.misc import manager as misc
 from fastapi import APIRouter, Request
 from controller.auth import manager as auth_manager
 from controller.embedding import manager
+from util import spacy_util
 import json
 
 router = APIRouter()
@@ -26,3 +27,11 @@ def data_slices(request: Request, project_id: Optional[str] = None) -> List:
     for v in data:
         v["applicability"] = json.dumps(v["applicability"])
     return pack_json_result({"data": {"recommendedEncoders": data}})
+
+
+@router.get("/language-models")
+def language_models(request: Request) -> List:
+    auth_manager.check_demo_access(request.state.info)
+    return pack_json_result(
+        {"data": {"languageModels": spacy_util.get_language_models()}}
+    )
