@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request
 from controller.auth import manager as auth_manager
 from controller.organization import manager
-from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 
 
 router = APIRouter()
@@ -9,14 +8,7 @@ router = APIRouter()
 
 @router.get("/overview-stats")
 def get_overview_stats(request: Request):
-    info = FastAPIResolveInfo(
-        context={"request": request},
-        field_name="OrganizationQuery",
-        parent_type="Query",
-    )
-
-    auth_manager.check_demo_access(info)
-    org_id = str(auth_manager.get_user_by_info(info).organization_id)
+    org_id = str(auth_manager.get_user_by_info(request.state.info).organization_id)
     data = manager.get_overview_stats(org_id)
 
     return {"data": {"overviewStats": data}}
@@ -24,13 +16,6 @@ def get_overview_stats(request: Request):
 
 @router.get("/user-info")
 def get_user_info(request: Request):
-    info = FastAPIResolveInfo(
-        context={"request": request},
-        field_name="OrganizationQuery",
-        parent_type="Query",
-    )
-
-    auth_manager.check_demo_access(info)
-    data = auth_manager.get_user_by_info(info)
+    data = auth_manager.get_user_by_info(request.state.info)
 
     return {"data": {"userInfo": data}}

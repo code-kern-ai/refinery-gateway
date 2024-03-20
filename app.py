@@ -30,17 +30,11 @@ from starlette.routing import Route, Mount
 from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
+from route_prefix import PREFIX_ORG, PREFIX_PROJECT, PREFIX_MISC, PREFIX_ZERO_SHOT
 from util import security, clean_up
-
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-PREFIX = "/v1"
-PREFIX_ORG = PREFIX + "/organization"
-PREFIX_PROJECT = PREFIX + "/project"
-PREFIX_MISC = PREFIX + "/misc"
-PREFIX_ZERO_SHOT = PREFIX + "/zero-shot"
 
 fastapi_app = FastAPI()
 
