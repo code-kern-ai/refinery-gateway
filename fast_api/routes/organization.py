@@ -18,6 +18,14 @@ ACTIVE_ADMIN_MESSAGE_KEYS_TO_BE_KEPT = {
 }
 
 
+@router.get("")
+def get_organization(request: Request):
+    auth_manager.check_demo_access(request.state.info)
+    data = auth_manager.get_user_by_info(request.state.info).organization
+
+    return {"data": {"userOrganization": data}}
+
+
 @router.get("/overview-stats")
 def get_overview_stats(request: Request):
     org_id = str(auth_manager.get_user_by_info(request.state.info).organization_id)
