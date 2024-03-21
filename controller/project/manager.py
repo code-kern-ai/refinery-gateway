@@ -311,7 +311,9 @@ projects_updating = set()
 projects_updating_lock = threading.Lock()
 
 
-def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
+def get_gates_integration_data(
+    project_id: str, for_gql: bool = True
+) -> GatesIntegrationData:
     project_item = project.get(project_id)
     if not project_item:
         raise GraphQLError("Project not found")
@@ -335,13 +337,19 @@ def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
         or len(missing_information_sources) > 0
     ):
         status = enums.GatesIntegrationStatus.NOT_READY.value
-
-    return GatesIntegrationData(
-        status=status,
-        missing_tokenizer=missing_tokenizer,
-        missing_embeddings=missing_embeddings,
-        missing_information_sources=missing_information_sources,
-    )
+    if for_gql:
+        return GatesIntegrationData(
+            status=status,
+            missing_tokenizer=missing_tokenizer,
+            missing_embeddings=missing_embeddings,
+            missing_information_sources=missing_information_sources,
+        )
+    return {
+        "status": status,
+        "missing_tokenizer": missing_tokenizer,
+        "missing_embeddings": missing_embeddings,
+        "missing_information_sources": missing_information_sources,
+    }
 
 
 def __tokenizer_pickle_exists(config_string: str) -> bool:
