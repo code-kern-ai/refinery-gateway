@@ -62,8 +62,7 @@ def inter_annotator_matrix(
     include_all_org_user: Optional[bool] = False,
     only_on_static_slice: Optional[str] = None,
 ) -> Dict:
-    auth_manager.check_demo_access(request.state.info)
-    auth_manager.check_project_access(request.state.info, project_id)
+
     labeling_task = task_manager.get_labeling_task(project_id, labeling_task_id)
     if not labeling_task:
         raise ValueError("Can't match labeling task to given Ids")
@@ -98,8 +97,6 @@ def confusion_matrix(
     labeling_task_id: str,
     slice_id: Optional[str] = None,
 ) -> Dict:
-    auth_manager.check_demo_access(request.state.info)
-    auth_manager.check_project_access(request.state.info, project_id)
     return pack_json_result(
         {
             "data": {
@@ -120,8 +117,6 @@ def confidence_distribution(
     slice_id: Optional[str] = None,
     num_samples: int = 100,
 ) -> List:
-    auth_manager.check_demo_access(request.state.info)
-    auth_manager.check_project_access(request.state.info, project_id)
     return pack_json_result(
         {
             "data": {
@@ -141,8 +136,6 @@ def label_distribution(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
 ) -> str:
-    auth_manager.check_demo_access(request.state.info)
-    auth_manager.check_project_access(request.state.info, project_id)
     return pack_json_result(
         {
             "data": {

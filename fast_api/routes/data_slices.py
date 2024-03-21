@@ -16,8 +16,7 @@ router = APIRouter()
 def data_slices(
     request: Request, project_id: str, slice_type: Optional[str] = None
 ) -> List:
-    auth_manager.check_demo_access(request.state.info)
-    auth_manager.check_project_access(request.state.info, project_id)
+
     values = [
         sql_alchemy_to_dict(ds)
         for ds in manager.get_all_data_slices(project_id, slice_type)
