@@ -13,8 +13,10 @@ BASE_URI_UPDATER = os.getenv("UPDATER")
 def check_is_managed() -> bool:
     return config_service.get_config_value("is_managed")
 
+
 def check_is_demo() -> bool:
     return config_service.get_config_value("is_demo")
+
 
 def update_config(dict_str: str) -> None:
     return config_service.change_config(dict_str)
@@ -32,20 +34,21 @@ def get_version_overview() -> List[ServiceVersionResult]:
     updater_version_overview = __updater_version_overview()
     date_format = "%Y-%m-%dT%H:%M:%S.%f"  # 2022-09-06T12:10:39.167397
     return [
-        ServiceVersionResult(
-            service=service["name"],
-            installed_version=service["installed_version"],
-            remote_version=service["remote_version"],
-            last_checked=datetime.strptime(service["last_checked"], date_format),
-            remote_has_newer=service["remote_has_newer"],
-            link=service["link"],
-        )
+        {
+            "service": service["name"],
+            "installed_version": service["installed_version"],
+            "remote_version": service["remote_version"],
+            "last_checked": datetime.strptime(service["last_checked"], date_format),
+            "remote_has_newer": service["remote_has_newer"],
+            "link": service["link"],
+        }
         for service in updater_version_overview
     ]
 
 
 def has_updates() -> List[ServiceVersionResult]:
     return __updater_has_updates()
+
 
 # function only sets the versions in the database, not the actual update logic
 def update_versions_to_newest() -> None:
