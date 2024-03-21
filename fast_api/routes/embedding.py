@@ -19,7 +19,6 @@ def get_embedding_platforms():
 
 @router.get("/recommended-encoders")
 def data_slices(request: Request, project_id: Optional[str] = None) -> List:
-    auth_manager.check_demo_access(request.state.info)
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)
     is_managed = misc.check_is_managed()
@@ -31,7 +30,6 @@ def data_slices(request: Request, project_id: Optional[str] = None) -> List:
 
 @router.get("/language-models")
 def language_models(request: Request) -> List:
-    auth_manager.check_demo_access(request.state.info)
     return pack_json_result(
         {"data": {"languageModels": spacy_util.get_language_models()}}
     )

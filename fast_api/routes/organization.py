@@ -20,7 +20,6 @@ ACTIVE_ADMIN_MESSAGE_KEYS_TO_BE_KEPT = {
 
 @router.get("")
 def get_organization(request: Request):
-    auth_manager.check_demo_access(request.state.info)
     user = auth_manager.get_user_by_info(request.state.info)
     organization = manager.get_organization_by_id(user.organization_id)
 
@@ -44,7 +43,6 @@ def get_user_info(request: Request):
 
 @router.get("/all-users")
 def get_all_user(request: Request):
-    auth_manager.check_demo_access(request.state.info)
     organization_id = str(
         auth_manager.get_user_by_info(request.state.info).organization.id
     )
@@ -54,7 +52,6 @@ def get_all_user(request: Request):
 
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
-    auth_manager.check_demo_access(request.state.info)
     return pack_json_result(
         {
             "data": {
