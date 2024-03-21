@@ -8,14 +8,27 @@ from controller.labeling_task import manager as task_manager
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
 from controller.project import manager
-from submodules.model.util import pack_as_graphql
+from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
 
+from submodules.model.business_objects import tokenization, task_queue
 
 router = APIRouter()
+
+PROJECT_TOKENIZATION_WHITELIST = {
+    "id",
+    "project_id",
+    "user_id",
+    "type",
+    "state",
+    "progress",
+    "workload",
+    "started_at",
+    "finished_at",
+}
 
 
 @router.get("/{project_id}/project-by-project-id")
@@ -162,4 +175,30 @@ def gates_integration_data(
                 )
             }
         },
+    )
+
+
+@router.get("/{project_id}/project-tokenization")
+def project_tokenization(
+    project_id: str,
+) -> str:
+    waiting_task = task_queue.get_by_tokenization(project_id)
+    data = None
+    if waiting_task and not waiting_task.is_active:
+        data = {
+            "id": waiting_task.id,
+            "started_at": waiting_task.created_at,
+            "state": "QUEUED",
+            "progress": -1,
+        }
+        for key in PROJECT_TOKENIZATION_WHITELIST:
+            if key not in data:
+                data[key] = None
+    else:
+        data = sql_alchemy_to_dict(
+            tokenization.get_record_tokenization_task(project_id),
+            column_whitelist=PROJECT_TOKENIZATION_WHITELIST,
+        )
+    return pack_json_result(
+        {"data": {"projectTokenization": data}},
     )
