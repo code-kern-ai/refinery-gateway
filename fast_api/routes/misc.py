@@ -17,3 +17,9 @@ def get_is_admin(request: Request) -> Dict:
 def get_version_overview(request: Request) -> Dict:
     data = manager.get_version_overview()
     return pack_json_result({"data": {"versionOverview": data}})
+
+
+@router.get("/has-updates")
+def get_version_overview(request: Request) -> Dict:
+    data = manager.has_updates()
+    return pack_json_result({"data": {"hasUpdates": data}})
