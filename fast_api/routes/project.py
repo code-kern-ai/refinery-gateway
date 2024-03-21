@@ -11,11 +11,14 @@ from submodules.model.business_objects.labeling_task import (
     get_labeling_tasks_by_project_id_full,
 )
 from controller.project import manager
+from controller.model_provider import manager as model_manager
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
+from controller.misc import manager as misc
+from exceptions.exceptions import NotAllowedInOpenSourceError
 
 from submodules.model.business_objects import tokenization, task_queue
 
@@ -220,3 +223,12 @@ def labeling_tasks_by_project_id(
             }
         },
     )
+
+
+@router.get("/model-provider-info")
+def get_model_provider_info(request: Request) -> Dict:
+    if not misc.check_is_managed():
+        raise NotAllowedInOpenSourceError
+
+    data = model_manager.get_model_provider_info()
+    return pack_json_result({"data": {"modelProviderInfo": data}})

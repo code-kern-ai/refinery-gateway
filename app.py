@@ -76,7 +76,6 @@ fastapi_app.include_router(
 fastapi_app.include_router(
     notification_router, prefix=PREFIX_NOTIFICATION, tags=["notification"]
 )
-
 fastapi_app.include_router(
     data_slice_router, prefix=PREFIX_DATA_SLICE, tags=["data-slice"]
 )
