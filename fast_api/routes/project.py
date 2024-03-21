@@ -7,6 +7,9 @@ from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
+from submodules.model.business_objects.labeling_task import (
+    get_labeling_tasks_by_project_id_full,
+)
 from controller.project import manager
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util.inter_annotator.functions import (
@@ -201,4 +204,19 @@ def project_tokenization(
         )
     return pack_json_result(
         {"data": {"projectTokenization": data}},
+    )
+
+
+@router.get("/{project_id}/labeling-tasks-by-project-id")
+def labeling_tasks_by_project_id(
+    project_id: str,
+) -> str:
+    return pack_json_result(
+        {
+            "data": {
+                "projectByProjectId": sql_alchemy_to_dict(
+                    get_labeling_tasks_by_project_id_full(project_id)
+                )
+            }
+        },
     )
