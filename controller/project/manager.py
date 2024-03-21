@@ -35,10 +35,32 @@ from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
 from controller.gates import gates_service
 from controller.auth import kratos
+from controller.labeling_task import manager as labeling_task_manager
+
+LABELING_TASK_WHITELIST = {
+    "id",
+    "name",
+    "taskTarget",
+    "taskType",
+    "attribute",
+    "labels",
+    "information_sources",
+}
+LABEL_WHITELIST = {"id", "name", "color", "hotkey"}
+ATTRIBUTE_WHITELIST = {"id", "name", "relativePosition", "dataType"}
+INFORMATION_SOURCES_WHITELIST = {"id", "type", "returnType", "name", "description"}
 
 
 def get_project(project_id: str) -> Project:
     return project.get(project_id)
+
+
+def get_project_with_labeling_tasks(project_id: str) -> Project:
+    return project.get_with_labling_tasks(project_id)
+
+
+def expand_labeling_tasks(project_id: str) -> Project:
+    labeling_task_manager.get_labeling_tasks(project_id)
 
 
 def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
