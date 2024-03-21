@@ -23,6 +23,9 @@ from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
 from fast_api.routes.zero_shot import router as zero_shot_router
 from fast_api.routes.attribute import router as attribute_router
+from fast_api.routes.embedding import router as embedding_router
+from fast_api.routes.notification import router as notification_router
+from fast_api.routes.data_slices import router as data_slice_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -39,6 +42,9 @@ from route_prefix import (
     PREFIX_COMMENT,
     PREFIX_ZERO_SHOT,
     PREFIX_ATTRIBUTE,
+    PREFIX_EMBEDDING,
+    PREFIX_NOTIFICATION,
+    PREFIX_DATA_SLICE,
 )
 from util import security, clean_up
 
@@ -56,6 +62,16 @@ fastapi_app.include_router(
 )
 fastapi_app.include_router(
     attribute_router, prefix=PREFIX_ATTRIBUTE, tags=["attribute"]
+)
+fastapi_app.include_router(
+    embedding_router, prefix=PREFIX_EMBEDDING, tags=["embedding"]
+)
+fastapi_app.include_router(
+    notification_router, prefix=PREFIX_NOTIFICATION, tags=["notification"]
+)
+
+fastapi_app.include_router(
+    data_slice_router, prefix=PREFIX_DATA_SLICE, tags=["data-slice"]
 )
 
 routes = [

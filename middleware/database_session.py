@@ -1,6 +1,6 @@
 from json import JSONDecodeError
 import logging
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -8,17 +8,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from exceptions.exceptions import NotAllowedInDemoError
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
-from route_prefix import PREFIX_ATTRIBUTE, PREFIX_PROJECT
+from route_prefix import PREFIX_ATTRIBUTE, PREFIX_PROJECT, PREFIX_DATA_SLICE
 from submodules.model.business_objects import general
 from controller.auth import manager as auth_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-PROJECT_ACCESS_PREFIX = [
-    PREFIX_PROJECT,
-    PREFIX_ATTRIBUTE,
-]
+
+PROJECT_ACCESS_PREFIX = [PREFIX_PROJECT, PREFIX_ATTRIBUTE, PREFIX_DATA_SLICE]
 
 
 class DatabaseSessionHandler(BaseHTTPMiddleware):

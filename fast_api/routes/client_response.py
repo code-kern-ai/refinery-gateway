@@ -21,7 +21,7 @@ def pack_json_result(
         )
     else:
         if wrap_for_frontend:
-            content = __wrap_content_for_frontend(content)
+            content = wrap_content_for_frontend(content)
         if not status_code:
             status_code = status.HTTP_200_OK
         return JSONResponse(
@@ -30,11 +30,11 @@ def pack_json_result(
         )
 
 
-def __wrap_content_for_frontend(content: Any):
+def wrap_content_for_frontend(content: Any):
     if not content:
         return content
     if is_list_like(content):
-        return [__wrap_content_for_frontend(item) for item in content]
+        return [wrap_content_for_frontend(item) for item in content]
     else:
         if isinstance(content, BaseModel):
             return to_json(content)

@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import pack_json_result
-from typing import Dict
+from typing import Dict, List
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from submodules.model.enums import LabelingTaskType
@@ -84,6 +84,70 @@ def inter_annotator_matrix(
                     include_all_org_user,
                     only_on_static_slice,
                     as_gql_type=False,
+                )
+            }
+        },
+        wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
+
+
+@router.get("/{project_id}/confusion-matrix")
+def confusion_matrix(
+    request: Request,
+    project_id: str,
+    labeling_task_id: str,
+    slice_id: Optional[str] = None,
+) -> Dict:
+    auth_manager.check_demo_access(request.state.info)
+    auth_manager.check_project_access(request.state.info, project_id)
+    return pack_json_result(
+        {
+            "data": {
+                "confusionMatrix": manager.get_confusion_matrix(
+                    project_id, labeling_task_id, slice_id
+                )
+            }
+        },
+        wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
+
+
+@router.get("/{project_id}/confidence-distribution")
+def confidence_distribution(
+    request: Request,
+    project_id: str,
+    labeling_task_id: Optional[str] = None,
+    slice_id: Optional[str] = None,
+    num_samples: int = 100,
+) -> List:
+    auth_manager.check_demo_access(request.state.info)
+    auth_manager.check_project_access(request.state.info, project_id)
+    return pack_json_result(
+        {
+            "data": {
+                "confidenceDistribution": manager.get_confidence_distribution(
+                    project_id, labeling_task_id, slice_id, num_samples
+                )
+            }
+        },
+        wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
+
+
+@router.get("/{project_id}/label-distribution")
+def label_distribution(
+    request: Request,
+    project_id: str,
+    labeling_task_id: Optional[str] = None,
+    slice_id: Optional[str] = None,
+) -> str:
+    auth_manager.check_demo_access(request.state.info)
+    auth_manager.check_project_access(request.state.info, project_id)
+    return pack_json_result(
+        {
+            "data": {
+                "labelDistribution": manager.get_label_distribution(
+                    project_id, labeling_task_id, slice_id
                 )
             }
         },
