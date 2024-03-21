@@ -28,7 +28,7 @@ from fast_api.routes.embedding import router as embedding_router
 from fast_api.routes.notification import router as notification_router
 from fast_api.routes.data_slices import router as data_slice_router
 from fast_api.routes.lookup_lists import router as lookup_lists_router
-from fast_api.routes.heuristics import router as heuristics_router
+from fast_api.routes.heuristic import router as heuristic_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -39,7 +39,6 @@ from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
-    PREFIX_HEURISTICS,
     PREFIX_ORG,
     PREFIX_PROJECT,
     PREFIX_PROJECT_SETTING,
@@ -51,6 +50,7 @@ from route_prefix import (
     PREFIX_NOTIFICATION,
     PREFIX_DATA_SLICE,
     PREFIX_LOOKUP_LISTS,
+    PREFIX_HEURISTIC,
 )
 from util import security, clean_up
 
@@ -85,7 +85,7 @@ fastapi_app.include_router(
     lookup_lists_router, prefix=PREFIX_LOOKUP_LISTS, tags=["lookup-lists"]
 )
 fastapi_app.include_router(
-    heuristics_router, prefix=PREFIX_HEURISTICS, tags=["heuristics"]
+    heuristic_router, prefix=PREFIX_HEURISTIC, tags=["heuristic"]
 )
 
 routes = [

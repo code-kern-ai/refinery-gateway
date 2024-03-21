@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 router = APIRouter()
 
 
-@router.get("/zero-shot-recommendations/{project_id}")
+@router.get("/{project_id}/zero-shot-recommendations")
 def get_zero_shot_recommendations(request: Request, project_id: str):
 
     data = manager.get_zero_shot_recommendations(project_id)
