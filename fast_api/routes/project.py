@@ -7,15 +7,34 @@ from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
+from submodules.model.business_objects.labeling_task import (
+    get_labeling_tasks_by_project_id_full,
+)
 from controller.project import manager
-from submodules.model.util import pack_as_graphql
+from controller.model_provider import manager as model_manager
+from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
 )
+from controller.misc import manager as misc
+from exceptions.exceptions import NotAllowedInOpenSourceError
 
+from submodules.model.business_objects import tokenization, task_queue
 
 router = APIRouter()
+
+PROJECT_TOKENIZATION_WHITELIST = {
+    "id",
+    "project_id",
+    "user_id",
+    "type",
+    "state",
+    "progress",
+    "workload",
+    "started_at",
+    "finished_at",
+}
 
 
 @router.get("/{project_id}/project-by-project-id")
@@ -42,7 +61,6 @@ def get_all_projects(request: Request) -> Dict:
 
 @router.get("/{project_id}/general-project-stats")
 def general_project_stats(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -62,7 +80,6 @@ def general_project_stats(
 
 @router.get("/{project_id}/inter-annotator-matrix")
 def inter_annotator_matrix(
-    request: Request,
     project_id: str,
     labeling_task_id: str,
     include_gold_star: Optional[bool] = True,
@@ -99,7 +116,6 @@ def inter_annotator_matrix(
 
 @router.get("/{project_id}/confusion-matrix")
 def confusion_matrix(
-    request: Request,
     project_id: str,
     labeling_task_id: str,
     slice_id: Optional[str] = None,
@@ -118,7 +134,6 @@ def confusion_matrix(
 
 @router.get("/{project_id}/confidence-distribution")
 def confidence_distribution(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -138,7 +153,6 @@ def confidence_distribution(
 
 @router.get("/{project_id}/label-distribution")
 def label_distribution(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -153,3 +167,68 @@ def label_distribution(
         },
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
+
+
+@router.get("/{project_id}/gates-integration-data")
+def gates_integration_data(
+    project_id: str,
+) -> str:
+    return pack_json_result(
+        {
+            "data": {
+                "getGatesIntegrationData": manager.get_gates_integration_data(
+                    project_id, False
+                )
+            }
+        },
+    )
+
+
+@router.get("/{project_id}/project-tokenization")
+def project_tokenization(
+    project_id: str,
+) -> str:
+    waiting_task = task_queue.get_by_tokenization(project_id)
+    data = None
+    if waiting_task and not waiting_task.is_active:
+        data = {
+            "id": waiting_task.id,
+            "started_at": waiting_task.created_at,
+            "state": "QUEUED",
+            "progress": -1,
+        }
+        for key in PROJECT_TOKENIZATION_WHITELIST:
+            if key not in data:
+                data[key] = None
+    else:
+        data = sql_alchemy_to_dict(
+            tokenization.get_record_tokenization_task(project_id),
+            column_whitelist=PROJECT_TOKENIZATION_WHITELIST,
+        )
+    return pack_json_result(
+        {"data": {"projectTokenization": data}},
+    )
+
+
+@router.get("/{project_id}/labeling-tasks-by-project-id")
+def labeling_tasks_by_project_id(
+    project_id: str,
+) -> str:
+    return pack_json_result(
+        {
+            "data": {
+                "projectByProjectId": sql_alchemy_to_dict(
+                    get_labeling_tasks_by_project_id_full(project_id)
+                )
+            }
+        },
+    )
+
+
+@router.get("/model-provider-info")
+def get_model_provider_info(request: Request) -> Dict:
+    if not misc.check_is_managed():
+        raise NotAllowedInOpenSourceError
+
+    data = model_manager.get_model_provider_info()
+    return pack_json_result({"data": {"modelProviderInfo": data}})

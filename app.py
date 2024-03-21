@@ -19,6 +19,7 @@ from api.transfer import (
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
+from fast_api.routes.project_setting import router as project_setting_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
 from fast_api.routes.zero_shot import router as zero_shot_router
@@ -27,6 +28,7 @@ from fast_api.routes.embedding import router as embedding_router
 from fast_api.routes.notification import router as notification_router
 from fast_api.routes.data_slices import router as data_slice_router
 from fast_api.routes.lookup_lists import router as lookup_lists_router
+from fast_api.routes.heuristic import router as heuristic_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -39,6 +41,7 @@ from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
     PREFIX_ORG,
     PREFIX_PROJECT,
+    PREFIX_PROJECT_SETTING,
     PREFIX_MISC,
     PREFIX_COMMENT,
     PREFIX_ZERO_SHOT,
@@ -47,6 +50,7 @@ from route_prefix import (
     PREFIX_NOTIFICATION,
     PREFIX_DATA_SLICE,
     PREFIX_LOOKUP_LISTS,
+    PREFIX_HEURISTIC,
 )
 from util import security, clean_up
 
@@ -57,6 +61,9 @@ fastapi_app = FastAPI()
 
 fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
+fastapi_app.include_router(
+    project_setting_router, prefix=PREFIX_PROJECT_SETTING, tags=["project-setting"]
+)
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
 fastapi_app.include_router(comment_router, prefix=PREFIX_COMMENT, tags=["comment"])
 fastapi_app.include_router(
@@ -71,12 +78,14 @@ fastapi_app.include_router(
 fastapi_app.include_router(
     notification_router, prefix=PREFIX_NOTIFICATION, tags=["notification"]
 )
-
 fastapi_app.include_router(
     data_slice_router, prefix=PREFIX_DATA_SLICE, tags=["data-slice"]
 )
 fastapi_app.include_router(
     lookup_lists_router, prefix=PREFIX_LOOKUP_LISTS, tags=["lookup-lists"]
+)
+fastapi_app.include_router(
+    heuristic_router, prefix=PREFIX_HEURISTIC, tags=["heuristic"]
 )
 
 routes = [

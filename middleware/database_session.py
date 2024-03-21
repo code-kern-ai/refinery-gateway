@@ -5,10 +5,16 @@ from fastapi.responses import JSONResponse
 from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from exceptions.exceptions import NotAllowedInDemoError
+from exceptions.exceptions import NotAllowedInDemoError, NotAllowedInOpenSourceError
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
-from route_prefix import PREFIX_ATTRIBUTE, PREFIX_PROJECT, PREFIX_DATA_SLICE
+from route_prefix import (
+    PREFIX_ATTRIBUTE,
+    PREFIX_PROJECT,
+    PREFIX_DATA_SLICE,
+    PREFIX_PROJECT_SETTING,
+    PREFIX_HEURISTIC,
+)
 from submodules.model.business_objects import general
 from controller.auth import manager as auth_manager
 
@@ -16,7 +22,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-PROJECT_ACCESS_PREFIX = [PREFIX_PROJECT, PREFIX_ATTRIBUTE, PREFIX_DATA_SLICE]
+PROJECT_ACCESS_PREFIX = [
+    PREFIX_PROJECT,
+    PREFIX_PROJECT_SETTING,
+    PREFIX_ATTRIBUTE,
+    PREFIX_DATA_SLICE,
+    PREFIX_HEURISTIC,
+]
 
 
 class DatabaseSessionHandler(BaseHTTPMiddleware):
@@ -49,7 +61,12 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
                     if project_id:
                         auth_manager.check_project_access(info, project_id)
                     break
-        except (NotAllowedInDemoError, GraphQLError, JSONDecodeError) as e:
+        except (
+            NotAllowedInDemoError,
+            NotAllowedInOpenSourceError,
+            GraphQLError,
+            JSONDecodeError,
+        ) as e:
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=401,
