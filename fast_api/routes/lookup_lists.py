@@ -28,3 +28,9 @@ def get_lookup_lists(project_id: str):
 def get_lookup_lists_by_lookup_list_id(project_id: str, lookup_list_id: str):
     data = manager.get_knowledge_base(project_id, lookup_list_id)
     return {"data": {"knowledgeBaseByKnowledgeBaseId": data}}
+
+
+@router.get("/lookup-lists/{project_id}/{lookup_list_id}/terms")
+def get_terms_by_lookup_list_id(project_id: str, lookup_list_id: str):
+    data = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list_id)
+    return {"data": {"termsByKnowledgeBaseId": data}}
