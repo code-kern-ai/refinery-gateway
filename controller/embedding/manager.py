@@ -9,7 +9,15 @@ from . import util
 from . import connector
 from .terms import TERMS_INFO
 from controller.model_provider import manager as model_manager
-from submodules.model.business_objects import attribute, embedding, agreement, general
+from submodules.model.business_objects import (
+    attribute,
+    embedding,
+    agreement,
+    general,
+    project,
+)
+from submodules.model.util import sql_alchemy_to_dict
+from controller.embedding.connector import collection_on_qdrant
 
 
 def get_terms_info(
@@ -135,6 +143,63 @@ def get_embedding_name(
         name += f"-{api_token[:3]}...{api_token[-4:]}"
 
     return name
+
+
+EMBEDDING_SCHEMA_WHITELIST = [
+    "id",
+    "name",
+    "custom",
+    "type",
+    "state",
+    "progress",
+    "dimension",
+    "count",
+    "platform",
+    "model",
+    "filterAttributes",
+    "attributeId",
+    "onQdrant",
+]
+
+
+def get_embedding_schema(project_id: str) -> List[Dict[str, Any]]:
+    embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+    embedding_dict = sql_alchemy_to_dict(
+        embeddings, column_whitelist=EMBEDDING_SCHEMA_WHITELIST
+    )
+    number_records = len(project.get(project_id).records)
+    expanded_embeddings = []
+    for embed in embedding_dict:
+        count = embedding.get_tensor_count(embed["id"])
+        onQdrant = collection_on_qdrant(project_id, embed["id"])
+
+        embedding_item = embedding.get_tensor(embed["id"])
+        dimension = 0
+        if embedding_item is not None:
+            # distinguish between token and attribute embeddings
+            if type(embedding_item.data[0]) is list:
+                dimension = len(embedding_item.data[0])
+            else:
+                dimension = len(embedding_item.data)
+
+        if embed["state"] == "FINISHED":
+            progress = 1
+        elif embed["state"] == "INITIALIZING" or embed["state"] == "WAITING":
+            progress = 0.0
+        else:
+            progress = min(
+                0.1 + (count / number_records * 0.9),
+                0.99,
+            )
+        expanded_embed = {
+            **embed,
+            "progress": progress,
+            "count": count,
+            "dimension": dimension,
+            "onQdrant": onQdrant,
+        }
+        expanded_embeddings.append(expanded_embed)
+    return {"id": project_id, "embeddings": expanded_embeddings}
 
 
 def recreate_embeddings(
