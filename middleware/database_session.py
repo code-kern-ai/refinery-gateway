@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from exceptions.exceptions import NotAllowedInDemoError
+from exceptions.exceptions import NotAllowedInDemoError, NotAllowedInOpenSourceError
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
 from route_prefix import (
@@ -59,7 +59,12 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
                     if project_id:
                         auth_manager.check_project_access(info, project_id)
                     break
-        except (NotAllowedInDemoError, GraphQLError, JSONDecodeError) as e:
+        except (
+            NotAllowedInDemoError,
+            NotAllowedInOpenSourceError,
+            GraphQLError,
+            JSONDecodeError,
+        ) as e:
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=401,
