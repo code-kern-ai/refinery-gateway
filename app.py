@@ -19,6 +19,7 @@ from api.transfer import (
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
+from fast_api.routes.project_setting import router as project_setting_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
 from fast_api.routes.zero_shot import router as zero_shot_router
@@ -39,6 +40,7 @@ from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
     PREFIX_ORG,
     PREFIX_PROJECT,
+    PREFIX_PROJECT_SETTING,
     PREFIX_MISC,
     PREFIX_COMMENT,
     PREFIX_ZERO_SHOT,
@@ -57,6 +59,9 @@ fastapi_app = FastAPI()
 
 fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
+fastapi_app.include_router(
+    project_setting_router, prefix=PREFIX_PROJECT_SETTING, tags=["project-setting"]
+)
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
 fastapi_app.include_router(comment_router, prefix=PREFIX_COMMENT, tags=["comment"])
 fastapi_app.include_router(

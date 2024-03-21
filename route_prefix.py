@@ -1,6 +1,7 @@
 PREFIX = "/v1"
 PREFIX_ORG = PREFIX + "/organization"
 PREFIX_PROJECT = PREFIX + "/project"
+PREFIX_PROJECT_SETTING = PREFIX + "/project-setting"
 PREFIX_MISC = PREFIX + "/misc"
 PREFIX_COMMENT = PREFIX + "/comment"
 PREFIX_ZERO_SHOT = PREFIX + "/zero-shot"
