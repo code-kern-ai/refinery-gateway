@@ -6,7 +6,7 @@ router = APIRouter()
 
 
 @router.get("/lookup-lists/{project_id}")
-def get_lookup_lists(request: Request, project_id: str):
+def get_lookup_lists(project_id: str):
 
     data = manager.get_all_knowledge_bases(project_id)
     term_data = []
@@ -22,3 +22,9 @@ def get_lookup_lists(request: Request, project_id: str):
         )
 
     return {"data": {"knowledgeBasesByProjectId": term_data}}
+
+
+@router.get("/lookup-lists/{project_id}/{lookup_list_id}")
+def get_lookup_lists_by_lookup_list_id(project_id: str, lookup_list_id: str):
+    data = manager.get_knowledge_base(project_id, lookup_list_id)
+    return {"data": {"knowledgeBaseByKnowledgeBaseId": data}}
