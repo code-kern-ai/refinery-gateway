@@ -37,8 +37,8 @@ def get_overview_stats(request: Request):
 
 @router.get("/user-info")
 def get_user_info(request: Request):
-    data = auth_manager.get_user_by_info(request.state.info)
-
+    user = auth_manager.get_user_by_info(request.state.info)
+    data = manager.get_user_info(user)
     return {"data": {"userInfo": data}}
 
 

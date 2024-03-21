@@ -10,6 +10,8 @@ from util import notification
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
+USER_INFO_WHITELIST = {"id", "role"}
+
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
     org = organization.get(org_id)
@@ -40,6 +42,12 @@ def get_organization_by_id(org_id: str) -> Organization:
     attr = ["id", "name", "max_rows", "max_cols", "max_char_count", "gdpr_compliant"]
     organization_filtered = [{key: org_dict[key] for key in org_dict if key in attr}]
     return organization_filtered
+
+
+def get_user_info(user) -> User:
+    user_filtered = sql_alchemy_to_dict(user, column_whitelist=USER_INFO_WHITELIST)
+    (user_expanded,) = kratos.expand_user_mail_name([user_filtered])
+    return user_expanded
 
 
 def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
