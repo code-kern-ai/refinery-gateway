@@ -20,6 +20,7 @@ from api.transfer import (
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.misc import router as misc_router
+from fast_api.routes.comment import router as comment_router
 from fast_api.routes.zero_shot import router as zero_shot_router
 from fast_api.routes.attribute import router as attribute_router
 from fast_api.routes.embedding import router as embedding_router
@@ -39,6 +40,7 @@ from route_prefix import (
     PREFIX_ORG,
     PREFIX_PROJECT,
     PREFIX_MISC,
+    PREFIX_COMMENT,
     PREFIX_ZERO_SHOT,
     PREFIX_ATTRIBUTE,
     PREFIX_EMBEDDING,
@@ -56,6 +58,7 @@ fastapi_app = FastAPI()
 fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
+fastapi_app.include_router(comment_router, prefix=PREFIX_COMMENT, tags=["comment"])
 fastapi_app.include_router(
     zero_shot_router, prefix=PREFIX_ZERO_SHOT, tags=["zero-shot"]
 )

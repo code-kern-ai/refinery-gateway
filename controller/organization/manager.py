@@ -11,6 +11,14 @@ from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
 USER_INFO_WHITELIST = {"id", "role"}
+ORGANIZATION_WHITELIST = {
+    "id",
+    "name",
+    "max_rows",
+    "max_cols",
+    "max_char_count",
+    "gdpr_compliant",
+}
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
@@ -38,10 +46,8 @@ def get_organization_by_name(name: str) -> Organization:
 
 def get_organization_by_id(org_id: str) -> Organization:
     org = organization.get(org_id)
-    org_dict = sql_alchemy_to_dict(org)
-    attr = ["id", "name", "max_rows", "max_cols", "max_char_count", "gdpr_compliant"]
-    organization_filtered = [{key: org_dict[key] for key in org_dict if key in attr}]
-    return organization_filtered
+    org_dict = sql_alchemy_to_dict(org, column_whitelist=ORGANIZATION_WHITELIST)
+    return org_dict
 
 
 def get_user_info(user) -> User:
