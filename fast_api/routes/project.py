@@ -19,7 +19,14 @@ router = APIRouter()
 
 
 @router.get("/{project_id}/project-by-project-id")
-def get_project_by_project_id(request: Request, project_id: str) -> Dict:
+def get_project_by_project_id(
+    request: Request, project_id: str, labeling_tasks=False
+) -> Dict:
+
+    if labeling_tasks:
+        data = manager.get_project_with_labeling_tasks(project_id)
+        data_graphql = pack_as_graphql(data, "projectByProjectId")
+        return pack_json_result(data_graphql)
     data = get_project_by_project_id_sql(project_id)
     return pack_json_result({"data": {"projectByProjectId": data}})
 
@@ -35,7 +42,6 @@ def get_all_projects(request: Request) -> Dict:
 
 @router.get("/{project_id}/general-project-stats")
 def general_project_stats(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -55,7 +61,6 @@ def general_project_stats(
 
 @router.get("/{project_id}/inter-annotator-matrix")
 def inter_annotator_matrix(
-    request: Request,
     project_id: str,
     labeling_task_id: str,
     include_gold_star: Optional[bool] = True,
@@ -92,7 +97,6 @@ def inter_annotator_matrix(
 
 @router.get("/{project_id}/confusion-matrix")
 def confusion_matrix(
-    request: Request,
     project_id: str,
     labeling_task_id: str,
     slice_id: Optional[str] = None,
@@ -111,7 +115,6 @@ def confusion_matrix(
 
 @router.get("/{project_id}/confidence-distribution")
 def confidence_distribution(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -131,7 +134,6 @@ def confidence_distribution(
 
 @router.get("/{project_id}/label-distribution")
 def label_distribution(
-    request: Request,
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
@@ -145,4 +147,19 @@ def label_distribution(
             }
         },
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
+    )
+
+
+@router.get("/{project_id}/gates-integration-data")
+def gates_integration_data(
+    project_id: str,
+) -> str:
+    return pack_json_result(
+        {
+            "data": {
+                "getGatesIntegrationData": manager.get_gates_integration_data(
+                    project_id, False
+                )
+            }
+        },
     )
