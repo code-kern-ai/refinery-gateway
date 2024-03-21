@@ -19,7 +19,14 @@ router = APIRouter()
 
 
 @router.get("/{project_id}/project-by-project-id")
-def get_project_by_project_id(request: Request, project_id: str) -> Dict:
+def get_project_by_project_id(
+    request: Request, project_id: str, labeling_tasks=False
+) -> Dict:
+
+    if labeling_tasks:
+        data = manager.get_project_with_labeling_tasks(project_id)
+        data_graphql = pack_as_graphql(data, "projectByProjectId")
+        return pack_json_result(data_graphql)
     data = get_project_by_project_id_sql(project_id)
     return pack_json_result({"data": {"projectByProjectId": data}})
 
