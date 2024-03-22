@@ -4,10 +4,12 @@ from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
 from controller.organization import manager as org_manager
+from controller.payload import manager as payload_manager
 from submodules.model.business_objects.information_source import (
     get_heuristic_id_with_payload,
     get_source_statistics,
 )
+from submodules.model.business_objects.payload import get_payload_with_heuristic_type
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 
 
@@ -44,3 +46,9 @@ def get_heuristic_by_heuristic_id(project_id: str, heuristic_id: str):
     if statistics is not None:
         data["sourceStatistics"] = statistics["data"]["sourceStatistics"]
     return pack_json_result({"data": {"informationSourceBySourceId": data}})
+
+
+@router.get("/{project_id}/{payload_id}/payload-by-id")
+def get_payload_by_payload_id(project_id: str, payload_id: str):
+    data = sql_alchemy_to_dict(get_payload_with_heuristic_type(project_id, payload_id))
+    return pack_json_result({"data": {"payloadByPayloadId": data}})
