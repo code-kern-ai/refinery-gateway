@@ -4,7 +4,11 @@ from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
 from controller.organization import manager as org_manager
-from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.business_objects.information_source import (
+    get_heuristic_id_with_payload,
+    get_source_statistics,
+)
+from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 
 
 router = APIRouter()
@@ -28,3 +32,15 @@ def get_weak_supervision_run(request: Request, project_id: str):
     )
     ws_data["user"] = data
     return pack_json_result({"data": {"currentWeakSupervisionRun": ws_data}})
+
+
+@router.get("/{project_id}/{heuristic_id}/heuristic-by-id")
+def get_heuristic_by_heuristic_id(project_id: str, heuristic_id: str):
+    data = sql_alchemy_to_dict(get_heuristic_id_with_payload(project_id, heuristic_id))
+    statistics = pack_as_graphql(
+        sql_alchemy_to_dict(get_source_statistics(project_id, heuristic_id)),
+        "sourceStatistics",
+    )
+    if statistics is not None:
+        data["sourceStatistics"] = statistics["data"]["sourceStatistics"]
+    return pack_json_result({"data": {"informationSourceBySourceId": data}})
