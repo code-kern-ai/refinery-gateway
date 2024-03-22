@@ -6,6 +6,7 @@ from submodules.model.util import sql_alchemy_to_dict
 from typing import List
 from controller.auth import manager as auth_manager
 from controller.data_slice import manager
+from controller.record import manager as record_manager
 import json
 
 
@@ -30,3 +31,9 @@ def data_slices(
     return pack_json_result(
         {"data": {"dataSlices": wrap_content_for_frontend(values)}},
     )
+
+
+@router.get("/{project_id}/unique-values")
+def get_unique_values_by_attributes(project_id: str):
+    data = record_manager.get_unique_values_by_attributes(project_id)
+    return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
