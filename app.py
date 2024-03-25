@@ -29,6 +29,7 @@ from fast_api.routes.notification import router as notification_router
 from fast_api.routes.data_slices import router as data_slice_router
 from fast_api.routes.lookup_lists import router as lookup_lists_router
 from fast_api.routes.heuristic import router as heuristic_router
+from fast_api.routes.data_browser import router as data_browser_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -51,6 +52,7 @@ from route_prefix import (
     PREFIX_DATA_SLICE,
     PREFIX_LOOKUP_LISTS,
     PREFIX_HEURISTIC,
+    PREFIX_DATA_BROWSER,
 )
 from util import security, clean_up
 
@@ -86,6 +88,9 @@ fastapi_app.include_router(
 )
 fastapi_app.include_router(
     heuristic_router, prefix=PREFIX_HEURISTIC, tags=["heuristic"]
+)
+fastapi_app.include_router(
+    data_browser_router, prefix=PREFIX_DATA_BROWSER, tags=["data-browser"]
 )
 
 routes = [
