@@ -41,7 +41,7 @@ async def get_all_comments(request: Request):
                 project_id,
             )
         add_info = None
-        if requested[key].get("includeAddInfo"):
+        if requested[key].get("includeAddInfo") and "xfkey" in requested[key]:
             add_info = manager.get_add_info(
                 requested[key]["xftype"], project_id, requested[key].get("xfkey")
             )
