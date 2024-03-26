@@ -218,6 +218,21 @@ def labeling_tasks_by_project_id(
     )
 
 
+@router.get("/{project_id}/record-export-by-project-id")
+def record_export_by_project_id(
+    project_id: str,
+) -> str:
+    return pack_json_result(
+        {
+            "data": {
+                "projectByProjectId": sql_alchemy_to_dict(
+                    get_labeling_tasks_by_project_id_full(project_id)
+                )
+            }
+        },
+    )
+
+
 @router.get("/model-provider-info")
 def get_model_provider_info(request: Request) -> Dict:
     if not misc.check_is_managed():
