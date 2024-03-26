@@ -8,7 +8,7 @@ from fast_api.routes.client_response import pack_json_result
 
 from submodules.model.util import (
     sql_alchemy_to_dict,
-    to_frontend_obj_snake,
+    to_frontend_obj_raw,
 )
 
 
@@ -56,7 +56,7 @@ async def search_records_extended(request: Request, project_id: str):
     )
 
     record_list = sql_alchemy_to_dict(results.record_list, for_frontend=False)
-    record_list = to_frontend_obj_snake(record_list)
+    record_list = to_frontend_obj_raw(record_list)
     record_list_pop = [{"recordData": json.dumps(item)} for item in record_list]
 
     data = {
