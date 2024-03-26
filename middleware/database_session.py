@@ -9,6 +9,7 @@ from exceptions.exceptions import NotAllowedInDemoError, NotAllowedInOpenSourceE
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
 from route_prefix import (
+    PREFIX_ORGANIZATION,
     PREFIX_ATTRIBUTE,
     PREFIX_PROJECT,
     PREFIX_DATA_SLICE,
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 PROJECT_ACCESS_PREFIX = [
+    PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
     PREFIX_PROJECT_SETTING,
     PREFIX_ATTRIBUTE,

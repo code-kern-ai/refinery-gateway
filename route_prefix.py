@@ -1,5 +1,5 @@
 PREFIX = "/v1"
-PREFIX_ORG = PREFIX + "/organization"
+PREFIX_ORGANIZATION = PREFIX + "/organization"
 PREFIX_PROJECT = PREFIX + "/project"
 PREFIX_PROJECT_SETTING = PREFIX + "/project-setting"
 PREFIX_MISC = PREFIX + "/misc"
