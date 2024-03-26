@@ -14,6 +14,7 @@ from submodules.model.business_objects import (
     labeling_task,
     organization,
     project,
+    record,
     record_label_association,
     data_slice,
     embedding,
@@ -35,7 +36,7 @@ from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
 from controller.gates import gates_service
 from controller.auth import kratos
-from controller.labeling_task import manager as labeling_task_manager
+from submodules.model.util import sql_alchemy_to_dict
 
 LABELING_TASK_WHITELIST = {
     "id",
@@ -49,6 +50,15 @@ LABELING_TASK_WHITELIST = {
 LABEL_WHITELIST = {"id", "name", "color", "hotkey"}
 ATTRIBUTE_WHITELIST = {"id", "name", "relativePosition", "dataType"}
 INFORMATION_SOURCES_WHITELIST = {"id", "type", "returnType", "name", "description"}
+ALL_PROJECTS_WHITELIST = {
+    "id",
+    "name",
+    "description",
+    "tokenizer",
+    "status",
+    "created_at",
+    "created_by",
+}
 
 
 def get_project(project_id: str) -> Project:
@@ -68,7 +78,10 @@ def get_all_projects(organization_id: str) -> List[Project]:
 
 
 def get_all_projects_by_user(organization_id) -> List[Project]:
-    project_dicts = project.get_all_by_user_organization_id(organization_id)
+    projects = project.get_all_by_user_organization_id(organization_id)
+    project_dicts = sql_alchemy_to_dict(
+        projects, column_whitelist=ALL_PROJECTS_WHITELIST
+    )
 
     for p in project_dicts:
         user_id = p["created_by"]
@@ -80,6 +93,13 @@ def get_all_projects_by_user(organization_id) -> List[Project]:
             "first_name": first_name,
             "last_name": last_name,
         }
+
+        if p["status"] == enums.ProjectStatus.IN_DELETION.value:
+            p["num_data_scale_uploaded"] = -1
+        else:
+            p["num_data_scale_uploaded"] = record.get_count_scale_uploaded(p["id"])
+
+        del p["created_by"]
 
     return project_dicts
 

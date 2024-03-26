@@ -20,6 +20,6 @@ def get_version_overview(request: Request) -> Dict:
 
 
 @router.get("/has-updates")
-def get_version_overview(request: Request) -> Dict:
+def has_updates(request: Request) -> Dict:
     data = manager.has_updates()
     return pack_json_result({"data": {"hasUpdates": data}})

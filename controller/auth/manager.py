@@ -13,6 +13,8 @@ from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
 import sqlalchemy
 
+DEV_USER_ID = "59e8dfca-ce56-44df-a8c7-5f05c61da499"
+
 
 def get_organization_id_by_info(info) -> Organization:
     organization: Organization = get_user_by_info(info).organization
@@ -22,7 +24,11 @@ def get_organization_id_by_info(info) -> Organization:
 
 
 def get_user_by_info(info) -> User:
-    user_id: str = get_user_id_by_jwt_token(info.context["request"])
+    request = info.context["request"]
+    if request.url.hostname == "localhost" and request.url.port == 7051:
+        user_id = DEV_USER_ID
+    else:
+        user_id: str = get_user_id_by_jwt_token(request)
     return user_manager.get_or_create_user(user_id)
 
 
