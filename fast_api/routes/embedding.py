@@ -21,8 +21,6 @@ def get_embedding_platforms():
 
 @router.get("/recommended-encoders")
 def data_slices(request: Request, project_id: Optional[str] = None) -> List:
-    if project_id:
-        auth_manager.check_project_access(request.state.info, project_id)
     is_managed = misc.check_is_managed()
     data = manager.get_recommended_encoders(is_managed)
     for v in data:
