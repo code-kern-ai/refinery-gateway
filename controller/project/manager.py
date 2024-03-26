@@ -69,6 +69,10 @@ def get_project_with_labeling_tasks(project_id: str) -> Project:
     return project.get_with_labling_tasks(project_id)
 
 
+def get_project_with_labeling_tasks_info_attributes(project_id: str) -> Project:
+    return project.get_with_labling_tasks_info_attributes(project_id)
+
+
 def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
     return project.get_with_organization_id(organization_id, project_id)
 

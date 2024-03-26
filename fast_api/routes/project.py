@@ -222,15 +222,9 @@ def labeling_tasks_by_project_id(
 def record_export_by_project_id(
     project_id: str,
 ) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "projectByProjectId": sql_alchemy_to_dict(
-                    get_labeling_tasks_by_project_id_full(project_id)
-                )
-            }
-        },
-    )
+    data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
+    data_graphql = pack_as_graphql(data, "projectByProjectId")
+    return pack_json_result(data_graphql)
 
 
 @router.get("/model-provider-info")
