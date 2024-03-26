@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from controller.auth import kratos
 
 from graphql_api import (
     types,
@@ -22,6 +23,7 @@ def resolve_inter_annotator_matrix_classification(
     include_gold_star: bool,
     include_all_org_user: bool,
     static_slice_id: str,
+    as_gql_type: bool = True,  # otherwise its a dict
 ):
     project_id = str(labeling_task.project_id)
     labeling_task_id = str(labeling_task.id)
@@ -50,15 +52,28 @@ def resolve_inter_annotator_matrix_classification(
     ):
         users[enums.InterAnnotatorConstants.ID_GOLD_USER.value] = 0
 
-    for user in users:
-        all_users.append(
-            types.UserCountWrapper(user=models.User(id=user), count=users[user])
+    if as_gql_type:
+        for user in users:
+            all_users.append(
+                types.UserCountWrapper(user=models.User(id=user), count=users[user])
+            )
+        all_users.sort(
+            key=lambda x: (
+                x.user.id
+                if x.user.id != enums.InterAnnotatorConstants.ID_GOLD_USER.value
+                else "zzz"
+            )
         )
-    all_users.sort(
-        key=lambda x: x.user.id
-        if x.user.id != enums.InterAnnotatorConstants.ID_GOLD_USER.value
-        else "zzz"
-    )
+    else:
+        all_users = kratos.resolve_all_user_ids(list(users.keys()))
+        all_users = [{"user": user, "count": users[user["id"]]} for user in all_users]
+        all_users.sort(
+            key=lambda x: (
+                x["user"]["id"]
+                if x["user"]["id"] != enums.InterAnnotatorConstants.ID_GOLD_USER.value
+                else "zzz"
+            )
+        )
 
     elements = []
     count_lookup = __get_classification_user_by_user_label_count(
@@ -73,16 +88,26 @@ def resolve_inter_annotator_matrix_classification(
                 percent = count_lookup.get(userA + "@" + userB)
                 if percent is None:
                     percent = -1
-
-            elements.append(
-                types.InterAnnotatorElement(
-                    user_id_a=userA, user_id_b=userB, percent=percent
+            if as_gql_type:
+                elements.append(
+                    types.InterAnnotatorElement(
+                        user_id_a=userA, user_id_b=userB, percent=percent
+                    )
                 )
-            )
-
-    return types.InterAnnotatorMatrix(
-        all_users=all_users, count_names=len(all_users), elements=elements
-    )
+            else:
+                elements.append(
+                    {"userIdA": userA, "userIdB": userB, "percent": float(percent)}
+                )
+    if as_gql_type:
+        return types.InterAnnotatorMatrix(
+            all_users=all_users, count_names=len(all_users), elements=elements
+        )
+    else:
+        return {
+            "allUsers": all_users,
+            "countNames": len(all_users),
+            "elements": elements,
+        }
 
 
 def __run_checks_inter_annotator_classification(
@@ -147,6 +172,7 @@ def resolve_inter_annotator_matrix_extraction(
     include_gold_star: bool,
     include_all_org_user: bool,
     static_slice_id: str,
+    as_gql_type: bool = True,  # otherwise its a dict
 ):
     project_id = str(labeling_task.project_id)
     labeling_task_id = str(labeling_task.id)
@@ -168,15 +194,28 @@ def resolve_inter_annotator_matrix_extraction(
     ):
         users[enums.InterAnnotatorConstants.ID_GOLD_USER.value] = 0
 
-    for user in users:
-        all_users.append(
-            types.UserCountWrapper(user=models.User(id=user), count=users[user])
+    if as_gql_type:
+        for user in users:
+            all_users.append(
+                types.UserCountWrapper(user=models.User(id=user), count=users[user])
+            )
+        all_users.sort(
+            key=lambda x: (
+                x.user.id
+                if x.user.id != enums.InterAnnotatorConstants.ID_GOLD_USER.value
+                else "zzz"
+            )
         )
-    all_users.sort(
-        key=lambda x: x.user.id
-        if x.user.id != enums.InterAnnotatorConstants.ID_GOLD_USER.value
-        else "zzz"
-    )
+    else:
+        all_users = kratos.resolve_all_user_ids(list(users.keys()))
+        all_users = [{"user": user, "count": users[user["id"]]} for user in all_users]
+        all_users.sort(
+            key=lambda x: (
+                x["user"]["id"]
+                if x["user"]["id"] != enums.InterAnnotatorConstants.ID_GOLD_USER.value
+                else "zzz"
+            )
+        )
 
     elements = []
     max_lookup = __get_extraction_user_max_lookup(
@@ -200,16 +239,26 @@ def resolve_inter_annotator_matrix_extraction(
                     percent = -1
                 else:
                     percent = round(amount / full_count, 4)
-
-            elements.append(
-                types.InterAnnotatorElement(
-                    user_id_a=userA, user_id_b=userB, percent=percent
+            if as_gql_type:
+                elements.append(
+                    types.InterAnnotatorElement(
+                        user_id_a=userA, user_id_b=userB, percent=percent
+                    )
                 )
-            )
-
-    return types.InterAnnotatorMatrix(
-        all_users=all_users, count_names=len(all_users), elements=elements
-    )
+            else:
+                elements.append(
+                    {"user_id_a": userA, "user_id_b": userB, "percent": percent}
+                )
+    if as_gql_type:
+        return types.InterAnnotatorMatrix(
+            all_users=all_users, count_names=len(all_users), elements=elements
+        )
+    else:
+        return {
+            "allUsers": all_users,
+            "countNames": len(all_users),
+            "elements": elements,
+        }
 
 
 def __run_checks_inter_annotator_extraction(project_id: str, slice_id: str) -> None:
