@@ -3,8 +3,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
+from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
 from fast_api.routes.client_response import pack_json_result
+from util import notification
+from submodules.model.enums import NotificationType
 
 from submodules.model.util import (
     sql_alchemy_to_dict,
@@ -71,3 +74,28 @@ async def search_records_extended(request: Request, project_id: str):
     }
 
     return pack_json_result({"data": {"searchRecordsExtended": data}})
+
+
+@router.post("/{project_id}/create-outlier-slice/{embedding_id}")
+def create_outlier_slice(request: Request, project_id: str, embedding_id: str):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+
+    data_slice_item = data_slice_manager.create_outlier_slice(
+        project_id, user_id, embedding_id
+    )
+    if not data_slice_item:
+        notification.create_notification(
+            NotificationType.CUSTOM,
+            user_id,
+            project_id,
+            "Not enough unlabeled records. No outliers detected.",
+        )
+    else:
+        notification.send_organization_update(
+            project_id, f"data_slice_created:{str(data_slice_item.id)}"
+        )
+
+    return JSONResponse(
+        status_code=201,
+        content={"message": "Outlier slice created"},
+    )
