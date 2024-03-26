@@ -40,7 +40,7 @@ from graphql_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
-    PREFIX_ORG,
+    PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
     PREFIX_PROJECT_SETTING,
     PREFIX_MISC,
@@ -61,7 +61,9 @@ logger = logging.getLogger(__name__)
 
 fastapi_app = FastAPI()
 
-fastapi_app.include_router(org_router, prefix=PREFIX_ORG, tags=["organization"])
+fastapi_app.include_router(
+    org_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
+)
 fastapi_app.include_router(project_router, prefix=PREFIX_PROJECT, tags=["project"])
 fastapi_app.include_router(
     project_setting_router, prefix=PREFIX_PROJECT_SETTING, tags=["project-setting"]

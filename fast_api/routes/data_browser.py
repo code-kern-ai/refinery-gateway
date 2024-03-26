@@ -57,7 +57,10 @@ async def search_records_extended(request: Request, project_id: str):
 
     record_list = sql_alchemy_to_dict(results.record_list, for_frontend=False)
     record_list = to_frontend_obj_raw(record_list)
-    record_list_pop = [{"recordData": json.dumps(item)} for item in record_list]
+    record_list_pop = [
+        {"recordData": json.dumps(item), "__typename": "ExtendedRecord"}
+        for item in record_list
+    ]
 
     data = {
         "recordList": record_list_pop,
