@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from controller.knowledge_base import manager
 from controller.knowledge_term import manager as manager_terms
 from submodules.model.util import sql_alchemy_to_dict

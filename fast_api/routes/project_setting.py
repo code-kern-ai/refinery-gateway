@@ -9,13 +9,21 @@ from submodules.model.util import sql_alchemy_to_dict
 
 router = APIRouter()
 
+QUEUED_TASKS_WHITELIST = [
+    "id",
+    "project_id",
+    "task_type",
+    "task_id",
+    "task_info",
+    "__typename",
+]
+
 
 @router.get("/{project_id}/queued-tasks/{task_type}")
-def get_project_by_project_id(
-    request: Request, project_id: str, task_type: str
-) -> Dict:
+def get_queued_tasks(request: Request, project_id: str, task_type: str) -> Dict:
     data = manager.get_all_waiting_by_type(project_id, task_type)
-    return pack_json_result({"data": {"queuedTasks": data}})
+    data_dict = sql_alchemy_to_dict(data, column_whitelist=QUEUED_TASKS_WHITELIST)
+    return pack_json_result({"data": {"queuedTasks": data_dict}})
 
 
 @router.get("/{project_id}/{attribute_id}/attribute-by-id")
