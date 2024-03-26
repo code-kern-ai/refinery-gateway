@@ -9,7 +9,7 @@ from submodules.model.util import sql_alchemy_to_dict
 router = APIRouter()
 
 
-ACTIVE_ADMIN_MESSAGE_KEYS_TO_BE_KEPT = {
+ACTIVE_ADMIN_MESSAGES_WHITELIST = {
     "archive_date",
     "created_at",
     "id",
@@ -52,19 +52,9 @@ def get_all_user(request: Request):
 
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "allActiveAdminMessages": [
-                    {
-                        k: v
-                        for k, v in sql_alchemy_to_dict(ds).items()
-                        if k in ACTIVE_ADMIN_MESSAGE_KEYS_TO_BE_KEPT
-                    }
-                    for ds in admin_message_manager.get_messages(
-                        limit, active_only=True
-                    )
-                ]
-            }
-        },
+
+    data = admin_message_manager.get_messages(limit, active_only=True)
+    data_dict = sql_alchemy_to_dict(
+        data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
     )
+    return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
