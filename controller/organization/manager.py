@@ -64,12 +64,10 @@ def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
     all_users = user.get_all(organization_id, parsed)
-    all_users_dict = sql_alchemy_to_dict(all_users)
-    attr = ["id", "role"]
-    all_users_dict_filtered = [
-        {key: user[key] for key in user if key in attr} for user in all_users_dict
-    ]
-    all_users_expanded = kratos.expand_user_mail_name(all_users_dict_filtered)
+    all_users_dict = sql_alchemy_to_dict(
+        all_users, column_whitelist=USER_INFO_WHITELIST
+    )
+    all_users_expanded = kratos.expand_user_mail_name(all_users_dict)
     return all_users_expanded
 
 
