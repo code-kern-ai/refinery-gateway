@@ -37,3 +37,11 @@ def data_slices(
 def get_unique_values_by_attributes(project_id: str):
     data = record_manager.get_unique_values_by_attributes(project_id)
     return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
+
+
+@router.get("/{project_id}/static-data-slices-current-count/{slice_id}")
+def get_static_data_slices_current_count(
+    request: Request, project_id: str, slice_id: str
+):
+    data = manager.count_items(project_id, slice_id)
+    return pack_json_result({"data": {"staticDataSlicesCurrentCount": data}})
