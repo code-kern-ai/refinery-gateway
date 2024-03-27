@@ -4,7 +4,6 @@ from fastapi import APIRouter, Request
 from fast_api.routes.client_response import pack_json_result, wrap_content_for_frontend
 from submodules.model.util import sql_alchemy_to_dict
 from typing import List
-from controller.auth import manager as auth_manager
 from controller.data_slice import manager
 from controller.record import manager as record_manager
 import json
