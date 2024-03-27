@@ -16,6 +16,7 @@ from route_prefix import (
     PREFIX_PROJECT_SETTING,
     PREFIX_HEURISTIC,
     PREFIX_DATA_BROWSER,
+    PREFIX_LABELING,
 )
 from submodules.model.business_objects import general
 from controller.auth import manager as auth_manager
@@ -32,6 +33,7 @@ PROJECT_ACCESS_PREFIX = [
     PREFIX_DATA_SLICE,
     PREFIX_HEURISTIC,
     PREFIX_DATA_BROWSER,
+    PREFIX_LABELING,
 ]
 
 
