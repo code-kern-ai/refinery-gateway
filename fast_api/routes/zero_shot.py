@@ -1,6 +1,5 @@
 from controller.zero_shot import manager
 from fast_api.routes.client_response import pack_json_result
-from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from fastapi import APIRouter, Request
 
 

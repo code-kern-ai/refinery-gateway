@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict
 from controller.auth import manager as auth
-from controller.misc import config_service, manager
+from controller.misc import manager
 
 router = APIRouter()
 

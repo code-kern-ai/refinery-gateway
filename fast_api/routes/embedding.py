@@ -3,11 +3,10 @@ from typing import List, Optional
 from fast_api.routes.client_response import pack_json_result
 from controller.misc import manager as misc
 from fastapi import APIRouter, Request
-from controller.auth import manager as auth_manager
 from controller.embedding import manager
 from util import spacy_util
 import json
-from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
+from submodules.model.util import pack_as_graphql
 
 
 router = APIRouter()
