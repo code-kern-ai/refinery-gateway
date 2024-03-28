@@ -17,6 +17,7 @@ from .handler import (
     attribute_calculation as attribute_calculation_handler,
     task_queue as task_queue_handler,
     markdown_file as markdown_file_handler,
+    parse_cognition_tmp_file as cognition_tmp_file,
 )
 from .util import if_task_queue_send_websocket
 
@@ -90,6 +91,8 @@ def get_task_function_by_type(task_type: str) -> Tuple[Callable, Callable, int]:
         return task_queue_handler.get_task_functions()
     if task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
         return markdown_file_handler.get_task_functions()
+    if task_type == enums.TaskType.PARSE_COGNITION_TMP_FILE.value:
+        return cognition_tmp_file.get_task_functions()
     raise ValueError(f"Task type {task_type} not supported yet")
 
 
