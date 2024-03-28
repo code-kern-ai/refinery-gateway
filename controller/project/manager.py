@@ -365,12 +365,19 @@ def get_gates_integration_data(
     missing_information_sources = __get_missing_information_source_pickles(project_id)
 
     if project_id in projects_updating:
-        return GatesIntegrationData(
-            status=enums.GatesIntegrationStatus.UPDATING.value,
-            missing_tokenizer=missing_tokenizer,
-            missing_embeddings=missing_embeddings,
-            missing_information_sources=missing_information_sources,
-        )
+        if for_gql:
+            return GatesIntegrationData(
+                status=enums.GatesIntegrationStatus.UPDATING.value,
+                missing_tokenizer=missing_tokenizer,
+                missing_embeddings=missing_embeddings,
+                missing_information_sources=missing_information_sources,
+            )
+        return {
+            "status": status,
+            "missing_tokenizer": missing_tokenizer,
+            "missing_embeddings": missing_embeddings,
+            "missing_information_sources": missing_information_sources,
+        }
 
     status = enums.GatesIntegrationStatus.READY.value
     if (
