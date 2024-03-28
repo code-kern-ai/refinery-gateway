@@ -2,11 +2,13 @@ import json
 from typing import Dict
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from graphql import GraphQLError
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
 from fast_api.routes.client_response import pack_json_result
+from graphql_api.mutation.data_slice import handle_error
 from util import notification
 from submodules.model.enums import NotificationType
 
@@ -139,3 +141,36 @@ async def get_records_by_static_slice(request: Request, project_id: str, slice_i
     }
 
     return pack_json_result({"data": {"recordsByStaticSlice": data}})
+
+
+@router.post("/{project_id}/create-data-slice")
+async def create_data_slice(request: Request, project_id: str):
+    body = await request.json()
+
+    try:
+        filter_raw = body.get("options", {}).get("filterRaw")
+        name = body.get("options", {}).get("name")
+        filter_data = body.get("options", {}).get("filterData")
+        static = body.get("options", {}).get("static")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    user = auth_manager.get_user_by_info(request.state.info)
+
+    try:
+        data_slice_item = data_slice_manager.create_data_slice(
+            project_id, user.id, name, filter_raw, filter_data, static
+        )
+        notification.send_organization_update(
+            project_id, f"data_slice_created:{str(data_slice_item.id)}"
+        )
+        data = {"id": str(data_slice_item.id), "__typename": "CreateDataSlice"}
+        return pack_json_result(
+            {"data": {"createDataSlice": data}}, wrap_for_frontend=False
+        )
+    except Exception as e:
+        handle_error(e, user.id, project_id)
+        return GraphQLError(e)
