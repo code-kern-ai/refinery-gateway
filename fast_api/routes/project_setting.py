@@ -1,10 +1,16 @@
 from fastapi import APIRouter, Request
 from typing import Dict
+
+from fastapi.responses import JSONResponse
 from controller.task_queue import manager
+from controller.auth import manager as auth_manager
+from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
 from controller.labeling_task_label import manager as label_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.util import sql_alchemy_to_dict
+import traceback
+import json
 
 
 router = APIRouter()
@@ -45,3 +51,35 @@ def get_attribute_by_attribute_id(project_id: str, attribute_id: str):
 def check_rename_label(project_id: str, label_id: str, new_name: str):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
     return pack_json_result({"data": {"checkRenameLabel": data}})
+
+
+@router.get("/{project_id}/last-record-export-credentials")
+def get_last_record_export_credentials(request: Request, project_id: str):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    data = transfer_manager.last_record_export_credentials(project_id, user_id)
+    return pack_json_result({"data": {"lastRecordExportCredentials": data}})
+
+
+@router.post("/{project_id}/prepare-record-export")
+async def prepare_record_export(request: Request, project_id: str):
+    body = await request.json()
+
+    try:
+        export_options = body.get("options", {}).get("exportOptions")
+        export_options = json.loads(export_options)
+        key = body.get("options", {}).get("key")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+
+    try:
+        transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
+    except Exception as e:
+        print(traceback.format_exc(), flush=True)
+        return str(e)
+
+    return pack_json_result({"data": {"prepareRecordExport": ""}})
