@@ -8,6 +8,8 @@ from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
 from controller.project import manager as project_manager
+from submodules.model.business_objects import record
+from controller.tokenization import manager as tokenization_manager
 
 from submodules.model.business_objects import (
     information_source as information_source,
@@ -108,3 +110,58 @@ async def get_huddle_data(request: Request, project_id: str):
     }
 
     return pack_json_result({"data": {"requestHuddleData": data}})
+
+
+@router.post("/tokenized-record")
+async def get_tokenized_record(request: Request):
+    body = await request.json()
+
+    try:
+        record_id = body.get("recordId", "")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    record_item = record.get_without_project_id(record_id)
+    if not record_item:
+        return pack_json_result({"data": {"tokenizeRecord": None}})
+
+    # specific scenario where we should not delegate this call up to middleware
+    auth_manager.check_project_access(request.state.info, record_item.project_id)
+
+    tokenize_data = tokenization_manager.get_tokenized_record(
+        record_item.project_id, record_id
+    )
+
+    attributes = []
+
+    for attr in tokenize_data.attributes:
+        tokens = [
+            {
+                "value": token.value,
+                "idx": token.idx,
+                "posStart": token.pos_start,
+                "posEnd": token.pos_end,
+                "type": token.type,
+            }
+            for token in attr.tokens
+        ]
+        attributes.append(
+            {
+                "raw": tokenize_data.attributes[0].raw,
+                "attribute": {
+                    "id": tokenize_data.attributes[0].attribute.id,
+                    "name": tokenize_data.attributes[0].attribute.name,
+                },
+                "tokens": tokens,
+            }
+        )
+
+    data = {
+        "recordId": record_id,
+        "attributes": attributes,
+    }
+
+    return pack_json_result({"data": {"tokenizeRecord": data}})
