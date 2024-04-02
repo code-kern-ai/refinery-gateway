@@ -9,6 +9,7 @@ from controller.attribute import manager as attribute_manager
 from controller.labeling_task_label import manager as label_manager
 from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
+from controller.record import manager as record_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import events
@@ -51,7 +52,7 @@ def get_attribute_by_attribute_id(project_id: str, attribute_id: str):
     return pack_json_result({"data": {"attributeByAttributeId": data}})
 
 
-@router.get("/{project_id}/check-rename-label/")
+@router.get("/{project_id}/check-rename-label")
 def check_rename_label(project_id: str, label_id: str, new_name: str):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
     return pack_json_result({"data": {"checkRenameLabel": data}})
@@ -122,3 +123,17 @@ async def create_label(request: Request, project_id: str):
         project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
     )
     return pack_json_result({"data": {"createLabel": ""}})
+
+
+@router.get("/{project_id}/record-by-record-id")
+def get_record_by_record_id(project_id: str, record_id: str):
+    record = record_manager.get_record(project_id, record_id)
+
+    data = {
+        "id": str(record.id),
+        "data": json.dumps(record.data),
+        "projectId": str(record.project_id),
+        "category": record.category,
+    }
+
+    return pack_json_result({"data": {"recordByRecordId": data}})
