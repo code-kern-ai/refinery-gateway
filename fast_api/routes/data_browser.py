@@ -173,3 +173,39 @@ async def create_data_slice(request: Request, project_id: str):
     except Exception as e:
         handle_error(e, user.id, project_id)
         return GraphQLError(e)
+
+
+@router.post("/{project_id}/search-records-by-similarity")
+async def get_records_by_similarity(request: Request, project_id: str):
+    body = await request.body()
+    try:
+        data = json.loads(body)
+        embedding_id = data["embeddingId"]
+        record_id = data["recordId"]
+        att_filter = json.loads(data["attFilter"])
+        record_sub_key = data["recordSubKey"]
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+    results = manager.get_records_by_similarity_search(
+        project_id, user_id, embedding_id, record_id, att_filter, record_sub_key
+    )
+    record_list = sql_alchemy_to_dict(results.record_list, for_frontend=False)
+    record_list = to_frontend_obj_raw(record_list)
+    record_list_pop = [
+        {"recordData": json.dumps(item), "__typename": "ExtendedRecord"}
+        for item in record_list
+    ]
+
+    data = {
+        "recordList": record_list_pop,
+        "queryLimit": results.query_limit,
+        "queryOffset": results.query_offset,
+        "fullCount": results.full_count,
+        "sessionId": results.session_id,
+    }
+
+    return pack_json_result({"data": {"searchRecordsBySimilarity": data}})
