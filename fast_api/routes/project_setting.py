@@ -52,7 +52,7 @@ def get_attribute_by_attribute_id(project_id: str, attribute_id: str):
     return pack_json_result({"data": {"attributeByAttributeId": data}})
 
 
-@router.get("/{project_id}/check-rename-label/")
+@router.get("/{project_id}/check-rename-label")
 def check_rename_label(project_id: str, label_id: str, new_name: str):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
     return pack_json_result({"data": {"checkRenameLabel": data}})
