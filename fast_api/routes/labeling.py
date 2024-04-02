@@ -11,12 +11,15 @@ from controller.project import manager as project_manager
 from submodules.model.business_objects import record
 from controller.tokenization import manager as tokenization_manager
 
+from controller.record_label_association import manager as rla_manager
+from controller.record import manager as record_manager
 from submodules.model.business_objects import (
     information_source as information_source,
     user as user_manager,
     data_slice,
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
+from util import notification
 
 
 router = APIRouter()
@@ -165,3 +168,30 @@ async def get_tokenized_record(request: Request):
     }
 
     return pack_json_result({"data": {"tokenizeRecord": data}})
+
+
+@router.delete("/{project_id}/record-label-association-by-ids")
+async def delete_record_label_association_by_ids(request: Request, project_id: str):
+    body = await request.json()
+    try:
+        record_id = body.get("recordId", "")
+        association_ids = body.get("associationIds", [])
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.delete_record_label_association(
+        project_id, record_id, association_ids, user.id
+    )
+
+    return pack_json_result({"data": {"deleteRecordLabelAssociation": True}})
+
+
+@router.delete("/{project_id}/{record_id}/record-by-id")
+async def delete_record_by_id(request: Request, project_id: str, record_id: str):
+    record_manager.delete_record(project_id, record_id)
+    notification.send_organization_update(project_id, f"record_deleted:{record_id}")
+    return pack_json_result({"data": {"deleteRecord": True}})

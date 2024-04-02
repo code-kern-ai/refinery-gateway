@@ -7,8 +7,12 @@ from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
 from controller.labeling_task_label import manager as label_manager
+from controller.labeling_task import manager as task_manager
+from controller.project import manager as project_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.model import events
+from util import doc_ock, notification
 import traceback
 import json
 
@@ -83,3 +87,39 @@ async def prepare_record_export(request: Request, project_id: str):
         return str(e)
 
     return pack_json_result({"data": {"prepareRecordExport": ""}})
+
+
+@router.post("/{project_id}/create-label")
+async def create_label(request: Request, project_id: str):
+    body = await request.json()
+    try:
+        label_name = body.get("labelName")
+        labeling_task_id = body.get("labelingTaskId")
+        label_color = body.get("labelColor")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    if project_id:
+        auth_manager.check_project_access(request.state.info, project_id)
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    label = label_manager.create_label(
+        project_id, label_name, labeling_task_id, label_color
+    )
+    task = task_manager.get_labeling_task(project_id, labeling_task_id)
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabel(
+            ProjectName=f"{project.name}-{project.id}",
+            Name=label_name,
+            LabelingTaskName=task.name,
+        ),
+    )
+    notification.send_organization_update(
+        project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
+    )
+    return pack_json_result({"data": {"createLabel": ""}})
