@@ -29,9 +29,8 @@ AVAILABLE_LINKS_WHITELIST = ["id", "link", "link_type", "name", "is_locked"]
 
 @router.post("/{project_id}/available-links")
 async def get_available_links(request: Request, project_id: str):
-    body = await request.json()
-
     try:
+        body = await request.json()
         assumed_role = body.get("assumedRole", "")
         assumed_heuristic_id = body.get("assumedHeuristicId", "")
     except json.JSONDecodeError:
@@ -86,9 +85,8 @@ async def get_available_links(request: Request, project_id: str):
 
 @router.post("/{project_id}/huddle-data")
 async def get_huddle_data(request: Request, project_id: str):
-    body = await request.json()
-
     try:
+        body = await request.json()
         huddle_id = body.get("huddleId", "")
         huddle_type = body.get("huddleType", "")
     except json.JSONDecodeError:
@@ -117,9 +115,8 @@ async def get_huddle_data(request: Request, project_id: str):
 
 @router.post("/tokenized-record")
 async def get_tokenized_record(request: Request):
-    body = await request.json()
-
     try:
+        body = await request.json()
         record_id = body.get("recordId", "")
     except json.JSONDecodeError:
         return JSONResponse(
@@ -172,8 +169,8 @@ async def get_tokenized_record(request: Request):
 
 @router.delete("/{project_id}/record-label-association-by-ids")
 async def delete_record_label_association_by_ids(request: Request, project_id: str):
-    body = await request.json()
     try:
+        body = await request.json()
         record_id = body.get("recordId", "")
         association_ids = body.get("associationIds", [])
     except json.JSONDecodeError:
