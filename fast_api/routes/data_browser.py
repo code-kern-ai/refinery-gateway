@@ -145,9 +145,8 @@ async def get_records_by_static_slice(request: Request, project_id: str, slice_i
 
 @router.post("/{project_id}/create-data-slice")
 async def create_data_slice(request: Request, project_id: str):
-    body = await request.json()
-
     try:
+        body = await request.json()
         filter_raw = body.get("options", {}).get("filterRaw")
         name = body.get("options", {}).get("name")
         filter_data = body.get("options", {}).get("filterData")

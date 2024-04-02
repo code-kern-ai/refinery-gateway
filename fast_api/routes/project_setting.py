@@ -66,9 +66,8 @@ def get_last_record_export_credentials(request: Request, project_id: str):
 
 @router.post("/{project_id}/prepare-record-export")
 async def prepare_record_export(request: Request, project_id: str):
-    body = await request.json()
-
     try:
+        body = await request.json()
         export_options = body.get("options", {}).get("exportOptions")
         export_options = json.loads(export_options)
         key = body.get("options", {}).get("key")
@@ -91,8 +90,8 @@ async def prepare_record_export(request: Request, project_id: str):
 
 @router.post("/{project_id}/create-label")
 async def create_label(request: Request, project_id: str):
-    body = await request.json()
     try:
+        body = await request.json()
         label_name = body.get("labelName")
         labeling_task_id = body.get("labelingTaskId")
         label_color = body.get("labelColor")
