@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
+from controller.project import manager as project_manager
 
 from submodules.model.business_objects import (
     information_source as information_source,
@@ -75,6 +76,35 @@ async def get_available_links(request: Request, project_id: str):
             if key not in AVAILABLE_LINKS_WHITELIST:
                 obj.pop(key, None)
 
-    print(available_links)
-
     return pack_json_result({"data": {"availableLinks": available_links}})
+
+
+@router.post("/{project_id}/huddle-data")
+async def get_huddle_data(request: Request, project_id: str):
+    body = await request.json()
+
+    try:
+        huddle_id = body.get("huddleId", "")
+        huddle_type = body.get("huddleType", "")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+    huddle_data = project_manager.resolve_request_huddle_data(
+        project_id, user_id, huddle_id, huddle_type
+    )
+
+    data = {
+        "huddleId": huddle_id,
+        "huddleType": huddle_type,
+        "recordIds": huddle_data.record_ids,
+        "startPos": huddle_data.start_pos,
+        "allowedTask": huddle_data.allowed_task,
+        "canEdit": huddle_data.can_edit,
+        "checkedAt": huddle_data.checked_at,
+    }
+
+    return pack_json_result({"data": {"requestHuddleData": data}})
