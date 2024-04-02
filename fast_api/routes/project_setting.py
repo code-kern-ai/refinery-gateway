@@ -92,9 +92,15 @@ async def prepare_record_export(request: Request, project_id: str):
 @router.post("/{project_id}/create-label")
 async def create_label(request: Request, project_id: str):
     body = await request.json()
-    label_name = body.get("labelName")
-    labeling_task_id = body.get("labelingTaskId")
-    label_color = body.get("labelColor")
+    try:
+        label_name = body.get("labelName")
+        labeling_task_id = body.get("labelingTaskId")
+        label_color = body.get("labelColor")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
 
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)

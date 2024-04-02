@@ -8,7 +8,7 @@ from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
 from controller.project import manager as project_manager
-
+from controller.record_label_association import manager as rla_manager
 from submodules.model.business_objects import (
     information_source as information_source,
     user as user_manager,
@@ -108,3 +108,23 @@ async def get_huddle_data(request: Request, project_id: str):
     }
 
     return pack_json_result({"data": {"requestHuddleData": data}})
+
+
+@router.delete("/{project_id}/record-label-association-by-ids")
+async def delete_record_label_association_by_ids(request: Request, project_id: str):
+    body = await request.json()
+    try:
+        record_id = body.get("recordId", "")
+        association_ids = body.get("associationIds", [])
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.delete_record_label_association(
+        project_id, record_id, association_ids, user.id
+    )
+
+    return pack_json_result({"data": {"deleteRecordLabelAssociation": True}})
