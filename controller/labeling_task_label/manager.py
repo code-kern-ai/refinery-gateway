@@ -212,9 +212,9 @@ def __check_warnings_label_rename(
             entry["new_name"] = new_name
             entry["old_highlighting"] = old_highlighting
             entry["new_highlighting"] = new_highlighting
-            entry[
-                "href"
-            ] = f"/projects/{project_id}/information_sources/{information_source_item.id}"
+            entry["href"] = (
+                f"/projects/{project_id}/information_sources/{information_source_item.id}"
+            )
 
             append_me.append(entry)
 
