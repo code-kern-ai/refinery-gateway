@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from controller.knowledge_base import manager
 from controller.knowledge_term import manager as manager_terms
+from controller.transfer import manager as transfer_manager
 from submodules.model.util import sql_alchemy_to_dict
 
 router = APIRouter()
@@ -46,3 +47,14 @@ def get_terms_by_lookup_list_id(project_id: str, lookup_list_id: str):
     data = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
     return {"data": {"termsByKnowledgeBaseId": data_dict}}
+
+
+@router.get("/lookup-lists/{project_id}/{lookup_list_id}/export")
+def get_export_lookup_list(project_id: str, lookup_list_id: str):
+    return {
+        "data": {
+            "exportKnowledgeBase": transfer_manager.export_knowledge_base(
+                project_id, lookup_list_id
+            )
+        }
+    }
