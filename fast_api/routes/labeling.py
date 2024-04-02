@@ -96,18 +96,19 @@ async def get_huddle_data(request: Request, project_id: str):
         )
 
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+
     huddle_data = project_manager.resolve_request_huddle_data(
         project_id, user_id, huddle_id, huddle_type
     )
 
     data = {
-        "huddleId": huddle_id,
-        "huddleType": huddle_type,
+        "huddleId": huddle_data.huddle_id,
         "recordIds": huddle_data.record_ids,
+        "huddleType": huddle_type,
         "startPos": huddle_data.start_pos,
         "allowedTask": huddle_data.allowed_task,
         "canEdit": huddle_data.can_edit,
-        "checkedAt": huddle_data.checked_at,
+        "checkedAt": huddle_data.checked_at.isoformat(),
     }
 
     return pack_json_result({"data": {"requestHuddleData": data}})
