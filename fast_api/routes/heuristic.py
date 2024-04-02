@@ -74,3 +74,9 @@ def get_labeling_function_on_10_records(project_id: str, heuristic_id: str):
         "codeHasErrors": data.code_has_errors,
     }
     return {"data": {"getLabelingFunctionOn10Records": final_data}}
+
+
+@router.get("/{project_id}/model-callbacks-overview-data")
+def get_model_callbacks_overview_data(request: Request, project_id: str):
+    data = manager.get_overview_data(project_id, is_model_callback=True)
+    return pack_json_result({"data": {"modelCallbacksOverviewData": data}})
