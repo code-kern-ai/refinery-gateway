@@ -42,3 +42,33 @@ async def get_zero_shot_text(request: Request, project_id: str):
         ],
     }
     return {"data": {"zeroShotText": final_data}}
+
+
+@router.post("/{project_id}/zero-shot-10-records")
+async def get_zero_shot_10_records(request: Request, project_id: str):
+    body = await request.json()
+    try:
+        heuristic_id = body["heuristicId"]
+        label_names = body["labelNames"]
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+    data = manager.get_zero_shot_10_records(project_id, heuristic_id, label_names)
+    final_data = {
+        "duration": data.duration,
+        "records": [
+            {
+                "recordId": record.record_id,
+                "checkedText": record.checked_text,
+                "fullRecordData": record.full_record_data,
+                "labels": [
+                    {"labelName": label.label_name, "confidence": label.confidence}
+                    for label in record.labels
+                ],
+            }
+            for record in data.records
+        ],
+    }
+    return {"data": {"zeroShot10Records": final_data}}
