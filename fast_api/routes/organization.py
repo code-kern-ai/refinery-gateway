@@ -89,3 +89,9 @@ def get_all_users_with_record_count(request: Request, project_id: str):
         )
 
     return pack_json_result({"data": {"allUsersWithRecordCount": data}})
+
+
+@router.get("/can-create-local-org")
+def can_create_local_org(request: Request):
+    data = manager.can_create_local()
+    return pack_json_result({"data": {"canCreateLocalOrg": data}})
