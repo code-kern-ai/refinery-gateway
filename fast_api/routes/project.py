@@ -14,6 +14,7 @@ from submodules.model.business_objects.labeling_task import (
 )
 from controller.project import manager
 from controller.model_provider import manager as model_manager
+from controller.transfer import manager as transfer_manager
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
@@ -248,6 +249,13 @@ def get_model_provider_info(request: Request) -> Dict:
     return pack_json_result({"data": {"modelProviderInfo": data}})
 
 
+@router.get("/{project_id}/rats-running")
+def is_rats_running(request: Request, project_id: str) -> Dict:
+
+    data = manager.is_rats_tokenization_still_running(project_id)
+    return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
+
+
 @router.get("/{project_id}/access-tokens")
 def get_access_tokens(request: Request, project_id: str) -> Dict:
     data = sql_alchemy_to_dict(
@@ -261,3 +269,10 @@ def get_access_tokens(request: Request, project_id: str) -> Dict:
         token["created_by"] = f"{first_name} {last_name}"
 
     return pack_json_result({"data": {"allPersonalAccessTokens": data}})
+
+
+@router.get("/{project_id}/last-export-credentials")
+def last_export_credentials(request: Request, project_id: str) -> Dict:
+
+    data = transfer_manager.last_project_export_credentials(project_id)
+    return pack_json_result({"data": {"lastProjectExportCredentials": data}})
