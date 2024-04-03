@@ -1,12 +1,13 @@
 from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
+from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
 from submodules.model.business_objects.labeling_task import (
@@ -276,3 +277,33 @@ def last_export_credentials(request: Request, project_id: str) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
     return pack_json_result({"data": {"lastProjectExportCredentials": data}})
+
+
+@router.get("/notifications")
+def get_notifications(
+    request: Request,
+    project_filter: List[str] = Query(default=None),
+    level_filter: List[str] = Query(default=None),
+    type_filter: List[str] = Query(default=None),
+    user_filter: bool = Query(default=True),
+    limit: int = Query(default=50),
+):
+
+    if project_filter is None:
+        project_filter = []
+    if level_filter is None:
+        level_filter = []
+    if type_filter is None:
+        type_filter = []
+
+    for project_id in project_filter:
+        auth_manager.check_project_access(request.state.info, project_id)
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    notifications = get_filtered_notification(
+        user, project_filter, level_filter, type_filter, user_filter, limit
+    )
+
+    data = sql_alchemy_to_dict(notifications)
+
+    return pack_json_result({"data": {"notifications": data}})
