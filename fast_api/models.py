@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
@@ -49,3 +49,7 @@ class UploadCredentialsAndIdBody(BaseModel):
 
 class RecordIdeBody(BaseModel):
     code: StrictStr
+
+
+class RecordSyncBody(BaseModel):
+    changes: Dict

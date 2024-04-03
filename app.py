@@ -32,6 +32,7 @@ from fast_api.routes.heuristic import router as heuristic_router
 from fast_api.routes.data_browser import router as data_browser_router
 from fast_api.routes.labeling import router as labeling_router
 from fast_api.routes.record_ide import router as record_ide_router
+from fast_api.routes.record import router as record_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
@@ -57,6 +58,7 @@ from route_prefix import (
     PREFIX_DATA_BROWSER,
     PREFIX_LABELING,
     PREFIX_RECORD_IDE,
+    PREFIX_RECORD,
 )
 from util import security, clean_up
 
@@ -101,7 +103,8 @@ fastapi_app.include_router(
 fastapi_app.include_router(labeling_router, prefix=PREFIX_LABELING, tags=["labeling"])
 fastapi_app.include_router(
     record_ide_router, prefix=PREFIX_RECORD_IDE, tags=["record-ide"]
-)
+),
+fastapi_app.include_router(record_router, prefix=PREFIX_RECORD, tags=["record"])
 
 routes = [
     Route(
