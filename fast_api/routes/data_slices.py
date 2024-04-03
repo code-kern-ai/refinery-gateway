@@ -6,6 +6,7 @@ from submodules.model.util import sql_alchemy_to_dict
 from typing import List
 from controller.data_slice import manager
 from controller.record import manager as record_manager
+from util import notification
 import json
 
 
@@ -44,3 +45,14 @@ def get_static_data_slices_current_count(
 ):
     data = manager.count_items(project_id, slice_id)
     return pack_json_result({"data": {"staticDataSlicesCurrentCount": data}})
+
+
+@router.delete("/{project_id}/{data_slice_id}")
+async def delete_data_slice_by_id(
+    request: Request, project_id: str, data_slice_id: str
+):
+    manager.delete_data_slice(project_id, data_slice_id)
+    notification.send_organization_update(
+        project_id, f"data_slice_deleted:{data_slice_id}"
+    )
+    return pack_json_result({"data": {"deleteDataSliceById": True}})

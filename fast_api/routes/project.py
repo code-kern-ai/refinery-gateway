@@ -1,7 +1,8 @@
 from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
-from fastapi import APIRouter, Query, Request
+from fast_api.models import UploadCredentialsAndIdBody
+from fastapi import APIRouter, Body, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
@@ -277,6 +278,25 @@ def last_export_credentials(request: Request, project_id: str) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
     return pack_json_result({"data": {"lastProjectExportCredentials": data}})
+
+
+@router.post("/{project_id}/upload-credentials-and-id")
+def upload_credentials_and_id(
+    request: Request,
+    project_id: str,
+    upload_credentials: UploadCredentialsAndIdBody = Body(...),
+):
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+    data = transfer_manager.get_upload_credentials_and_id(
+        project_id,
+        user_id,
+        upload_credentials.file_name,
+        upload_credentials.file_type,
+        upload_credentials.file_import_options,
+        upload_credentials.upload_type,
+        upload_credentials.key,
+    )
+    return pack_json_result({"data": {"uploadCredentialsAndId": data}})
 
 
 @router.get("/notifications")
