@@ -201,5 +201,4 @@ async def get_link_locked(
     request: Request, project_id: str, link_route: StringBody = Body(...)
 ):
     is_locked = manager.check_link_locked(project_id, link_route.value)
-
     return pack_json_result({"data": {"linkLocked": is_locked}})
