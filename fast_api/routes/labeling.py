@@ -4,7 +4,7 @@ import json
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
-from fast_api.models import StringBody
+from fast_api.models import LinkRouteBody
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
@@ -198,7 +198,7 @@ async def delete_record_by_id(request: Request, project_id: str, record_id: str)
 
 @router.post("/{project_id}/link-locked")
 async def get_link_locked(
-    request: Request, project_id: str, link_route: StringBody = Body(...)
+    request: Request, project_id: str, linkRouteBody: LinkRouteBody = Body(...)
 ):
-    is_locked = manager.check_link_locked(project_id, link_route.value)
+    is_locked = manager.check_link_locked(project_id, linkRouteBody.link_route)
     return pack_json_result({"data": {"linkLocked": is_locked}})
