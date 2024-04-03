@@ -45,3 +45,7 @@ class UploadCredentialsAndIdBody(BaseModel):
     file_import_options: StrictStr
     upload_type: StrictStr
     key: StrictStr = None
+
+
+class RecordIdeBody(BaseModel):
+    code: StrictStr
