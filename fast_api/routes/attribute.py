@@ -46,3 +46,21 @@ def get_check_composite_key(request: Request, project_id: str):
         )
 
     return pack_json_result({"data": {"checkCompositeKey": is_valid}})
+
+
+@router.get("/{project_id}/{attribute_id}/sample-records")
+def get_sample_records(project_id: str, attribute_id):
+
+    record_ids, calculated_attributes = manager.calculate_user_attribute_sample_records(
+        project_id, attribute_id
+    )
+    return pack_json_result(
+        {
+            "data": {
+                "calculateUserAttributeSampleRecords": {
+                    "record_ids": record_ids,
+                    "calculated_attributes": calculated_attributes,
+                }
+            }
+        }
+    )
