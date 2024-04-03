@@ -37,3 +37,11 @@ class FloatListBody(BaseModel):
 
 class BoolListBody(BaseModel):
     values: List[StrictBool]
+
+
+class UploadCredentialsAndIdBody(BaseModel):
+    file_name: StrictStr
+    file_type: StrictStr
+    file_import_options: StrictStr
+    upload_type: StrictStr
+    key: StrictStr = None
