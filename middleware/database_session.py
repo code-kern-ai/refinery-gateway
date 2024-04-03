@@ -70,15 +70,16 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
                     if project_id:
                         auth_manager.check_project_access(info, project_id)
                     break
-        except (
-            NotAllowedInDemoError,
-            NotAllowedInOpenSourceError,
-            GraphQLError,
-            JSONDecodeError,
-        ) as e:
+        except (NotAllowedInDemoError, NotAllowedInOpenSourceError) as e:
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=401,
+                content={"message": e.detail},
+            )
+        except (GraphQLError, JSONDecodeError) as e:
+            general.remove_and_refresh_session(request.state.session_token)
+            return JSONResponse(
+                status_code=400,
                 content={"message": e.detail},
             )
         except Exception:
