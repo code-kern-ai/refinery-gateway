@@ -1,10 +1,12 @@
 from typing import Optional
 
+from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
+from controller.personal_access_token import manager as token_manager
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
 from submodules.model.business_objects.labeling_task import (
@@ -34,6 +36,16 @@ PROJECT_TOKENIZATION_WHITELIST = {
     "workload",
     "started_at",
     "finished_at",
+}
+
+TOKENS_WHITELIST = {
+    "id",
+    "created_at",
+    "expires_at",
+    "last_used",
+    "name",
+    "scope",
+    "user_id",
 }
 
 
@@ -241,3 +253,18 @@ def is_rats_running(request: Request, project_id: str) -> Dict:
 
     data = manager.is_rats_tokenization_still_running(project_id)
     return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
+
+
+@router.get("/{project_id}/access-tokens")
+def get_access_tokens(request: Request, project_id: str) -> Dict:
+    data = sql_alchemy_to_dict(
+        token_manager.get_all_personal_access_tokens(project_id),
+        column_whitelist=TOKENS_WHITELIST,
+    )
+    for token in data:
+        names, email = resolve_user_name_and_email_by_id(token["user_id"])
+        last_name = names.get("last", "")
+        first_name = names.get("first", "")
+        token["created_by"] = f"{first_name} {last_name}"
+
+    return pack_json_result({"data": {"allPersonalAccessTokens": data}})
