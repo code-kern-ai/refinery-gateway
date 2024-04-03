@@ -137,3 +137,20 @@ def get_record_by_record_id(project_id: str, record_id: str):
     }
 
     return pack_json_result({"data": {"recordByRecordId": data}})
+
+
+@router.get("/{project_id}/project-size")
+def get_project_size(project_id: str):
+    data = project_manager.get_project_size(project_id)
+    final_data = [
+        {
+            "byteSize": key.byte_size,
+            "byteReadable": key.byte_readable,
+            "table": key.table,
+            "order": key.order,
+            "description": key.description,
+            "default": key.default,
+        }
+        for key in data
+    ]
+    return {"data": {"projectSize": final_data}}
