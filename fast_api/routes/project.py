@@ -1,13 +1,15 @@
+import json
 from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import UploadCredentialsAndIdBody
-from fastapi import APIRouter,Body, Query, Request
+from fastapi import APIRouter, Body, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
+from controller.upload_task import manager as upload_task_manager
 from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
@@ -296,7 +298,16 @@ def upload_credentials_and_id(
         upload_credentials.upload_type,
         upload_credentials.key,
     )
-    return pack_json_result({"data": {"uploadCredentialsAndId": data}})
+    return pack_json_result({"data": {"uploadCredentialsAndId": json.dumps(data)}})
+
+
+@router.get("/{project_id}/upload-task-by-id")
+def upload_task_by_id(request: Request, project_id: str, upload_task_id: str) -> Dict:
+    if upload_task_id.find("/") != -1:
+        upload_task_id = upload_task_id.split("/")[-1]
+    data = upload_task_manager.get_upload_task(project_id, upload_task_id)
+    return {"data": {"uploadTaskById": data}}
+
 
 @router.get("/notifications")
 def get_notifications(
