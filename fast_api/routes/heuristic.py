@@ -103,3 +103,12 @@ def toggle_heuristic(request: Request, project_id: str, information_source_id: s
         project_id, f"information_source_updated:{information_source_id}"
     )
     return pack_json_result({"data": {"toggleInformationSource": {"ok": True}}})
+
+
+@router.delete("/{project_id}/{heuristic_id}/delete-heuristic")
+def toggle_heuristic(request: Request, project_id: str, heuristic_id: str):
+    manager.delete_information_source(project_id, heuristic_id)
+    notification.send_organization_update(
+        project_id, f"information_source_deleted:{heuristic_id}"
+    )
+    return pack_json_result({"data": {"deleteInformationSource": {"ok": True}}})
