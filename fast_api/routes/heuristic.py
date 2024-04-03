@@ -4,6 +4,7 @@ from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
 from controller.organization import manager as org_manager
+from controller.labeling_access_link import manager as access_link_manager
 from controller.payload import manager as payload_manager
 from submodules.model.business_objects.information_source import (
     get_heuristic_id_with_payload,
@@ -74,3 +75,16 @@ def get_labeling_function_on_10_records(project_id: str, heuristic_id: str):
         "codeHasErrors": data.code_has_errors,
     }
     return {"data": {"getLabelingFunctionOn10Records": final_data}}
+
+
+@router.get("/{project_id}/access-link")
+def get_access_link(request: Request, project_id: str, link_id: str):
+    accessLink = access_link_manager.get(link_id)
+
+    data = {
+        "id": str(accessLink.id),
+        "link": accessLink.link,
+        "isLocked": accessLink.is_locked,
+    }
+
+    return pack_json_result({"data": {"accessLink": data}})
