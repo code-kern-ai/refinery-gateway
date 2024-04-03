@@ -234,3 +234,10 @@ def get_model_provider_info(request: Request) -> Dict:
 
     data = model_manager.get_model_provider_info()
     return pack_json_result({"data": {"modelProviderInfo": data}})
+
+
+@router.get("/{project_id}/rats-running")
+def is_rats_running(request: Request, project_id: str) -> Dict:
+
+    data = manager.is_rats_tokenization_still_running(project_id)
+    return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
