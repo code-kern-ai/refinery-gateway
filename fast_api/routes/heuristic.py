@@ -12,7 +12,7 @@ from submodules.model.business_objects.information_source import (
 )
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
-
+from util import notification
 
 router = APIRouter()
 
@@ -94,3 +94,12 @@ def get_access_link(request: Request, project_id: str, link_id: str):
     }
 
     return pack_json_result({"data": {"accessLink": data}})
+
+
+@router.post("/{project_id}/{information_source_id}/toggle-heuristic")
+def toggle_heuristic(request: Request, project_id: str, information_source_id: str):
+    manager.toggle_information_source(project_id, information_source_id)
+    notification.send_organization_update(
+        project_id, f"information_source_updated:{information_source_id}"
+    )
+    return pack_json_result({"data": {"toggleInformationSource": {"ok": True}}})
