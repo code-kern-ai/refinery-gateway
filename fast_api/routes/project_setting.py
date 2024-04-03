@@ -154,3 +154,37 @@ def get_project_size(project_id: str):
         for key in data
     ]
     return {"data": {"projectSize": final_data}}
+
+
+@router.post("/{project_id}/create-labels")
+async def create_labels(request: Request, project_id: str):
+    try:
+        body = await request.json()
+        labeling_task_id = body.get("labelingTaskId")
+        labels = body.get("labels")
+    except json.JSONDecodeError:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Invalid JSON"},
+        )
+
+    if project_id:
+        auth_manager.check_project_access(request.state.info, project_id)
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    created_labels = label_manager.create_labels(project_id, labeling_task_id, labels)
+    task = task_manager.get_labeling_task(project_id, labeling_task_id)
+    project = project_manager.get_project(project_id)
+    for label in created_labels:
+        doc_ock.post_event(
+            str(user.id),
+            events.AddLabel(
+                ProjectName=f"{project.name}-{project_id}",
+                Name=label.name,
+                LabelingTaskName=task.name,
+            ),
+        )
+        notification.send_organization_update(
+            project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
+        )
+    return pack_json_result({"data": {"createLabels": ""}})
