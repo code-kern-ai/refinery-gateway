@@ -3,7 +3,7 @@ import json
 
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse
 from fast_api.models import StringBody
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
