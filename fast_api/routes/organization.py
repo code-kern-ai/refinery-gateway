@@ -1,6 +1,10 @@
 import json
 from controller.misc import config_service
-from fast_api.models import AddUserToOrganizationBody, CreateOrganizationBody
+from fast_api.models import (
+    AddUserToOrganizationBody,
+    ChangeOrganizationBody,
+    CreateOrganizationBody,
+)
 from fastapi import APIRouter, Body, Request
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import resolve_user_name_and_email_by_id
@@ -128,3 +132,11 @@ def add_user_to_organization(
     doc_ock.register_user(user)
     doc_ock.post_event(str(user.id), events.SignUp())
     return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
+
+
+@router.post("/change-organization")
+def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
+    if config_service.get_config_value("is_managed"):
+        auth_manager.check_admin_access(request.state.info)
+    organization_manager.change_organization(body.org_id, json.loads(body.changes))
+    return pack_json_result({"data": {"changeOrganization": {"ok": True}}})

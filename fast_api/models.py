@@ -121,3 +121,8 @@ class CreateOrganizationBody(BaseModel):
 class AddUserToOrganizationBody(BaseModel):
     user_mail: StrictStr
     organization_name: StrictStr
+
+
+class ChangeOrganizationBody(BaseModel):
+    org_id: StrictStr
+    changes: StrictStr
