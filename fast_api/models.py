@@ -1,5 +1,5 @@
-from typing import List, Dict
-from pydantic import BaseModel, StrictBool, StrictStr
+from typing import List, Dict, Optional, Union
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
 """
@@ -40,3 +40,8 @@ class CreateHeuristicBody(BaseModel):
     description: StrictStr
     source_code: StrictStr
     name: StrictStr
+
+
+class InitWeakSuperVisionBody(BaseModel):
+    overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]]
+    overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]]

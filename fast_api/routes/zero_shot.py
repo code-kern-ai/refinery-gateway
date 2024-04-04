@@ -1,9 +1,12 @@
 import json
 from controller.zero_shot import manager
 from fast_api.routes.client_response import pack_json_result
+from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from submodules.model.util import sql_alchemy_to_dict
+from controller.task_queue import manager as task_queue_manager
+from submodules.model.enums import TaskType
 
 router = APIRouter()
 
@@ -72,3 +75,17 @@ async def get_zero_shot_10_records(request: Request, project_id: str):
         ],
     }
     return {"data": {"zeroShot10Records": final_data}}
+
+
+@router.post("/{project_id}/{heuristic_id}/run-zero-shot")
+def init_zeroshot(request: Request, project_id: str, heuristic_id: str):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    task_queue_manager.add_task(
+        project_id,
+        TaskType.INFORMATION_SOURCE,
+        user_id,
+        {
+            "information_source_id": heuristic_id,
+        },
+    )
+    return pack_json_result({"data": {"zeroShotProject": {"ok": True}}})
