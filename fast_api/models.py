@@ -45,3 +45,9 @@ class CreateHeuristicBody(BaseModel):
 class InitWeakSuperVisionBody(BaseModel):
     overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]]
     overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]]
+
+
+class CreateZeroShotBody(BaseModel):
+    target_config: StrictStr
+    labeling_task_id: StrictStr
+    attribute_id: StrictStr
