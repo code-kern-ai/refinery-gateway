@@ -1,9 +1,15 @@
 import json
 from controller.zero_shot import manager
+from fast_api.models import CreateZeroShotBody
 from fast_api.routes.client_response import pack_json_result
-from fastapi import APIRouter, Request
+from controller.auth import manager as auth_manager
+from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from submodules.model.util import sql_alchemy_to_dict
+from controller.task_queue import manager as task_queue_manager
+from controller.zero_shot import manager as zero_shot_manager
+from submodules.model.enums import TaskType
+from util import notification
 
 router = APIRouter()
 
@@ -72,3 +78,37 @@ async def get_zero_shot_10_records(request: Request, project_id: str):
         ],
     }
     return {"data": {"zeroShot10Records": final_data}}
+
+
+@router.post("/{project_id}/{heuristic_id}/run-zero-shot")
+def init_zeroshot(request: Request, project_id: str, heuristic_id: str):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    task_queue_manager.add_task(
+        project_id,
+        TaskType.INFORMATION_SOURCE,
+        user_id,
+        {
+            "information_source_id": heuristic_id,
+        },
+    )
+    return pack_json_result({"data": {"zeroShotProject": {"ok": True}}})
+
+
+@router.post("/{project_id}/create-zero-shot")
+def create_zero_shot(
+    request: Request, project_id: str, body: CreateZeroShotBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    zero_shot_id = zero_shot_manager.create_zero_shot_information_source(
+        user.id,
+        project_id,
+        body.target_config,
+        body.labeling_task_id,
+        body.attribute_id,
+    )
+    notification.send_organization_update(
+        project_id, f"information_source_created:{zero_shot_id}"
+    )
+    return pack_json_result(
+        {"data": {"createZeroShotInformationSource": {"id": zero_shot_id}}}
+    )

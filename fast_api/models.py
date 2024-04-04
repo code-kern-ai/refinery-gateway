@@ -1,5 +1,5 @@
-from typing import List, Dict
-from pydantic import BaseModel, StrictBool, StrictStr
+from typing import List, Dict, Optional, Union
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
 """
@@ -37,3 +37,29 @@ class RecordIdeBody(BaseModel):
 
 class RecordSyncBody(BaseModel):
     changes: Dict
+
+
+class CreateHeuristicBody(BaseModel):
+    labeling_task_id: StrictStr
+    type: StrictStr
+    description: StrictStr
+    source_code: StrictStr
+    name: StrictStr
+
+
+class InitWeakSuperVisionBody(BaseModel):
+    overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]]
+    overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]]
+
+
+class CreateZeroShotBody(BaseModel):
+    target_config: StrictStr
+    labeling_task_id: StrictStr
+    attribute_id: StrictStr
+
+
+class UpdateHeuristicBody(BaseModel):
+    labeling_task_id: StrictStr
+    code: StrictStr
+    description: StrictStr
+    name: StrictStr
