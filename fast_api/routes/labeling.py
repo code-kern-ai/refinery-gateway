@@ -2,9 +2,14 @@ import json
 
 
 from controller.auth import manager as auth_manager
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Query, Request
 from fastapi.responses import JSONResponse
-from fast_api.models import GenerateAccessLinkBody, LinkRouteBody, StringBody
+from fast_api.models import (
+    GenerateAccessLinkBody,
+    LinkRouteBody,
+    LockAccessLinkBody,
+    StringBody,
+)
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
@@ -254,3 +259,22 @@ def remove_access_link(
     data = {"ok": True}
 
     return pack_json_result({"data": {"removeAccessLink": data}})
+
+
+@router.put("/{project_id}/lock-access-link")
+def lock_access_link(
+    request: Request,
+    project_id: str,
+    lockAccessLinkBody: LockAccessLinkBody = Body(...),
+):
+    type_id = manager.change_user_access_to_link_lock(
+        lockAccessLinkBody.link_id, lockAccessLinkBody.lock_state
+    )
+    notification.send_organization_update(
+        project_id,
+        f"access_link_changed:{lockAccessLinkBody.link_id}:{type_id}:{lockAccessLinkBody.lock_state}",
+    )
+
+    data = {"ok": True}
+
+    return pack_json_result({"data": {"lockAccessLink": data}})

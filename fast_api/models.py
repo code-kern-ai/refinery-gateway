@@ -20,6 +20,11 @@ class GenerateAccessLinkBody(BaseModel):
     id: StrictStr
 
 
+class LockAccessLinkBody(BaseModel):
+    link_id: StrictStr
+    lock_state: StrictBool
+
+
 class UpdateDataSliceBody(BaseModel):
     data_slice_id: StrictStr
     static: StrictBool
