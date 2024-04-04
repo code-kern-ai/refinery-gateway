@@ -32,3 +32,11 @@ class RecordIdeBody(BaseModel):
 
 class RecordSyncBody(BaseModel):
     changes: Dict
+
+
+class CreateHeuristicBody(BaseModel):
+    labeling_task_id: StrictStr
+    type: StrictStr
+    description: StrictStr
+    source_code: StrictStr
+    name: StrictStr

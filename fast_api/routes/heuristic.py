@@ -1,5 +1,6 @@
+from fast_api.models import CreateHeuristicBody
 from fast_api.routes.client_response import pack_json_result
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Body, Request
 from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
@@ -11,6 +12,7 @@ from submodules.model.business_objects.information_source import (
     get_source_statistics,
 )
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
+from submodules.model.enums import InformationSourceType
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util import notification
 
@@ -112,3 +114,31 @@ def toggle_heuristic(request: Request, project_id: str, heuristic_id: str):
         project_id, f"information_source_deleted:{heuristic_id}"
     )
     return pack_json_result({"data": {"deleteInformationSource": {"ok": True}}})
+
+
+@router.post("/{project_id}/create-heuristic")
+def create_heuristic(
+    request: Request, project_id: str, body: CreateHeuristicBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    if body.type == InformationSourceType.CROWD_LABELER.value:
+        information_source = manager.create_crowd_information_source(
+            str(user.id), project_id, body.labeling_task_id, body.name, body.description
+        )
+
+    else:
+        information_source = manager.create_information_source(
+            project_id,
+            user.id,
+            body.labeling_task_id,
+            body.name,
+            body.source_code,
+            body.description,
+            body.type,
+        )
+    notification.send_organization_update(
+        project_id, f"information_source_created:{str(information_source.id)}"
+    )
+    return {
+        "data": {"createInformationSource": {"informationSource": information_source}}
+    }
