@@ -11,6 +11,11 @@ class LinkRouteBody(BaseModel):
     link_route: StrictStr
 
 
+class GenerateAccessLinkBody(BaseModel):
+    type: StrictStr
+    id: StrictStr
+
+
 class UpdateDataSliceBody(BaseModel):
     data_slice_id: StrictStr
     static: StrictBool

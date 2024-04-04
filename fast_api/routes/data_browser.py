@@ -2,7 +2,6 @@ import json
 from typing import Dict
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
-from graphql import GraphQLError
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
@@ -151,6 +150,7 @@ async def create_data_slice(request: Request, project_id: str):
         filter_raw = body.get("options", {}).get("filterRaw")
         name = body.get("options", {}).get("name")
         filter_data = body.get("options", {}).get("filterData")
+        filter_data = [json.loads(item) for item in filter_data]
         static = body.get("options", {}).get("static")
     except json.JSONDecodeError:
         return JSONResponse(
@@ -173,7 +173,10 @@ async def create_data_slice(request: Request, project_id: str):
         )
     except Exception as e:
         handle_error(e, user.id, project_id)
-        return GraphQLError(e)
+        return JSONResponse(
+            status_code=400,
+            content={"message": str(e)},
+        )
 
 
 @router.post("/{project_id}/search-records-by-similarity")

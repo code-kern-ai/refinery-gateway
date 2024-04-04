@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -48,9 +47,7 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
         info.context = {"request": request}
         request.state.info = info
 
-        if request.url.hostname == "localhost" and request.url.port == 7051:
-            pass
-        else:
+        if request.url.hostname != "localhost" or request.url.port != 7051:
             self._check_access(request, info)
 
         try:
@@ -70,17 +67,23 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
                     if project_id:
                         auth_manager.check_project_access(info, project_id)
                     break
-        except (NotAllowedInDemoError, NotAllowedInOpenSourceError) as e:
+        except (NotAllowedInDemoError, NotAllowedInOpenSourceError):
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=401,
-                content={"message": e.detail},
+                content={"message": "Unauthorized access"},
             )
-        except (GraphQLError, JSONDecodeError) as e:
+        except GraphQLError as e:
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=400,
-                content={"message": e.detail},
+                content={"message": e.message},
+            )
+        except ValueError as e:
+            general.remove_and_refresh_session(request.state.session_token)
+            return JSONResponse(
+                status_code=400,
+                content={"message": str(e)},
             )
         except Exception:
             general.remove_and_refresh_session(request.state.session_token)
