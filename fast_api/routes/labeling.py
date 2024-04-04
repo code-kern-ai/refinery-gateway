@@ -4,6 +4,7 @@ from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from fast_api.models import (
     AddClassificationLabelBody,
+    AddExtractionLabelBody,
     GenerateAccessLinkBody,
     LinkRouteBody,
     LockAccessLinkBody,
@@ -305,3 +306,32 @@ def add_classification_labels_to_record(
     )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
     return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
+
+
+@router.post("/{project_id}/add-extraction-label")
+def add_extraction_label_to_record(
+    request: Request, project_id: str, body: AddExtractionLabelBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.create_manual_extraction_label(
+        project_id,
+        user.id,
+        body.record_id,
+        body.labeling_task_id,
+        body.label_id,
+        body.token_start_index,
+        body.token_end_index,
+        body.value,
+        body.as_gold_star,
+        body.source_id,
+    )
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=enums.LabelingTaskType.INFORMATION_EXTRACTION.value,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})

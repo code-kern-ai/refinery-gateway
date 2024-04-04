@@ -90,3 +90,14 @@ class AddClassificationLabelBody(BaseModel):
     label_id: StrictStr
     as_gold_star: Optional[StrictBool]
     source_id: Optional[StrictStr]
+
+
+class AddExtractionLabelBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    label_id: StrictStr
+    as_gold_star: Optional[StrictBool]
+    token_start_index: Optional[StrictInt]
+    token_end_index: Optional[StrictInt]
+    value: Optional[StrictStr]
+    source_id: Optional[StrictStr]
