@@ -112,3 +112,12 @@ class SetGoldStarBody(BaseModel):
 class RemoveGoldStarBody(BaseModel):
     record_id: StrictStr
     labeling_task_id: StrictStr
+
+
+class CreateOrganizationBody(BaseModel):
+    name: StrictStr
+
+
+class AddUserToOrganizationBody(BaseModel):
+    user_mail: StrictStr
+    organization_name: StrictStr
