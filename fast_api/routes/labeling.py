@@ -4,7 +4,7 @@ import json
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
-from fast_api.models import LinkRouteBody
+from fast_api.models import GenerateAccessLinkBody, LinkRouteBody
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
@@ -202,3 +202,38 @@ async def get_link_locked(
 ):
     is_locked = manager.check_link_locked(project_id, linkRouteBody.link_route)
     return pack_json_result({"data": {"linkLocked": is_locked}})
+
+
+@router.post("/{project_id}/generate-access-link")
+def generate_access_link(
+    request: Request,
+    project_id: str,
+    generateAccessLinkBody: GenerateAccessLinkBody = Body(...),
+):
+
+    user = auth_manager.get_user_by_info(request.state.info)
+
+    try:
+        link_type_parsed = enums.LinkTypes[generateAccessLinkBody.type.upper()]
+    except KeyError:
+        raise ValueError(f"Invalid LinkTypes: {generateAccessLinkBody.type}")
+
+    if link_type_parsed == enums.LinkTypes.HEURISTIC:
+        link = manager.generate_heuristic_access_link(
+            project_id, user.id, generateAccessLinkBody.id
+        )
+    elif link_type_parsed == enums.LinkTypes.DATA_SLICE:
+        print("not yet supported")
+    notification.send_organization_update(
+        project_id, f"access_link_created:{str(link.id)}"
+    )
+
+    data = {
+        "link": {
+            "id": str(link.id),
+            "link": link.link,
+            "isLocked": link.is_locked,
+        }
+    }
+
+    return pack_json_result({"data": {"generateAccessLink": data}})
