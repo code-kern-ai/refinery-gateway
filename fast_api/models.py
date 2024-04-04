@@ -101,3 +101,14 @@ class AddExtractionLabelBody(BaseModel):
     token_end_index: Optional[StrictInt]
     value: Optional[StrictStr]
     source_id: Optional[StrictStr]
+
+
+class SetGoldStarBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    gold_user_id: StrictStr
+
+
+class RemoveGoldStarBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr

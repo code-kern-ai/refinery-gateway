@@ -8,6 +8,8 @@ from fast_api.models import (
     GenerateAccessLinkBody,
     LinkRouteBody,
     LockAccessLinkBody,
+    RemoveGoldStarBody,
+    SetGoldStarBody,
     StringBody,
 )
 from submodules.model import enums, events
@@ -335,3 +337,34 @@ def add_extraction_label_to_record(
     )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
     return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})
+
+
+@router.post("/{project_id}/set-gold-star")
+def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
+    user = auth_manager.get_user_by_info(request.state.info)
+    task_type = rla_manager.create_gold_star_association(
+        project_id, body.record_id, body.labeling_task_id, body.gold_user_id, user.id
+    )
+
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=task_type,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"setGoldStarAnnotationForTask": {"ok": True}}})
+
+
+@router.post("/{project_id}/remove-gold-star")
+def remove_gold_star(
+    request: Request, project_id: str, body: RemoveGoldStarBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.delete_gold_star_association(
+        project_id, user.id, body.record_id, body.labeling_task_id
+    )
+    notification.send_organization_update(project_id, f"rla_deleted:{body.record_id}")
+    return pack_json_result({"data": {"removeGoldStarAnnotationForTask": {"ok": True}}})
