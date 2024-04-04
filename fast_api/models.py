@@ -82,3 +82,51 @@ class RunThenWeakSupervisionBody(BaseModel):
 class CancelZeroShotBody(BaseModel):
     heuristic_id: StrictStr
     payload_id: StrictStr
+
+
+class AddClassificationLabelBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    label_id: StrictStr
+    as_gold_star: Optional[StrictBool]
+    source_id: Optional[StrictStr]
+
+
+class AddExtractionLabelBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    label_id: StrictStr
+    as_gold_star: Optional[StrictBool]
+    token_start_index: Optional[StrictInt]
+    token_end_index: Optional[StrictInt]
+    value: Optional[StrictStr]
+    source_id: Optional[StrictStr]
+
+
+class SetGoldStarBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    gold_user_id: StrictStr
+
+
+class RemoveGoldStarBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+
+
+class CreateOrganizationBody(BaseModel):
+    name: StrictStr
+
+
+class AddUserToOrganizationBody(BaseModel):
+    user_mail: StrictStr
+    organization_name: StrictStr
+
+
+class ChangeOrganizationBody(BaseModel):
+    org_id: StrictStr
+    changes: StrictStr
+
+
+class UpdateConfigBody(BaseModel):
+    dict_str: StrictStr

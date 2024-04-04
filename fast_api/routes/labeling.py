@@ -3,12 +3,16 @@ from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 from fast_api.models import (
+    AddClassificationLabelBody,
+    AddExtractionLabelBody,
     GenerateAccessLinkBody,
     LinkRouteBody,
     LockAccessLinkBody,
+    RemoveGoldStarBody,
+    SetGoldStarBody,
     StringBody,
 )
-from submodules.model import enums
+from submodules.model import enums, events
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
 from controller.project import manager as project_manager
@@ -23,7 +27,7 @@ from submodules.model.business_objects import (
     data_slice,
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
-from util import notification
+from util import doc_ock, notification
 
 
 router = APIRouter()
@@ -299,3 +303,91 @@ def lock_access_link(
     data = {"ok": True}
 
     return pack_json_result({"data": {"lockAccessLink": data}})
+
+
+@router.post("/{project_id}/add-classification-labels")
+def add_classification_labels_to_record(
+    request: Request, project_id: str, body: AddClassificationLabelBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.create_manual_classification_label(
+        project_id,
+        user.id,
+        body.record_id,
+        body.label_id,
+        body.labeling_task_id,
+        body.as_gold_star,
+        body.source_id,
+    )
+
+    # this below seems not optimal positioned here
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=enums.LabelingTaskType.CLASSIFICATION.value,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
+
+
+@router.post("/{project_id}/add-extraction-label")
+def add_extraction_label_to_record(
+    request: Request, project_id: str, body: AddExtractionLabelBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.create_manual_extraction_label(
+        project_id,
+        user.id,
+        body.record_id,
+        body.labeling_task_id,
+        body.label_id,
+        body.token_start_index,
+        body.token_end_index,
+        body.value,
+        body.as_gold_star,
+        body.source_id,
+    )
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=enums.LabelingTaskType.INFORMATION_EXTRACTION.value,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})
+
+
+@router.post("/{project_id}/set-gold-star")
+def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
+    user = auth_manager.get_user_by_info(request.state.info)
+    task_type = rla_manager.create_gold_star_association(
+        project_id, body.record_id, body.labeling_task_id, body.gold_user_id, user.id
+    )
+
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=task_type,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"setGoldStarAnnotationForTask": {"ok": True}}})
+
+
+@router.post("/{project_id}/remove-gold-star")
+def remove_gold_star(
+    request: Request, project_id: str, body: RemoveGoldStarBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.delete_gold_star_association(
+        project_id, user.id, body.record_id, body.labeling_task_id
+    )
+    notification.send_organization_update(project_id, f"rla_deleted:{body.record_id}")
+    return pack_json_result({"data": {"removeGoldStarAnnotationForTask": {"ok": True}}})
