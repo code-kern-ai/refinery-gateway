@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
@@ -53,3 +53,8 @@ class RecordIdeBody(BaseModel):
 
 class RecordSyncBody(BaseModel):
     changes: Dict
+
+
+class InitWeakSuperVisionBody(BaseModel):
+    overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]]
+    overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]]
