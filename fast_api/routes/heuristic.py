@@ -137,3 +137,12 @@ def set_payload(request: Request, project_id: str, heuristic_id: str):
     )
 
     return pack_json_result({"data": {"createPayload": {"queueId": queue_id}}})
+
+
+@router.delete("/{project_id}/{heuristic_id}/delete-heuristic")
+def delete_heuristic(request: Request, project_id: str, heuristic_id: str):
+    manager.delete_information_source(project_id, heuristic_id)
+    notification.send_organization_update(
+        project_id, f"information_source_deleted:{heuristic_id}"
+    )
+    return pack_json_result({"data": {"deleteInformationSource": {"ok": True}}})

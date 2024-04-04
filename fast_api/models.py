@@ -3,40 +3,19 @@ from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
 """
-Reusable Pydantic models for FastAPI.
+Pydantic models for FastAPI.
 """
 
 
-class StringBody(BaseModel):
-    value: StrictStr
+class LinkRouteBody(BaseModel):
+    link_route: StrictStr
 
 
-class IntBody(BaseModel):
-    value: StrictInt
-
-
-class FloatBody(BaseModel):
-    value: StrictFloat
-
-
-class BoolBody(BaseModel):
-    value: StrictBool
-
-
-class StringListBody(BaseModel):
-    values: List[StrictStr]
-
-
-class IntListBody(BaseModel):
-    values: List[StrictInt]
-
-
-class FloatListBody(BaseModel):
-    values: List[StrictFloat]
-
-
-class BoolListBody(BaseModel):
-    values: List[StrictBool]
+class UpdateDataSliceBody(BaseModel):
+    data_slice_id: StrictStr
+    static: StrictBool
+    filter_raw: StrictStr
+    filter_data: List[StrictStr]
 
 
 class UploadCredentialsAndIdBody(BaseModel):

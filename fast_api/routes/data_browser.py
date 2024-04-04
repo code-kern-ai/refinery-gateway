@@ -1,12 +1,13 @@
 import json
 from typing import Dict
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from graphql import GraphQLError
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
+from fast_api.models import UpdateDataSliceBody
 from fast_api.routes.client_response import pack_json_result
 from graphql_api.mutation.data_slice import handle_error
 from util import notification
@@ -209,3 +210,29 @@ async def get_records_by_similarity(request: Request, project_id: str):
     }
 
     return pack_json_result({"data": {"searchRecordsBySimilarity": data}})
+
+
+@router.post("/{project_id}/update-data-slice")
+async def update_data_slice(
+    request: Request, project_id: str, dataSliceBody: UpdateDataSliceBody = Body(...)
+):
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    ok = False
+
+    try:
+        manager.update_data_slice(
+            project_id,
+            dataSliceBody.data_slice_id,
+            dataSliceBody.filter_data,
+            dataSliceBody.filter_raw,
+            dataSliceBody.static,
+        )
+        notification.send_organization_update(
+            project_id, f"data_slice_updated:{dataSliceBody.data_slice_id}"
+        )
+        ok = True
+    except Exception as e:
+        handle_error(e, user.id, project_id)
+
+    return pack_json_result({"data": {"updateDataSlice": {"ok": ok}}})
