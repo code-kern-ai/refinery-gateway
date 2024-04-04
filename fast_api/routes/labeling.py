@@ -1,8 +1,6 @@
 import json
-
-
 from controller.auth import manager as auth_manager
-from fastapi import APIRouter, Body, Query, Request
+from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from fast_api.models import (
     GenerateAccessLinkBody,
