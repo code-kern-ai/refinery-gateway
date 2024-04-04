@@ -51,3 +51,10 @@ class CreateZeroShotBody(BaseModel):
     target_config: StrictStr
     labeling_task_id: StrictStr
     attribute_id: StrictStr
+
+
+class UpdateHeuristicBody(BaseModel):
+    labeling_task_id: StrictStr
+    code: StrictStr
+    description: StrictStr
+    name: StrictStr

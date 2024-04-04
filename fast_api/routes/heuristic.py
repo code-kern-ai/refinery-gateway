@@ -1,4 +1,4 @@
-from fast_api.models import CreateHeuristicBody
+from fast_api.models import CreateHeuristicBody, UpdateHeuristicBody
 from fast_api.routes.client_response import pack_json_result
 from fastapi import APIRouter, Body, Request
 from controller.information_source import manager
@@ -176,3 +176,25 @@ def create_heuristic(
     return {
         "data": {"createInformationSource": {"informationSource": information_source}}
     }
+
+
+@router.post("/{project_id}/{heuristic_id}/update-heuristic")
+def update_heuristic(
+    request: Request,
+    project_id: str,
+    heuristic_id: str,
+    body: UpdateHeuristicBody = Body(...),
+):
+    manager.update_information_source(
+        project_id,
+        heuristic_id,
+        body.labeling_task_id,
+        body.code,
+        body.description,
+        body.name,
+    )
+    user = auth_manager.get_user_by_info(request.state.info)
+    notification.send_organization_update(
+        project_id, f"information_source_updated:{heuristic_id}:{user.id}"
+    )
+    return {"data": {"updateInformationSource": {"ok": True}}}
