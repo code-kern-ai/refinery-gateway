@@ -3,7 +3,7 @@ from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import UploadCredentialsAndIdBody
-from fastapi import APIRouter, Body, Query, Request
+from fastapi import APIRouter, Body, Depends, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
@@ -55,7 +55,10 @@ TOKENS_WHITELIST = {
 
 
 @router.get("/{project_id}/project-by-project-id")
-def get_project_by_project_id(request: Request, project_id: str) -> Dict:
+def get_project_by_project_id(
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
     data = get_project_by_project_id_sql(project_id)
     return pack_json_result({"data": {"projectByProjectId": data}})
 
@@ -74,6 +77,7 @@ def general_project_stats(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     return pack_json_result(
@@ -95,6 +99,7 @@ def inter_annotator_matrix(
     include_gold_star: Optional[bool] = True,
     include_all_org_user: Optional[bool] = False,
     only_on_static_slice: Optional[str] = None,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     labeling_task = task_manager.get_labeling_task(project_id, labeling_task_id)
@@ -129,6 +134,7 @@ def confusion_matrix(
     project_id: str,
     labeling_task_id: str,
     slice_id: Optional[str] = None,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     return pack_json_result(
         {
@@ -148,6 +154,7 @@ def confidence_distribution(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
     num_samples: int = 100,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> List:
     return pack_json_result(
         {
@@ -166,6 +173,7 @@ def label_distribution(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> str:
     return pack_json_result(
         {
@@ -181,7 +189,7 @@ def label_distribution(
 
 @router.get("/{project_id}/gates-integration-data")
 def gates_integration_data(
-    project_id: str,
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
 ) -> str:
     return pack_json_result(
         {
@@ -196,7 +204,7 @@ def gates_integration_data(
 
 @router.get("/{project_id}/project-tokenization")
 def project_tokenization(
-    project_id: str,
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
 ) -> str:
     waiting_task = task_queue.get_by_tokenization(project_id)
     data = None
@@ -222,7 +230,7 @@ def project_tokenization(
 
 @router.get("/{project_id}/labeling-tasks-by-project-id")
 def labeling_tasks_by_project_id(
-    project_id: str,
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
 ) -> str:
     return pack_json_result(
         {
@@ -237,7 +245,7 @@ def labeling_tasks_by_project_id(
 
 @router.get("/{project_id}/record-export-by-project-id")
 def record_export_by_project_id(
-    project_id: str,
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
 ) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
     data_graphql = pack_as_graphql(data, "projectByProjectId")
@@ -254,14 +262,22 @@ def get_model_provider_info(request: Request) -> Dict:
 
 
 @router.get("/{project_id}/rats-running")
-def is_rats_running(request: Request, project_id: str) -> Dict:
+def is_rats_running(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
 
     data = manager.is_rats_tokenization_still_running(project_id)
     return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
 
 
 @router.get("/{project_id}/access-tokens")
-def get_access_tokens(request: Request, project_id: str) -> Dict:
+def get_access_tokens(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
     data = sql_alchemy_to_dict(
         token_manager.get_all_personal_access_tokens(project_id),
         column_whitelist=TOKENS_WHITELIST,
@@ -276,7 +292,11 @@ def get_access_tokens(request: Request, project_id: str) -> Dict:
 
 
 @router.get("/{project_id}/last-export-credentials")
-def last_export_credentials(request: Request, project_id: str) -> Dict:
+def last_export_credentials(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
     return pack_json_result({"data": {"lastProjectExportCredentials": data}})
@@ -287,6 +307,7 @@ def upload_credentials_and_id(
     request: Request,
     project_id: str,
     upload_credentials: UploadCredentialsAndIdBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_by_info(request.state.info).id
     data = transfer_manager.get_upload_credentials_and_id(
@@ -302,12 +323,16 @@ def upload_credentials_and_id(
 
 
 @router.get("/{project_id}/upload-task-by-id")
-def upload_task_by_id(request: Request, project_id: str, upload_task_id: str) -> Dict:
+def upload_task_by_id(
+    request: Request,
+    project_id: str,
+    upload_task_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
     if upload_task_id.find("/") != -1:
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
     return {"data": {"uploadTaskById": data}}
-
 
 
 @router.get("/notifications")

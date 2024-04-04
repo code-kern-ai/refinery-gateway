@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from controller.knowledge_base import manager
 from controller.knowledge_term import manager as manager_terms
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import sql_alchemy_to_dict
+from controller.auth import manager as auth_manager
 
 router = APIRouter()
 
@@ -17,7 +18,9 @@ LOOKUP_LIST_TERM_WHITELIST = [
 
 
 @router.get("/lookup-lists/{project_id}")
-def get_lookup_lists(project_id: str):
+def get_lookup_lists(
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
+):
 
     data = manager.get_all_knowledge_bases(project_id)
     term_data = []
@@ -36,21 +39,34 @@ def get_lookup_lists(project_id: str):
 
 
 @router.get("/lookup-lists/{project_id}/{lookup_list_id}")
-def get_lookup_lists_by_lookup_list_id(project_id: str, lookup_list_id: str):
+def get_lookup_lists_by_lookup_list_id(
+    project_id: str,
+    lookup_list_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     data = manager.get_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_WHITELIST)
     return {"data": {"knowledgeBaseByKnowledgeBaseId": data_dict}}
 
 
 @router.get("/lookup-lists/{project_id}/{lookup_list_id}/terms")
-def get_terms_by_lookup_list_id(project_id: str, lookup_list_id: str):
+def get_terms_by_lookup_list_id(
+    project_id: str,
+    lookup_list_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     data = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
     return {"data": {"termsByKnowledgeBaseId": data_dict}}
 
 
 @router.get("/lookup-lists/{project_id}/{lookup_list_id}/export")
-def get_export_lookup_list(project_id: str, lookup_list_id: str):
+def get_export_lookup_list(
+    project_id: str,
+    lookup_list_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    print("EXPORT REACHED")
     return {
         "data": {
             "exportKnowledgeBase": transfer_manager.export_knowledge_base(

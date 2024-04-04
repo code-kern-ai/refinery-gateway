@@ -3,9 +3,8 @@ from controller.zero_shot import manager
 from fast_api.models import CancelZeroShotBody, CreateZeroShotBody
 from fast_api.routes.client_response import pack_json_result
 from controller.auth import manager as auth_manager
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
-from submodules.model.util import sql_alchemy_to_dict
 from controller.task_queue import manager as task_queue_manager
 from controller.zero_shot import manager as zero_shot_manager
 from submodules.model.enums import TaskType
@@ -15,14 +14,22 @@ router = APIRouter()
 
 
 @router.get("/{project_id}/zero-shot-recommendations")
-def get_zero_shot_recommendations(request: Request, project_id: str):
+def get_zero_shot_recommendations(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
 
     data = manager.get_zero_shot_recommendations(project_id)
     return pack_json_result({"data": {"zeroShotRecommendations": data}})
 
 
 @router.post("/{project_id}/zero-shot-text")
-async def get_zero_shot_text(request: Request, project_id: str):
+async def get_zero_shot_text(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.json()
     try:
         heuristic_id = body["heuristicId"]
@@ -51,7 +58,11 @@ async def get_zero_shot_text(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/zero-shot-10-records")
-async def get_zero_shot_10_records(request: Request, project_id: str):
+async def get_zero_shot_10_records(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.json()
     try:
         heuristic_id = body["heuristicId"]
@@ -81,7 +92,12 @@ async def get_zero_shot_10_records(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/{heuristic_id}/run-zero-shot")
-def init_zeroshot(request: Request, project_id: str, heuristic_id: str):
+def init_zeroshot(
+    request: Request,
+    project_id: str,
+    heuristic_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     task_queue_manager.add_task(
         project_id,
@@ -96,7 +112,10 @@ def init_zeroshot(request: Request, project_id: str, heuristic_id: str):
 
 @router.post("/{project_id}/create-zero-shot")
 def create_zero_shot(
-    request: Request, project_id: str, body: CreateZeroShotBody = Body(...)
+    request: Request,
+    project_id: str,
+    body: CreateZeroShotBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     zero_shot_id = zero_shot_manager.create_zero_shot_information_source(
@@ -115,7 +134,11 @@ def create_zero_shot(
 
 
 @router.post("/{project_id}/cancel-zero-shot")
-def cancel_zero_shot(project_id: str, body: CancelZeroShotBody = Body(...)):
+def cancel_zero_shot(
+    project_id: str,
+    body: CancelZeroShotBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     zero_shot_manager.cancel_zero_shot_run(
         project_id, body.heuristic_id, body.payload_id
     )

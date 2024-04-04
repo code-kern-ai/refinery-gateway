@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import resolve_user_name_and_email_by_id
 from controller.organization import manager
@@ -63,7 +63,11 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
 
 @router.get("/{project_id}/all-users-with-record-count")
-def get_all_users_with_record_count(request: Request, project_id: str):
+def get_all_users_with_record_count(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     organization_id = str(
         auth_manager.get_user_by_info(request.state.info).organization.id
     )

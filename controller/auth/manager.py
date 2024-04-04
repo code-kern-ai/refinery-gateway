@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Set
 
+from fastapi import Request
 from graphene import ResolveInfo
 from controller.misc import config_service
-from exceptions.exceptions import NotAllowedInDemoError
+from exceptions.exceptions import NotAllowedInDemoError, ProjectAccessError
 import jwt
 from graphql import GraphQLError
 from controller.project import manager as project_manager
@@ -65,6 +66,13 @@ def get_user_id_by_jwt_token(request) -> str:
         options={"verify_signature": False},
     )
     return claims["session"]["identity"]["id"]
+
+
+def check_project_access_dep(request: Request, project_id: str):
+    if len(project_id) == 36:
+        check_project_access(request.state.info, project_id)
+    else:
+        raise ProjectAccessError
 
 
 def check_project_access(info, project_id: str) -> None:

@@ -1,6 +1,6 @@
 import json
 from controller.auth import manager as auth_manager
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 from fast_api.models import (
     GenerateAccessLinkBody,
@@ -32,7 +32,11 @@ AVAILABLE_LINKS_WHITELIST = ["id", "link", "link_type", "name", "is_locked"]
 
 
 @router.post("/{project_id}/available-links")
-async def get_available_links(request: Request, project_id: str):
+async def get_available_links(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         assumed_role = body.get("assumedRole", "")
@@ -88,7 +92,11 @@ async def get_available_links(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/huddle-data")
-async def get_huddle_data(request: Request, project_id: str):
+async def get_huddle_data(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         huddle_id = body.get("huddleId", "")
@@ -173,7 +181,11 @@ async def get_tokenized_record(request: Request):
 
 
 @router.delete("/{project_id}/record-label-association-by-ids")
-async def delete_record_label_association_by_ids(request: Request, project_id: str):
+async def delete_record_label_association_by_ids(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         record_id = body.get("recordId", "")
@@ -193,7 +205,12 @@ async def delete_record_label_association_by_ids(request: Request, project_id: s
 
 
 @router.delete("/{project_id}/{record_id}/record-by-id")
-async def delete_record_by_id(request: Request, project_id: str, record_id: str):
+async def delete_record_by_id(
+    request: Request,
+    project_id: str,
+    record_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     record_manager.delete_record(project_id, record_id)
     notification.send_organization_update(project_id, f"record_deleted:{record_id}")
     return pack_json_result({"data": {"deleteRecord": True}})
@@ -201,7 +218,10 @@ async def delete_record_by_id(request: Request, project_id: str, record_id: str)
 
 @router.post("/{project_id}/link-locked")
 async def get_link_locked(
-    request: Request, project_id: str, linkRouteBody: LinkRouteBody = Body(...)
+    request: Request,
+    project_id: str,
+    linkRouteBody: LinkRouteBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     is_locked = manager.check_link_locked(project_id, linkRouteBody.link_route)
     return pack_json_result({"data": {"linkLocked": is_locked}})
@@ -212,6 +232,7 @@ def generate_access_link(
     request: Request,
     project_id: str,
     generateAccessLinkBody: GenerateAccessLinkBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     user = auth_manager.get_user_by_info(request.state.info)
@@ -247,6 +268,7 @@ def remove_access_link(
     request: Request,
     project_id: str,
     stringBody: StringBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     type_id = manager.remove(stringBody.value)
@@ -264,6 +286,7 @@ def lock_access_link(
     request: Request,
     project_id: str,
     lockAccessLinkBody: LockAccessLinkBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     type_id = manager.change_user_access_to_link_lock(
         lockAccessLinkBody.link_id, lockAccessLinkBody.lock_state
