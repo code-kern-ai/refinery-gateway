@@ -58,3 +58,8 @@ class UpdateHeuristicBody(BaseModel):
     code: StrictStr
     description: StrictStr
     name: StrictStr
+
+
+class RunThenWeakSupervisionBody(BaseModel):
+    heuristic_id: StrictStr
+    labeling_task_id: StrictStr
