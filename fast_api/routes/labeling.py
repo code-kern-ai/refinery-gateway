@@ -4,7 +4,7 @@ import json
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
-from fast_api.models import GenerateAccessLinkBody, LinkRouteBody
+from fast_api.models import GenerateAccessLinkBody, LinkRouteBody, StringBody
 from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
@@ -237,3 +237,20 @@ def generate_access_link(
     }
 
     return pack_json_result({"data": {"generateAccessLink": data}})
+
+
+@router.delete("/{project_id}/remove-access-link")
+def remove_access_link(
+    request: Request,
+    project_id: str,
+    stringBody: StringBody = Body(...),
+):
+
+    type_id = manager.remove(stringBody.value)
+    notification.send_organization_update(
+        project_id, f"access_link_removed:{stringBody.value}:{type_id}"
+    )
+
+    data = {"ok": True}
+
+    return pack_json_result({"data": {"removeAccessLink": data}})

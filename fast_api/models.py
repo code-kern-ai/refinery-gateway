@@ -7,6 +7,10 @@ Pydantic models for FastAPI.
 """
 
 
+class StringBody(BaseModel):
+    value: StrictStr
+
+
 class LinkRouteBody(BaseModel):
     link_route: StrictStr
 
