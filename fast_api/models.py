@@ -68,3 +68,8 @@ class UpdateHeuristicBody(BaseModel):
 class RunThenWeakSupervisionBody(BaseModel):
     heuristic_id: StrictStr
     labeling_task_id: StrictStr
+
+
+class CancelZeroShotBody(BaseModel):
+    heuristic_id: StrictStr
+    payload_id: StrictStr

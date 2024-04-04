@@ -1,6 +1,6 @@
 import json
 from controller.zero_shot import manager
-from fast_api.models import CreateZeroShotBody
+from fast_api.models import CancelZeroShotBody, CreateZeroShotBody
 from fast_api.routes.client_response import pack_json_result
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
@@ -112,3 +112,11 @@ def create_zero_shot(
     return pack_json_result(
         {"data": {"createZeroShotInformationSource": {"id": zero_shot_id}}}
     )
+
+
+@router.post("/{project_id}/cancel-zero-shot")
+def cancel_zero_shot(project_id: str, body: CancelZeroShotBody = Body(...)):
+    zero_shot_manager.cancel_zero_shot_run(
+        project_id, body.heuristic_id, body.payload_id
+    )
+    return pack_json_result({"data": {"cancelZeroShot": {"ok": True}}})
