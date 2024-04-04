@@ -126,3 +126,7 @@ class AddUserToOrganizationBody(BaseModel):
 class ChangeOrganizationBody(BaseModel):
     org_id: StrictStr
     changes: StrictStr
+
+
+class UpdateConfigBody(BaseModel):
+    dict_str: StrictStr

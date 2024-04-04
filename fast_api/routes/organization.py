@@ -4,6 +4,7 @@ from fast_api.models import (
     AddUserToOrganizationBody,
     ChangeOrganizationBody,
     CreateOrganizationBody,
+    UpdateConfigBody,
 )
 from fastapi import APIRouter, Body, Request
 from controller.auth import manager as auth_manager
@@ -12,11 +13,13 @@ from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
 from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
+from controller.misc import manager as misc
 
 from fast_api.routes.client_response import pack_json_result
 from submodules.model import events
+from submodules.model.business_objects import organization
 from submodules.model.util import sql_alchemy_to_dict
-from util import doc_ock
+from util import doc_ock, notification
 
 router = APIRouter()
 
@@ -140,3 +143,23 @@ def change_organization(request: Request, body: ChangeOrganizationBody = Body(..
         auth_manager.check_admin_access(request.state.info)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
     return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
+
+
+@router.post("/update-config")
+def update_config(request: Request, body: UpdateConfigBody = Body(...)):
+    if misc.check_is_managed():
+        print(
+            "config should only be changed for open source/local version to prevent limit issues"
+        )
+    misc.update_config(body.dict_str)
+    misc.refresh_config()
+    orgs = organization.get_all()
+    if not orgs or len(orgs) != 1:
+        print("local version should only have one organization")
+
+    for org in orgs:
+        # send to all so all are notified about the change
+        notification.send_organization_update(
+            None, f"config_updated", True, str(org.id)
+        )
+    return pack_json_result({"data": {"updateConfig": {"ok": True}}})
