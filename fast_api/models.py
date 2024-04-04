@@ -77,3 +77,11 @@ class RunThenWeakSupervisionBody(BaseModel):
 class CancelZeroShotBody(BaseModel):
     heuristic_id: StrictStr
     payload_id: StrictStr
+
+
+class AddClassificationLabelBody(BaseModel):
+    record_id: StrictStr
+    labeling_task_id: StrictStr
+    label_id: StrictStr
+    as_gold_star: Optional[StrictBool]
+    source_id: Optional[StrictStr]

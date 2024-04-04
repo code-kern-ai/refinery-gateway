@@ -4,8 +4,13 @@ import json
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
-from fast_api.models import GenerateAccessLinkBody, LinkRouteBody, StringBody
-from submodules.model import enums
+from fast_api.models import (
+    AddClassificationLabelBody,
+    GenerateAccessLinkBody,
+    LinkRouteBody,
+    StringBody,
+)
+from submodules.model import enums, events
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
 from controller.project import manager as project_manager
@@ -20,7 +25,7 @@ from submodules.model.business_objects import (
     data_slice,
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
-from util import notification
+from util import doc_ock, notification
 
 
 router = APIRouter()
@@ -254,3 +259,31 @@ def remove_access_link(
     data = {"ok": True}
 
     return pack_json_result({"data": {"removeAccessLink": data}})
+
+
+@router.post("/{project_id}/add-classification-labels")
+def add_classification_labels_to_record(
+    request: Request, project_id: str, body: AddClassificationLabelBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    rla_manager.create_manual_classification_label(
+        project_id,
+        user.id,
+        body.record_id,
+        body.label_id,
+        body.labeling_task_id,
+        body.as_gold_star,
+        body.source_id,
+    )
+
+    # this below seems not optimal positioned here
+    project = project_manager.get_project(project_id)
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelsToRecord(
+            ProjectName=f"{project.name}-{project.id}",
+            Type=enums.LabelingTaskType.CLASSIFICATION.value,
+        ),
+    )
+    notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
+    return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
