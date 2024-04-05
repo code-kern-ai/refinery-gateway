@@ -23,10 +23,12 @@ ALL_ATTRIBUTES_WHITELIST = {
 }
 
 
-@router.get("/{project_id}/all-attributes")
+@router.get(
+    "/{project_id}/all-attributes",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_attributes(
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
     state_filter: Union[List[str], None] = Query(default=None),
 ):
 
@@ -35,11 +37,13 @@ def get_attributes(
     return pack_json_result({"data": {"attributesByProjectId": data_dict}})
 
 
-@router.get("/{project_id}/check-composite-key")
+@router.get(
+    "/{project_id}/check-composite-key",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_check_composite_key(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     is_valid = manager.check_composite_key(project_id)
@@ -53,11 +57,13 @@ def get_check_composite_key(
     return pack_json_result({"data": {"checkCompositeKey": is_valid}})
 
 
-@router.get("/{project_id}/{attribute_id}/sample-records")
+@router.get(
+    "/{project_id}/{attribute_id}/sample-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_sample_records(
     project_id: str,
     attribute_id,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     record_ids, calculated_attributes = manager.calculate_user_attribute_sample_records(
