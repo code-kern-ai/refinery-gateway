@@ -40,33 +40,39 @@ def get_lookup_lists_by_project_id(
     return {"data": {"knowledgeBasesByProjectId": term_data}}
 
 
-@router.get("/{project_id}/{lookup_list_id}/get-lookup-lists-by-lookup-list-id")
+@router.get(
+    "/{project_id}/{lookup_list_id}/get-lookup-lists-by-lookup-list-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_lookup_lists_by_lookup_list_id(
     project_id: str,
     lookup_list_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager.get_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_WHITELIST)
     return {"data": {"knowledgeBaseByKnowledgeBaseId": data_dict}}
 
 
-@router.get("/{project_id}/{lookup_list_id}/terms")
+@router.get(
+    "/{project_id}/{lookup_list_id}/terms",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_terms_by_lookup_list_id(
     project_id: str,
     lookup_list_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
     return {"data": {"termsByKnowledgeBaseId": data_dict}}
 
 
-@router.get("/{project_id}/{lookup_list_id}/export")
+@router.get(
+    "/{project_id}/{lookup_list_id}/export",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_export_lookup_list(
     project_id: str,
     lookup_list_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     return {
         "data": {
@@ -77,10 +83,12 @@ def get_export_lookup_list(
     }
 
 
-@router.post("/{project_id}/create-knowledge-base")
+@router.post(
+    "/{project_id}/create-knowledge-base",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_knowledge_base(
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     knowledge_base = manager.create_knowledge_base(project_id)
 
@@ -100,11 +108,13 @@ def create_knowledge_base(
     return {"data": {"createKnowledgeBase": data}}
 
 
-@router.delete("/{project_id}/delete-knowledge-base/{knowledge_base_id}")
+@router.delete(
+    "/{project_id}/delete-knowledge-base/{knowledge_base_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_knowledge_base(
     project_id: str,
     knowledge_base_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.delete_knowledge_base(project_id, knowledge_base_id)
 
@@ -115,12 +125,14 @@ def delete_knowledge_base(
     return {"data": {"deleteKnowledgeBase": {"ok": True}}}
 
 
-@router.put("/{project_id}/update-knowledge-base")
+@router.put(
+    "/{project_id}/update-knowledge-base",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_knowledge_base(
     project_id: str,
     request: Request,
     updateKnowledgeBaseBody: UpdateKnowledgeBaseBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = get_user_by_info(request.state.info)
 
