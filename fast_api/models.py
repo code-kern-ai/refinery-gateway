@@ -143,6 +143,12 @@ class CreateNewAttributeBody(BaseModel):
     data_type: StrictStr
 
 
+class UpdateKnowledgeBaseBody(BaseModel):
+    knowledge_base_id: StrictStr
+    name: StrictStr
+    description: StrictStr
+
+
 class UpdateAttributeBody(BaseModel):
     attribute_id: StrictStr
     name: Optional[StrictStr]

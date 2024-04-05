@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends, Request
 from controller.knowledge_base import manager
 from controller.knowledge_term import manager as manager_terms
 from controller.transfer import manager as transfer_manager
+from fast_api.models import UpdateKnowledgeBaseBody
 from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
 from util import notification as prj_notification
+from controller.auth.manager import get_user_by_info
 
 router = APIRouter()
 
@@ -75,7 +77,7 @@ def get_export_lookup_list(
     }
 
 
-@router.post("/{project_id}/knowledge-base")
+@router.post("/{project_id}/create-knowledge-base")
 def create_knowledge_base(
     project_id: str,
     access: bool = Depends(auth_manager.check_project_access_dep),
@@ -96,3 +98,28 @@ def create_knowledge_base(
     }
 
     return {"data": {"createKnowledgeBase": data}}
+
+
+@router.post("/{project_id}/update-knowledge-base")
+def update_knowledge_base(
+    project_id: str,
+    request: Request,
+    updateKnowledgeBaseBody: UpdateKnowledgeBaseBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    user = get_user_by_info(request.state.info)
+
+    manager.update_knowledge_base(
+        project_id,
+        user.id,
+        updateKnowledgeBaseBody.knowledge_base_id,
+        updateKnowledgeBaseBody.name,
+        updateKnowledgeBaseBody.description,
+    )
+
+    prj_notification.send_organization_update(
+        str(project_id),
+        f"knowledge_base_updated:{str(updateKnowledgeBaseBody.knowledge_base_id)}",
+    )
+
+    return {"data": {"updateKnowledgeBase": {"ok": True}}}
