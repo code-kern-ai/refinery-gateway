@@ -13,7 +13,10 @@ from util import notification
 router = APIRouter()
 
 
-@router.get("/{project_id}/zero-shot-recommendations")
+@router.get(
+    "/{project_id}/zero-shot-recommendations",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_zero_shot_recommendations(
     request: Request,
     project_id: str,
@@ -24,7 +27,10 @@ def get_zero_shot_recommendations(
     return pack_json_result({"data": {"zeroShotRecommendations": data}})
 
 
-@router.post("/{project_id}/zero-shot-text")
+@router.post(
+    "/{project_id}/zero-shot-text",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_zero_shot_text(
     request: Request,
     project_id: str,
@@ -57,7 +63,10 @@ async def get_zero_shot_text(
     return {"data": {"zeroShotText": final_data}}
 
 
-@router.post("/{project_id}/zero-shot-10-records")
+@router.post(
+    "/{project_id}/zero-shot-10-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_zero_shot_10_records(
     request: Request,
     project_id: str,
@@ -91,7 +100,10 @@ async def get_zero_shot_10_records(
     return {"data": {"zeroShot10Records": final_data}}
 
 
-@router.post("/{project_id}/{heuristic_id}/run-zero-shot")
+@router.post(
+    "/{project_id}/{heuristic_id}/run-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def init_zeroshot(
     request: Request,
     project_id: str,
@@ -110,7 +122,10 @@ def init_zeroshot(
     return pack_json_result({"data": {"zeroShotProject": {"ok": True}}})
 
 
-@router.post("/{project_id}/create-zero-shot")
+@router.post(
+    "/{project_id}/create-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_zero_shot(
     request: Request,
     project_id: str,
@@ -133,7 +148,10 @@ def create_zero_shot(
     )
 
 
-@router.post("/{project_id}/cancel-zero-shot")
+@router.post(
+    "/{project_id}/cancel-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def cancel_zero_shot(
     project_id: str,
     body: CancelZeroShotBody = Body(...),
