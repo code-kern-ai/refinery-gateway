@@ -61,7 +61,7 @@ def get_terms_by_lookup_list_id(
     return {"data": {"termsByKnowledgeBaseId": data_dict}}
 
 
-@router.get("/lookup-lists/{project_id}/{lookup_list_id}/export")
+@router.get("/{project_id}/{lookup_list_id}/export")
 def get_export_lookup_list(
     project_id: str,
     lookup_list_id: str,
