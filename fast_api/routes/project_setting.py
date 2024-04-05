@@ -1,4 +1,7 @@
-from fast_api.models import CreateNewAttributeBody, UpdateAttributeBody
+from fast_api.models import (
+    CreateNewAttributeBody,
+    UpdateAttributeBody,
+)
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
 
@@ -11,9 +14,8 @@ from controller.labeling_task_label import manager as label_manager
 from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from controller.record import manager as record_manager
-from controller.task_queue import manager as task_queue_manager
-from controller.embedding import manager as embedding_manager
 from fast_api.routes.client_response import pack_json_result
+from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import events
 from util import doc_ock, notification
@@ -292,28 +294,3 @@ def update_project_for_gates(
     user_id = auth_manager.get_user_by_info(request.state.info).id
     project_manager.update_project_for_gates(project_id, user_id)
     return pack_json_result({"data": {"updateProjectGates": {"ok": True}}})
-
-
-@router.delete("/{project_id}/{task_id}/delete-from-task-queue")
-def delete_from_task_queue(
-    request: Request,
-    project_id: str,
-    task_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
-):
-    task_queue_manager.remove_task_from_queue(project_id, task_id)
-    return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
-
-
-@router.delete("/{project_id}/{embedding_id}/delete-embedding")
-def delete_embedding(
-    request: Request,
-    project_id: str,
-    embedding_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
-):
-    embedding_manager.delete_embedding(project_id, embedding_id)
-    notification.send_organization_update(
-        project_id, f"embedding_deleted:{embedding_id}"
-    )
-    return pack_json_result({"data": {"deleteEmbedding": {"ok": True}}})
