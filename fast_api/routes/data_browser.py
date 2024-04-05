@@ -21,11 +21,13 @@ from submodules.model.util import (
 router = APIRouter()
 
 
-@router.post("/{project_id}/record-comments")
+@router.post(
+    "/{project_id}/record-comments",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_record_comments(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.body()
 
@@ -44,11 +46,13 @@ async def get_record_comments(
     )
 
 
-@router.post("/{project_id}/search-records-extended")
+@router.post(
+    "/{project_id}/search-records-extended",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def search_records_extended(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.body()
 
@@ -87,12 +91,14 @@ async def search_records_extended(
     return pack_json_result({"data": {"searchRecordsExtended": data}})
 
 
-@router.post("/{project_id}/create-outlier-slice/{embedding_id}")
+@router.post(
+    "/{project_id}/create-outlier-slice/{embedding_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_outlier_slice(
     request: Request,
     project_id: str,
     embedding_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
@@ -117,12 +123,14 @@ def create_outlier_slice(
     )
 
 
-@router.post("/{project_id}/records-by-static-slice/{slice_id}")
+@router.post(
+    "/{project_id}/records-by-static-slice/{slice_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_records_by_static_slice(
     request: Request,
     project_id: str,
     slice_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.body()
 
@@ -161,11 +169,13 @@ async def get_records_by_static_slice(
     return pack_json_result({"data": {"recordsByStaticSlice": data}})
 
 
-@router.post("/{project_id}/create-data-slice")
+@router.post(
+    "/{project_id}/create-data-slice",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def create_data_slice(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -201,11 +211,13 @@ async def create_data_slice(
         )
 
 
-@router.post("/{project_id}/search-records-by-similarity")
+@router.post(
+    "/{project_id}/search-records-by-similarity",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_records_by_similarity(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.body()
     try:
@@ -241,12 +253,14 @@ async def get_records_by_similarity(
     return pack_json_result({"data": {"searchRecordsBySimilarity": data}})
 
 
-@router.post("/{project_id}/update-data-slice")
+@router.post(
+    "/{project_id}/update-data-slice",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def update_data_slice(
     request: Request,
     project_id: str,
     dataSliceBody: UpdateDataSliceBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     user = auth_manager.get_user_by_info(request.state.info)

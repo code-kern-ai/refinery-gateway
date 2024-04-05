@@ -18,21 +18,25 @@ from submodules.model import enums
 router = APIRouter()
 
 
-@router.get("/{project_id}/information-sources-overview-data")
+@router.get(
+    "/{project_id}/information-sources-overview-data",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_information_sources_overview_data(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager.get_overview_data(project_id)
     return pack_json_result({"data": {"informationSourcesOverviewData": data}})
 
 
-@router.get("/{project_id}/weak-supervision-run")
+@router.get(
+    "/{project_id}/weak-supervision-run",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_weak_supervision_run(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)
@@ -46,11 +50,13 @@ def get_weak_supervision_run(
     return pack_json_result({"data": {"currentWeakSupervisionRun": ws_data}})
 
 
-@router.get("/{project_id}/{heuristic_id}/heuristic-by-id")
+@router.get(
+    "/{project_id}/{heuristic_id}/heuristic-by-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_heuristic_by_heuristic_id(
     project_id: str,
     heuristic_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = sql_alchemy_to_dict(
         information_source.get_heuristic_id_with_payload(project_id, heuristic_id)
@@ -66,21 +72,25 @@ def get_heuristic_by_heuristic_id(
     return pack_json_result({"data": {"informationSourceBySourceId": data}})
 
 
-@router.get("/{project_id}/{payload_id}/payload-by-id")
+@router.get(
+    "/{project_id}/{payload_id}/payload-by-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_payload_by_payload_id(
     project_id: str,
     payload_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = sql_alchemy_to_dict(get_payload_with_heuristic_type(project_id, payload_id))
     return pack_json_result({"data": {"payloadByPayloadId": data}})
 
 
-@router.get("/{project_id}/{heuristic_id}/lf-on-10-records")
+@router.get(
+    "/{project_id}/{heuristic_id}/lf-on-10-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_labeling_function_on_10_records(
     project_id: str,
     heuristic_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = sql_alchemy_to_dict(
         payload_manager.get_labeling_function_on_10_records(project_id, heuristic_id)
@@ -102,22 +112,26 @@ def get_labeling_function_on_10_records(
     return {"data": {"getLabelingFunctionOn10Records": final_data}}
 
 
-@router.get("/{project_id}/model-callbacks-overview-data")
+@router.get(
+    "/{project_id}/model-callbacks-overview-data",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_model_callbacks_overview_data(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager.get_overview_data(project_id, is_model_callback=True)
     return pack_json_result({"data": {"modelCallbacksOverviewData": data}})
 
 
-@router.get("/{project_id}/access-link")
+@router.get(
+    "/{project_id}/access-link",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_access_link(
     request: Request,
     project_id: str,
     link_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     accessLink = access_link_manager.get(link_id)
 
@@ -130,12 +144,14 @@ def get_access_link(
     return pack_json_result({"data": {"accessLink": data}})
 
 
-@router.post("/{project_id}/{information_source_id}/toggle-heuristic")
+@router.post(
+    "/{project_id}/{information_source_id}/toggle-heuristic",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def toggle_heuristic(
     request: Request,
     project_id: str,
     information_source_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.toggle_information_source(project_id, information_source_id)
     notification.send_organization_update(
@@ -144,24 +160,27 @@ def toggle_heuristic(
     return pack_json_result({"data": {"toggleInformationSource": {"ok": True}}})
 
 
-@router.post("/{project_id}")
+@router.post(
+    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+)
 def set_information_sources(
     request: Request,
     project_id: str,
     value: bool,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.set_all_information_source_selected(project_id, value)
     notification.send_organization_update(project_id, "information_source_updated:all")
     return pack_json_result({"data": {"setAllInformationSources": {"ok": True}}})
 
 
-@router.post("/{project_id}/{heuristic_id}/payload")
+@router.post(
+    "/{project_id}/{heuristic_id}/payload",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def set_payload(
     request: Request,
     project_id: str,
     heuristic_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     information_source_item = information_source.get(project_id, heuristic_id)
@@ -185,12 +204,14 @@ def set_payload(
     return pack_json_result({"data": {"createPayload": {"queueId": queue_id}}})
 
 
-@router.delete("/{project_id}/{heuristic_id}/delete-heuristic")
+@router.delete(
+    "/{project_id}/{heuristic_id}/delete-heuristic",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_heuristic(
     request: Request,
     project_id: str,
     heuristic_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.delete_information_source(project_id, heuristic_id)
     notification.send_organization_update(
@@ -199,12 +220,14 @@ def delete_heuristic(
     return pack_json_result({"data": {"deleteInformationSource": {"ok": True}}})
 
 
-@router.post("/{project_id}/create-heuristic")
+@router.post(
+    "/{project_id}/create-heuristic",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_heuristic(
     request: Request,
     project_id: str,
     body: CreateHeuristicBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     if body.type == InformationSourceType.CROWD_LABELER.value:
@@ -230,13 +253,15 @@ def create_heuristic(
     }
 
 
-@router.post("/{project_id}/{heuristic_id}/update-heuristic")
+@router.post(
+    "/{project_id}/{heuristic_id}/update-heuristic",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_heuristic(
     request: Request,
     project_id: str,
     heuristic_id: str,
     body: UpdateHeuristicBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.update_information_source(
         project_id,

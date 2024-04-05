@@ -13,22 +13,26 @@ from util import notification
 router = APIRouter()
 
 
-@router.get("/{project_id}/zero-shot-recommendations")
+@router.get(
+    "/{project_id}/zero-shot-recommendations",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_zero_shot_recommendations(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     data = manager.get_zero_shot_recommendations(project_id)
     return pack_json_result({"data": {"zeroShotRecommendations": data}})
 
 
-@router.post("/{project_id}/zero-shot-text")
+@router.post(
+    "/{project_id}/zero-shot-text",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_zero_shot_text(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.json()
     try:
@@ -57,11 +61,13 @@ async def get_zero_shot_text(
     return {"data": {"zeroShotText": final_data}}
 
 
-@router.post("/{project_id}/zero-shot-10-records")
+@router.post(
+    "/{project_id}/zero-shot-10-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_zero_shot_10_records(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     body = await request.json()
     try:
@@ -91,12 +97,14 @@ async def get_zero_shot_10_records(
     return {"data": {"zeroShot10Records": final_data}}
 
 
-@router.post("/{project_id}/{heuristic_id}/run-zero-shot")
+@router.post(
+    "/{project_id}/{heuristic_id}/run-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def init_zeroshot(
     request: Request,
     project_id: str,
     heuristic_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     task_queue_manager.add_task(
@@ -110,12 +118,14 @@ def init_zeroshot(
     return pack_json_result({"data": {"zeroShotProject": {"ok": True}}})
 
 
-@router.post("/{project_id}/create-zero-shot")
+@router.post(
+    "/{project_id}/create-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_zero_shot(
     request: Request,
     project_id: str,
     body: CreateZeroShotBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     zero_shot_id = zero_shot_manager.create_zero_shot_information_source(
@@ -133,11 +143,13 @@ def create_zero_shot(
     )
 
 
-@router.post("/{project_id}/cancel-zero-shot")
+@router.post(
+    "/{project_id}/cancel-zero-shot",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def cancel_zero_shot(
     project_id: str,
     body: CancelZeroShotBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     zero_shot_manager.cancel_zero_shot_run(
         project_id, body.heuristic_id, body.payload_id

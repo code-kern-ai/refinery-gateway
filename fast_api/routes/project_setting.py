@@ -39,23 +39,27 @@ ATTRIBUTE_WHITELIST = [
 ]
 
 
-@router.get("/{project_id}/queued-tasks/{task_type}")
+@router.get(
+    "/{project_id}/queued-tasks/{task_type}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_queued_tasks(
     request: Request,
     project_id: str,
     task_type: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     data = manager.get_all_waiting_by_type(project_id, task_type)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=QUEUED_TASKS_WHITELIST)
     return pack_json_result({"data": {"queuedTasks": data_dict}})
 
 
-@router.get("/{project_id}/{attribute_id}/attribute-by-id")
+@router.get(
+    "/{project_id}/{attribute_id}/attribute-by-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_attribute_by_attribute_id(
     project_id: str,
     attribute_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = sql_alchemy_to_dict(
         attribute_manager.get_attribute(project_id, attribute_id),
@@ -64,33 +68,39 @@ def get_attribute_by_attribute_id(
     return pack_json_result({"data": {"attributeByAttributeId": data}})
 
 
-@router.get("/{project_id}/check-rename-label")
+@router.get(
+    "/{project_id}/check-rename-label",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def check_rename_label(
     project_id: str,
     label_id: str,
     new_name: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
     return pack_json_result({"data": {"checkRenameLabel": data}})
 
 
-@router.get("/{project_id}/last-record-export-credentials")
+@router.get(
+    "/{project_id}/last-record-export-credentials",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_last_record_export_credentials(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = transfer_manager.last_record_export_credentials(project_id, user_id)
     return pack_json_result({"data": {"lastRecordExportCredentials": data}})
 
 
-@router.post("/{project_id}/prepare-record-export")
+@router.post(
+    "/{project_id}/prepare-record-export",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def prepare_record_export(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -114,11 +124,13 @@ async def prepare_record_export(
     return pack_json_result({"data": {"prepareRecordExport": ""}})
 
 
-@router.post("/{project_id}/create-label")
+@router.post(
+    "/{project_id}/create-label",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def create_label(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -154,11 +166,13 @@ async def create_label(
     return pack_json_result({"data": {"createLabel": ""}})
 
 
-@router.get("/{project_id}/record-by-record-id")
+@router.get(
+    "/{project_id}/record-by-record-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_record_by_record_id(
     project_id: str,
     record_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     record = record_manager.get_record(project_id, record_id)
 
@@ -191,11 +205,13 @@ def get_project_size(
     return {"data": {"projectSize": final_data}}
 
 
-@router.post("/{project_id}/create-labels")
+@router.post(
+    "/{project_id}/create-labels",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def create_labels(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -229,12 +245,14 @@ async def create_labels(
     return pack_json_result({"data": {"createLabels": ""}})
 
 
-@router.post("/{project_id}/create-attribute")
+@router.post(
+    "/{project_id}/create-attribute",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_new_attribute(
     request: Request,
     project_id,
     body: CreateNewAttributeBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     attribute = attribute_manager.create_user_attribute(
         project_id, body.name, body.data_type
@@ -244,12 +262,14 @@ def create_new_attribute(
     )
 
 
-@router.post("/{project_id}/update-attribute")
+@router.post(
+    "/{project_id}/update-attribute",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_attribute(
     request: Request,
     project_id,
     body: UpdateAttributeBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     attribute_manager.update_attribute(
         project_id,

@@ -8,12 +8,14 @@ from util import notification
 router = APIRouter()
 
 
-@router.post("/{project_id}/sync-records")
+@router.post(
+    "/{project_id}/sync-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def sync_records(
     request: Request,
     project_id: str,
     record_sync_body: RecordSyncBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_by_info(request.state.info).id
     errors = manager.edit_records(user_id, project_id, record_sync_body.changes)

@@ -75,11 +75,13 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
 
 
-@router.get("/{project_id}/all-users-with-record-count")
+@router.get(
+    "/{project_id}/all-users-with-record-count",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_all_users_with_record_count(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     organization_id = str(
         auth_manager.get_user_by_info(request.state.info).organization.id

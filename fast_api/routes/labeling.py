@@ -35,11 +35,13 @@ router = APIRouter()
 AVAILABLE_LINKS_WHITELIST = ["id", "link", "link_type", "name", "is_locked"]
 
 
-@router.post("/{project_id}/available-links")
+@router.post(
+    "/{project_id}/available-links",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_available_links(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -95,11 +97,13 @@ async def get_available_links(
     return pack_json_result({"data": {"availableLinks": available_links}})
 
 
-@router.post("/{project_id}/huddle-data")
+@router.post(
+    "/{project_id}/huddle-data",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_huddle_data(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -184,11 +188,13 @@ async def get_tokenized_record(request: Request):
     return pack_json_result({"data": {"tokenizeRecord": data}})
 
 
-@router.delete("/{project_id}/record-label-association-by-ids")
+@router.delete(
+    "/{project_id}/record-label-association-by-ids",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def delete_record_label_association_by_ids(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     try:
         body = await request.json()
@@ -208,35 +214,41 @@ async def delete_record_label_association_by_ids(
     return pack_json_result({"data": {"deleteRecordLabelAssociation": True}})
 
 
-@router.delete("/{project_id}/{record_id}/record-by-id")
+@router.delete(
+    "/{project_id}/{record_id}/record-by-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def delete_record_by_id(
     request: Request,
     project_id: str,
     record_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     record_manager.delete_record(project_id, record_id)
     notification.send_organization_update(project_id, f"record_deleted:{record_id}")
     return pack_json_result({"data": {"deleteRecord": True}})
 
 
-@router.post("/{project_id}/link-locked")
+@router.post(
+    "/{project_id}/link-locked",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def get_link_locked(
     request: Request,
     project_id: str,
     linkRouteBody: LinkRouteBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     is_locked = manager.check_link_locked(project_id, linkRouteBody.link_route)
     return pack_json_result({"data": {"linkLocked": is_locked}})
 
 
-@router.post("/{project_id}/generate-access-link")
+@router.post(
+    "/{project_id}/generate-access-link",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def generate_access_link(
     request: Request,
     project_id: str,
     generateAccessLinkBody: GenerateAccessLinkBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     user = auth_manager.get_user_by_info(request.state.info)
@@ -267,12 +279,14 @@ def generate_access_link(
     return pack_json_result({"data": {"generateAccessLink": data}})
 
 
-@router.delete("/{project_id}/remove-access-link")
+@router.delete(
+    "/{project_id}/remove-access-link",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def remove_access_link(
     request: Request,
     project_id: str,
     stringBody: StringBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     type_id = manager.remove(stringBody.value)
@@ -285,12 +299,14 @@ def remove_access_link(
     return pack_json_result({"data": {"removeAccessLink": data}})
 
 
-@router.put("/{project_id}/lock-access-link")
+@router.put(
+    "/{project_id}/lock-access-link",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def lock_access_link(
     request: Request,
     project_id: str,
     lockAccessLinkBody: LockAccessLinkBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     type_id = manager.change_user_access_to_link_lock(
         lockAccessLinkBody.link_id, lockAccessLinkBody.lock_state
