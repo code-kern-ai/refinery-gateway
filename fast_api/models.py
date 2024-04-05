@@ -147,3 +147,12 @@ class UpdateKnowledgeBaseBody(BaseModel):
     knowledge_base_id: StrictStr
     name: StrictStr
     description: StrictStr
+
+
+class UpdateAttributeBody(BaseModel):
+    attribute_id: StrictStr
+    name: Optional[StrictStr]
+    data_type: Optional[StrictStr]
+    is_primary_key: Optional[StrictBool]
+    source_code: Optional[StrictStr]
+    visibility: Optional[StrictStr]
