@@ -2,7 +2,11 @@ import json
 from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
-from fast_api.models import CreatePersonalTokenBody, UploadCredentialsAndIdBody
+from fast_api.models import (
+    CreatePersonalTokenBody,
+    UpdateProjectNameAndDescriptionBody,
+    UploadCredentialsAndIdBody,
+)
 from fastapi import APIRouter, Body, Depends, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
@@ -20,6 +24,7 @@ from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
+from util import notification
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
@@ -390,3 +395,20 @@ def delete_personal_access_token(
     auth_manager.check_admin_access(request.state.info)
     token_manager.delete_personal_access_token(project_id, token_id)
     return pack_json_result({"data": {"deletePersonalAccessToken": True}})
+
+
+@router.post("/{project_id}/update-project-name-description")
+def update_project_name_description(
+    request: Request,
+    project_id: str,
+    body: UpdateProjectNameAndDescriptionBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    manager.update_project(project_id, name=body.name, description=body.description)
+    # one global for e.g notification center
+    notification.send_organization_update(
+        project_id, f"project_update:{project_id}", True
+    )
+    # one for the specific project so it's updated
+    notification.send_organization_update(project_id, f"project_update:{project_id}")
+    return pack_json_result({"data": {"updateProjectNameDescription": True}})
