@@ -141,3 +141,9 @@ class CreatePersonalTokenBody(BaseModel):
 class CreateNewAttributeBody(BaseModel):
     name: StrictStr
     data_type: StrictStr
+
+
+class UpdateKnowledgeBaseBody(BaseModel):
+    knowledge_base_id: StrictStr
+    name: StrictStr
+    description: StrictStr
