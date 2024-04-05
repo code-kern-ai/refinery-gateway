@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from typing import Dict
 
 from fastapi.responses import JSONResponse
@@ -37,14 +37,23 @@ ATTRIBUTE_WHITELIST = [
 
 
 @router.get("/{project_id}/queued-tasks/{task_type}")
-def get_queued_tasks(request: Request, project_id: str, task_type: str) -> Dict:
+def get_queued_tasks(
+    request: Request,
+    project_id: str,
+    task_type: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+) -> Dict:
     data = manager.get_all_waiting_by_type(project_id, task_type)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=QUEUED_TASKS_WHITELIST)
     return pack_json_result({"data": {"queuedTasks": data_dict}})
 
 
 @router.get("/{project_id}/{attribute_id}/attribute-by-id")
-def get_attribute_by_attribute_id(project_id: str, attribute_id: str):
+def get_attribute_by_attribute_id(
+    project_id: str,
+    attribute_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     data = sql_alchemy_to_dict(
         attribute_manager.get_attribute(project_id, attribute_id),
         column_whitelist=ATTRIBUTE_WHITELIST,
@@ -53,20 +62,33 @@ def get_attribute_by_attribute_id(project_id: str, attribute_id: str):
 
 
 @router.get("/{project_id}/check-rename-label")
-def check_rename_label(project_id: str, label_id: str, new_name: str):
+def check_rename_label(
+    project_id: str,
+    label_id: str,
+    new_name: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
     return pack_json_result({"data": {"checkRenameLabel": data}})
 
 
 @router.get("/{project_id}/last-record-export-credentials")
-def get_last_record_export_credentials(request: Request, project_id: str):
+def get_last_record_export_credentials(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = transfer_manager.last_record_export_credentials(project_id, user_id)
     return pack_json_result({"data": {"lastRecordExportCredentials": data}})
 
 
 @router.post("/{project_id}/prepare-record-export")
-async def prepare_record_export(request: Request, project_id: str):
+async def prepare_record_export(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         export_options = body.get("options", {}).get("exportOptions")
@@ -90,7 +112,11 @@ async def prepare_record_export(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/create-label")
-async def create_label(request: Request, project_id: str):
+async def create_label(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         label_name = body.get("labelName")
@@ -126,7 +152,11 @@ async def create_label(request: Request, project_id: str):
 
 
 @router.get("/{project_id}/record-by-record-id")
-def get_record_by_record_id(project_id: str, record_id: str):
+def get_record_by_record_id(
+    project_id: str,
+    record_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     record = record_manager.get_record(project_id, record_id)
 
     data = {
@@ -140,7 +170,9 @@ def get_record_by_record_id(project_id: str, record_id: str):
 
 
 @router.get("/{project_id}/project-size")
-def get_project_size(project_id: str):
+def get_project_size(
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
+):
     data = project_manager.get_project_size(project_id)
     final_data = [
         {
@@ -157,7 +189,11 @@ def get_project_size(project_id: str):
 
 
 @router.post("/{project_id}/create-labels")
-async def create_labels(request: Request, project_id: str):
+async def create_labels(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         labeling_task_id = body.get("labelingTaskId")

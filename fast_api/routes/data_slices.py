@@ -1,11 +1,12 @@
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fast_api.routes.client_response import pack_json_result, wrap_content_for_frontend
 from submodules.model.util import sql_alchemy_to_dict
 from typing import List
 from controller.data_slice import manager
 from controller.record import manager as record_manager
+from controller.auth import manager as auth_manager
 from util import notification
 import json
 
@@ -15,7 +16,10 @@ router = APIRouter()
 
 @router.get("/{project_id}")
 def data_slices(
-    request: Request, project_id: str, slice_type: Optional[str] = None
+    request: Request,
+    project_id: str,
+    slice_type: Optional[str] = None,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> List:
 
     values = [
@@ -34,14 +38,19 @@ def data_slices(
 
 
 @router.get("/{project_id}/unique-values")
-def get_unique_values_by_attributes(project_id: str):
+def get_unique_values_by_attributes(
+    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
+):
     data = record_manager.get_unique_values_by_attributes(project_id)
     return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
 
 
 @router.get("/{project_id}/static-data-slices-current-count/{slice_id}")
 def get_static_data_slices_current_count(
-    request: Request, project_id: str, slice_id: str
+    request: Request,
+    project_id: str,
+    slice_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager.count_items(project_id, slice_id)
     return pack_json_result({"data": {"staticDataSlicesCurrentCount": data}})
@@ -49,7 +58,10 @@ def get_static_data_slices_current_count(
 
 @router.delete("/{project_id}/{data_slice_id}")
 async def delete_data_slice_by_id(
-    request: Request, project_id: str, data_slice_id: str
+    request: Request,
+    project_id: str,
+    data_slice_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.delete_data_slice(project_id, data_slice_id)
     notification.send_organization_update(

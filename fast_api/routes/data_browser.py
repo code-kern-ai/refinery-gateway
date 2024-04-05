@@ -1,6 +1,6 @@
 import json
 from typing import Dict
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
@@ -22,7 +22,11 @@ router = APIRouter()
 
 
 @router.post("/{project_id}/record-comments")
-async def get_record_comments(request: Request, project_id: str):
+async def get_record_comments(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.body()
 
     try:
@@ -41,7 +45,11 @@ async def get_record_comments(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/search-records-extended")
-async def search_records_extended(request: Request, project_id: str):
+async def search_records_extended(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.body()
 
     try:
@@ -80,7 +88,12 @@ async def search_records_extended(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/create-outlier-slice/{embedding_id}")
-def create_outlier_slice(request: Request, project_id: str, embedding_id: str):
+def create_outlier_slice(
+    request: Request,
+    project_id: str,
+    embedding_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
     data_slice_item = data_slice_manager.create_outlier_slice(
@@ -105,7 +118,12 @@ def create_outlier_slice(request: Request, project_id: str, embedding_id: str):
 
 
 @router.post("/{project_id}/records-by-static-slice/{slice_id}")
-async def get_records_by_static_slice(request: Request, project_id: str, slice_id: str):
+async def get_records_by_static_slice(
+    request: Request,
+    project_id: str,
+    slice_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.body()
 
     try:
@@ -144,7 +162,11 @@ async def get_records_by_static_slice(request: Request, project_id: str, slice_i
 
 
 @router.post("/{project_id}/create-data-slice")
-async def create_data_slice(request: Request, project_id: str):
+async def create_data_slice(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     try:
         body = await request.json()
         filter_raw = body.get("options", {}).get("filterRaw")
@@ -180,7 +202,11 @@ async def create_data_slice(request: Request, project_id: str):
 
 
 @router.post("/{project_id}/search-records-by-similarity")
-async def get_records_by_similarity(request: Request, project_id: str):
+async def get_records_by_similarity(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     body = await request.body()
     try:
         data = json.loads(body)
@@ -217,7 +243,10 @@ async def get_records_by_similarity(request: Request, project_id: str):
 
 @router.post("/{project_id}/update-data-slice")
 async def update_data_slice(
-    request: Request, project_id: str, dataSliceBody: UpdateDataSliceBody = Body(...)
+    request: Request,
+    project_id: str,
+    dataSliceBody: UpdateDataSliceBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
 
     user = auth_manager.get_user_by_info(request.state.info)

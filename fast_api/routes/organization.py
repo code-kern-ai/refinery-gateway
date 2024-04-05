@@ -1,4 +1,5 @@
 import json
+from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
     AddUserToOrganizationBody,
@@ -6,7 +7,6 @@ from fast_api.models import (
     CreateOrganizationBody,
     UpdateConfigBody,
 )
-from fastapi import APIRouter, Body, Request
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import resolve_user_name_and_email_by_id
 from controller.organization import manager
@@ -76,7 +76,11 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
 
 @router.get("/{project_id}/all-users-with-record-count")
-def get_all_users_with_record_count(request: Request, project_id: str):
+def get_all_users_with_record_count(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     organization_id = str(
         auth_manager.get_user_by_info(request.state.info).organization.id
     )
@@ -159,7 +163,5 @@ def update_config(request: Request, body: UpdateConfigBody = Body(...)):
 
     for org in orgs:
         # send to all so all are notified about the change
-        notification.send_organization_update(
-            None, f"config_updated", True, str(org.id)
-        )
+        notification.send_organization_update(None, "config_updated", True, str(org.id))
     return pack_json_result({"data": {"updateConfig": {"ok": True}}})

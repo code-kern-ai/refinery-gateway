@@ -2,7 +2,7 @@ from controller.attribute import manager
 from controller.auth import manager as auth_manager
 from typing import List, Union
 from fast_api.routes.client_response import pack_json_result
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from submodules.model.enums import NotificationType
 from submodules.model.util import sql_alchemy_to_dict
 from util.notification import create_notification
@@ -26,6 +26,7 @@ ALL_ATTRIBUTES_WHITELIST = {
 @router.get("/{project_id}/all-attributes")
 def get_attributes(
     project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
     state_filter: Union[List[str], None] = Query(default=None),
 ):
 
@@ -35,7 +36,11 @@ def get_attributes(
 
 
 @router.get("/{project_id}/check-composite-key")
-def get_check_composite_key(request: Request, project_id: str):
+def get_check_composite_key(
+    request: Request,
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     user = auth_manager.get_user_by_info(request.state.info)
     is_valid = manager.check_composite_key(project_id)
     if not is_valid:
@@ -49,7 +54,11 @@ def get_check_composite_key(request: Request, project_id: str):
 
 
 @router.get("/{project_id}/{attribute_id}/sample-records")
-def get_sample_records(project_id: str, attribute_id):
+def get_sample_records(
+    project_id: str,
+    attribute_id,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
 
     record_ids, calculated_attributes = manager.calculate_user_attribute_sample_records(
         project_id, attribute_id

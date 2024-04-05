@@ -32,3 +32,7 @@ class BadPasswordError(Exception):
 
 class ApiTokenImportError(Exception):
     pass
+
+
+class ProjectAccessError(Exception):
+    pass
