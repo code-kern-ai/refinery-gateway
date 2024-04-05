@@ -7,12 +7,13 @@ from fast_api.routes.client_response import pack_json_result
 router = APIRouter()
 
 
-@router.post("/{project_id}")
+@router.post(
+    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+)
 def init_weak_supervision(
     request: Request,
     project_id: str,
     init_body: InitWeakSuperVisionBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     manager.run_weak_supervision(
@@ -27,12 +28,14 @@ def init_weak_supervision(
     )
 
 
-@router.post("/{project_id}/run-then-weak-supervision")
+@router.post(
+    "/{project_id}/run-then-weak-supervision",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def run_then_weak_supervision(
     request: Request,
     project_id: str,
     body: RunThenWeakSupervisionBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_by_info(request.state.info).id
     manager.run_then_weak_supervision(

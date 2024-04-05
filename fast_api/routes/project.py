@@ -59,10 +59,12 @@ TOKENS_WHITELIST = {
 }
 
 
-@router.get("/{project_id}/project-by-project-id")
+@router.get(
+    "/{project_id}/project-by-project-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_project_by_project_id(
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     data = get_project_by_project_id_sql(project_id)
     return pack_json_result({"data": {"projectByProjectId": data}})
@@ -77,12 +79,14 @@ def get_all_projects(request: Request) -> Dict:
     return pack_json_result(projects_graphql)
 
 
-@router.get("/{project_id}/general-project-stats")
+@router.get(
+    "/{project_id}/general-project-stats",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def general_project_stats(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     return pack_json_result(
@@ -97,14 +101,16 @@ def general_project_stats(
     )
 
 
-@router.get("/{project_id}/inter-annotator-matrix")
+@router.get(
+    "/{project_id}/inter-annotator-matrix",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def inter_annotator_matrix(
     project_id: str,
     labeling_task_id: str,
     include_gold_star: Optional[bool] = True,
     include_all_org_user: Optional[bool] = False,
     only_on_static_slice: Optional[str] = None,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     labeling_task = task_manager.get_labeling_task(project_id, labeling_task_id)
@@ -134,12 +140,14 @@ def inter_annotator_matrix(
     )
 
 
-@router.get("/{project_id}/confusion-matrix")
+@router.get(
+    "/{project_id}/confusion-matrix",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def confusion_matrix(
     project_id: str,
     labeling_task_id: str,
     slice_id: Optional[str] = None,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     return pack_json_result(
         {
@@ -153,13 +161,15 @@ def confusion_matrix(
     )
 
 
-@router.get("/{project_id}/confidence-distribution")
+@router.get(
+    "/{project_id}/confidence-distribution",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def confidence_distribution(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
     num_samples: int = 100,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> List:
     return pack_json_result(
         {
@@ -173,12 +183,14 @@ def confidence_distribution(
     )
 
 
-@router.get("/{project_id}/label-distribution")
+@router.get(
+    "/{project_id}/label-distribution",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def label_distribution(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> str:
     return pack_json_result(
         {
@@ -266,22 +278,26 @@ def get_model_provider_info(request: Request) -> Dict:
     return pack_json_result({"data": {"modelProviderInfo": data}})
 
 
-@router.get("/{project_id}/rats-running")
+@router.get(
+    "/{project_id}/rats-running",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def is_rats_running(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     data = manager.is_rats_tokenization_still_running(project_id)
     return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
 
 
-@router.get("/{project_id}/access-tokens")
+@router.get(
+    "/{project_id}/access-tokens",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_access_tokens(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     data = sql_alchemy_to_dict(
         token_manager.get_all_personal_access_tokens(project_id),
@@ -296,23 +312,27 @@ def get_access_tokens(
     return pack_json_result({"data": {"allPersonalAccessTokens": data}})
 
 
-@router.get("/{project_id}/last-export-credentials")
+@router.get(
+    "/{project_id}/last-export-credentials",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def last_export_credentials(
     request: Request,
     project_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
     return pack_json_result({"data": {"lastProjectExportCredentials": data}})
 
 
-@router.post("/{project_id}/upload-credentials-and-id")
+@router.post(
+    "/{project_id}/upload-credentials-and-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def upload_credentials_and_id(
     request: Request,
     project_id: str,
     upload_credentials: UploadCredentialsAndIdBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_by_info(request.state.info).id
     data = transfer_manager.get_upload_credentials_and_id(
@@ -327,12 +347,14 @@ def upload_credentials_and_id(
     return pack_json_result({"data": {"uploadCredentialsAndId": json.dumps(data)}})
 
 
-@router.get("/{project_id}/upload-task-by-id")
+@router.get(
+    "/{project_id}/upload-task-by-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def upload_task_by_id(
     request: Request,
     project_id: str,
     upload_task_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> Dict:
     if upload_task_id.find("/") != -1:
         upload_task_id = upload_task_id.split("/")[-1]
@@ -370,12 +392,14 @@ def get_notifications(
     return pack_json_result({"data": {"notifications": data}})
 
 
-@router.post("/{project_id}/create-personal-token")
+@router.post(
+    "/{project_id}/create-personal-token",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_personal_access_token(
     request: Request,
     project_id: str,
     body: CreatePersonalTokenBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_by_info(request.state.info).id
@@ -385,24 +409,28 @@ def create_personal_access_token(
     return pack_json_result({"data": {"createPersonalAccessToken": token}})
 
 
-@router.delete("/{project_id}/{token_id}/delete-personal-token")
+@router.delete(
+    "/{project_id}/{token_id}/delete-personal-token",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_personal_access_token(
     request: Request,
     project_id: str,
     token_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     auth_manager.check_admin_access(request.state.info)
     token_manager.delete_personal_access_token(project_id, token_id)
     return pack_json_result({"data": {"deletePersonalAccessToken": True}})
 
 
-@router.post("/{project_id}/update-project-name-description")
+@router.post(
+    "/{project_id}/update-project-name-description",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_project_name_description(
     request: Request,
     project_id: str,
     body: UpdateProjectNameAndDescriptionBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.update_project(project_id, name=body.name, description=body.description)
     # one global for e.g notification center
