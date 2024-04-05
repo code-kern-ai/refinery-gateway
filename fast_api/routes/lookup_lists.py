@@ -39,7 +39,7 @@ def get_lookup_lists(
     return {"data": {"knowledgeBasesByProjectId": term_data}}
 
 
-@router.get("/{project_id}/{lookup_list_id}/get-lookup-list-by-id")
+@router.get("/{project_id}/{lookup_list_id}/get-lookup-list-by-lookup-list-id")
 def get_lookup_lists_by_lookup_list_id(
     project_id: str,
     lookup_list_id: str,
