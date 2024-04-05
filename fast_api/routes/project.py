@@ -2,7 +2,7 @@ import json
 from typing import Optional
 
 from controller.auth.kratos import resolve_user_name_and_email_by_id
-from fast_api.models import UploadCredentialsAndIdBody
+from fast_api.models import CreatePersonalTokenBody, UploadCredentialsAndIdBody
 from fastapi import APIRouter, Body, Query, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
@@ -309,7 +309,6 @@ def upload_task_by_id(request: Request, project_id: str, upload_task_id: str) ->
     return {"data": {"uploadTaskById": data}}
 
 
-
 @router.get("/notifications")
 def get_notifications(
     request: Request,
@@ -338,3 +337,22 @@ def get_notifications(
     data = sql_alchemy_to_dict(notifications)
 
     return pack_json_result({"data": {"notifications": data}})
+
+
+@router.post("/{project_id}/create-personal-token")
+def create_personal_access_token(
+    request: Request, project_id: str, body: CreatePersonalTokenBody = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+    token = token_manager.create_personal_access_token(
+        project_id, user_id, body.name, body.scope, body.expires_at
+    )
+    return pack_json_result({"data": {"createPersonalAccessToken": token}})
+
+
+@router.delete("/{project_id}/{token_id}/delete-personal-token")
+def delete_personal_access_token(request: Request, project_id: str, token_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    token_manager.delete_personal_access_token(project_id, token_id)
+    return pack_json_result({"data": {"deletePersonalAccessToken": True}})

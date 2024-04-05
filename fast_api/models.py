@@ -130,3 +130,9 @@ class ChangeOrganizationBody(BaseModel):
 
 class UpdateConfigBody(BaseModel):
     dict_str: StrictStr
+
+
+class CreatePersonalTokenBody(BaseModel):
+    name: StrictStr
+    scope: StrictStr
+    expires_at: StrictStr
