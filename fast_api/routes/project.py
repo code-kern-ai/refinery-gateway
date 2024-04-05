@@ -367,7 +367,10 @@ def get_notifications(
 
 @router.post("/{project_id}/create-personal-token")
 def create_personal_access_token(
-    request: Request, project_id: str, body: CreatePersonalTokenBody = Body(...)
+    request: Request,
+    project_id: str,
+    body: CreatePersonalTokenBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_by_info(request.state.info).id
@@ -378,7 +381,12 @@ def create_personal_access_token(
 
 
 @router.delete("/{project_id}/{token_id}/delete-personal-token")
-def delete_personal_access_token(request: Request, project_id: str, token_id: str):
+def delete_personal_access_token(
+    request: Request,
+    project_id: str,
+    token_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
     auth_manager.check_admin_access(request.state.info)
     token_manager.delete_personal_access_token(project_id, token_id)
     return pack_json_result({"data": {"deletePersonalAccessToken": True}})
