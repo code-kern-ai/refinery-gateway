@@ -279,3 +279,14 @@ def update_attribute(
         body.visibility,
     )
     return pack_json_result({"data": {"updateAttribute": {"ok": True}}})
+
+
+@router.post("/{project_id}/update-project-gates")
+def update_project_for_gates(
+    request: Request,
+    project_id,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+    project_manager.update_project_for_gates(project_id, user_id)
+    return pack_json_result({"data": {"updateProjectGates": {"ok": True}}})
