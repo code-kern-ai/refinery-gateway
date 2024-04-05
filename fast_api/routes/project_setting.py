@@ -1,4 +1,4 @@
-from fast_api.models import CreateNewAttributeBody
+from fast_api.models import CreateNewAttributeBody, UpdateAttributeBody
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
 
@@ -240,3 +240,22 @@ def create_new_attribute(
     return pack_json_result(
         {"data": {"createUserAttribute": {"attributeId": attribute.id}}}
     )
+
+
+@router.post("/{project_id}/update-attribute")
+def update_attribute(
+    request: Request,
+    project_id,
+    body: UpdateAttributeBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    attribute_manager.update_attribute(
+        project_id,
+        body.attribute_id,
+        body.data_type,
+        body.is_primary_key,
+        body.name,
+        body.source_code,
+        body.visibility,
+    )
+    return pack_json_result({"data": {"updateAttribute": {"ok": True}}})

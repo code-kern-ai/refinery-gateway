@@ -141,3 +141,12 @@ class CreatePersonalTokenBody(BaseModel):
 class CreateNewAttributeBody(BaseModel):
     name: StrictStr
     data_type: StrictStr
+
+
+class UpdateAttributeBody(BaseModel):
+    attribute_id: StrictStr
+    name: Optional[StrictStr]
+    data_type: Optional[StrictStr]
+    is_primary_key: Optional[StrictBool]
+    source_code: Optional[StrictStr]
+    visibility: Optional[StrictStr]
