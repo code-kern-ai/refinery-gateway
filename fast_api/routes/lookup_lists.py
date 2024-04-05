@@ -4,6 +4,7 @@ from controller.knowledge_term import manager as manager_terms
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
+from util import notification as prj_notification
 
 router = APIRouter()
 
@@ -73,3 +74,26 @@ def get_export_lookup_list(
             )
         }
     }
+
+
+@router.post("/{project_id}/knowledge-base")
+def create_knowledge_base(
+    project_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    knowledge_base = manager.create_knowledge_base(project_id)
+
+    prj_notification.send_organization_update(
+        project_id, f"knowledge_base_created:{str(knowledge_base.id)}"
+    )
+
+    data = {
+        "knowledgeBase": {
+            "id": str(knowledge_base.id),
+            "name": knowledge_base.name,
+            "description": knowledge_base.description,
+            "termCount": len(knowledge_base.terms),
+        }
+    }
+
+    return {"data": {"createKnowledgeBase": data}}
