@@ -2,7 +2,6 @@ from typing import Optional
 
 from controller.auth import manager as auth
 from controller.knowledge_base import manager
-from graphql_api import types
 from controller.auth.manager import get_user_by_info
 from graphql_api.types import KnowledgeBase
 from util import notification as prj_notification
