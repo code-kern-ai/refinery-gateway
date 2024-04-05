@@ -100,7 +100,22 @@ def create_knowledge_base(
     return {"data": {"createKnowledgeBase": data}}
 
 
-@router.post("/{project_id}/update-knowledge-base")
+@router.delete("/{project_id}/delete-knowledge-base/{knowledge_base_id}")
+def delete_knowledge_base(
+    project_id: str,
+    knowledge_base_id: str,
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    manager.delete_knowledge_base(project_id, knowledge_base_id)
+
+    prj_notification.send_organization_update(
+        project_id, f"knowledge_base_deleted:{str(knowledge_base_id)}"
+    )
+
+    return {"data": {"deleteKnowledgeBase": {"ok": True}}}
+
+
+@router.put("/{project_id}/update-knowledge-base")
 def update_knowledge_base(
     project_id: str,
     request: Request,
