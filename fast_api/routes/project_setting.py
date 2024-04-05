@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Request
+from fast_api.models import CreateNewAttributeBody
+from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
 
 from fastapi.responses import JSONResponse
@@ -224,3 +225,18 @@ async def create_labels(
             project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
         )
     return pack_json_result({"data": {"createLabels": ""}})
+
+
+@router.post("/{project_id}/create-attribute")
+def create_new_attribute(
+    request: Request,
+    project_id,
+    body: CreateNewAttributeBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    attribute = attribute_manager.create_user_attribute(
+        project_id, body.name, body.data_type
+    )
+    return pack_json_result(
+        {"data": {"createUserAttribute": {"attributeId": attribute.id}}}
+    )
