@@ -150,3 +150,8 @@ class UpdateAttributeBody(BaseModel):
     is_primary_key: Optional[StrictBool]
     source_code: Optional[StrictStr]
     visibility: Optional[StrictStr]
+
+
+class UpdateProjectNameAndDescriptionBody(BaseModel):
+    name: StrictStr
+    description: StrictStr
