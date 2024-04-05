@@ -66,7 +66,6 @@ def get_export_lookup_list(
     lookup_list_id: str,
     access: bool = Depends(auth_manager.check_project_access_dep),
 ):
-    print("EXPORT REACHED")
     return {
         "data": {
             "exportKnowledgeBase": transfer_manager.export_knowledge_base(
