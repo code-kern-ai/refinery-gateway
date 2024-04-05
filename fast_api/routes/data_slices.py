@@ -14,12 +14,13 @@ import json
 router = APIRouter()
 
 
-@router.get("/{project_id}")
+@router.get(
+    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+)
 def data_slices(
     request: Request,
     project_id: str,
     slice_type: Optional[str] = None,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ) -> List:
 
     values = [
@@ -45,23 +46,27 @@ def get_unique_values_by_attributes(
     return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
 
 
-@router.get("/{project_id}/static-data-slices-current-count/{slice_id}")
+@router.get(
+    "/{project_id}/static-data-slices-current-count/{slice_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_static_data_slices_current_count(
     request: Request,
     project_id: str,
     slice_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     data = manager.count_items(project_id, slice_id)
     return pack_json_result({"data": {"staticDataSlicesCurrentCount": data}})
 
 
-@router.delete("/{project_id}/{data_slice_id}")
+@router.delete(
+    "/{project_id}/{data_slice_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 async def delete_data_slice_by_id(
     request: Request,
     project_id: str,
     data_slice_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.delete_data_slice(project_id, data_slice_id)
     notification.send_organization_update(
