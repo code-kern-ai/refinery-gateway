@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, Depends, Request
-from controller.knowledge_base import manager
-from controller.knowledge_term import manager as manager_terms
+from controller.knowledge_base import manager as base_manager
+from controller.knowledge_term import manager as terms_manager
 from controller.transfer import manager as transfer_manager
 from fast_api.models import AddTermToKnowledgeBaseBody, UpdateKnowledgeBaseBody
 from submodules.model.util import sql_alchemy_to_dict
@@ -24,10 +24,10 @@ LOOKUP_LIST_TERM_WHITELIST = [
 def get_lookup_lists_by_project_id(
     project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
 ):
-    data = manager.get_all_knowledge_bases(project_id)
+    data = base_manager.get_all_knowledge_bases(project_id)
     term_data = []
     for lookup_list in data:
-        terms = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list.id)
+        terms = terms_manager.get_terms_by_knowledge_base(project_id, lookup_list.id)
         term_data.append(
             {
                 "id": lookup_list.id,
@@ -48,7 +48,7 @@ def get_lookup_lists_by_lookup_list_id(
     project_id: str,
     lookup_list_id: str,
 ):
-    data = manager.get_knowledge_base(project_id, lookup_list_id)
+    data = base_manager.get_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_WHITELIST)
     return {"data": {"knowledgeBaseByKnowledgeBaseId": data_dict}}
 
@@ -61,7 +61,7 @@ def get_terms_by_lookup_list_id(
     project_id: str,
     lookup_list_id: str,
 ):
-    data = manager_terms.get_terms_by_knowledge_base(project_id, lookup_list_id)
+    data = terms_manager.get_terms_by_knowledge_base(project_id, lookup_list_id)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
     return {"data": {"termsByKnowledgeBaseId": data_dict}}
 
@@ -90,7 +90,7 @@ def get_export_lookup_list(
 def create_knowledge_base(
     project_id: str,
 ):
-    knowledge_base = manager.create_knowledge_base(project_id)
+    knowledge_base = base_manager.create_knowledge_base(project_id)
 
     prj_notification.send_organization_update(
         project_id, f"knowledge_base_created:{str(knowledge_base.id)}"
@@ -116,7 +116,7 @@ def delete_knowledge_base(
     project_id: str,
     knowledge_base_id: str,
 ):
-    manager.delete_knowledge_base(project_id, knowledge_base_id)
+    base_manager.delete_knowledge_base(project_id, knowledge_base_id)
 
     prj_notification.send_organization_update(
         project_id, f"knowledge_base_deleted:{str(knowledge_base_id)}"
@@ -136,7 +136,7 @@ def update_knowledge_base(
 ):
     user = get_user_by_info(request.state.info)
 
-    manager.update_knowledge_base(
+    base_manager.update_knowledge_base(
         project_id,
         user.id,
         updateKnowledgeBaseBody.knowledge_base_id,
@@ -160,7 +160,7 @@ def add_term_to_knowledge_base(
 ):
     user = get_user_by_info(request.state.info)
 
-    manager_terms.create_term(
+    terms_manager.create_term(
         user.id,
         project_id,
         termBody.knowledge_base_id,
@@ -174,3 +174,18 @@ def add_term_to_knowledge_base(
     )
 
     return {"data": {"addTermToKnowledgeBase": {"ok": True}}}
+
+
+@router.delete("/{project_id}/delete-term/{term_id}")
+def delete_term(
+    project_id: str,
+    term_id: str,
+):
+    base = base_manager.get_knowledge_base_by_term(project_id, term_id)
+    terms_manager.delete_term(project_id, term_id)
+
+    prj_notification.send_organization_update(
+        project_id, f"knowledge_base_term_updated:{str(base.id)}"
+    )
+
+    return {"data": {"deleteTerm": {"ok": True}}}
