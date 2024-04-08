@@ -15,7 +15,6 @@ from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from controller.record import manager as record_manager
 from fast_api.routes.client_response import pack_json_result
-from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import events
 from util import doc_ock, notification
