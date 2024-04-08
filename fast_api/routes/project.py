@@ -204,10 +204,11 @@ def label_distribution(
     )
 
 
-@router.get("/{project_id}/gates-integration-data")
-def gates_integration_data(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-) -> str:
+@router.get(
+    "/{project_id}/gates-integration-data",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def gates_integration_data(project_id: str) -> str:
     return pack_json_result(
         {
             "data": {
@@ -219,10 +220,11 @@ def gates_integration_data(
     )
 
 
-@router.get("/{project_id}/project-tokenization")
-def project_tokenization(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-) -> str:
+@router.get(
+    "/{project_id}/project-tokenization",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def project_tokenization(project_id: str) -> str:
     waiting_task = task_queue.get_by_tokenization(project_id)
     data = None
     if waiting_task and not waiting_task.is_active:
@@ -245,10 +247,11 @@ def project_tokenization(
     )
 
 
-@router.get("/{project_id}/labeling-tasks-by-project-id")
-def labeling_tasks_by_project_id(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-) -> str:
+@router.get(
+    "/{project_id}/labeling-tasks-by-project-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def labeling_tasks_by_project_id(project_id: str) -> str:
     return pack_json_result(
         {
             "data": {
@@ -260,10 +263,11 @@ def labeling_tasks_by_project_id(
     )
 
 
-@router.get("/{project_id}/record-export-by-project-id")
-def record_export_by_project_id(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-) -> str:
+@router.get(
+    "/{project_id}/record-export-by-project-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
     data_graphql = pack_as_graphql(data, "projectByProjectId")
     return pack_json_result(data_graphql)
