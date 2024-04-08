@@ -756,9 +756,9 @@ def import_file(
                 distinct_records=weak_supervision_item.get("distinct_records"),
                 result_count=weak_supervision_item.get("result_count"),
             )
-            weak_supervision_ids[
-                weak_supervision_item.get("id")
-            ] = weak_supervision_task.id
+            weak_supervision_ids[weak_supervision_item.get("id")] = (
+                weak_supervision_task.id
+            )
 
     send_progress_update_throttle(project_id, task_id, 80)
 
