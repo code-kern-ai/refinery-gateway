@@ -323,7 +323,10 @@ def lock_access_link(
     return pack_json_result({"data": {"lockAccessLink": data}})
 
 
-@router.post("/{project_id}/add-classification-labels")
+@router.post(
+    "/{project_id}/add-classification-labels",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def add_classification_labels_to_record(
     request: Request, project_id: str, body: AddClassificationLabelBody = Body(...)
 ):
@@ -351,7 +354,10 @@ def add_classification_labels_to_record(
     return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
 
 
-@router.post("/{project_id}/add-extraction-label")
+@router.post(
+    "/{project_id}/add-extraction-label",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def add_extraction_label_to_record(
     request: Request, project_id: str, body: AddExtractionLabelBody = Body(...)
 ):
@@ -380,7 +386,10 @@ def add_extraction_label_to_record(
     return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})
 
 
-@router.post("/{project_id}/set-gold-star")
+@router.post(
+    "/{project_id}/set-gold-star",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
     user = auth_manager.get_user_by_info(request.state.info)
     task_type = rla_manager.create_gold_star_association(
@@ -399,7 +408,10 @@ def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Bod
     return pack_json_result({"data": {"setGoldStarAnnotationForTask": {"ok": True}}})
 
 
-@router.post("/{project_id}/remove-gold-star")
+@router.post(
+    "/{project_id}/remove-gold-star",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def remove_gold_star(
     request: Request, project_id: str, body: RemoveGoldStarBody = Body(...)
 ):
