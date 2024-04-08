@@ -44,6 +44,14 @@ class RecordIdeBody(BaseModel):
     code: StrictStr
 
 
+class NotificationsBody(BaseModel):
+    project_filter: List[StrictStr]
+    level_filter: List[StrictStr]
+    type_filter: List[StrictStr]
+    user_filter: StrictBool
+    limit: StrictInt = 50
+
+
 class RecordSyncBody(BaseModel):
     changes: Dict
 
