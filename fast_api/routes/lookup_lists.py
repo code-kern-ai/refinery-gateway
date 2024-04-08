@@ -152,7 +152,10 @@ def update_knowledge_base(
     return {"data": {"updateKnowledgeBase": {"ok": True}}}
 
 
-@router.post("/{project_id}/add-term-to-knowledge-base")
+@router.post(
+    "/{project_id}/add-term-to-knowledge-base",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def add_term_to_knowledge_base(
     project_id: str,
     request: Request,
@@ -176,11 +179,11 @@ def add_term_to_knowledge_base(
     return {"data": {"addTermToKnowledgeBase": {"ok": True}}}
 
 
-@router.delete("/{project_id}/delete-term/{term_id}")
-def delete_term(
-    project_id: str,
-    term_id: str,
-):
+@router.delete(
+    "/{project_id}/delete-term/{term_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_term(project_id: str, term_id: str):
     base = base_manager.get_knowledge_base_by_term(project_id, term_id)
     terms_manager.delete_term(project_id, term_id)
 
@@ -189,3 +192,12 @@ def delete_term(
     )
 
     return {"data": {"deleteTerm": {"ok": True}}}
+
+
+@router.put(
+    "/{project_id}/blacklist-term/{term_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def blacklist_term(project_id: str, term_id: str):
+    terms_manager.blacklist_term(term_id)
+    return {"data": {"blacklistTerm": {"ok": True}}}
