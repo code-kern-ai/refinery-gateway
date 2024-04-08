@@ -25,10 +25,11 @@ LOOKUP_LIST_TERM_WHITELIST = [
 ]
 
 
-@router.get("/{project_id}/get-lookup-lists-by-project-id")
-def get_lookup_lists_by_project_id(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-):
+@router.get(
+    "/{project_id}/get-lookup-lists-by-project-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_lookup_lists_by_project_id(project_id: str):
     data = base_manager.get_all_knowledge_bases(project_id)
     term_data = []
     for lookup_list in data:
