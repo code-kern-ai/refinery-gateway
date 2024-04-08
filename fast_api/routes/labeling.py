@@ -442,3 +442,18 @@ def update_labeling_task(project_id: str, body: UpdateLabelingTaskBody = Body(..
     )
 
     return pack_json_result({"data": {"updateLabelingTask": {"ok": True}}})
+
+
+@router.delete(
+    "/{project_id}/delete-labeling-task",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_labeling_task(project_id: str, body: StringBody = Body(...)):
+    labeling_task_id = body.value
+    labeling_manager.delete_labeling_task(project_id, labeling_task_id)
+
+    notification.send_organization_update(
+        project_id, f"labeling_task_deleted:{labeling_task_id}"
+    )
+
+    return pack_json_result({"data": {"deleteLabelingTask": {"ok": True}}})
