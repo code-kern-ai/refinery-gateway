@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends, Request
 from controller.knowledge_base import manager
 from controller.knowledge_term import manager as manager_terms
 from controller.transfer import manager as transfer_manager
-from fast_api.models import UpdateKnowledgeBaseBody
+from fast_api.models import AddTermToKnowledgeBaseBody, UpdateKnowledgeBaseBody
 from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
 from util import notification as prj_notification
@@ -150,3 +150,27 @@ def update_knowledge_base(
     )
 
     return {"data": {"updateKnowledgeBase": {"ok": True}}}
+
+
+@router.post("/{project_id}/add-term-to-knowledge-base")
+def add_term_to_knowledge_base(
+    project_id: str,
+    request: Request,
+    termBody: AddTermToKnowledgeBaseBody = Body(...),
+):
+    user = get_user_by_info(request.state.info)
+
+    manager_terms.create_term(
+        user.id,
+        project_id,
+        termBody.knowledge_base_id,
+        termBody.value,
+        termBody.comment,
+    )
+
+    prj_notification.send_organization_update(
+        str(project_id),
+        f"knowledge_base_term_updated:{str(termBody.knowledge_base_id)}",
+    )
+
+    return {"data": {"addTermToKnowledgeBase": {"ok": True}}}

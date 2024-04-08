@@ -149,6 +149,12 @@ class UpdateKnowledgeBaseBody(BaseModel):
     description: StrictStr
 
 
+class AddTermToKnowledgeBaseBody(BaseModel):
+    value: StrictStr
+    comment: StrictStr
+    knowledge_base_id: Union[StrictStr, List[StrictStr]]
+
+
 class UpdateAttributeBody(BaseModel):
     attribute_id: StrictStr
     name: Optional[StrictStr]
