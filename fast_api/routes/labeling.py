@@ -11,10 +11,12 @@ from fast_api.models import (
     RemoveGoldStarBody,
     SetGoldStarBody,
     StringBody,
+    UpdateLabelingTaskBody,
 )
 from submodules.model import enums, events
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
+from controller.labeling_task import manager as labeling_manager
 from controller.project import manager as project_manager
 from submodules.model.business_objects import record
 from controller.tokenization import manager as tokenization_manager
@@ -407,3 +409,24 @@ def remove_gold_star(
     )
     notification.send_organization_update(project_id, f"rla_deleted:{body.record_id}")
     return pack_json_result({"data": {"removeGoldStarAnnotationForTask": {"ok": True}}})
+
+
+@router.put(
+    "/{project_id}/update-labeling-task",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_labeling_task(project_id: str, body: UpdateLabelingTaskBody = Body(...)):
+    labeling_manager.update_labeling_task(
+        project_id,
+        body.labeling_task_id,
+        body.labeling_task_target_id,
+        body.labeling_task_name,
+        body.labeling_task_type,
+    )
+
+    notification.send_organization_update(
+        project_id,
+        f"labeling_task_updated:{body.labeling_task_id}:{body.labeling_task_type}",
+    )
+
+    return pack_json_result({"data": {"updateLabelingTask": {"ok": True}}})

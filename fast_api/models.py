@@ -190,3 +190,10 @@ class CreateEmbeddingBody(BaseModel):
 class UpdateEmbeddingBody(BaseModel):
     embedding_id: StrictStr
     filter_attributes: List[StrictStr]
+
+
+class UpdateLabelingTaskBody(BaseModel):
+    labeling_task_id: StrictStr
+    labeling_task_name: StrictStr
+    labeling_task_type: StrictStr
+    labeling_task_target_id: Optional[StrictStr]
