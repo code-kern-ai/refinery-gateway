@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fast_api.models import CreateEmbeddingBody
+from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
 from fast_api.routes.client_response import pack_json_result
 from controller.misc import manager as misc
 from fastapi import APIRouter, Body, Depends, Request
@@ -127,3 +127,23 @@ def create_embedding(
         project_id=project_id, message="embedding:queued"
     )
     return pack_json_result({"data": {"createEmbedding": {"ok": True}}})
+
+
+@router.post("/{project_id}/update-embedding-payload")
+def update_embedding_payload(
+    project_id: str,
+    updateEmbeddingBody: UpdateEmbeddingBody = Body(...),
+    access: bool = Depends(auth_manager.check_project_access_dep),
+):
+    went_through = manager.update_embedding_payload(
+        project_id,
+        updateEmbeddingBody.embedding_id,
+        updateEmbeddingBody.filter_attributes,
+    )
+
+    if went_through:
+        notification.send_organization_update(
+            project_id, f"embedding_updated:{updateEmbeddingBody.embedding_id}"
+        )
+
+    return pack_json_result({"data": {"updateEmbeddingPayload": {"ok": went_through}}})

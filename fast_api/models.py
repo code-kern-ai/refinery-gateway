@@ -185,3 +185,8 @@ class UpdateProjectNameAndDescriptionBody(BaseModel):
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr
+
+
+class UpdateEmbeddingBody(BaseModel):
+    embedding_id: StrictStr
+    filter_attributes: List[StrictStr]
