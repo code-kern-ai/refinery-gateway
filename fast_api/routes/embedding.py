@@ -47,7 +47,10 @@ def get_embeddings(request: Request, project_id: str) -> List:
     return pack_json_result(data_graphql)
 
 
-@router.delete("/{project_id}/{task_id}/delete-from-task-queue",dependencies=[Depends(auth_manager.check_project_access_dep)])
+@router.delete(
+    "/{project_id}/{task_id}/delete-from-task-queue",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_from_task_queue(
     request: Request,
     project_id: str,
@@ -57,7 +60,10 @@ def delete_from_task_queue(
     return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
 
 
-@router.delete("/{project_id}/{embedding_id}/delete-embedding"dependencies=[Depends(auth_manager.check_project_access_dep)])
+@router.delete(
+    "/{project_id}/{embedding_id}/delete-embedding",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_embedding(
     request: Request,
     project_id: str,
@@ -70,7 +76,10 @@ def delete_embedding(
     return pack_json_result({"data": {"deleteEmbedding": {"ok": True}}})
 
 
-@router.post("/{project_id}/create-embedding"dependencies=[Depends(auth_manager.check_project_access_dep)])
+@router.post(
+    "/{project_id}/create-embedding",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_embedding(
     request: Request,
     project_id: str,
@@ -126,7 +135,10 @@ def create_embedding(
     return pack_json_result({"data": {"createEmbedding": {"ok": True}}})
 
 
-@router.post("/{project_id}/update-embedding-payload"dependencies=[Depends(auth_manager.check_project_access_dep)])
+@router.post(
+    "/{project_id}/update-embedding-payload",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_embedding_payload(
     project_id: str,
     updateEmbeddingBody: UpdateEmbeddingBody = Body(...),
