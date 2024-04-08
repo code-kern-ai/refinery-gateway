@@ -95,6 +95,10 @@ def import_sample_project(
         file_name = "sample_projects/conversational_ai_initial.zip"
     elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI.value:
         file_name = "sample_projects/conversational_ai.zip"
+    elif project_type == enums.SampleProjectType.GLOBAL_GUARD_INSURANCE_INITIAL.value:
+        file_name = "sample_projects/global_guard_insurance_initial.zip"
+    elif project_type == enums.SampleProjectType.GLOBAL_GUARD_INSURANCE.value:
+        file_name = "sample_projects/global_guard_insurance.zip"
     else:
         raise Exception("Unknown sample project" + project_type)
     if not project_name:
