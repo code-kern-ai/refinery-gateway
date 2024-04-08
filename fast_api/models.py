@@ -155,6 +155,13 @@ class AddTermToKnowledgeBaseBody(BaseModel):
     knowledge_base_id: Union[StrictStr, List[StrictStr]]
 
 
+class PasteKnowledgeTermsBody(BaseModel):
+    knowledge_base_id: Union[StrictStr, List[StrictStr]]
+    values: StrictStr
+    split: StrictStr
+    delete: StrictBool
+
+
 class UpdateAttributeBody(BaseModel):
     attribute_id: StrictStr
     name: Optional[StrictStr]

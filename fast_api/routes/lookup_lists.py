@@ -2,7 +2,11 @@ from fastapi import APIRouter, Body, Depends, Request
 from controller.knowledge_base import manager as base_manager
 from controller.knowledge_term import manager as terms_manager
 from controller.transfer import manager as transfer_manager
-from fast_api.models import AddTermToKnowledgeBaseBody, UpdateKnowledgeBaseBody
+from fast_api.models import (
+    AddTermToKnowledgeBaseBody,
+    PasteKnowledgeTermsBody,
+    UpdateKnowledgeBaseBody,
+)
 from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
 from util import notification as prj_notification
@@ -201,3 +205,26 @@ def delete_term(project_id: str, term_id: str):
 def blacklist_term(project_id: str, term_id: str):
     terms_manager.blacklist_term(term_id)
     return {"data": {"blacklistTerm": {"ok": True}}}
+
+
+@router.post(
+    "/{project_id}/paste-knowledge-terms",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def paste_knowledge_terms(
+    project_id: str, pasteBody: PasteKnowledgeTermsBody = Body(...)
+):
+    terms_manager.paste_knowledge_terms(
+        project_id,
+        pasteBody.knowledge_base_id,
+        pasteBody.values,
+        pasteBody.split,
+        pasteBody.delete,
+    )
+
+    prj_notification.send_organization_update(
+        str(project_id),
+        f"knowledge_base_term_updated:{str(pasteBody.knowledge_base_id)}",
+    )
+
+    return {"data": {"pasteKnowledgeTerms": {"ok": True}}}
