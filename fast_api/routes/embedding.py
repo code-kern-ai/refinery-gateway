@@ -47,23 +47,21 @@ def get_embeddings(request: Request, project_id: str) -> List:
     return pack_json_result(data_graphql)
 
 
-@router.delete("/{project_id}/{task_id}/delete-from-task-queue")
+@router.delete("/{project_id}/{task_id}/delete-from-task-queue",dependencies=[Depends(auth_manager.check_project_access_dep)])
 def delete_from_task_queue(
     request: Request,
     project_id: str,
     task_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     task_queue_manager.remove_task_from_queue(project_id, task_id)
     return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
 
 
-@router.delete("/{project_id}/{embedding_id}/delete-embedding")
+@router.delete("/{project_id}/{embedding_id}/delete-embedding"dependencies=[Depends(auth_manager.check_project_access_dep)])
 def delete_embedding(
     request: Request,
     project_id: str,
     embedding_id: str,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     manager.delete_embedding(project_id, embedding_id)
     notification.send_organization_update(
@@ -72,12 +70,11 @@ def delete_embedding(
     return pack_json_result({"data": {"deleteEmbedding": {"ok": True}}})
 
 
-@router.post("/{project_id}/create-embedding")
+@router.post("/{project_id}/create-embedding"dependencies=[Depends(auth_manager.check_project_access_dep)])
 def create_embedding(
     request: Request,
     project_id: str,
     body: CreateEmbeddingBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     body.config = json.loads(body.config)
@@ -129,11 +126,10 @@ def create_embedding(
     return pack_json_result({"data": {"createEmbedding": {"ok": True}}})
 
 
-@router.post("/{project_id}/update-embedding-payload")
+@router.post("/{project_id}/update-embedding-payload"dependencies=[Depends(auth_manager.check_project_access_dep)])
 def update_embedding_payload(
     project_id: str,
     updateEmbeddingBody: UpdateEmbeddingBody = Body(...),
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     went_through = manager.update_embedding_payload(
         project_id,
