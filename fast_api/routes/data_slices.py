@@ -38,10 +38,11 @@ def data_slices(
     )
 
 
-@router.get("/{project_id}/unique-values")
-def get_unique_values_by_attributes(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-):
+@router.get(
+    "/{project_id}/unique-values",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_unique_values_by_attributes(project_id: str):
     data = record_manager.get_unique_values_by_attributes(project_id)
     return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
 
