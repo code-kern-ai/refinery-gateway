@@ -188,10 +188,11 @@ def get_record_by_record_id(
     return pack_json_result({"data": {"recordByRecordId": data}})
 
 
-@router.get("/{project_id}/project-size")
-def get_project_size(
-    project_id: str, access: bool = Depends(auth_manager.check_project_access_dep)
-):
+@router.get(
+    "/{project_id}/project-size",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_project_size(project_id: str):
     data = project_manager.get_project_size(project_id)
     final_data = [
         {
@@ -285,11 +286,13 @@ def update_attribute(
     return pack_json_result({"data": {"updateAttribute": {"ok": True}}})
 
 
-@router.post("/{project_id}/update-project-gates")
+@router.post(
+    "/{project_id}/update-project-gates",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_project_for_gates(
     request: Request,
     project_id,
-    access: bool = Depends(auth_manager.check_project_access_dep),
 ):
     user_id = auth_manager.get_user_by_info(request.state.info).id
     project_manager.update_project_for_gates(project_id, user_id)
