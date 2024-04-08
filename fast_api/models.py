@@ -162,6 +162,12 @@ class PasteKnowledgeTermsBody(BaseModel):
     delete: StrictBool
 
 
+class UpdateTermBody(BaseModel):
+    term_id: StrictStr
+    value: StrictStr
+    comment: StrictStr
+
+
 class UpdateAttributeBody(BaseModel):
     attribute_id: StrictStr
     name: Optional[StrictStr]

@@ -6,6 +6,7 @@ from fast_api.models import (
     AddTermToKnowledgeBaseBody,
     PasteKnowledgeTermsBody,
     UpdateKnowledgeBaseBody,
+    UpdateTermBody,
 )
 from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
@@ -228,3 +229,31 @@ def paste_knowledge_terms(
     )
 
     return {"data": {"pasteKnowledgeTerms": {"ok": True}}}
+
+
+@router.put(
+    "/{project_id}/update-term",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_term(
+    project_id: str,
+    request: Request,
+    updateTermBody: UpdateTermBody = Body(...),
+):
+    base = base_manager.get_knowledge_base_by_term(project_id, updateTermBody.term_id)
+    user = get_user_by_info(request.state.info)
+
+    terms_manager.update_term(
+        project_id,
+        base.id,
+        user.id,
+        updateTermBody.term_id,
+        updateTermBody.value,
+        updateTermBody.comment,
+    )
+
+    prj_notification.send_organization_update(
+        str(project_id), f"knowledge_base_term_updated:{str(base.id)}"
+    )
+
+    return {"data": {"updateTerm": {"ok": True}}}
