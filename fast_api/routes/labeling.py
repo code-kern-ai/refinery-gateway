@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from fast_api.models import (
     AddClassificationLabelBody,
     AddExtractionLabelBody,
+    CreateLabelingTaskBody,
     GenerateAccessLinkBody,
     LinkRouteBody,
     LockAccessLinkBody,
@@ -457,3 +458,36 @@ def delete_labeling_task(project_id: str, body: StringBody = Body(...)):
     )
 
     return pack_json_result({"data": {"deleteLabelingTask": {"ok": True}}})
+
+
+@router.post(
+    "/{project_id}/create-labeling-task",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def create_labeling_task(
+    project_id: str, request: Request, body: CreateLabelingTaskBody = Body(...)
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    project = project_manager.get_project(project_id)
+
+    item = labeling_manager.create_labeling_task(
+        project_id,
+        body.labeling_task_name,
+        body.labeling_task_type,
+        body.labeling_task_target_id,
+    )
+
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelingTask(
+            ProjectName=f"{project.name}-{project.id}",
+            Name=body.labeling_task_name,
+            Type=body.labeling_task_type,
+        ),
+    )
+
+    notification.send_organization_update(
+        project_id, f"labeling_task_created:{str(item.id)}"
+    )
+
+    return pack_json_result({"data": {"createLabelingTask": {"ok": True}}})
