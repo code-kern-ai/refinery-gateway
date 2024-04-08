@@ -125,48 +125,6 @@ async def prepare_record_export(
     return pack_json_result({"data": {"prepareRecordExport": ""}})
 
 
-@router.post(
-    "/{project_id}/create-label",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-async def create_label(
-    request: Request,
-    project_id: str,
-):
-    try:
-        body = await request.json()
-        label_name = body.get("labelName")
-        labeling_task_id = body.get("labelingTaskId")
-        label_color = body.get("labelColor")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
-
-    if project_id:
-        auth_manager.check_project_access(request.state.info, project_id)
-
-    user = auth_manager.get_user_by_info(request.state.info)
-    label = label_manager.create_label(
-        project_id, label_name, labeling_task_id, label_color
-    )
-    task = task_manager.get_labeling_task(project_id, labeling_task_id)
-    project = project_manager.get_project(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabel(
-            ProjectName=f"{project.name}-{project.id}",
-            Name=label_name,
-            LabelingTaskName=task.name,
-        ),
-    )
-    notification.send_organization_update(
-        project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
-    )
-    return pack_json_result({"data": {"createLabel": ""}})
-
-
 @router.get(
     "/{project_id}/record-by-record-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
