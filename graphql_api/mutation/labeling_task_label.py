@@ -3,7 +3,6 @@ from submodules.model import events
 from controller.labeling_task_label import manager
 from controller.labeling_task import manager as task_manager
 import graphene
-from graphql_api import types
 from controller.auth import manager as auth
 from controller.project import manager as project_manager
 from util import doc_ock, notification

@@ -211,3 +211,8 @@ class CreateLabelingTaskBody(BaseModel):
     labeling_task_name: StrictStr
     labeling_task_type: StrictStr
     labeling_task_target_id: Optional[StrictStr]
+
+
+class UpdateLabelColorBody(BaseModel):
+    labeling_task_label_id: StrictStr
+    label_color: StrictStr

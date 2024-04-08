@@ -12,6 +12,7 @@ from fast_api.models import (
     RemoveGoldStarBody,
     SetGoldStarBody,
     StringBody,
+    UpdateLabelColorBody,
     UpdateLabelingTaskBody,
 )
 from submodules.model import enums, events
@@ -550,3 +551,14 @@ async def create_label(
         project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
     )
     return pack_json_result({"data": {"createLabel": True}})
+
+
+@router.put(
+    "/{project_id}/update-label-color",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_label_color(project_id: str, body: UpdateLabelColorBody = Body(...)):
+    label_manager.update_label_color(
+        project_id, body.labeling_task_label_id, body.label_color
+    )
+    return pack_json_result({"data": {"updateLabelColor": {"ok": True}}})
