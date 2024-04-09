@@ -104,10 +104,10 @@ def update_comment(
     item = comments.get(comment_id)
 
     if not item:
-        raise ValueError(f"Can't find comment")
+        raise ValueError("Can't find comment")
 
     if user.role != enums.UserRoles.ENGINEER.value and user.id != item.created_by:
-        raise ValueError(f"Can't update comment")
+        raise ValueError("Can't update comment")
     comments.change(item, changes, with_commit=True)
     return item
 
@@ -115,13 +115,13 @@ def update_comment(
 def delete_comment(comment_id: str, user_id: str) -> CommentData:
     item = comments.get(comment_id)
     if not item:
-        raise ValueError(f"Can't find comment")
+        raise ValueError("Can't find comment")
 
     if (
         item.created_by != user_id
         and user_manager.get_user_role_by_id(user_id) != enums.UserRoles.ENGINEER.value
     ):
-        raise ValueError(f"Can't delete comment")
+        raise ValueError("Can't delete comment")
     comments.remove(comment_id, with_commit=True)
 
 
