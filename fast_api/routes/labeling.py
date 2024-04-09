@@ -13,6 +13,7 @@ from fast_api.models import (
     SetGoldStarBody,
     StringBody,
     UpdateLabelColorBody,
+    UpdateLabelHotkeyBody,
     UpdateLabelingTaskBody,
 )
 from submodules.model import enums, events
@@ -562,3 +563,14 @@ def update_label_color(project_id: str, body: UpdateLabelColorBody = Body(...)):
         project_id, body.labeling_task_label_id, body.label_color
     )
     return pack_json_result({"data": {"updateLabelColor": {"ok": True}}})
+
+
+@router.put(
+    "/{project_id}/update-label-hotkey",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_label_hotkey(project_id: str, body: UpdateLabelHotkeyBody = Body(...)):
+    label_manager.update_label_hotkey(
+        project_id, body.labeling_task_label_id, body.label_hotkey
+    )
+    return pack_json_result({"data": {"updateLabelHotkey": {"ok": True}}})

@@ -216,3 +216,8 @@ class CreateLabelingTaskBody(BaseModel):
 class UpdateLabelColorBody(BaseModel):
     labeling_task_label_id: StrictStr
     label_color: StrictStr
+
+
+class UpdateLabelHotkeyBody(BaseModel):
+    labeling_task_label_id: StrictStr
+    label_hotkey: StrictStr
