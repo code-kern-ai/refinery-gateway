@@ -7,6 +7,7 @@ from fast_api.models import (
     CreateProjectBody,
     NotificationsBody,
     UpdateProjectNameAndDescriptionBody,
+    UpdateProjectStatusBody,
     UpdateProjectTokenizerBody,
     UploadCredentialsAndIdBody,
 )
@@ -506,3 +507,15 @@ def update_project_tokenizer(
 ):
     manager.update_project(project_id, tokenizer=body.tokenizer)
     return pack_json_result({"data": {"updateProjectTokenizer": {"ok": True}}})
+
+
+@router.put(
+    "/{project_id}/update-project-status",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_project_status(
+    project_id: str,
+    body: UpdateProjectStatusBody = Body(...),
+):
+    manager.update_project(project_id, status=body.new_status)
+    return pack_json_result({"data": {"updateProjectStatus": {"ok": True}}})

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Body, Depends, Request
 from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
-from controller.organization import manager as org_manager
 from controller.labeling_access_link import manager as access_link_manager
 from controller.payload import manager as payload_manager
 from submodules.model.business_objects import information_source

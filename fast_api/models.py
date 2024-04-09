@@ -203,6 +203,10 @@ class UpdateProjectTokenizerBody(BaseModel):
     tokenizer: StrictStr
 
 
+class UpdateProjectStatusBody(BaseModel):
+    new_status: StrictStr
+
+
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr
