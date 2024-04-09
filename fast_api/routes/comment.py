@@ -28,26 +28,31 @@ async def get_all_comments(request: Request):
 
     to_return = {}
     for key in requested:
+        xfkey = requested[key].get("xfkey")
+        xftype = requested[key].get("xftype")
         project_id = requested[key].get("pId")
+        comment_id = requested[key].get("commentId")
+        includeAddInfo = requested[key].get("includeAddInfo")
+
         if project_id:
             auth_manager.check_project_access(request.state.info, project_id)
         else:
             auth_manager.check_admin_access(request.state.info)
-        comment_id = requested[key].get("commentId")
+
         if comment_id:
-            data = manager.get_comment(requested[key]["xftype"], user_id, comment_id)
+            data = manager.get_comment_by_comment_id(user_id, comment_id)
         else:
             data = manager.get_comments(
-                requested[key]["xftype"],
+                xftype,
                 user_id,
-                requested[key].get("xfkey"),
+                xfkey,
                 project_id,
             )
+
         add_info = None
-        if requested[key].get("includeAddInfo"):
-            add_info = manager.get_add_info(
-                requested[key]["xftype"], project_id, requested[key].get("xfkey")
-            )
+        if includeAddInfo and xftype:
+            add_info = manager.get_add_info(xftype, project_id, xfkey)
+
         to_return[key] = {
             "data": data,
             "add_info": add_info,

@@ -47,6 +47,10 @@ def get_comment(xftype: str, user_id: str, comment_id: str) -> CommentData:
     return comments.get_as_json(comment_id, user_id)
 
 
+def get_comment_by_comment_id(user_id: str, comment_id: str) -> CommentData:
+    return comments.get_as_json(comment_id, user_id)
+
+
 def get_add_info(
     xftype: str,
     project_id: Optional[str] = None,
