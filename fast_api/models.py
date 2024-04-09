@@ -243,3 +243,9 @@ class CreateCommentBody(BaseModel):
 class DeleteCommentBody(BaseModel):
     comment_id: StrictStr
     project_id: Optional[StrictStr] = None
+
+
+class UpdateCommentBody(BaseModel):
+    comment_id: StrictStr
+    changes: Dict
+    project_id: Optional[StrictStr] = None

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from controller.comment import manager
 from controller.auth import manager as auth_manager
-from fast_api.models import CreateCommentBody, DeleteCommentBody
+from fast_api.models import CreateCommentBody, DeleteCommentBody, UpdateCommentBody
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import CommentCategory
 from util import notification
@@ -107,3 +107,28 @@ def delete_comment(
         )
 
     return pack_json_result({"data": {"deleteComment": {"ok": True}}})
+
+
+@router.put("/update-comment")
+def update_comment(
+    request: Request,
+    body: UpdateCommentBody = Body(...),
+):
+    if body.project_id:
+        auth_manager.check_project_access(request.state.info, body.project_id)
+    else:
+        auth_manager.check_admin_access(request.state.info)
+
+    user = auth_manager.get_user_by_info(request.state.info)
+    item = manager.update_comment(body.comment_id, user, body.changes)
+
+    if item and body.project_id:
+        # without project_id its a admin dashboard comment -> no websocket integration planned atm
+        # global notification since the data is collected globally -> further handling in frontend
+        notification.send_organization_update(
+            body.project_id,
+            f"comment_updated:{body.project_id}:{body.comment_id}",
+            True,
+        )
+
+    return pack_json_result({"data": {"updateComment": {"ok": True}}})
