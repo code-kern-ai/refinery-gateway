@@ -230,3 +230,11 @@ class UpdateLabelHotkeyBody(BaseModel):
 class UpdateLabelNameBody(BaseModel):
     label_id: StrictStr
     new_name: StrictStr
+
+
+class CreateCommentBody(BaseModel):
+    comment: StrictStr
+    xftype: StrictStr
+    xfkey: StrictStr
+    project_id: Optional[StrictStr] = None
+    is_private: Optional[StrictBool] = None

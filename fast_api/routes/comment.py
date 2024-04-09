@@ -1,9 +1,12 @@
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from controller.comment import manager
 from controller.auth import manager as auth_manager
+from fast_api.models import CreateCommentBody
 from fast_api.routes.client_response import pack_json_result
+from submodules.model.enums import CommentCategory
+from util import notification
 
 
 router = APIRouter()
@@ -53,3 +56,29 @@ async def get_all_comments(request: Request):
     return pack_json_result(
         {"data": {"getAllComments": to_return}}, wrap_for_frontend=False
     )
+
+
+@router.post("/create-comment")
+async def create_comment(request: Request, body: CreateCommentBody = Body(...)):
+    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+
+    if body.project_id:
+        auth_manager.check_project_access(request.state.info, body.project_id)
+    else:
+        auth_manager.check_admin_access(request.state.info)
+
+    if body.xftype == CommentCategory.USER.value:
+        user_id = body.xfkey
+
+    item = manager.create_comment(
+        body.xfkey, body.xftype, body.comment, user_id, body.project_id, body.is_private
+    )
+
+    if item and body.project_id:
+        notification.send_organization_update(
+            body.project_id,
+            f"comment_created:{body.project_id}:{body.xftype}:{body.xfkey}:{str(item.id)}",
+            True,
+        )
+
+    return pack_json_result({"data": {"createComment": {"ok": True}}})
