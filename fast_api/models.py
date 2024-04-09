@@ -11,6 +11,10 @@ class StringBody(BaseModel):
     value: StrictStr
 
 
+class WarningDataBody(BaseModel):
+    warning_data: Dict
+
+
 class LinkRouteBody(BaseModel):
     link_route: StrictStr
 

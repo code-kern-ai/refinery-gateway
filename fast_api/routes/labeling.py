@@ -15,6 +15,7 @@ from fast_api.models import (
     UpdateLabelColorBody,
     UpdateLabelHotkeyBody,
     UpdateLabelingTaskBody,
+    WarningDataBody,
 )
 from submodules.model import enums, events
 from fast_api.routes.client_response import pack_json_result
@@ -574,3 +575,15 @@ def update_label_hotkey(project_id: str, body: UpdateLabelHotkeyBody = Body(...)
         project_id, body.labeling_task_label_id, body.label_hotkey
     )
     return pack_json_result({"data": {"updateLabelHotkey": {"ok": True}}})
+
+
+@router.post(
+    "/{project_id}/handle-label-rename-warnings",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def handle_label_rename_warnings(
+    project_id: str,
+    body: WarningDataBody = Body(...),
+):
+    label_manager.handle_label_rename_warning(project_id, body.warning_data)
+    return pack_json_result({"data": {"handleLabelRenameWarnings": {"ok": True}}})

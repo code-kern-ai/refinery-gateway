@@ -5,7 +5,6 @@ from submodules.model.business_objects import (
     general,
     knowledge_base,
     information_source,
-    record_label_association,
 )
 from controller.knowledge_base.util import create_knowledge_base_if_not_existing
 from submodules.model.enums import LabelingTaskType
