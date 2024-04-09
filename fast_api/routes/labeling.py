@@ -12,6 +12,7 @@ from fast_api.models import (
     RemoveGoldStarBody,
     SetGoldStarBody,
     StringBody,
+    TokenizedRecordBody,
     UpdateLabelColorBody,
     UpdateLabelHotkeyBody,
     UpdateLabelNameBody,
@@ -144,17 +145,8 @@ async def get_huddle_data(
 
 
 @router.post("/tokenized-record")
-async def get_tokenized_record(request: Request):
-    try:
-        body = await request.json()
-        record_id = body.get("recordId", "")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
-
-    record_item = record.get_without_project_id(record_id)
+async def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)):
+    record_item = record.get_without_project_id(body.record_id)
     if not record_item:
         return pack_json_result({"data": {"tokenizeRecord": None}})
 
@@ -162,27 +154,29 @@ async def get_tokenized_record(request: Request):
     auth_manager.check_project_access(request.state.info, record_item.project_id)
 
     tokenize_data = tokenization_manager.get_tokenized_record(
-        record_item.project_id, record_id
+        record_item.project_id, body.record_id
     )
 
     attributes = []
 
     for attr in tokenize_data.attributes:
-        tokens = [
-            {
-                "value": token.value,
-                "idx": token.idx,
-                "posStart": token.pos_start,
-                "posEnd": token.pos_end,
-                "type": token.type,
-            }
-            for token in attr.tokens
-        ]
+        tokens = None
+        if attr.tokens is not None:
+            tokens = [
+                {
+                    "value": token.value,
+                    "idx": token.idx,
+                    "posStart": token.pos_start,
+                    "posEnd": token.pos_end,
+                    "type": token.type,
+                }
+                for token in attr.tokens
+            ]
         attributes.append(
             {
                 "raw": tokenize_data.attributes[0].raw,
                 "attribute": {
-                    "id": tokenize_data.attributes[0].attribute.id,
+                    "id": str(tokenize_data.attributes[0].attribute.id),
                     "name": tokenize_data.attributes[0].attribute.name,
                 },
                 "tokens": tokens,
@@ -190,7 +184,7 @@ async def get_tokenized_record(request: Request):
         )
 
     data = {
-        "recordId": record_id,
+        "recordId": body.record_id,
         "attributes": attributes,
     }
 
@@ -220,7 +214,7 @@ async def delete_record_label_association_by_ids(
         project_id, record_id, association_ids, user.id
     )
 
-    return pack_json_result({"data": {"deleteRecordLabelAssociation": True}})
+    return pack_json_result({"data": {"deleteRecordLabelAssociation": {"ok": True}}})
 
 
 @router.delete(
@@ -234,7 +228,7 @@ async def delete_record_by_id(
 ):
     record_manager.delete_record(project_id, record_id)
     notification.send_organization_update(project_id, f"record_deleted:{record_id}")
-    return pack_json_result({"data": {"deleteRecord": True}})
+    return pack_json_result({"data": {"deleteRecord": {"ok": True}}})
 
 
 @router.post(
@@ -553,7 +547,7 @@ async def create_label(
     notification.send_organization_update(
         project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
     )
-    return pack_json_result({"data": {"createLabel": True}})
+    return pack_json_result({"data": {"createLabel": {"ok": True}}})
 
 
 @router.put(

@@ -7,6 +7,7 @@ from fast_api.models import (
     CreateProjectBody,
     NotificationsBody,
     UpdateProjectNameAndDescriptionBody,
+    UpdateProjectTokenizerBody,
     UploadCredentialsAndIdBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
@@ -421,7 +422,7 @@ def delete_personal_access_token(
 ):
     auth_manager.check_admin_access(request.state.info)
     token_manager.delete_personal_access_token(project_id, token_id)
-    return pack_json_result({"data": {"deletePersonalAccessToken": True}})
+    return pack_json_result({"data": {"deletePersonalAccessToken": {"ok": True}}})
 
 
 @router.post(
@@ -440,7 +441,7 @@ def update_project_name_description(
     )
     # one for the specific project so it's updated
     notification.send_organization_update(project_id, f"project_update:{project_id}")
-    return pack_json_result({"data": {"updateProjectNameDescription": True}})
+    return pack_json_result({"data": {"updateProjectNameDescription": {"ok": True}}})
 
 
 @router.delete(
@@ -460,7 +461,7 @@ def delete_project(request: Request, project_id: str):
     notification.send_organization_update(
         project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
     )
-    return pack_json_result({"data": {"deleteProject": True}})
+    return pack_json_result({"data": {"deleteProject": {"ok": True}}})
 
 
 @router.post("/create-project")
@@ -493,3 +494,15 @@ def create_project(
     }
 
     return pack_json_result({"data": {"createProject": data}})
+
+
+@router.put(
+    "/{project_id}/update-project-tokenizer",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_project_tokenizer(
+    project_id: str,
+    body: UpdateProjectTokenizerBody = Body(...),
+):
+    manager.update_project(project_id, tokenizer=body.tokenizer)
+    return pack_json_result({"data": {"updateProjectTokenizer": {"ok": True}}})

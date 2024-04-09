@@ -199,6 +199,10 @@ class CreateProjectBody(BaseModel):
     description: StrictStr
 
 
+class UpdateProjectTokenizerBody(BaseModel):
+    tokenizer: StrictStr
+
+
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr
@@ -254,3 +258,7 @@ class UpdateCommentBody(BaseModel):
     comment_id: StrictStr
     changes: Dict
     project_id: Optional[StrictStr] = None
+
+
+class TokenizedRecordBody(BaseModel):
+    record_id: StrictStr

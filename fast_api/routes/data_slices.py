@@ -73,4 +73,4 @@ async def delete_data_slice_by_id(
     notification.send_organization_update(
         project_id, f"data_slice_deleted:{data_slice_id}"
     )
-    return pack_json_result({"data": {"deleteDataSliceById": True}})
+    return pack_json_result({"data": {"deleteDataSliceById": {"ok": True}}})
