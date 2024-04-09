@@ -14,6 +14,7 @@ from fast_api.models import (
     StringBody,
     UpdateLabelColorBody,
     UpdateLabelHotkeyBody,
+    UpdateLabelNameBody,
     UpdateLabelingTaskBody,
     WarningDataBody,
 )
@@ -587,3 +588,15 @@ def handle_label_rename_warnings(
 ):
     label_manager.handle_label_rename_warning(project_id, body.warning_data)
     return pack_json_result({"data": {"handleLabelRenameWarnings": {"ok": True}}})
+
+
+@router.put(
+    "/{project_id}/update-label-name",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update_label_name(
+    project_id: str,
+    body: UpdateLabelNameBody = Body(...),
+):
+    label_manager.update_label_name(project_id, body.label_id, body.new_name)
+    return pack_json_result({"data": {"updateLabelName": {"ok": True}}})
