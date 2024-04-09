@@ -4,6 +4,7 @@ from typing import Optional
 from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import (
     CreatePersonalTokenBody,
+    CreateProjectBody,
     NotificationsBody,
     UpdateProjectNameAndDescriptionBody,
     UploadCredentialsAndIdBody,
@@ -15,7 +16,7 @@ from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
-from submodules.model import enums
+from submodules.model import enums, events
 from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
@@ -26,7 +27,7 @@ from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
-from util import notification
+from util import notification, doc_ock
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
@@ -460,3 +461,35 @@ def delete_project(request: Request, project_id: str):
         project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
     )
     return pack_json_result({"data": {"deleteProject": True}})
+
+
+@router.post("/create-project")
+def create_project(
+    request: Request,
+    body: CreateProjectBody = Body(...),
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    organization = auth_manager.get_organization_id_by_info(request.state.info)
+
+    project = manager.create_project(
+        str(organization.id), body.name, body.description, str(user.id)
+    )
+
+    notification.send_organization_update(
+        project.id, f"project_created:{str(project.id)}", True
+    )
+
+    doc_ock.post_event(
+        str(user.id),
+        events.CreateProject(
+            Name=f"{body.name}-{project.id}", Description=body.description
+        ),
+    )
+
+    data = {
+        "project": {
+            "id": str(project.id),
+        }
+    }
+
+    return pack_json_result({"data": {"createProject": data}})

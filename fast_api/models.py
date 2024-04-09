@@ -194,6 +194,11 @@ class UpdateProjectNameAndDescriptionBody(BaseModel):
     description: StrictStr
 
 
+class CreateProjectBody(BaseModel):
+    name: StrictStr
+    description: StrictStr
+
+
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr
