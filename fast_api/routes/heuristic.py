@@ -14,6 +14,7 @@ from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
 from util import notification
 from controller.task_queue import manager as task_queue_manager
 from submodules.model import enums
+from controller.auth import kratos
 
 router = APIRouter()
 
@@ -38,16 +39,33 @@ def get_weak_supervision_run(
     request: Request,
     project_id: str,
 ):
-    if project_id:
-        auth_manager.check_project_access(request.state.info, project_id)
+    result = weak_supervision.get_current_weak_supervision_run(project_id)
+    if result is None:
+        return pack_json_result({"data": {"currentWeakSupervisionRun": None}})
 
-    user = auth_manager.get_user_by_info(request.state.info)
-    data = org_manager.get_user_info(user)
-    ws_data = sql_alchemy_to_dict(
-        weak_supervision.get_current_weak_supervision_run(project_id)
-    )
-    ws_data["user"] = data
-    return pack_json_result({"data": {"currentWeakSupervisionRun": ws_data}})
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    names, mail = kratos.resolve_user_name_and_email_by_id(user_id)
+    first_name = names.get("first", "")
+    last_name = names.get("last", "")
+
+    data = {
+        "id": str(result.id),
+        "state": result.state,
+        "createdAt": result.created_at,
+        "finishedAt": result.finished_at,
+        "selectedInformationSources": result.selected_information_sources,
+        "selectedLabelingTasks": result.selected_labeling_tasks,
+        "distinctRecords": result.distinct_records,
+        "result_count": result.result_count,
+        "user": {
+            "id": str(user_id),
+            "firstName": first_name,
+            "lastName": last_name,
+            "email": mail,
+        },
+    }
+
+    return pack_json_result({"data": {"currentWeakSupervisionRun": data}})
 
 
 @router.get(
