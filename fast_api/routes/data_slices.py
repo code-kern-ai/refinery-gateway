@@ -15,9 +15,10 @@ router = APIRouter()
 
 
 @router.get(
-    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/get-data-slices",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def data_slices(
+def get_data_slices(
     request: Request,
     project_id: str,
     slice_type: Optional[str] = None,
