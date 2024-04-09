@@ -15,6 +15,7 @@ from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
+from submodules.model import enums
 from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
@@ -32,6 +33,7 @@ from util.inter_annotator.functions import (
 )
 from controller.misc import manager as misc
 from exceptions.exceptions import NotAllowedInOpenSourceError
+from submodules.model.business_objects import notification as notification_model
 
 from submodules.model.business_objects import tokenization, task_queue
 
@@ -438,3 +440,23 @@ def update_project_name_description(
     # one for the specific project so it's updated
     notification.send_organization_update(project_id, f"project_update:{project_id}")
     return pack_json_result({"data": {"updateProjectNameDescription": True}})
+
+
+@router.delete(
+    "/{project_id}/delete-project",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_project(request: Request, project_id: str):
+    manager.update_project(project_id, status=enums.ProjectStatus.IN_DELETION.value)
+    user = auth_manager.get_user_by_info(request.state.info)
+    project_item = manager.get_project(project_id)
+    organization_id = str(project_item.organization_id)
+    notification.create_notification(
+        enums.NotificationType.PROJECT_DELETED, user.id, None, project_item.name
+    )
+    notification_model.remove_project_connection_for_last_x(project_id)
+    manager.delete_project(project_id)
+    notification.send_organization_update(
+        project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
+    )
+    return pack_json_result({"data": {"deleteProject": True}})
