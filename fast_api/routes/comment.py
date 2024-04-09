@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from controller.comment import manager
 from controller.auth import manager as auth_manager
-from fast_api.models import CreateCommentBody
+from fast_api.models import CreateCommentBody, DeleteCommentBody
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import CommentCategory
 from util import notification
@@ -59,7 +59,7 @@ async def get_all_comments(request: Request):
 
 
 @router.post("/create-comment")
-async def create_comment(request: Request, body: CreateCommentBody = Body(...)):
+def create_comment(request: Request, body: CreateCommentBody = Body(...)):
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
 
     if body.project_id:
@@ -82,3 +82,28 @@ async def create_comment(request: Request, body: CreateCommentBody = Body(...)):
         )
 
     return pack_json_result({"data": {"createComment": {"ok": True}}})
+
+
+@router.delete("/delete-comment")
+def delete_comment(
+    request: Request,
+    body: DeleteCommentBody = Body(...),
+):
+    if body.project_id:
+        auth_manager.check_project_access(request.state.info, body.project_id)
+    else:
+        auth_manager.check_admin_access(request.state.info)
+
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    manager.delete_comment(body.comment_id, user_id)
+
+    if body.project_id:
+        # without project_id its a admin dashboard comment -> no websocket integration planned atm
+        # global notification since the data is collected globally -> further handling in frontend
+        notification.send_organization_update(
+            body.project_id,
+            f"comment_deleted:{body.project_id}:{body.comment_id}",
+            True,
+        )
+
+    return pack_json_result({"data": {"deleteComment": {"ok": True}}})

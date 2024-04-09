@@ -238,3 +238,8 @@ class CreateCommentBody(BaseModel):
     xfkey: StrictStr
     project_id: Optional[StrictStr] = None
     is_private: Optional[StrictBool] = None
+
+
+class DeleteCommentBody(BaseModel):
+    comment_id: StrictStr
+    project_id: Optional[StrictStr] = None
