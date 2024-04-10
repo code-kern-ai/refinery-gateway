@@ -11,7 +11,6 @@ def handle_cognition_file_upload(path_parts: List[str]):
         return
 
     if path_parts[3] == "chat_tmp_files":
-        # other options could be original (after done with queue), chunks or tf-idf
         if path_parts[5] == "queued":
             cognition_project_id = path_parts[2]
             conversation_id = path_parts[4]
