@@ -1,4 +1,5 @@
 from fast_api.models import (
+    CalculateUserAttributeAllRecordsBody,
     CreateNewAttributeBody,
     UpdateAttributeBody,
 )
@@ -15,6 +16,7 @@ from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from controller.record import manager as record_manager
 from fast_api.routes.client_response import pack_json_result
+from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import events
 from util import doc_ock, notification
@@ -254,3 +256,26 @@ def update_project_for_gates(
     user_id = auth_manager.get_user_by_info(request.state.info).id
     project_manager.update_project_for_gates(project_id, user_id)
     return pack_json_result({"data": {"updateProjectGates": {"ok": True}}})
+
+
+@router.post("/{project_id}/calculate-user-attribute-all-records")
+def calculate_user_attribute_all_records(
+    request: Request,
+    project_id: str,
+    body: CalculateUserAttributeAllRecordsBody = Body(...),
+):
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+
+    manager.add_task(
+        project_id,
+        TaskType.ATTRIBUTE_CALCULATION,
+        user_id,
+        {
+            "attribute_id": body.attribute_id,
+        },
+        True,
+    )
+
+    return pack_json_result(
+        {"data": {"calculateUserAttributeAllRecords": {"ok": True}}}
+    )

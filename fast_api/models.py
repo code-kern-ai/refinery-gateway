@@ -189,6 +189,10 @@ class UpdateAttributeBody(BaseModel):
     visibility: Optional[StrictStr]
 
 
+class CalculateUserAttributeAllRecordsBody(BaseModel):
+    attribute_id: StrictStr
+
+
 class UpdateProjectNameAndDescriptionBody(BaseModel):
     name: StrictStr
     description: StrictStr
