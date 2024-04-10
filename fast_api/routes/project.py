@@ -5,6 +5,7 @@ from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import (
     CreatePersonalTokenBody,
     CreateProjectBody,
+    CreateSampleProjectBody,
     NotificationsBody,
     UpdateProjectNameAndDescriptionBody,
     UpdateProjectStatusBody,
@@ -519,3 +520,34 @@ def update_project_status(
 ):
     manager.update_project(project_id, status=body.new_status)
     return pack_json_result({"data": {"updateProjectStatus": {"ok": True}}})
+
+
+@router.post("/create-sample-project")
+def create_sample_project(
+    request: Request,
+    body: CreateSampleProjectBody = Body(...),
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    organization = auth_manager.get_organization_id_by_info(request.state.info)
+
+    project = manager.import_sample_project(
+        user.id, organization.id, body.name, body.project_type
+    )
+
+    doc_ock.post_event(
+        str(user.id),
+        events.CreateProject(
+            Name=f"{project.name}-{project.id}", Description=project.description
+        ),
+    )
+
+    data = {
+        "ok": True,
+        "project": {
+            "id": str(project.id),
+            "name": project.name,
+            "description": project.description,
+        },
+    }
+
+    return pack_json_result({"data": {"createSampleProject": data}})

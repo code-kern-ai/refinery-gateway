@@ -199,6 +199,11 @@ class CreateProjectBody(BaseModel):
     description: StrictStr
 
 
+class CreateSampleProjectBody(BaseModel):
+    name: StrictStr
+    project_type: StrictStr
+
+
 class UpdateProjectTokenizerBody(BaseModel):
     tokenizer: StrictStr
 
