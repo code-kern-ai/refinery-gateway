@@ -235,6 +235,11 @@ class UpdateProjectStatusBody(BaseModel):
     new_status: StrictStr
 
 
+class PrepareProjectExportBody(BaseModel):
+    export_options: StrictStr
+    key: Optional[StrictStr] = None
+
+
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr

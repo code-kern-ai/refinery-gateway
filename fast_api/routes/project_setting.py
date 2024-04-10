@@ -2,6 +2,7 @@ from fast_api.models import (
     CalculateUserAttributeAllRecordsBody,
     CreateNewAttributeBody,
     CreateTaskAndLabelsBody,
+    PrepareProjectExportBody,
     UpdateAttributeBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
@@ -317,3 +318,27 @@ def create_task_and_labels(
     return pack_json_result(
         {"data": {"createTaskAndLabels": {"ok": True, "taskId": item.id}}}
     )
+
+
+@router.post(
+    "/{project_id}/prepare-project-export",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def prepare_project_export(
+    request: Request,
+    project_id: str,
+    body: PrepareProjectExportBody = Body(...),
+):
+    ok = True
+    user_id = auth_manager.get_user_by_info(request.state.info).id
+
+    try:
+        export_options = json.loads(body.export_options)
+        transfer_manager.prepare_project_export(
+            project_id, user_id, export_options, body.key
+        )
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        ok = False
+
+    return pack_json_result({"data": {"prepareProjectExport": {"ok": ok}}})
