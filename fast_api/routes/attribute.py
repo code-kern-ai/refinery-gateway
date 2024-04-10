@@ -1,8 +1,9 @@
 from controller.attribute import manager
 from controller.auth import manager as auth_manager
 from typing import List, Union
+from fast_api.models import DeleteUserAttributeBody
 from fast_api.routes.client_response import pack_json_result
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Body, Depends, Query, Request
 from submodules.model.enums import NotificationType
 from submodules.model.util import sql_alchemy_to_dict
 from util.notification import create_notification
@@ -79,3 +80,13 @@ def get_sample_records(
             }
         }
     )
+
+
+@router.delete("/{project_id}/delete-user-attribute")
+def delete_user_attribute(
+    request: Request,
+    project_id: str,
+    body: DeleteUserAttributeBody = Body(...),
+):
+    manager.delete_attribute(project_id, body.attribute_id)
+    return pack_json_result({"data": {"deleteUserAttribute": {"ok": True}}})

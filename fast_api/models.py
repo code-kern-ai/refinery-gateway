@@ -201,6 +201,10 @@ class ModelProviderDownloadModelBody(BaseModel):
     model_name: StrictStr
 
 
+class DeleteUserAttributeBody(BaseModel):
+    attribute_id: StrictStr
+
+
 class CreateTaskAndLabelsBody(BaseModel):
     labeling_task_name: StrictStr
     labeling_task_type: StrictStr
