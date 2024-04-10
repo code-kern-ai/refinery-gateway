@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, Request
 from exceptions.exceptions import ProjectAccessError
-from fast_api.models import ModelProviderDeleteModelBody
+from fast_api.models import ModelProviderDeleteModelBody, ModelProviderDownloadModelBody
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict
 from controller.auth import manager as auth
@@ -41,3 +41,17 @@ def model_provider_delete_model(
     model_provider_manager.model_provider_delete_model(body.model_name)
 
     return pack_json_result({"data": {"modelProviderDeleteModel": {"ok": True}}})
+
+
+@router.post("/model-provider-download-model")
+def model_provider_download_model(
+    request: Request, body: ModelProviderDownloadModelBody = Body(...)
+):
+    if misc.check_is_managed():
+        if not auth.check_is_single_organization():
+            auth.check_admin_access(request.state.info)
+    else:
+        raise ProjectAccessError("Not allowed in open source version.")
+    model_provider_manager.model_provider_download_model(body.model_name)
+
+    return pack_json_result({"data": {"modelProviderDownloadModel": {"ok": True}}})
