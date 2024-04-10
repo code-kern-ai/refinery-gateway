@@ -193,6 +193,13 @@ class CalculateUserAttributeAllRecordsBody(BaseModel):
     attribute_id: StrictStr
 
 
+class CreateTaskAndLabelsBody(BaseModel):
+    labeling_task_name: StrictStr
+    labeling_task_type: StrictStr
+    labeling_task_target_id: Optional[StrictStr] = None
+    labels: List[StrictStr]
+
+
 class UpdateProjectNameAndDescriptionBody(BaseModel):
     name: StrictStr
     description: StrictStr

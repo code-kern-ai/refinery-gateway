@@ -1,6 +1,7 @@
 from fast_api.models import (
     CalculateUserAttributeAllRecordsBody,
     CreateNewAttributeBody,
+    CreateTaskAndLabelsBody,
     UpdateAttributeBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
@@ -278,4 +279,41 @@ def calculate_user_attribute_all_records(
 
     return pack_json_result(
         {"data": {"calculateUserAttributeAllRecords": {"ok": True}}}
+    )
+
+
+@router.post("/{project_id}/create-task-and-labels")
+def create_task_and_labels(
+    request: Request,
+    project_id: str,
+    body: CreateTaskAndLabelsBody = Body(...),
+):
+    user = auth_manager.get_user_by_info(request.state.info)
+    project = project_manager.get_project(project_id)
+
+    item = task_manager.create_labeling_task(
+        project_id,
+        body.labeling_task_name,
+        body.labeling_task_type,
+        body.labeling_task_target_id,
+    )
+
+    if body.labels is not None:
+        label_manager.create_labels(project_id, str(item.id), body.labels)
+
+    doc_ock.post_event(
+        str(user.id),
+        events.AddLabelingTask(
+            ProjectName=f"{project.name}-{project.id}",
+            Name=body.labeling_task_name,
+            Type=body.labeling_task_type,
+        ),
+    )
+
+    notification.send_organization_update(
+        project_id, f"labeling_task_created:{str(item.id)}"
+    )
+
+    return pack_json_result(
+        {"data": {"createTaskAndLabels": {"ok": True, "taskId": item.id}}}
     )
