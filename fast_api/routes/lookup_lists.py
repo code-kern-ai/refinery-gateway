@@ -186,7 +186,7 @@ def add_term_to_knowledge_base(
 
 
 @router.delete(
-    "/{project_id}/delete-term/{term_id}",
+    "/{project_id}/{term_id}/delete-term",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def delete_term(project_id: str, term_id: str):
@@ -201,7 +201,7 @@ def delete_term(project_id: str, term_id: str):
 
 
 @router.put(
-    "/{project_id}/blacklist-term/{term_id}",
+    "/{project_id}/{term_id}/blacklist-term",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def blacklist_term(project_id: str, term_id: str):

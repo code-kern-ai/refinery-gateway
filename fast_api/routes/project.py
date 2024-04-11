@@ -6,7 +6,6 @@ from fast_api.models import (
     CreatePersonalTokenBody,
     CreateProjectBody,
     CreateSampleProjectBody,
-    NotificationsBody,
     UpdateProjectNameAndDescriptionBody,
     UpdateProjectStatusBody,
     UpdateProjectTokenizerBody,
@@ -20,7 +19,6 @@ from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
 from submodules.model import enums, events
-from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
 from submodules.model.business_objects.labeling_task import (
@@ -371,29 +369,6 @@ def upload_task_by_id(
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
     return {"data": {"uploadTaskById": data}}
-
-
-@router.post("/notifications")
-def get_notifications(
-    request: Request,
-    body: NotificationsBody = Body(...),
-):
-    for project_id in body.project_filter:
-        auth_manager.check_project_access(request.state.info, project_id)
-
-    user = auth_manager.get_user_by_info(request.state.info)
-
-    notifications = get_filtered_notification(
-        user,
-        body.project_filter,
-        body.level_filter,
-        body.type_filter,
-        body.user_filter,
-        body.limit,
-    )
-
-    data = sql_alchemy_to_dict(notifications)
-    return pack_json_result({"data": {"notifications": data}})
 
 
 @router.post(
