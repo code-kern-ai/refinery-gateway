@@ -135,10 +135,11 @@ async def get_records_by_static_slice(
     body = await request.body()
 
     try:
-        data = json.loads(body)
-        order_by: Dict[str, str] = data.get("orderBy", {})
-        offset = data.get("offset", 0)
-        limit = data.get("limit", 0)
+        print(body)
+        options = json.loads(body).get("options", {})
+        order_by: Dict[str, str] = options.get("orderBy", {})
+        offset = options.get("offset", 0)
+        limit = options.get("limit", 0)
     except json.JSONDecodeError:
         return JSONResponse(
             status_code=400,
