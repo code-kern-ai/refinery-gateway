@@ -38,18 +38,6 @@ from controller.gates import gates_service
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
-LABELING_TASK_WHITELIST = {
-    "id",
-    "name",
-    "taskTarget",
-    "taskType",
-    "attribute",
-    "labels",
-    "information_sources",
-}
-LABEL_WHITELIST = {"id", "name", "color", "hotkey"}
-ATTRIBUTE_WHITELIST = {"id", "name", "relativePosition", "dataType"}
-INFORMATION_SOURCES_WHITELIST = {"id", "type", "returnType", "name", "description"}
 ALL_PROJECTS_WHITELIST = {
     "id",
     "name",
