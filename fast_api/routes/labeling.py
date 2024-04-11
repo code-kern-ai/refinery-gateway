@@ -498,11 +498,12 @@ def create_labeling_task(
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def delete_label(project_id: str, body: StringBody = Body(...)):
-    labeling_task_id = body.value
-    labeling_manager.delete_labeling_task(project_id, labeling_task_id)
-
+    label_id = body.value
+    label = label_manager.get_label(project_id, body.value)
+    labeling_task_id = str(label.labeling_task_id)
+    label_manager.delete_label(project_id, label_id)
     notification.send_organization_update(
-        project_id, f"labeling_task_deleted:{labeling_task_id}"
+        project_id, f"label_deleted:{label_id}:labeling_task:{labeling_task_id}"
     )
 
     return pack_json_result({"data": {"deleteLabel": {"ok": True}}})
