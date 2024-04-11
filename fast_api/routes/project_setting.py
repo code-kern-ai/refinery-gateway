@@ -260,7 +260,10 @@ def update_project_for_gates(
     return pack_json_result({"data": {"updateProjectGates": {"ok": True}}})
 
 
-@router.post("/{project_id}/calculate-user-attribute-all-records")
+@router.post(
+    "/{project_id}/calculate-user-attribute-all-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def calculate_user_attribute_all_records(
     request: Request,
     project_id: str,
@@ -283,7 +286,10 @@ def calculate_user_attribute_all_records(
     )
 
 
-@router.post("/{project_id}/create-task-and-labels")
+@router.post(
+    "/{project_id}/create-task-and-labels",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_task_and_labels(
     request: Request,
     project_id: str,

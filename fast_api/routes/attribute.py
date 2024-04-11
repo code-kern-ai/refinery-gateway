@@ -82,7 +82,10 @@ def get_sample_records(
     )
 
 
-@router.delete("/{project_id}/delete-user-attribute")
+@router.delete(
+    "/{project_id}/delete-user-attribute",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_user_attribute(
     request: Request,
     project_id: str,

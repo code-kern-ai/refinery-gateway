@@ -157,8 +157,8 @@ class CreateNewAttributeBody(BaseModel):
 
 class UpdateKnowledgeBaseBody(BaseModel):
     knowledge_base_id: StrictStr
-    name: StrictStr
-    description: StrictStr
+    name: Optional[StrictStr]
+    description: Optional[StrictStr]
 
 
 class AddTermToKnowledgeBaseBody(BaseModel):

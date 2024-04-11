@@ -76,7 +76,9 @@ def get_heuristic_by_heuristic_id(
     heuristic_id: str,
 ):
     data = sql_alchemy_to_dict(
-        information_source.get_heuristic_id_with_payload(project_id, heuristic_id)
+        information_source.get_heuristic_id_with_most_recent_payload(
+            project_id, heuristic_id
+        )
     )
     statistics = pack_as_graphql(
         sql_alchemy_to_dict(
@@ -178,7 +180,8 @@ def toggle_heuristic(
 
 
 @router.post(
-    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/change-selection-state",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def set_information_sources(
     request: Request,

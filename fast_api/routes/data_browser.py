@@ -135,10 +135,11 @@ async def get_records_by_static_slice(
     body = await request.body()
 
     try:
-        data = json.loads(body)
-        order_by: Dict[str, str] = data.get("orderBy", {})
-        offset = data.get("offset", 0)
-        limit = data.get("limit", 0)
+        print(body)
+        options = json.loads(body).get("options", {})
+        order_by: Dict[str, str] = options.get("orderBy", {})
+        offset = options.get("offset", 0)
+        limit = options.get("limit", 0)
     except json.JSONDecodeError:
         return JSONResponse(
             status_code=400,
@@ -267,11 +268,15 @@ async def update_data_slice(
     ok = False
 
     try:
-        manager.update_data_slice(
+        raw = json.loads(dataSliceBody.filter_raw)
+        if not isinstance(raw, dict):
+            raise Exception("Invalid filter_raw")
+        data = [json.loads(d) for d in dataSliceBody.filter_data]
+        data_slice_manager.update_data_slice(
             project_id,
             dataSliceBody.data_slice_id,
-            dataSliceBody.filter_data,
-            dataSliceBody.filter_raw,
+            data,
+            raw,
             dataSliceBody.static,
         )
         notification.send_organization_update(
