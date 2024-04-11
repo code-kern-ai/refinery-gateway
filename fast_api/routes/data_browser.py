@@ -135,7 +135,6 @@ async def get_records_by_static_slice(
     body = await request.body()
 
     try:
-        print(body)
         options = json.loads(body).get("options", {})
         order_by: Dict[str, str] = options.get("orderBy", {})
         offset = options.get("offset", 0)
