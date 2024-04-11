@@ -180,7 +180,8 @@ def toggle_heuristic(
 
 
 @router.post(
-    "/{project_id}", dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/change-selection-state",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def set_information_sources(
     request: Request,
