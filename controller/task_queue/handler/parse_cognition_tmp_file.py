@@ -28,7 +28,7 @@ def __start_task(task: Dict[str, Any]) -> bool:
     conversation_id = action["conversation_id"]
     cognition_project_id = action["cognition_project_id"]
     requests.post(
-        f"{BASE_URI}/api/v1/converters/internal/project/{cognition_project_id}/conversation/{conversation_id}/parse-tmp-file",
+        f"{BASE_URI}/api/v1/converters/internal/projects/{cognition_project_id}/conversation/{conversation_id}/parse-tmp-file",
         json={"minio_path": action["minio_path"], "bucket": action["bucket"]},
     )
     return True
