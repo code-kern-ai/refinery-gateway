@@ -37,7 +37,7 @@ from util.notification import create_notification
 from submodules.model.enums import NotificationType
 from submodules.model.models import UploadTask
 from util import daemon, notification
-from controller.transfer.cognition.minioUpload import handle_cognition_file_upload
+from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
 
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
