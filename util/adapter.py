@@ -23,6 +23,10 @@ def get_workflow_db_engine():
     global __engine
     if __engine is None:
         __engine = create_engine(os.getenv("WORKFLOW_POSTGRES"))
+        if __engine is None:
+            raise Exception(
+                "Workflow database connection failed because workflow is removed."
+            )
     return __engine
 
 
