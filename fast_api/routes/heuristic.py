@@ -76,7 +76,9 @@ def get_heuristic_by_heuristic_id(
     heuristic_id: str,
 ):
     data = sql_alchemy_to_dict(
-        information_source.get_heuristic_id_with_payload(project_id, heuristic_id)
+        information_source.get_heuristic_id_with_most_recent_payload(
+            project_id, heuristic_id
+        )
     )
     statistics = pack_as_graphql(
         sql_alchemy_to_dict(
