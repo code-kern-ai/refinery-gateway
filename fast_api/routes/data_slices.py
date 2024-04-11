@@ -45,7 +45,9 @@ def get_data_slices(
 )
 def get_unique_values_by_attributes(project_id: str):
     data = record_manager.get_unique_values_by_attributes(project_id)
-    return pack_json_result({"data": {"uniqueValuesByAttributes": data}})
+    return pack_json_result(
+        {"data": {"uniqueValuesByAttributes": data}}, wrap_for_frontend=False
+    )
 
 
 @router.get(
