@@ -38,7 +38,7 @@ def language_models(request: Request) -> List:
     )
 
 
-@router.get("/embeddings-by-project")
+@router.get("/{project_id}/embeddings-by-project")
 def get_embeddings(request: Request, project_id: str) -> List:
     data = manager.get_embedding_schema(
         project_id,
