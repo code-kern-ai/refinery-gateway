@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.record_ide import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import RecordIdeBody
+from fast_api.routes.client_response import pack_json_result
 
 router = APIRouter()
 
@@ -18,6 +19,12 @@ def get_record_ide(
 ):
 
     user_id = auth_manager.get_user_by_info(request.state.info).id
-    return manager.create_record_ide_payload(
-        user_id, project_id, record_id, record_ide_body.code
+    return pack_json_result(
+        {
+            "data": {
+                "runRecordIde": manager.create_record_ide_payload(
+                    user_id, project_id, record_id, record_ide_body.code
+                )
+            }
+        }
     )
