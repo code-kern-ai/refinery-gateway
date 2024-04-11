@@ -28,6 +28,8 @@ from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from submodules.model.business_objects import record
 from controller.tokenization import manager as tokenization_manager
+from controller.attribute import manager as attribute_manager
+from controller.information_source import manager as information_source_manager
 
 from controller.record_label_association import manager as rla_manager
 from controller.record import manager as record_manager
@@ -38,6 +40,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from util import doc_ock, notification
+from controller.auth import kratos
 
 
 router = APIRouter()
@@ -594,3 +597,114 @@ def update_label_name(
 ):
     label_manager.update_label_name(project_id, body.label_id, body.new_name)
     return pack_json_result({"data": {"updateLabelName": {"ok": True}}})
+
+
+@router.get(
+    "/{project_id}/record-label-associations",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_record_label_associations(
+    request: Request,
+    project_id: str,
+    record_id: str,
+):
+    record = record_manager.get_record(project_id, record_id)
+
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    names, mail = kratos.resolve_user_name_and_email_by_id(user_id)
+    first_name = names.get("first", "")
+    last_name = names.get("last", "")
+
+    edges = []
+    rla = record.record_label_associations
+    for r in rla:
+
+        source_id = getattr(r, "source_id", None)
+
+        informationSourceDict = None
+        labelingTaskLabelDict = {}
+        labelingTaskDict = {}
+        attributeDict = None
+
+        token_start_idx = None
+        token_end_idx = None
+
+        if source_id:
+            information_source = information_source_manager.get_information_source(
+                project_id, source_id
+            )
+            if information_source:
+                informationSourceDict = {
+                    "type": information_source.type,
+                    "return_type": information_source.return_type,
+                    "name": information_source.name,
+                    "description": information_source.description,
+                    "createdAt": information_source.created_at,
+                    "createdBy": information_source.created_by,
+                }
+
+        labelingTaskLabel = label_manager.get_label(
+            project_id, str(r.labeling_task_label_id)
+        )
+
+        if labelingTaskLabel:
+            labelingTaskLabelDict = {
+                "id": str(labelingTaskLabel.id),
+                "name": labelingTaskLabel.name,
+                "color": labelingTaskLabel.color,
+            }
+
+            labelingTask = task_manager.get_labeling_task(
+                project_id, labelingTaskLabel.labeling_task_id
+            )
+            if labelingTask:
+                labelingTaskDict = {
+                    "id": str(labelingTask.id),
+                    "name": labelingTask.name,
+                }
+                labelingTaskLabelDict["labeling_task"] = labelingTaskDict
+
+                attribute = attribute_manager.get_attribute(
+                    project_id, labelingTask.attribute_id
+                )
+                if attribute:
+                    attributeDict = {
+                        "id": str(labelingTask.attribute_id),
+                        "name": attribute.name,
+                        "relative_position": attribute.relative_position,
+                    }
+
+                    token_start_idx = attribute.relative_position
+                    token_end_idx = attribute.relative_position
+
+                labelingTaskLabelDict["labeling_task"]["attribute"] = attributeDict
+        edges.append(
+            {
+                "node": {
+                    "id": str(r.id),
+                    "recordId": str(r.record_id),
+                    "labelingTaskLabelId": str(r.labeling_task_label_id),
+                    "source_id": getattr(r, "source_id", None),
+                    "source_type": r.source_type,
+                    "return_type": r.return_type,
+                    "confidence": getattr(r, "confidence", None),
+                    "created_at": r.created_at,
+                    "created_by": str(r.created_by),
+                    "token_start_idx": token_start_idx,
+                    "token_end_idx": token_end_idx,
+                    "is_gold_star": getattr(r, "is_gold_star", None),
+                    "user": {
+                        "id": str(user_id),
+                        "firstName": first_name,
+                        "lastName": last_name,
+                        "mail": mail,
+                    },
+                    "information_source": informationSourceDict,
+                    "labeling_task_label": labelingTaskLabelDict,
+                }
+            }
+        )
+
+    data = {"id": str(record.id), "recordLabelAssociations": {"edges": edges}}
+
+    return pack_json_result({"data": {"recordByRecordId": data}})
