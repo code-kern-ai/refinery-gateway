@@ -158,7 +158,6 @@ EMBEDDING_SCHEMA_WHITELIST = [
     "model",
     "filter_attributes",
     "attribute_id",
-    "onQdrant",
 ]
 
 
