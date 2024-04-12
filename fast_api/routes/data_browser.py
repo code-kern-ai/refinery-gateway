@@ -277,7 +277,7 @@ async def update_data_slice(
             project_id,
             dataSliceBody.data_slice_id,
             data,
-            raw,
+            dataSliceBody.filter_raw,
             dataSliceBody.static,
         )
         notification.send_organization_update(
