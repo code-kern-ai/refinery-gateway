@@ -1,5 +1,5 @@
 from typing import Any, List, Dict, Optional, Union
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, Json
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
 """
