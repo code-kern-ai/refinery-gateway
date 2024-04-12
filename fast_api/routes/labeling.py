@@ -7,6 +7,7 @@ from fast_api.models import (
     AddExtractionLabelBody,
     AvailableLinksBody,
     GenerateAccessLinkBody,
+    HuddleDataBody,
     LinkRouteBody,
     LockAccessLinkBody,
     RemoveGoldStarBody,
@@ -102,19 +103,13 @@ def get_available_links(
     "/{project_id}/huddle-data",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_huddle_data(
+def get_huddle_data(
     request: Request,
     project_id: str,
+    body: HuddleDataBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        huddle_id = body.get("huddleId", "")
-        huddle_type = body.get("huddleType", "")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    huddle_id = body.huddleId
+    huddle_type = body.huddleType
 
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
 

@@ -44,6 +44,11 @@ class AvailableLinksBody(BaseModel):
     assumedHeuristicId: StrictStr
 
 
+class HuddleDataBody(BaseModel):
+    huddleId: StrictStr
+    huddleType: StrictStr
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 
