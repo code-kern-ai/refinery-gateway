@@ -64,8 +64,8 @@ class AvailableLinksBody(BaseModel):
 
 
 class HuddleDataBody(BaseModel):
-    huddleId: StrictStr
-    huddleType: StrictStr
+    huddleId: Optional[StrictStr] = None
+    huddleType: Optional[StrictStr] = None
 
 
 class WarningDataBody(BaseModel):
