@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from fast_api.models import (
     AddClassificationLabelBody,
     AddExtractionLabelBody,
+    AvailableLinksBody,
     GenerateAccessLinkBody,
     LinkRouteBody,
     LockAccessLinkBody,
@@ -45,19 +46,13 @@ AVAILABLE_LINKS_WHITELIST = ["id", "link", "link_type", "name", "is_locked"]
     "/{project_id}/available-links",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_available_links(
+def get_available_links(
     request: Request,
     project_id: str,
+    body: AvailableLinksBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        assumed_role = body.get("assumedRole", "")
-        assumed_heuristic_id = body.get("assumedHeuristicId", "")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    assumed_role = body.assumedRole
+    assumed_heuristic_id = body.assumedHeuristicId
 
     if assumed_heuristic_id == manager.DUMMY_LINK_ID:
         return pack_json_result({"data": {"availableLinks": []}})

@@ -39,6 +39,11 @@ class CreateLabelBody(BaseModel):
     labelColor: StrictStr
 
 
+class AvailableLinksBody(BaseModel):
+    assumedRole: StrictStr
+    assumedHeuristicId: StrictStr
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 
