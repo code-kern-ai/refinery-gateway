@@ -64,7 +64,7 @@ def get_static_data_slices_current_count(
     "/{project_id}/{data_slice_id}",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def delete_data_slice_by_id(
+def delete_data_slice_by_id(
     request: Request,
     project_id: str,
     data_slice_id: str,
