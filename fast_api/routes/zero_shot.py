@@ -35,6 +35,7 @@ async def get_zero_shot_text(
     project_id: str,
 ):
     body = await request.json()
+
     try:
         heuristic_id = body["heuristicId"]
         config = body["config"]
