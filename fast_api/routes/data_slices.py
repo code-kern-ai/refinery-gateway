@@ -25,15 +25,12 @@ def get_data_slices(
 ) -> List:
 
     values = [
-        sql_alchemy_to_dict(ds)
+        sql_alchemy_to_dict(ds, for_frontend=True)
         for ds in manager.get_all_data_slices(project_id, slice_type)
     ]
     for v in values:
-        v["filterData"] = json.dumps(v["filter_data"])
-        v["filterRaw"] = json.dumps(v["filter_raw"])
-        del v["filter_data"]
-        del v["filter_raw"]
-        del v["count_sql"]
+        v["filterData"] = json.dumps(v["filterData"])
+        del v["countSql"]
     return pack_json_result(
         {"data": {"dataSlices": wrap_content_for_frontend(values)}},
     )

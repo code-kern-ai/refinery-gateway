@@ -4,6 +4,7 @@ from fast_api.models import (
     CreateTaskAndLabelsBody,
     PrepareProjectExportBody,
     UpdateAttributeBody,
+    PrepareProjectExportBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
@@ -103,15 +104,12 @@ def get_last_record_export_credentials(
     "/{project_id}/prepare-record-export",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def prepare_record_export(
-    request: Request,
-    project_id: str,
+def prepare_record_export(
+    request: Request, project_id: str, body: PrepareProjectExportBody
 ):
     try:
-        body = await request.json()
-        export_options = body.get("options", {}).get("exportOptions")
-        export_options = json.loads(export_options)
-        key = body.get("options", {}).get("key")
+        export_options = json.loads(body.export_options)
+        key = body.key
     except json.JSONDecodeError:
         return JSONResponse(
             status_code=400,
