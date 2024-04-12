@@ -1,5 +1,6 @@
 from fast_api.models import (
     CalculateUserAttributeAllRecordsBody,
+    CreateLabelsBody,
     CreateNewAttributeBody,
     CreateTaskAndLabelsBody,
     PrepareProjectExportBody,
@@ -171,19 +172,13 @@ def get_project_size(project_id: str):
     "/{project_id}/create-labels",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def create_labels(
+def create_labels(
     request: Request,
     project_id: str,
+    body: CreateLabelsBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        labeling_task_id = body.get("labelingTaskId")
-        labels = body.get("labels")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    labeling_task_id = body.labelingTaskId
+    labels = body.labels
 
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)

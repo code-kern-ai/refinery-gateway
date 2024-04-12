@@ -28,6 +28,11 @@ class ZeroShotTextBody(BaseModel):
     labelNames: List[StrictStr]
 
 
+class CreateLabelsBody(BaseModel):
+    labelingTaskId: StrictStr
+    labels: List[StrictStr]
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 
