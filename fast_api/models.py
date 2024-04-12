@@ -15,6 +15,13 @@ class ListStringBody(BaseModel):
     value: List[StrictStr]
 
 
+class SearchRecordsBySimilarityBody(BaseModel):
+    embeddingId: StrictStr
+    recordId: StrictStr
+    attFilter: Any
+    recordSubKey: Any
+
+
 class ZeroShot10Body(BaseModel):
     heuristicId: StrictStr
     labelNames: List[StrictStr]

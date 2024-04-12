@@ -6,7 +6,12 @@ from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
-from fast_api.models import CreateDataSliceBody, ListStringBody, UpdateDataSliceBody
+from fast_api.models import (
+    CreateDataSliceBody,
+    ListStringBody,
+    SearchRecordsBySimilarityBody,
+    UpdateDataSliceBody,
+)
 from fast_api.routes.client_response import pack_json_result
 from graphql_api.mutation.data_slice import handle_error
 from util import notification
@@ -201,24 +206,18 @@ def create_data_slice(
     "/{project_id}/search-records-by-similarity",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_records_by_similarity(
+def get_search_records_by_similarity(
     request: Request,
     project_id: str,
+    body: SearchRecordsBySimilarityBody = Body(...),
 ):
-    body = await request.body()
-    try:
-        data = json.loads(body)
-        embedding_id = data["embeddingId"]
-        record_id = data["recordId"]
-        att_filter = None
-        if data["attFilter"]:
-            att_filter = json.loads(data["attFilter"])
-        record_sub_key = data["recordSubKey"]
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    embedding_id = body.embeddingId
+    record_id = body.recordId
+    att_filter = body.attFilter
+    record_sub_key = body.recordSubKey
+    if att_filter:
+        att_filter = json.loads(att_filter)
+
     user_id = auth_manager.get_user_by_info(request.state.info).id
     results = manager.get_records_by_similarity_search(
         project_id, user_id, embedding_id, record_id, att_filter, record_sub_key
