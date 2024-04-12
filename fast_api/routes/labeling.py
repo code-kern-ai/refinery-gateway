@@ -1,7 +1,6 @@
 import json
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Depends, Request
-from fastapi.responses import JSONResponse
 from fast_api.models import (
     AddClassificationLabelBody,
     AddExtractionLabelBody,
