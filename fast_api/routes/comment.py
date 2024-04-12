@@ -1,6 +1,4 @@
-import json
 from fastapi import APIRouter, Body, Request
-from fastapi.responses import JSONResponse
 from controller.comment import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import (
@@ -18,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/all-comments")
-async def get_all_comments(request: Request, commentsBody: AllCommentsBody = Body(...)):
+def get_all_comments(request: Request, commentsBody: AllCommentsBody = Body(...)):
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
     body = commentsBody.__root__
 
