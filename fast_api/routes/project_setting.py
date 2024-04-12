@@ -5,7 +5,6 @@ from fast_api.models import (
     CreateTaskAndLabelsBody,
     PrepareProjectExportBody,
     UpdateAttributeBody,
-    PrepareProjectExportBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
