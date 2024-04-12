@@ -1,4 +1,3 @@
-import json
 from controller.zero_shot import manager
 from fast_api.models import (
     CancelZeroShotBody,
@@ -9,7 +8,6 @@ from fast_api.models import (
 from fast_api.routes.client_response import pack_json_result
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Depends, Request
-from fastapi.responses import JSONResponse
 from controller.task_queue import manager as task_queue_manager
 from controller.zero_shot import manager as zero_shot_manager
 from submodules.model.enums import TaskType
