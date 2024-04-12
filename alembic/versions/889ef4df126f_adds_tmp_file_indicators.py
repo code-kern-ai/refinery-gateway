@@ -24,7 +24,9 @@ def upgrade():
     op.add_column('project', sa.Column('max_file_size_mb', sa.Float(), nullable=True), schema='cognition')
     op.add_column('project', sa.Column('open_ai_env_var_id', postgresql.UUID(as_uuid=True), nullable=True), schema='cognition')
     op.create_index(op.f('ix_cognition_project_open_ai_env_var_id'), 'project', ['open_ai_env_var_id'], unique=False, schema='cognition')
-    op.create_foreign_key(None, 'project', 'environment_variable', ['open_ai_env_var_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='SET NULL')
+    op.create_foreign_key(None, 'project', 'environment_variable', ['open_ai_env_var_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='SET NULL')    
+    op.drop_constraint('message_strategy_id_fkey', 'message', schema='cognition', type_='foreignkey')
+    op.create_foreign_key('message_strategy_id_fkey', 'message', 'strategy', ['strategy_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='SET NULL')
     # ### end Alembic commands ###
 
 
@@ -37,4 +39,6 @@ def downgrade():
     op.drop_column('project', 'allow_file_upload', schema='cognition')
     op.drop_column('conversation', 'archived', schema='cognition')
     op.drop_column('conversation', 'has_tmp_files', schema='cognition')
+    op.drop_constraint('message_strategy_id_fkey', 'message', schema='cognition', type_='foreignkey')
+    op.create_foreign_key('message_strategy_id_fkey', 'message', 'strategy', ['strategy_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='CASCADE')
     # ### end Alembic commands ###
