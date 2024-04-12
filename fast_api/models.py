@@ -40,8 +40,8 @@ class CreateLabelBody(BaseModel):
 
 
 class AvailableLinksBody(BaseModel):
-    assumedRole: StrictStr
-    assumedHeuristicId: StrictStr
+    assumedRole: Optional[StrictStr] = None
+    assumedHeuristicId: Optional[StrictStr] = None
 
 
 class HuddleDataBody(BaseModel):
