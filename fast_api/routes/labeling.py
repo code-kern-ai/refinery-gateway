@@ -131,7 +131,7 @@ def get_huddle_data(
 
 
 @router.post("/tokenized-record")
-async def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)):
+def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)):
     record_item = record.get_without_project_id(body.record_id)
     if not record_item:
         return pack_json_result({"data": {"tokenizeRecord": None}})
