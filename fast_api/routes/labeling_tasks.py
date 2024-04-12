@@ -1,4 +1,3 @@
-import json
 from fast_api.models import (
     CreateLabelBody,
     CreateLabelingTaskBody,
@@ -10,7 +9,7 @@ from fast_api.models import (
     WarningDataBody,
 )
 from fastapi import APIRouter, Depends, Request, Body
-from fastapi.responses import JSONResponse
+
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as labeling_manager
 from controller.project import manager as project_manager
