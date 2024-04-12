@@ -252,7 +252,7 @@ async def get_records_by_similarity(
     "/{project_id}/update-data-slice",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def update_data_slice(
+def update_data_slice(
     request: Request,
     project_id: str,
     dataSliceBody: UpdateDataSliceBody = Body(...),
