@@ -15,6 +15,11 @@ class ListStringBody(BaseModel):
     value: List[StrictStr]
 
 
+class ZeroShot10Body(BaseModel):
+    heuristicId: StrictStr
+    labelNames: List[StrictStr]
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 

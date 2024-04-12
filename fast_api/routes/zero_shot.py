@@ -1,6 +1,6 @@
 import json
 from controller.zero_shot import manager
-from fast_api.models import CancelZeroShotBody, CreateZeroShotBody
+from fast_api.models import CancelZeroShotBody, CreateZeroShotBody, ZeroShot10Body
 from fast_api.routes.client_response import pack_json_result
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Depends, Request
@@ -66,20 +66,14 @@ async def get_zero_shot_text(
     "/{project_id}/zero-shot-10-records",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_zero_shot_10_records(
+def get_zero_shot_10_records(
     request: Request,
     project_id: str,
+    body: ZeroShot10Body = Body(...),
 ):
-    body = await request.json()
+    heuristic_id = body.heuristicId
+    label_names = body.labelNames
 
-    try:
-        heuristic_id = body["heuristicId"]
-        label_names = body["labelNames"]
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
     data = manager.get_zero_shot_10_records(project_id, heuristic_id, label_names)
     final_data = {
         "duration": data.duration,
