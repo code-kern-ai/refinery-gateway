@@ -10,7 +10,6 @@ from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.business_objects import project
 from submodules.model.business_objects.embedding import (
-    get,
     get_all_embeddings_by_project_id,
     get_tensor_count,
     get_tensor,
@@ -18,7 +17,6 @@ from submodules.model.business_objects.embedding import (
 from submodules.model.enums import TaskType
 from util import notification, spacy_util
 import json
-from submodules.model.util import pack_as_graphql
 
 
 router = APIRouter()
