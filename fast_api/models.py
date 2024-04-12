@@ -20,6 +20,14 @@ class ZeroShot10Body(BaseModel):
     labelNames: List[StrictStr]
 
 
+class ZeroShotTextBody(BaseModel):
+    heuristicId: StrictStr
+    config: StrictStr
+    text: StrictStr
+    runIndividually: StrictBool
+    labelNames: List[StrictStr]
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 
