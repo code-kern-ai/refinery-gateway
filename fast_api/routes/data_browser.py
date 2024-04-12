@@ -6,7 +6,7 @@ from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
-from fast_api.models import ListStringBody, UpdateDataSliceBody
+from fast_api.models import CreateDataSliceBody, ListStringBody, UpdateDataSliceBody
 from fast_api.routes.client_response import pack_json_result
 from graphql_api.mutation.data_slice import handle_error
 from util import notification
@@ -166,22 +166,15 @@ async def get_records_by_static_slice(
     "/{project_id}/create-data-slice",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def create_data_slice(
+def create_data_slice(
     request: Request,
     project_id: str,
+    body: CreateDataSliceBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        filter_raw = body.get("options", {}).get("filterRaw")
-        name = body.get("options", {}).get("name")
-        filter_data = body.get("options", {}).get("filterData")
-        filter_data = [json.loads(item) for item in filter_data]
-        static = body.get("options", {}).get("static")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    name = body.name
+    static = body.static
+    filter_raw = body.filterRaw
+    filter_data = [json.loads(item) for item in body.filterData]
 
     user = auth_manager.get_user_by_info(request.state.info)
 

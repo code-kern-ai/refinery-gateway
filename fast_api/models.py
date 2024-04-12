@@ -1,5 +1,5 @@
 from typing import Any, List, Dict, Optional, Union
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, Json
 
 
 """
@@ -42,6 +42,13 @@ class CreateLabelBody(BaseModel):
 class DeleteRecordLabelAssociationBody(BaseModel):
     recordId: StrictStr
     associationIds: Optional[List[StrictStr]] = []
+
+
+class CreateDataSliceBody(BaseModel):
+    name: StrictStr
+    static: StrictBool
+    filterRaw: StrictStr
+    filterData: Any
 
 
 class AvailableLinksBody(BaseModel):
