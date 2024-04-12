@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Union
+from typing import Any, List, Dict, Optional, Union
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 
 
@@ -276,6 +276,10 @@ class UpdateLabelHotkeyBody(BaseModel):
 class UpdateLabelNameBody(BaseModel):
     label_id: StrictStr
     new_name: StrictStr
+
+
+class AllCommentsBody(BaseModel):
+    __root__: Dict[StrictStr, Any]
 
 
 class CreateCommentBody(BaseModel):

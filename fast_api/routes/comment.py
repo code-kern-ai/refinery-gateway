@@ -3,7 +3,12 @@ from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
 from controller.comment import manager
 from controller.auth import manager as auth_manager
-from fast_api.models import CreateCommentBody, DeleteCommentBody, UpdateCommentBody
+from fast_api.models import (
+    AllCommentsBody,
+    CreateCommentBody,
+    DeleteCommentBody,
+    UpdateCommentBody,
+)
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import CommentCategory
 from util import notification
@@ -13,26 +18,17 @@ router = APIRouter()
 
 
 @router.post("/all-comments")
-async def get_all_comments(request: Request):
-    body = await request.body()
-
-    try:
-        requested = json.loads(body)
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
-
+async def get_all_comments(request: Request, commentsBody: AllCommentsBody = Body(...)):
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+    body = commentsBody.__root__
 
     to_return = {}
-    for key in requested:
-        xfkey = requested[key].get("xfkey")
-        xftype = requested[key].get("xftype")
-        project_id = requested[key].get("pId")
-        comment_id = requested[key].get("commentId")
-        includeAddInfo = requested[key].get("includeAddInfo")
+    for key in body:
+        xfkey = body[key].get("xfkey")
+        xftype = body[key].get("xftype")
+        project_id = body[key].get("pId")
+        comment_id = body[key].get("commentId")
+        includeAddInfo = body[key].get("includeAddInfo")
 
         if project_id:
             auth_manager.check_project_access(request.state.info, project_id)
