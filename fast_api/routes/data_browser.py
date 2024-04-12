@@ -224,7 +224,9 @@ async def get_records_by_similarity(
         data = json.loads(body)
         embedding_id = data["embeddingId"]
         record_id = data["recordId"]
-        att_filter = json.loads(data["attFilter"])
+        att_filter = None
+        if data["attFilter"]:
+            att_filter = json.loads(data["attFilter"])
         record_sub_key = data["recordSubKey"]
     except json.JSONDecodeError:
         return JSONResponse(
