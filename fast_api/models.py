@@ -33,6 +33,12 @@ class CreateLabelsBody(BaseModel):
     labels: List[StrictStr]
 
 
+class CreateLabelBody(BaseModel):
+    labelName: StrictStr
+    labelingTaskId: StrictStr
+    labelColor: StrictStr
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 

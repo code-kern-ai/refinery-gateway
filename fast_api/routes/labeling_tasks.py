@@ -1,5 +1,6 @@
 import json
 from fast_api.models import (
+    CreateLabelBody,
     CreateLabelingTaskBody,
     StringBody,
     UpdateLabelColorBody,
@@ -112,20 +113,14 @@ def delete_label(project_id: str, body: StringBody = Body(...)):
     "/{project_id}/create-label",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def create_label(
+def create_label(
     request: Request,
     project_id: str,
+    body: CreateLabelBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        label_name = body.get("labelName")
-        labeling_task_id = body.get("labelingTaskId")
-        label_color = body.get("labelColor")
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    label_name = body.labelName
+    labeling_task_id = body.labelingTaskId
+    label_color = body.labelColor
 
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)
