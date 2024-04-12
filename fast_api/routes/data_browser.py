@@ -6,7 +6,7 @@ from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
-from fast_api.models import UpdateDataSliceBody
+from fast_api.models import ListStringBody, UpdateDataSliceBody
 from fast_api.routes.client_response import pack_json_result
 from graphql_api.mutation.data_slice import handle_error
 from util import notification
@@ -25,19 +25,12 @@ router = APIRouter()
     "/{project_id}/record-comments",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_record_comments(
+def get_record_comments(
     request: Request,
     project_id: str,
+    body: ListStringBody = Body(...),
 ):
-    body = await request.body()
-
-    try:
-        record_ids = json.loads(body)["recordIds"]
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    record_ids = body.value
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = comment_manager.get_record_comments(project_id, user_id, record_ids)

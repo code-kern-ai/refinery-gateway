@@ -47,7 +47,7 @@ def language_models(request: Request) -> List:
 
 
 @router.get(
-    "/embeddings-by-project",
+    "/{project_id}/embeddings-by-project",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def get_embeddings(request: Request, project_id: str) -> List:
@@ -107,7 +107,7 @@ def get_embeddings(request: Request, project_id: str) -> List:
         }
     }
 
-    return pack_json_result(data)
+    return pack_json_result({"data": data})
 
 
 @router.delete(

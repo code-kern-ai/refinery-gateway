@@ -11,6 +11,10 @@ class StringBody(BaseModel):
     value: StrictStr
 
 
+class ListStringBody(BaseModel):
+    value: List[StrictStr]
+
+
 class WarningDataBody(BaseModel):
     warning_data: Dict
 
