@@ -7,6 +7,14 @@ from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
 from controller.task_queue import manager as task_queue_manager
 from controller.auth import manager as auth_manager
+from controller.embedding.connector import collection_on_qdrant
+from submodules.model.business_objects import project
+from submodules.model.business_objects.embedding import (
+    get,
+    get_all_embeddings_by_project_id,
+    get_tensor_count,
+    get_tensor,
+)
 from submodules.model.enums import TaskType
 from util import notification, spacy_util
 import json
@@ -38,13 +46,68 @@ def language_models(request: Request) -> List:
     )
 
 
-@router.get("/embeddings-by-project")
+@router.get(
+    "/embeddings-by-project",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_embeddings(request: Request, project_id: str) -> List:
-    data = manager.get_embedding_schema(
-        project_id,
-    )
-    data_graphql = pack_as_graphql(data, "projectByProjectId", 2)
-    return pack_json_result(data_graphql)
+    embeddings = get_all_embeddings_by_project_id(project_id)
+    number_records = len(project.get(project_id).records)
+
+    edges = []
+
+    for embedding in embeddings:
+
+        count = get_tensor_count(embedding.id)
+        on_qdrant = collection_on_qdrant(project_id, embedding.id)
+
+        embedding_item = get_tensor(embedding.id)
+        dimension = 0
+        if embedding_item is not None:
+            # distinguish between token and attribute embeddings
+            if type(embedding_item.data[0]) is list:
+                dimension = len(embedding_item.data[0])
+            else:
+                dimension = len(embedding_item.data)
+
+        if embedding.state == "FINISHED":
+            progress = 1
+        elif embedding.state == "INITIALIZING" or embedding.state == "WAITING":
+            progress = 0.0
+        else:
+            progress = min(
+                0.1 + (count / number_records * 0.9),
+                0.99,
+            )
+
+        edges.append(
+            {
+                "node": {
+                    "id": embedding.id,
+                    "name": embedding.name,
+                    "custom": embedding.custom,
+                    "type": embedding.type,
+                    "state": embedding.state,
+                    "platform": embedding.platform,
+                    "model": embedding.model,
+                    "filterAttributes": embedding.filter_attributes,
+                    "attributeId": embedding.attribute_id,
+                    "progress": progress,
+                    "dimension": dimension,
+                    "count": count,
+                    "onQdrant": on_qdrant,
+                }
+            }
+        )
+
+    data = {
+        "projectByProjectId": {
+            "id": project_id,
+            "embeddings": {"edges": edges},
+        }
+    }
+
+    return pack_json_result(data)
 
 
 @router.delete(
