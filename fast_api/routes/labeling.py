@@ -6,6 +6,7 @@ from fast_api.models import (
     AddClassificationLabelBody,
     AddExtractionLabelBody,
     AvailableLinksBody,
+    DeleteRecordLabelAssociationBody,
     GenerateAccessLinkBody,
     HuddleDataBody,
     LinkRouteBody,
@@ -181,19 +182,13 @@ async def get_tokenized_record(request: Request, body: TokenizedRecordBody = Bod
     "/{project_id}/record-label-association-by-ids",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def delete_record_label_association_by_ids(
+def delete_record_label_association_by_ids(
     request: Request,
     project_id: str,
+    body: DeleteRecordLabelAssociationBody = Body(...),
 ):
-    try:
-        body = await request.json()
-        record_id = body.get("recordId", "")
-        association_ids = body.get("associationIds", [])
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    record_id = body.recordId
+    association_ids = body.associationIds
 
     user = auth_manager.get_user_by_info(request.state.info)
     rla_manager.delete_record_label_association(

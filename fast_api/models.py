@@ -39,6 +39,11 @@ class CreateLabelBody(BaseModel):
     labelColor: StrictStr
 
 
+class DeleteRecordLabelAssociationBody(BaseModel):
+    recordId: StrictStr
+    associationIds: Optional[List[StrictStr]] = []
+
+
 class AvailableLinksBody(BaseModel):
     assumedRole: Optional[StrictStr] = None
     assumedHeuristicId: Optional[StrictStr] = None
