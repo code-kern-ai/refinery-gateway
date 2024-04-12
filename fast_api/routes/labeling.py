@@ -217,7 +217,7 @@ async def delete_record_label_association_by_ids(
     "/{project_id}/{record_id}/record-by-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def delete_record_by_id(
+def delete_record_by_id(
     request: Request,
     project_id: str,
     record_id: str,
@@ -231,7 +231,7 @@ async def delete_record_by_id(
     "/{project_id}/link-locked",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_link_locked(
+def get_link_locked(
     request: Request,
     project_id: str,
     linkRouteBody: LinkRouteBody = Body(...),

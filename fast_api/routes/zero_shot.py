@@ -71,6 +71,7 @@ async def get_zero_shot_10_records(
     project_id: str,
 ):
     body = await request.json()
+
     try:
         heuristic_id = body["heuristicId"]
         label_names = body["labelNames"]
