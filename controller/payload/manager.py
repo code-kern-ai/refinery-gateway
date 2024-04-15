@@ -62,19 +62,21 @@ def get_labeling_function_on_10_records(
         prefixed_doc_bin=doc_bin_samples,
     )
     calculated_labels = fill_missing_record_ids(sample_records, calculated_labels)
+    for key in calculated_labels:
+        calculated_labels[key] = [str(label) for label in calculated_labels[key]]
 
-    return LabelingFunctionSampleRecords(
-        records=[
-            LabelingFunctionSampleRecordWrapper(
-                record_id=record_item[0],
-                full_record_data=record_item[1],
-                calculated_labels=calculated_labels[record_item[0]],
-            )
+    return {
+        "records": [
+            {
+                "recordId": record_item[0],
+                "calculatedLabels": calculated_labels[record_item[0]],
+                "fullRecordData": record_item[1],
+            }
             for record_item in sample_records
         ],
-        container_logs=container_logs,
-        code_has_errors=code_has_errors,
-    )
+        "containerLogs": container_logs,
+        "codeHasErrors": code_has_errors,
+    }
 
 
 def fill_missing_record_ids(
