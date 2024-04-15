@@ -37,6 +37,7 @@ from util.notification import create_notification
 from submodules.model.enums import NotificationType
 from submodules.model.models import UploadTask
 from util import daemon, notification
+from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
 
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
@@ -51,12 +52,18 @@ class Notify(HTTPEndpoint):
         data = await request.json()
         file_path = data["Key"]
 
-        if len(file_path.split("/")) != 4:
+        parts = file_path.split("/")
+
+        if parts[1] == "_cognition":
+            handle_cognition_file_upload(parts)
+            return PlainTextResponse("OK")
+
+        if len(parts) != 4:
             # We need handling for lf execution notification here.
             # ATM we have a different path of handling in util/payload_scheduler.py update_records method
             return PlainTextResponse("OK")
 
-        org_id, project_id, upload_task_id, file_name = file_path.split("/")
+        org_id, project_id, upload_task_id, file_name = parts
         if len(project_id) != 36:
             return PlainTextResponse("OK")
         if upload_task_id == "download":
