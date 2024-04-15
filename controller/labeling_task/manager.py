@@ -1,6 +1,6 @@
 from submodules.model import LabelingTask
 from .util import resolve_attribute_information
-from submodules.model.business_objects import labeling_task, general, attribute
+from submodules.model.business_objects import labeling_task, attribute
 
 
 def get_labeling_task(project_id: str, labeling_task_id: str) -> LabelingTask:

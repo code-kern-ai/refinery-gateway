@@ -21,8 +21,18 @@ class MissingArgumentsException(Exception):
 class NotAllowedInDemoError(Exception):
     pass
 
+
+class NotAllowedInOpenSourceError(Exception):
+    pass
+
+
 class BadPasswordError(Exception):
     pass
 
+
 class ApiTokenImportError(Exception):
+    pass
+
+
+class ProjectAccessError(Exception):
     pass

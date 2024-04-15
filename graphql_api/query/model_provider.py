@@ -1,5 +1,4 @@
 import graphene
-from graphql import GraphQLError
 from typing import List
 from graphql_api.types import ModelProviderInfoResult
 from controller.auth import manager as auth

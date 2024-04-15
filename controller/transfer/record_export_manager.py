@@ -18,7 +18,6 @@ from util.miscellaneous_functions import first_item
 def get_records_by_options_query_data(
     project_id: str, export_options: Optional[Dict[str, Any]] = None
 ) -> Any:
-
     column_options = export_options.get("columns")
     row_options = export_options.get("rows")
 
@@ -190,9 +189,9 @@ def __extract_table_meta_classification_data(
                     )
                     additional_created_by_name = full_table_name + "__created_by"
                     tables_mapping[additional_created_by_name] = __create_alias()
-                    tables_meta_data[
-                        tables_mapping.get(additional_created_by_name)
-                    ] = additional_created_by_table
+                    tables_meta_data[tables_mapping.get(additional_created_by_name)] = (
+                        additional_created_by_table
+                    )
     return tables_meta_data, tables_mapping
 
 
