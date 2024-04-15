@@ -434,6 +434,10 @@ def get_record_label_associations(
         token_start_idx = None
         token_end_idx = None
 
+        if len(r.tokens) > 0:
+            token_start_idx = r.tokens[0].token_index
+            token_end_idx = r.tokens[-1].token_index
+
         if source_id:
             information_source = information_source_manager.get_information_source(
                 project_id, source_id
@@ -478,9 +482,6 @@ def get_record_label_associations(
                         "name": attribute.name,
                         "relative_position": attribute.relative_position,
                     }
-
-                    token_start_idx = attribute.relative_position
-                    token_end_idx = attribute.relative_position
 
                 labelingTaskLabelDict["labeling_task"]["attribute"] = attributeDict
         edges.append(
