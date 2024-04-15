@@ -111,24 +111,8 @@ def get_labeling_function_on_10_records(
     project_id: str,
     heuristic_id: str,
 ):
-    data = sql_alchemy_to_dict(
-        payload_manager.get_labeling_function_on_10_records(project_id, heuristic_id)
-    )
-    records = []
-    for record in data.records:
-        records.append(
-            {
-                "recordId": record.record_id,
-                "calculatedLabels": record.calculated_labels,
-                "fullRecordData": record.full_record_data,
-            }
-        )
-    final_data = {
-        "records": records,
-        "containerLogs": data.container_logs,
-        "codeHasErrors": data.code_has_errors,
-    }
-    return {"data": {"getLabelingFunctionOn10Records": final_data}}
+    data = payload_manager.get_labeling_function_on_10_records(project_id, heuristic_id)
+    return {"data": {"getLabelingFunctionOn10Records": data}}
 
 
 @router.get(
