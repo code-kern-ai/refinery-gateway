@@ -10,6 +10,7 @@ from fast_api.models import (
     CreateDataSliceBody,
     ListStringBody,
     SearchRecordsBySimilarityBody,
+    SearchRecordsExtendedBody,
     UpdateDataSliceBody,
 )
 from fast_api.routes.client_response import pack_json_result
@@ -48,22 +49,14 @@ def get_record_comments(
     "/{project_id}/search-records-extended",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def search_records_extended(
+def search_records_extended(
     request: Request,
     project_id: str,
+    body: SearchRecordsExtendedBody = Body(...),
 ):
-    body = await request.body()
-
-    try:
-        data = json.loads(body)
-        filter_data = [json.loads(json_s) for json_s in data["filterData"]]
-        offset = data["offset"]
-        limit = data["limit"]
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    filter_data = [json.loads(item) for item in body.filterData]
+    limit = body.limit
+    offset = body.offset
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 

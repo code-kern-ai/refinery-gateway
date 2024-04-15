@@ -22,6 +22,12 @@ class SearchRecordsBySimilarityBody(BaseModel):
     recordSubKey: Any
 
 
+class SearchRecordsExtendedBody(BaseModel):
+    filterData: Any
+    offset: StrictInt
+    limit: StrictInt
+
+
 class ZeroShot10Body(BaseModel):
     heuristicId: StrictStr
     labelNames: List[StrictStr]
