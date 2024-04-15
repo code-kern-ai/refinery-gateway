@@ -1,5 +1,4 @@
 import json
-from typing import Dict
 from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
