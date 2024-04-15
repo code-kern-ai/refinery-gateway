@@ -28,6 +28,12 @@ class SearchRecordsExtendedBody(BaseModel):
     limit: StrictInt
 
 
+class RecordsByStaticSliceBody(BaseModel):
+    orderBy: Any
+    offset: Any
+    limit: Any
+
+
 class ZeroShot10Body(BaseModel):
     heuristicId: StrictStr
     labelNames: List[StrictStr]
