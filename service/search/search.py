@@ -184,7 +184,8 @@ def resolve_labeling_session(
 ) -> UserSessions:
 
     user_session = __collect_user_session_data_from_db(project_id, session_id, user_id)
-    if not user_session.session_record_ids:
+    attr = getattr(user_session, "session_record_ids", None)
+    if not attr:
         collect_user_session_record_ids(user_session, project_id)
 
     return user_session
