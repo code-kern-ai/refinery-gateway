@@ -9,7 +9,9 @@ from controller.comment import manager as comment_manager
 from fast_api.models import (
     CreateDataSliceBody,
     ListStringBody,
+    RecordsByStaticSliceBody,
     SearchRecordsBySimilarityBody,
+    SearchRecordsExtendedBody,
     UpdateDataSliceBody,
 )
 from fast_api.routes.client_response import pack_json_result
@@ -48,22 +50,14 @@ def get_record_comments(
     "/{project_id}/search-records-extended",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def search_records_extended(
+def search_records_extended(
     request: Request,
     project_id: str,
+    body: SearchRecordsExtendedBody = Body(...),
 ):
-    body = await request.body()
-
-    try:
-        data = json.loads(body)
-        filter_data = [json.loads(json_s) for json_s in data["filterData"]]
-        offset = data["offset"]
-        limit = data["limit"]
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    filter_data = [json.loads(item) for item in body.filterData]
+    limit = body.limit
+    offset = body.offset
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
@@ -125,23 +119,15 @@ def create_outlier_slice(
     "/{project_id}/records-by-static-slice/{slice_id}",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-async def get_records_by_static_slice(
+def get_records_by_static_slice(
     request: Request,
     project_id: str,
     slice_id: str,
+    body: RecordsByStaticSliceBody = Body(...),
 ):
-    body = await request.body()
-
-    try:
-        options = json.loads(body).get("options", {})
-        order_by: Dict[str, str] = options.get("orderBy", {})
-        offset = options.get("offset", 0)
-        limit = options.get("limit", 0)
-    except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+    order_by = body.orderBy
+    limit = body.limit
+    offset = body.offset
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
