@@ -305,7 +305,7 @@ class UpdateProjectStatusBody(BaseModel):
 
 
 class PrepareProjectExportBody(BaseModel):
-    exportOptions: Any
+    export_options: Any
     key: Optional[StrictStr] = None
 
 
