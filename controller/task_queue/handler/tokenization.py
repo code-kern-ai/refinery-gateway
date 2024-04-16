@@ -53,4 +53,4 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
 
 def __check_finished(task: Dict[str, Any]) -> bool:
-    return not is_doc_bin_creation_running_or_queued(task["project_id"])
+    return not is_doc_bin_creation_running_or_queued(task["project_id"], True)
