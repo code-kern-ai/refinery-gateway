@@ -108,7 +108,7 @@ def prepare_record_export(
     request: Request, project_id: str, body: PrepareProjectExportBody
 ):
     try:
-        export_options = json.loads(body.export_options)
+        export_options = json.loads(body.exportOptions)
         key = body.key
     except json.JSONDecodeError:
         return JSONResponse(
