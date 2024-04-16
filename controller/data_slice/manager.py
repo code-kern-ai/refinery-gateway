@@ -1,3 +1,4 @@
+import json
 from typing import Dict, Any, List, Optional
 
 from submodules.model import DataSlice
@@ -78,7 +79,7 @@ def create_data_slice(
         project_id=project_id,
         created_by=user_id,
         name=name,
-        filter_raw=filter_raw,
+        filter_raw=json.loads(filter_raw),
         filter_data=filter_data,
         static=static,
         slice_type=slice_type,

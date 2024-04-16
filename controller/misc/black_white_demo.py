@@ -42,7 +42,7 @@ def __parse_black_white_list():
     __blacklist_query_demo_parsed = tmp
 
 
-# caution this is not nessecarily the class name but often times similar or equal. This is the schema name we would use in gql
+# CAUTION: this is not necessarily the class name but often times similar or equal. This is the schema name we would use in gql
 __whitelist_mutation_demo = {
     "CreateDataSlice",
     "UpdateDataSlice",
@@ -76,12 +76,16 @@ __whitelist_mutation_demo = {
     "DeleteGoldStarAssociationForTask",
     "UpdateRlaIsValidManual",
 }
-# function names without resolve_
+
+
+# Function names without resolve_
 __blacklist_query_demo = {
     "upload_credentials_and_id",
     "upload_task_by_id",
     "prepare_project_export",
 }
-# parsed to a dict with gql query names
+
+
+# Parsed to a dict with gql query names
 __whitelist_mutation_demo_parsed = None
 __blacklist_query_demo_parsed = None

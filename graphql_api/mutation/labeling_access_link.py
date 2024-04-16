@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional
-
 from controller.auth import manager as auth
 import graphene
 from submodules.model import enums
