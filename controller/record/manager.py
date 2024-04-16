@@ -164,7 +164,7 @@ def edit_records(
         tokenization_service.request_tokenize_project(project_id, user_id)
         time.sleep(1)
         # wait for tokenization to finish, the endpoint itself handles missing docbins
-        while tokenization.is_doc_bin_creation_running(project_id):
+        while tokenization.is_doc_bin_creation_running_or_queued(project_id):
             time.sleep(0.5)
 
     except Exception as e:
@@ -255,7 +255,7 @@ def __check_and_prep_edit_records(
             useable_embeddings[embedding_item.attribute_id] = []
         useable_embeddings[embedding_item.attribute_id].append(embedding_item)
 
-    if tokenization.is_doc_bin_creation_running(project_id):
+    if tokenization.is_doc_bin_creation_running_or_queued(project_id):
         errors_found.append(
             "tokenization is currently running. Wait for it to finish before editing records."
         )

@@ -441,7 +441,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             if i >= 60:
                 i = 0
                 ctx_token = general.remove_and_refresh_session(ctx_token, True)
-            if tokenization.is_doc_bin_creation_running(project_id):
+            if tokenization.is_doc_bin_creation_running_or_queued(project_id):
                 time.sleep(2)
                 continue
             else:
