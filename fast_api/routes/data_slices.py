@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
-from fast_api.routes.client_response import pack_json_result, wrap_content_for_frontend
+from fast_api.routes.client_response import pack_json_result
 from submodules.model.util import sql_alchemy_to_dict
 from typing import List
 from controller.data_slice import manager
@@ -28,10 +28,12 @@ def get_data_slices(
         sql_alchemy_to_dict(ds, for_frontend=False)
         for ds in manager.get_all_data_slices(project_id, slice_type)
     ]
+
     for v in values:
         v["filterData"] = json.dumps(v["filter_data"])
         v["filterRaw"] = json.dumps(v["filter_raw"])
         del v["count_sql"]
+
     return pack_json_result(
         {"data": {"dataSlices": values}},
     )

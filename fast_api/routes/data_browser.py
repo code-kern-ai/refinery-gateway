@@ -163,7 +163,7 @@ def create_data_slice(
 ):
     name = body.name
     static = body.static
-    filter_raw = body.filterRaw
+    filter_raw = json.loads(body.filterRaw)
     filter_data = [json.loads(item) for item in body.filterData]
 
     user = auth_manager.get_user_by_info(request.state.info)
