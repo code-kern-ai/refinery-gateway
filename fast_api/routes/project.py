@@ -27,7 +27,11 @@ from submodules.model.business_objects.labeling_task import (
 from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
-from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
+from submodules.model.util import (
+    pack_as_graphql,
+    sql_alchemy_to_dict,
+    to_frontend_obj_raw,
+)
 from util import notification, doc_ock
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
@@ -368,7 +372,10 @@ def upload_task_by_id(
     if upload_task_id.find("/") != -1:
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
-    return {"data": {"uploadTaskById": data}}
+    data_dict = to_frontend_obj_raw(sql_alchemy_to_dict(data))
+    return pack_json_result(
+        {"data": {"uploadTaskById": data_dict}}, wrap_for_frontend=False
+    )
 
 
 @router.post(
