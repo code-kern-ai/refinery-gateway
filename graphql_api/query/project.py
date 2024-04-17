@@ -106,8 +106,7 @@ class ProjectQuery(graphene.ObjectType):
 
     def resolve_all_projects(self, info, sort) -> List[Project]:
         auth.check_demo_access(info)
-        organization = auth.get_organization_id_by_info(info)
-        return manager.get_all_projects(organization.id)
+        return manager.get_all_projects(auth.get_organization_id_by_info(info))
 
     def resolve_user_session_by_session_id(
         self, info, project_id: str, session_id: str

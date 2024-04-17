@@ -81,9 +81,10 @@ def get_project_by_project_id(
 
 @router.get("/all-projects")
 def get_all_projects(request: Request) -> Dict:
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
-    projects = manager.get_all_projects_by_user(organization.id)
+    projects = manager.get_all_projects_by_user(
+        auth_manager.get_organization_id_by_info(request.state.info)
+    )
     projects_graphql = pack_as_graphql(projects, "allProjects")
     return pack_json_result(projects_graphql)
 
@@ -454,10 +455,9 @@ def create_project(
     body: CreateProjectBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
     project = manager.create_project(
-        str(organization.id), body.name, body.description, str(user.id)
+        str(user.organization_id), body.name, body.description, str(user.id)
     )
 
     notification.send_organization_update(
@@ -510,10 +510,9 @@ def create_sample_project(
     body: CreateSampleProjectBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
     project = manager.import_sample_project(
-        user.id, organization.id, body.name, body.project_type
+        user.id, str(user.organization_id), body.name, body.project_type
     )
 
     doc_ock.post_event(

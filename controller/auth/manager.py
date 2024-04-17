@@ -18,10 +18,10 @@ DEV_USER_ID = "59e8dfca-ce56-44df-a8c7-5f05c61da499"
 
 
 def get_organization_id_by_info(info) -> Organization:
-    organization: Organization = get_user_by_info(info).organization
-    if not organization:
+    user = get_user_by_info(info)
+    if not user or not user.organization_id:
         raise GraphQLError("User is not associated to an organization")
-    return organization
+    return str(user.organization_id)
 
 
 def get_user_by_info(info) -> User:
@@ -76,7 +76,7 @@ def check_project_access_dep(request: Request, project_id: str):
 
 
 def check_project_access(info, project_id: str) -> None:
-    organization_id: str = get_organization_id_by_info(info).id
+    organization_id: str = get_organization_id_by_info(info)
     project: Project = project_manager.get_project_with_orga_id(
         organization_id, project_id
     )
