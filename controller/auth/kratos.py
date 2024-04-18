@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 from datetime import datetime, timedelta
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
@@ -53,6 +54,18 @@ def __get_identity(user_id: str, only_simple: bool = True) -> Dict[str, Any]:
         if only_simple:
             return cache[user_id]["simple"]
         return cache[user_id]
+
+    if len(user_id) == 36:
+        # check not new entry outside cache
+        request = requests.get(f"{KRATOS_ADMIN_URL}/identities/{user_id}")
+        if request.ok:
+            identity = request.json()
+            if identity["id"] == user_id:
+                KRATOS_IDENTITY_CACHE[user_id] = {
+                    "identity": identity,
+                    "simple": __parse_identity_to_simple(identity),
+                }
+                return KRATOS_IDENTITY_CACHE[user_id]
     # e.g. if id "GOLD_STAR" is requested => wont be in cache but expects a dummy dict
     if only_simple:
         return __parse_identity_to_simple({"id": user_id})
