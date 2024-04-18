@@ -95,9 +95,6 @@ def __parse_identity_to_simple(identity: Dict[str, Any]) -> Dict[str, str]:
 
 def get_userid_from_mail(user_mail: str) -> str:
     values = __get_cached_values()
-    import json
-
-    print(json.dumps(values, indent=4, default=str), flush=True)
     for key in values:
         if key == "collected":
             continue
