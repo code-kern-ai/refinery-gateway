@@ -27,7 +27,11 @@ from submodules.model.business_objects.labeling_task import (
 from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
-from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
+from submodules.model.util import (
+    pack_as_graphql,
+    sql_alchemy_to_dict,
+    to_frontend_obj_raw,
+)
 from util import notification, doc_ock
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
@@ -77,9 +81,10 @@ def get_project_by_project_id(
 
 @router.get("/all-projects")
 def get_all_projects(request: Request) -> Dict:
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
-    projects = manager.get_all_projects_by_user(organization.id)
+    projects = manager.get_all_projects_by_user(
+        auth_manager.get_organization_id_by_info(request.state.info)
+    )
     projects_graphql = pack_as_graphql(projects, "allProjects")
     return pack_json_result(projects_graphql)
 
@@ -368,7 +373,10 @@ def upload_task_by_id(
     if upload_task_id.find("/") != -1:
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
-    return {"data": {"uploadTaskById": data}}
+    data_dict = to_frontend_obj_raw(sql_alchemy_to_dict(data))
+    return pack_json_result(
+        {"data": {"uploadTaskById": data_dict}}, wrap_for_frontend=False
+    )
 
 
 @router.post(
@@ -447,10 +455,9 @@ def create_project(
     body: CreateProjectBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
     project = manager.create_project(
-        str(organization.id), body.name, body.description, str(user.id)
+        str(user.organization_id), body.name, body.description, str(user.id)
     )
 
     notification.send_organization_update(
@@ -503,10 +510,9 @@ def create_sample_project(
     body: CreateSampleProjectBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = auth_manager.get_organization_id_by_info(request.state.info)
 
     project = manager.import_sample_project(
-        user.id, organization.id, body.name, body.project_type
+        user.id, str(user.organization_id), body.name, body.project_type
     )
 
     doc_ock.post_event(

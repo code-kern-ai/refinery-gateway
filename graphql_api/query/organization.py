@@ -35,7 +35,7 @@ class OrganizationQuery(graphene.ObjectType):
     def resolve_all_users(self, info, user_role: str = None) -> List[User]:
         auth_manager.check_demo_access(info)
         organization_id = str(auth_manager.get_user_by_info(info).organization.id)
-        return manager.get_all_users(organization_id, user_role)
+        return manager.get_all_users(organization_id, user_role, as_dict=False)
 
     def resolve_all_users_with_record_count(
         self, info, project_id: str

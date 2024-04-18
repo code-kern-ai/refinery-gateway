@@ -5,7 +5,9 @@ from submodules.model.business_objects import (
     attribute as attribute_db_bo,
 )
 from controller.tokenization import tokenization_service
-from submodules.model.business_objects.tokenization import is_doc_bin_creation_running
+from submodules.model.business_objects.tokenization import (
+    is_doc_bin_creation_running_or_queued,
+)
 from submodules.model.enums import RecordTokenizationScope
 from ..util import if_task_queue_send_websocket
 
@@ -51,4 +53,4 @@ def __start_task(task: Dict[str, Any]) -> bool:
 
 
 def __check_finished(task: Dict[str, Any]) -> bool:
-    return not is_doc_bin_creation_running(task["project_id"])
+    return not is_doc_bin_creation_running_or_queued(task["project_id"], True)

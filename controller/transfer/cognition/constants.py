@@ -242,4 +242,4 @@ MODEL_DOC2QUERY = {
     "en": "doc2query/msmarco-t5-base-v1",
 }
 
-FREE_API_REQUEST_URL = "https://free.api.kern.ai/inference"
+FREE_API_REQUEST_URL = "https://k8s.freeapi.kern.ai/inference"

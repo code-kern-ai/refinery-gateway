@@ -56,7 +56,9 @@ def get_user_info(user) -> User:
     return user_expanded
 
 
-def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
+def get_all_users(
+    organization_id: str, user_role: Optional[str] = None, as_dict: bool = True
+) -> List[User]:
     parsed = None
     if user_role:
         try:
@@ -64,6 +66,8 @@ def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
     all_users = user.get_all(organization_id, parsed)
+    if not as_dict:
+        return all_users
     all_users_dict = sql_alchemy_to_dict(
         all_users, column_whitelist=USER_INFO_WHITELIST
     )
