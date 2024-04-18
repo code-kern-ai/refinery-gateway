@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Any
 import graphene
 
 from controller.auth import manager as auth
-from controller.transfer import manager as transfer_manager, record_export_manager
+from controller.transfer import manager as transfer_manager
 import traceback
 
 from submodules.model import enums
@@ -86,13 +86,19 @@ class TransferQuery(graphene.ObjectType):
         file_type: str,
         file_import_options: Optional[str] = "",
         upload_type: str = enums.UploadTypes.DEFAULT.value,
-        key: Optional[str] = None
+        key: Optional[str] = None,
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user = auth.get_user_by_info(info)
         return transfer_manager.get_upload_credentials_and_id(
-            project_id, user.id, file_name, file_type, file_import_options, upload_type, key
+            project_id,
+            user.id,
+            file_name,
+            file_type,
+            file_import_options,
+            upload_type,
+            key,
         )
 
     def resolve_export(
@@ -108,7 +114,11 @@ class TransferQuery(graphene.ObjectType):
         return transfer_manager.export_knowledge_base(project_id, list_id)
 
     def resolve_prepare_project_export(
-        self, info, project_id: str, export_options: Optional[str] = None, key: Optional[str] = None
+        self,
+        info,
+        project_id: str,
+        export_options: Optional[str] = None,
+        key: Optional[str] = None,
     ) -> bool:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
@@ -123,13 +133,19 @@ class TransferQuery(graphene.ObjectType):
         return transfer_manager.last_project_export_credentials(project_id)
 
     def resolve_prepare_record_export(
-        self, info, project_id: str, export_options: Optional[Dict[str, Any]] = None, key: Optional[str] = None
+        self,
+        info,
+        project_id: str,
+        export_options: Optional[Dict[str, Any]] = None,
+        key: Optional[str] = None,
     ) -> str:
         auth.check_demo_access(info)
         auth.check_project_access(info, project_id)
         user_id = auth.get_user_id_by_info(info)
         try:
-            transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
+            transfer_manager.prepare_record_export(
+                project_id, user_id, export_options, key
+            )
         except Exception as e:
             print(traceback.format_exc(), flush=True)
             return str(e)

@@ -6,7 +6,7 @@ from submodules.model.exceptions import (
     EntityAlreadyExistsException,
     EntityNotFoundException,
 )
-from submodules.model.business_objects import general, knowledge_term, knowledge_base
+from submodules.model.business_objects import knowledge_term, knowledge_base
 from util.notification import create_notification
 
 

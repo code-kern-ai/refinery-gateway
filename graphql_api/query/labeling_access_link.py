@@ -38,9 +38,9 @@ class LabelingAccessLinkQuery(graphene.ObjectType):
     available_links = graphene.Field(
         graphene.List(LabelingAccessLink),
         project_id=graphene.ID(required=True),
-        # only to fill for engeneers testing the labeling view
+        # only to fill for engineers testing the labeling view
         assumed_role=graphene.String(required=False),
-        # only to fill for engeneers testing the labeling view as annotator
+        # only to fill for engineers testing the labeling view as annotator
         assumed_heuristic_id=graphene.ID(required=False),
     )
 

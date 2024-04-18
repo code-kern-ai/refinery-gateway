@@ -193,11 +193,17 @@ def __finalize_setup(
         if c > 120:
             token_ref.request_new()
             c = 0
-        if tokenization_db_bo.is_doc_bin_creation_running(reference_project_id):
+        if tokenization_db_bo.is_doc_bin_creation_running_or_queued(
+            reference_project_id
+        ):
             continue
-        if tokenization_db_bo.is_doc_bin_creation_running(question_project_id):
+        if tokenization_db_bo.is_doc_bin_creation_running_or_queued(
+            question_project_id
+        ):
             continue
-        if tokenization_db_bo.is_doc_bin_creation_running(relevance_project_id):
+        if tokenization_db_bo.is_doc_bin_creation_running_or_queued(
+            relevance_project_id
+        ):
             continue
         break
 
@@ -313,6 +319,7 @@ def __finalize_setup_for(
     token_ref: TokenRef,
 ) -> Token:
     target_data = {"TARGET_LANGUAGE": project_language}
+
     # attributes
     attributes = project_type.get_attributes()
     target_data["target_type"] = "ac"

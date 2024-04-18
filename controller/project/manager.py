@@ -14,6 +14,7 @@ from submodules.model.business_objects import (
     labeling_task,
     organization,
     project,
+    record,
     record_label_association,
     data_slice,
     embedding,
@@ -34,10 +35,30 @@ from controller.transfer.record_transfer_manager import import_records_and_rlas
 from controller.transfer.manager import check_and_add_running_id
 from controller.upload_task import manager as upload_task_manager
 from controller.gates import gates_service
+from controller.auth import kratos
+from submodules.model.util import sql_alchemy_to_dict
+
+ALL_PROJECTS_WHITELIST = {
+    "id",
+    "name",
+    "description",
+    "tokenizer",
+    "status",
+    "created_at",
+    "created_by",
+}
 
 
 def get_project(project_id: str) -> Project:
     return project.get(project_id)
+
+
+def get_project_with_labeling_tasks(project_id: str) -> Project:
+    return project.get_with_labling_tasks(project_id)
+
+
+def get_project_with_labeling_tasks_info_attributes(project_id: str) -> Project:
+    return project.get_with_labling_tasks_info_attributes(project_id)
 
 
 def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
@@ -46,6 +67,33 @@ def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
 
 def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
+
+
+def get_all_projects_by_user(organization_id) -> List[Project]:
+    projects = project.get_all_by_user_organization_id(organization_id)
+    project_dicts = sql_alchemy_to_dict(
+        projects, column_whitelist=ALL_PROJECTS_WHITELIST
+    )
+
+    for p in project_dicts:
+        user_id = p["created_by"]
+        names, mail = kratos.resolve_user_name_and_email_by_id(user_id)
+        last_name = names.get("last", "")
+        first_name = names.get("first", "")
+        p["user"] = {
+            "mail": mail,
+            "first_name": first_name,
+            "last_name": last_name,
+        }
+
+        if p["status"] == enums.ProjectStatus.IN_DELETION.value:
+            p["num_data_scale_uploaded"] = -1
+        else:
+            p["num_data_scale_uploaded"] = record.get_count_scale_uploaded(p["id"])
+
+        del p["created_by"]
+
+    return project_dicts
 
 
 def get_project_size(project_id: str) -> List[ProjectSize]:
@@ -293,7 +341,9 @@ projects_updating = set()
 projects_updating_lock = threading.Lock()
 
 
-def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
+def get_gates_integration_data(
+    project_id: str, for_gql: bool = True
+) -> GatesIntegrationData:
     project_item = project.get(project_id)
     if not project_item:
         raise GraphQLError("Project not found")
@@ -303,27 +353,29 @@ def get_gates_integration_data(project_id: str) -> GatesIntegrationData:
     missing_information_sources = __get_missing_information_source_pickles(project_id)
 
     if project_id in projects_updating:
-        return GatesIntegrationData(
-            status=enums.GatesIntegrationStatus.UPDATING.value,
-            missing_tokenizer=missing_tokenizer,
-            missing_embeddings=missing_embeddings,
-            missing_information_sources=missing_information_sources,
-        )
-
-    status = enums.GatesIntegrationStatus.READY.value
-    if (
+        status = enums.GatesIntegrationStatus.UPDATING.value
+    elif (
         missing_tokenizer
         or len(missing_embeddings) > 0
         or len(missing_information_sources) > 0
     ):
         status = enums.GatesIntegrationStatus.NOT_READY.value
+    else:
+        status = enums.GatesIntegrationStatus.READY.value
 
-    return GatesIntegrationData(
-        status=status,
-        missing_tokenizer=missing_tokenizer,
-        missing_embeddings=missing_embeddings,
-        missing_information_sources=missing_information_sources,
-    )
+    if for_gql:
+        return GatesIntegrationData(
+            status=status,
+            missing_tokenizer=missing_tokenizer,
+            missing_embeddings=missing_embeddings,
+            missing_information_sources=missing_information_sources,
+        )
+    return {
+        "status": status,
+        "missing_tokenizer": missing_tokenizer,
+        "missing_embeddings": missing_embeddings,
+        "missing_information_sources": missing_information_sources,
+    }
 
 
 def __tokenizer_pickle_exists(config_string: str) -> bool:

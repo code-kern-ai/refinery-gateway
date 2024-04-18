@@ -184,7 +184,10 @@ def resolve_labeling_session(
 ) -> UserSessions:
 
     user_session = __collect_user_session_data_from_db(project_id, session_id, user_id)
-    if not user_session.session_record_ids:
+    attr = getattr(user_session, "session_record_ids", None)
+    if not attr:
+        user_session.temp_session = False
+        general.commit()
         collect_user_session_record_ids(user_session, project_id)
 
     return user_session
@@ -196,11 +199,6 @@ def collect_user_session_record_ids(
     # currently fixed values. In the future this might be changed to a dynamic value
     limit = 1000
     offset = 0
-
-    # create_notification(
-    #     NotificationType.COLLECTING_SESSION_DATA, user_session.created_by, project_id,
-    # )
-
     current_count = general.execute_distinct_count(user_session.count_sql_statement)
     if current_count != user_session.last_count and user_session.last_count != -1:
         create_notification(
@@ -224,7 +222,6 @@ def collect_user_session_record_ids(
     if user_session.random_seed:
         general.execute(f"SELECT setseed({user_session.random_seed});")
     general.execute(update_query)
-    user_session.temp_session = False
     general.commit()
 
 

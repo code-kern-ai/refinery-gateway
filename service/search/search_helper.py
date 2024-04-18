@@ -369,7 +369,7 @@ LEFT JOIN (
     GROUP BY rla.project_id, rla.record_id ) order_rla
     ON r.project_id = order_rla.pID AND r.id = order_rla.rID """,
     SearchQueryTemplate.SUBQUERY_RLA_DIFFERENT_IS_CLASSIFICATION: """
-SELECT project_id pID, record_id rID, COUNT(*) different_versions, SUM(full_count) full_count
+SELECT project_id pID, record_id rID, COUNT(*) different_versions,  SUM(CAST(full_count AS INT)) AS full_count 
 FROM (
 	SELECT rla.record_id,rla.project_id, rla.labeling_task_label_id, COUNT(*) full_count
 	FROM record_label_association rla
@@ -383,7 +383,7 @@ FROM (
 GROUP BY record_id, project_id
 HAVING COUNT(*) >1 """,
     SearchQueryTemplate.SUBQUERY_RLA_DIFFERENT_IS_EXTRACTION: """
-SELECT project_id pID, record_id rID, COUNT(*) different_versions, SUM(full_count) full_count
+SELECT project_id pID, record_id rID, COUNT(*) different_versions,  SUM(CAST(full_count AS INT)) AS full_count 
 FROM (
 	SELECT rla.record_id,rla.project_id, rlat.label,COUNT(*) full_count
 	FROM record_label_association rla

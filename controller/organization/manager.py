@@ -7,6 +7,18 @@ from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import User as User_model, Organization, User
 from util import notification
+from controller.auth import kratos
+from submodules.model.util import sql_alchemy_to_dict
+
+USER_INFO_WHITELIST = {"id", "role"}
+ORGANIZATION_WHITELIST = {
+    "id",
+    "name",
+    "max_rows",
+    "max_cols",
+    "max_char_count",
+    "gdpr_compliant",
+}
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
@@ -32,14 +44,35 @@ def get_organization_by_name(name: str) -> Organization:
     return organization.get_by_name(name)
 
 
-def get_all_users(organization_id: str, user_role: Optional[str] = None) -> List[User]:
+def get_organization_by_id(org_id: str) -> Organization:
+    org = organization.get(org_id)
+    org_dict = sql_alchemy_to_dict(org, column_whitelist=ORGANIZATION_WHITELIST)
+    return org_dict
+
+
+def get_user_info(user) -> User:
+    user_filtered = sql_alchemy_to_dict(user, column_whitelist=USER_INFO_WHITELIST)
+    (user_expanded,) = kratos.expand_user_mail_name([user_filtered])
+    return user_expanded
+
+
+def get_all_users(
+    organization_id: str, user_role: Optional[str] = None, as_dict: bool = True
+) -> List[User]:
     parsed = None
     if user_role:
         try:
             parsed = enums.UserRoles[user_role.upper()]
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
-    return user.get_all(organization_id, parsed)
+    all_users = user.get_all(organization_id, parsed)
+    if not as_dict:
+        return all_users
+    all_users_dict = sql_alchemy_to_dict(
+        all_users, column_whitelist=USER_INFO_WHITELIST
+    )
+    all_users_expanded = kratos.expand_user_mail_name(all_users_dict)
+    return all_users_expanded
 
 
 def get_all_users_with_record_count(
@@ -80,6 +113,9 @@ def can_create_local(org: bool = True) -> bool:
         return False
     return True
 
+
 def __check_notification(org_id: str, key: str, value: Any):
     if key in ["gdpr_compliant"]:
-        notification.send_organization_update(None, f"gdpr_compliant:{value}" , True, org_id)
+        notification.send_organization_update(
+            None, f"gdpr_compliant:{value}", True, org_id
+        )

@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Set
 
+from fastapi import Request
 from graphene import ResolveInfo
 from controller.misc import config_service
-from exceptions.exceptions import NotAllowedInDemoError
+from exceptions.exceptions import NotAllowedInDemoError, ProjectAccessError
 import jwt
 from graphql import GraphQLError
 from controller.project import manager as project_manager
@@ -13,16 +14,22 @@ from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
 import sqlalchemy
 
+DEV_USER_ID = "59e8dfca-ce56-44df-a8c7-5f05c61da499"
+
 
 def get_organization_id_by_info(info) -> Organization:
-    organization: Organization = get_user_by_info(info).organization
-    if not organization:
+    user = get_user_by_info(info)
+    if not user or not user.organization_id:
         raise GraphQLError("User is not associated to an organization")
-    return organization
+    return str(user.organization_id)
 
 
 def get_user_by_info(info) -> User:
-    user_id: str = get_user_id_by_jwt_token(info.context["request"])
+    request = info.context["request"]
+    if request.url.hostname == "localhost" and request.url.port == 7051:
+        user_id = DEV_USER_ID
+    else:
+        user_id: str = get_user_id_by_jwt_token(request)
     return user_manager.get_or_create_user(user_id)
 
 
@@ -61,8 +68,15 @@ def get_user_id_by_jwt_token(request) -> str:
     return claims["session"]["identity"]["id"]
 
 
+def check_project_access_dep(request: Request, project_id: str):
+    if len(project_id) == 36:
+        check_project_access(request.state.info, project_id)
+    else:
+        raise ProjectAccessError
+
+
 def check_project_access(info, project_id: str) -> None:
-    organization_id: str = get_organization_id_by_info(info).id
+    organization_id: str = get_organization_id_by_info(info)
     project: Project = project_manager.get_project_with_orga_id(
         organization_id, project_id
     )
@@ -110,14 +124,14 @@ def check_is_admin(request: Any) -> bool:
     return False
 
 
-def check_demo_access(info: ResolveInfo) -> None:
+def check_demo_access(info: Any) -> None:
     if not check_is_admin(info.context["request"]) and config_service.get_config_value(
         "is_demo"
     ):
         check_black_white(info)
 
 
-def check_black_white(info: ResolveInfo):
+def check_black_white(info: Any):
     black_white = misc_manager.get_black_white_demo()
     if str(info.parent_type) == "Mutation":
         if info.field_name not in black_white["mutations"]:

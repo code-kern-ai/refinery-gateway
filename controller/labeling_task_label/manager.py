@@ -5,7 +5,6 @@ from submodules.model.business_objects import (
     general,
     knowledge_base,
     information_source,
-    record_label_association,
 )
 from controller.knowledge_base.util import create_knowledge_base_if_not_existing
 from submodules.model.enums import LabelingTaskType
@@ -212,9 +211,9 @@ def __check_warnings_label_rename(
             entry["new_name"] = new_name
             entry["old_highlighting"] = old_highlighting
             entry["new_highlighting"] = new_highlighting
-            entry[
-                "href"
-            ] = f"/projects/{project_id}/information_sources/{information_source_item.id}"
+            entry["href"] = (
+                f"/projects/{project_id}/information_sources/{information_source_item.id}"
+            )
 
             append_me.append(entry)
 
