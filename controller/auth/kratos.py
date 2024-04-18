@@ -1,5 +1,4 @@
-from typing import Union, Any, List, Optional, Dict
-from requests import Response
+from typing import Union, Any, List, Dict
 import os
 import requests
 import logging
@@ -14,13 +13,17 @@ KRATOS_ADMIN_URL = os.getenv("KRATOS_ADMIN_URL")
 # user_id -> {"identity" -> full identity, "simple" -> {"id": str, "mail": str, "firstName": str, "lastName": str}}
 # "collected" -> timestamp
 KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
+KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
 
 def __get_cached_values() -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
     if not KRATOS_IDENTITY_CACHE or len(KRATOS_IDENTITY_CACHE) == 0:
         __refresh_identity_cache()
-    elif KRATOS_IDENTITY_CACHE["collected"] + timedelta(minutes=30) < datetime.now():
+    elif (
+        KRATOS_IDENTITY_CACHE["collected"] + KRATOS_IDENTITY_CACHE_TIMEOUT
+        < datetime.now()
+    ):
         __refresh_identity_cache()
     return KRATOS_IDENTITY_CACHE
 
@@ -50,6 +53,15 @@ def __get_identity(user_id: str, only_simple: bool = True) -> Dict[str, Any]:
         if only_simple:
             return cache[user_id]["simple"]
         return cache[user_id]
+    # e.g. if id "GOLD_STAR" is requested => wont be in cache but expects a dummy dict
+    if only_simple:
+        return __parse_identity_to_simple({"id": user_id})
+    return {
+        "identity": {
+            "id": user_id,
+            "traits": {"email": None, "name": {"first": None, "last": None}},
+        }
+    }
 
 
 def __parse_identity_to_simple(identity: Dict[str, Any]) -> Dict[str, str]:
@@ -97,8 +109,6 @@ def resolve_all_user_ids(
     final = [] if as_list else {}
     for id in relevant_ids:
         i = __get_identity(id)
-        if not i:
-            i = __parse_identity_to_simple({"id": id})
         if as_list:
             final.append(i)
         else:
@@ -112,11 +122,8 @@ def expand_user_mail_name(
     final = []
     for user in users:
         i = __get_identity(user[user_id_key])
-        if i:
-            user = {**user, **i}
-            final.append(user)
-        else:
-            raise ValueError(f"Identity with id {user[user_id_key]} not found")
+        user = {**user, **i}
+        final.append(user)
     return final
 
 
