@@ -309,6 +309,11 @@ class PrepareProjectExportBody(BaseModel):
     key: Optional[StrictStr] = None
 
 
+class PrepareRecordExportBody(BaseModel):
+    export_options: Any
+    key: Optional[StrictStr] = None
+
+
 class CreateEmbeddingBody(BaseModel):
     attribute_id: StrictStr
     config: StrictStr

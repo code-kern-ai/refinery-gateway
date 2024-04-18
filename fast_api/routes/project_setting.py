@@ -4,6 +4,7 @@ from fast_api.models import (
     CreateNewAttributeBody,
     CreateTaskAndLabelsBody,
     PrepareProjectExportBody,
+    PrepareRecordExportBody,
     UpdateAttributeBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
@@ -105,10 +106,10 @@ def get_last_record_export_credentials(
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def prepare_record_export(
-    request: Request, project_id: str, body: PrepareProjectExportBody
+    request: Request, project_id: str, body: PrepareRecordExportBody
 ):
     try:
-        export_options = json.loads(body.exportOptions)
+        export_options = json.loads(body.export_options)
         key = body.key
     except json.JSONDecodeError:
         return JSONResponse(
