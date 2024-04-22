@@ -53,6 +53,7 @@ exceptiongroup==1.2.0
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
+    #   pytest
 fastapi==0.65.0
     # via -r requirements/requirements.in
 graphene==2.1.9
@@ -79,6 +80,8 @@ idna==3.7
     #   -r requirements/common-requirements.txt
     #   anyio
     #   requests
+iniconfig==2.0.0
+    # via pytest
 jinja2==3.1.3
     # via spacy
 jmespath==1.0.1
@@ -112,6 +115,7 @@ openpyxl==3.0.10
     # via -r requirements/requirements.in
 packaging==24.0
     # via
+    #   pytest
     #   spacy
     #   thinc
 pandas==1.5.1
@@ -120,6 +124,8 @@ pathlib-abc==0.1.1
     # via pathy
 pathy==0.11.0
     # via spacy
+pluggy==1.4.0
+    # via pytest
 preshed==3.0.9
     # via
     #   spacy
@@ -143,6 +149,8 @@ pydantic==1.10.8
 pyjwt==2.4.0
     # via -r requirements/requirements.in
 pyminizip==0.2.6
+    # via -r requirements/requirements.in
+pytest==8.1.1
     # via -r requirements/requirements.in
 python-dateutil==2.9.0.post0
     # via
@@ -214,6 +222,8 @@ sudachipy==0.6.8
     #   sudachidict-core
 thinc==8.1.12
     # via spacy
+tomli==2.0.1
+    # via pytest
 tqdm==4.66.2
     # via spacy
 typer==0.4.2

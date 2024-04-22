@@ -14,3 +14,4 @@ starlette==0.14.2
 fastapi==0.65.0
 pyminizip==0.2.6
 rncryptor==3.3.0
+pytest==8.1.1
