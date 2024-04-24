@@ -18,6 +18,7 @@ from controller.misc import manager as misc
 from fast_api.routes.client_response import pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
+from submodules.model.business_objects.user import get
 from submodules.model.util import sql_alchemy_to_dict
 from util import doc_ock, notification
 
@@ -54,6 +55,27 @@ def get_user_info(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
     data = manager.get_user_info(user)
     return {"data": {"userInfo": data}}
+
+
+@router.get("/get-user-info-extended")
+def get_user_info_extended(request: Request):
+    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+    user = get(user_id)
+    name, mail = resolve_user_name_and_email_by_id(user_id)
+
+    data = {
+        "userInfo": {
+            "id": user_id,
+            "organizationId": {"id": str(user.organization_id)},
+            "firstName": name.get("first"),
+            "lastName": name.get("last"),
+            "mail": mail,
+            "role": user.role,
+            "languageDisplay": user.language_display,
+        }
+    }
+
+    return pack_json_result({"data": data})
 
 
 @router.get("/all-users")
