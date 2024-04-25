@@ -189,3 +189,10 @@ def update_config(request: Request, body: UpdateConfigBody = Body(...)):
         # send to all so all are notified about the change
         notification.send_organization_update(None, "config_updated", True, str(org.id))
     return pack_json_result({"data": {"updateConfig": {"ok": True}}})
+
+
+@router.get("/user-roles")
+def get_user_roles(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = user_manager.get_user_roles()
+    return {"data": {"userRoles": data}}
