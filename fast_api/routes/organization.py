@@ -109,7 +109,7 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
     )
-    return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
+    return pack_json_result({"data": {"allAdminMessages": data_dict}})
 
 
 @router.get(
