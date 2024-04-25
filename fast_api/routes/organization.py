@@ -102,6 +102,16 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
 
 
+@router.get("/all-admin-messages")
+def all_admin_messages(request: Request, limit: int = 100) -> str:
+
+    data = admin_message_manager.get_messages(limit, active_only=False)
+    data_dict = sql_alchemy_to_dict(
+        data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
+    )
+    return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
+
+
 @router.get(
     "/{project_id}/all-users-with-record-count",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
@@ -263,3 +273,19 @@ def delete_organization(request: Request, body: DeleteOrganizationBody = Body(..
     auth_manager.check_admin_access(request.state.info)
     organization_manager.delete_organization(body.name)
     return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
+
+
+@router.get("/active-users")
+def get_active_users(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    activeUsers = user_manager.get_active_users(None, None)
+
+    activeUsers = [
+        {
+            "id": str(user.id),
+            "lastInteraction": user.last_interaction.isoformat(),
+        }
+        for user in activeUsers
+    ]
+
+    return {"data": {"activeUsers": activeUsers}}
