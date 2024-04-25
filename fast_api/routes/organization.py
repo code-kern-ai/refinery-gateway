@@ -4,6 +4,7 @@ from controller.misc import config_service
 from fast_api.models import (
     AddUserToOrganizationBody,
     ChangeOrganizationBody,
+    ChangeUserRoleBody,
     CreateOrganizationBody,
     UpdateConfigBody,
 )
@@ -196,3 +197,10 @@ def get_user_roles(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user_manager.get_user_roles()
     return {"data": {"userRoles": data}}
+
+
+@router.post("/change-user-role")
+def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.update_user_role(body.user_id, body.role)
+    return {"data": {"changeUserRole": {"ok": True}}}

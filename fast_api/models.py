@@ -213,6 +213,11 @@ class UpdateConfigBody(BaseModel):
     dict_str: StrictStr
 
 
+class ChangeUserRoleBody(BaseModel):
+    user_id: StrictStr
+    role: StrictStr
+
+
 class CreatePersonalTokenBody(BaseModel):
     name: StrictStr
     scope: StrictStr
