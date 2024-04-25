@@ -6,10 +6,14 @@ from fast_api.models import (
     ChangeOrganizationBody,
     ChangeUserRoleBody,
     CreateOrganizationBody,
+    DeleteOrganizationBody,
     UpdateConfigBody,
 )
 from controller.auth import manager as auth_manager
-from controller.auth.kratos import resolve_user_name_and_email_by_id
+from controller.auth.kratos import (
+    resolve_user_mail_by_id,
+    resolve_user_name_and_email_by_id,
+)
 from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
 from controller.organization import manager as organization_manager
@@ -204,3 +208,58 @@ def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.update_user_role(body.user_id, body.role)
     return {"data": {"changeUserRole": {"ok": True}}}
+
+
+@router.get("/all-organizations")
+def get_all_organizations(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    organizations = manager.get_all_organizations()
+
+    edges = []
+
+    for org in organizations:
+        edges.append(
+            {
+                "node": {
+                    "id": str(org.id),
+                    "name": org.name,
+                    "createdAt": (
+                        org.created_at.isoformat()
+                        if org.created_at is not None
+                        else None
+                    ),
+                    "startedAt": (
+                        org.started_at.isoformat()
+                        if org.started_at is not None
+                        else None
+                    ),
+                    "isPaying": org.is_paying,
+                    "users": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": str(user.id),
+                                    "mail": resolve_user_mail_by_id(user.id),
+                                }
+                            }
+                            for user in org.users
+                        ]
+                    },
+                    "maxRows": org.max_rows,
+                    "maxCols": org.max_cols,
+                    "maxCharCount": org.max_char_count,
+                    "gdprCompliant": org.gdpr_compliant,
+                }
+            }
+        )
+
+    data = {"edges": edges}
+
+    return pack_json_result({"data": {"allOrganizations": data}})
+
+
+@router.delete("/delete-organization")
+def delete_organization(request: Request, body: DeleteOrganizationBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    organization_manager.delete_organization(body.name)
+    return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})

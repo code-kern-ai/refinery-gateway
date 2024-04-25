@@ -209,6 +209,10 @@ class ChangeOrganizationBody(BaseModel):
     changes: StrictStr
 
 
+class DeleteOrganizationBody(BaseModel):
+    name: StrictStr
+
+
 class UpdateConfigBody(BaseModel):
     dict_str: StrictStr
 
