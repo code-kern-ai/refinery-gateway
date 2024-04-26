@@ -11,7 +11,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-COPY requirements-dev.txt .
+COPY requirements*.txt .
 
 RUN pip3 install --no-cache-dir -r requirements-dev.txt
 
