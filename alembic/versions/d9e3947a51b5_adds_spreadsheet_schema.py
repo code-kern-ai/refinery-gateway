@@ -28,6 +28,7 @@ def upgrade():
         sa.Column('data_type', sa.String(), nullable=True),
         sa.Column('is_input', sa.Boolean(), nullable=True),
         sa.Column('is_hidden', sa.Boolean(), nullable=True),
+        sa.Column('width', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
         sa.PrimaryKeyConstraint('id'),
