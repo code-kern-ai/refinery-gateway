@@ -283,7 +283,9 @@ def get_active_users(request: Request):
     activeUsers = [
         {
             "id": str(user.id),
-            "lastInteraction": user.last_interaction.isoformat(),
+            "lastInteraction": (
+                user.last_interaction.isoformat() if user.last_interaction else None
+            ),
         }
         for user in activeUsers
     ]
