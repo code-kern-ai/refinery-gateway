@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it refinery-gateway bash -c "cd /app && python -m pytest -v"
