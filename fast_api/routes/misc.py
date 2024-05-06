@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Body, Request
 from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
@@ -12,6 +13,7 @@ from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
 from submodules.model import enums
+import util.user_activity
 
 router = APIRouter()
 
@@ -123,3 +125,25 @@ def cancel_all_running_tasks(request: Request):
     auth.check_admin_access(request.state.info)
     controller_manager.cancel_all_running_tasks()
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
+
+
+@router.get("/all-users-activity")
+def get_all_users_activity(request: Request):
+    auth.check_admin_access(request.state.info)
+    data = util.user_activity.resolve_all_users_activity()
+
+    activity = [
+        {
+            "user": {
+                "id": str(user.user.id),
+            },
+            "userActivity": [
+                json.dumps(activity_item) for activity_item in user.user_activity
+            ],
+            "warning": user.warning,
+            "warningText": user.warning_text,
+        }
+        for user in data
+    ]
+
+    return pack_json_result({"data": {"allUsersActivity": activity}})
