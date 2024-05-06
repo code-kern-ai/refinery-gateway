@@ -131,3 +131,10 @@ def update_comment(
         )
 
     return pack_json_result({"data": {"updateComment": {"ok": True}}})
+
+
+@router.get("/get-unique-comments-keys-for")
+def get_unique_comments_keys_for(request: Request, xftype: str):
+    if xftype in [CommentCategory.ORGANIZATION.value, CommentCategory.USER.value]:
+        auth_manager.check_admin_access(request.state.info)
+    return manager.get_unique_comments_keys_for(xftype)
