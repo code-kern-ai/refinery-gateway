@@ -204,6 +204,10 @@ class AddUserToOrganizationBody(BaseModel):
     organization_name: StrictStr
 
 
+class RemoveUserToOrganizationBody(BaseModel):
+    user_mail: StrictStr
+
+
 class ChangeOrganizationBody(BaseModel):
     org_id: StrictStr
     changes: StrictStr

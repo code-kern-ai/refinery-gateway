@@ -7,6 +7,7 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateOrganizationBody,
     DeleteOrganizationBody,
+    RemoveUserToOrganizationBody,
     UpdateConfigBody,
 )
 from controller.auth import manager as auth_manager
@@ -178,6 +179,15 @@ def add_user_to_organization(
     doc_ock.register_user(user)
     doc_ock.post_event(str(user.id), events.SignUp())
     return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
+
+
+@router.post("/remove-user-from-organization")
+def remove_user_from_organization(
+    request: Request, body: RemoveUserToOrganizationBody = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.remove_organization_from_user(body.user_mail)
+    return pack_json_result({"data": {"removeUserFromOrganization": {"ok": True}}})
 
 
 @router.post("/change-organization")
