@@ -217,6 +217,17 @@ class DeleteOrganizationBody(BaseModel):
     name: StrictStr
 
 
+class CreateAdminMessageBody(BaseModel):
+    text: StrictStr
+    level: StrictStr
+    archive_date: StrictStr
+
+
+class ArchiveAdminMessageBody(BaseModel):
+    message_id: StrictStr
+    archived_reason: StrictStr
+
+
 class UpdateConfigBody(BaseModel):
     dict_str: StrictStr
 

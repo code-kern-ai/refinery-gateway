@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
     AddUserToOrganizationBody,
+    ArchiveAdminMessageBody,
     ChangeOrganizationBody,
     ChangeUserRoleBody,
+    CreateAdminMessageBody,
     CreateOrganizationBody,
     DeleteOrganizationBody,
     RemoveUserToOrganizationBody,
@@ -301,3 +303,28 @@ def get_active_users(request: Request):
     ]
 
     return {"data": {"activeUsers": activeUsers}}
+
+
+@router.post("/create-admin-message")
+def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    admin_message_manager.create_admin_message(
+        body.text, body.level, body.archive_date, user_id
+    )
+    notification.send_global_update_for_all_organizations("admin_message")
+    return pack_json_result({"data": {"createAdminMessage": {"ok": True}}})
+
+
+@router.delete("/archive-admin-message")
+def archive_admin_message(
+    request: Request,
+    body: ArchiveAdminMessageBody = Body(...),
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    admin_message_manager.archive_admin_message(
+        body.message_id, user_id, body.archived_reason
+    )
+    notification.send_global_update_for_all_organizations("admin_message")
+    return pack_json_result({"data": {"archiveAdminMessage": {"ok": True}}})
