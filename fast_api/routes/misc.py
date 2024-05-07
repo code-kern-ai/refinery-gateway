@@ -24,6 +24,16 @@ def get_is_admin(request: Request) -> Dict:
     return pack_json_result({"data": {"isAdmin": data}})
 
 
+@router.get("/is-demo")
+def get_is_demo(request: Request) -> Dict:
+    is_demo = False
+    try:
+        auth.check_demo_access(request.state.info)
+    except Exception:
+        is_demo = True
+    return pack_json_result({"data": {"isDemo": is_demo}})
+
+
 @router.get("/version-overview")
 def get_version_overview(request: Request) -> Dict:
     data = manager.get_version_overview()
@@ -132,18 +142,22 @@ def get_all_users_activity(request: Request):
     auth.check_admin_access(request.state.info)
     data = util.user_activity.resolve_all_users_activity()
 
-    activity = [
-        {
-            "user": {
-                "id": str(user.user.id),
-            },
-            "userActivity": [
-                json.dumps(activity_item) for activity_item in user.user_activity
-            ],
-            "warning": user.warning,
-            "warningText": user.warning_text,
-        }
-        for user in data
-    ]
+    activity = []
+
+    for user in data:
+        user_activity = []
+        if user.user_activity:
+            for activity_item in user.user_activity:
+                user_activity.append(json.dumps(activity_item))
+        activity.append(
+            {
+                "user": {
+                    "id": str(user.user.id),
+                },
+                "userActivity": user_activity,
+                "warning": user.warning,
+                "warningText": user.warning_text,
+            }
+        )
 
     return pack_json_result({"data": {"allUsersActivity": activity}})

@@ -86,6 +86,23 @@ def get_user_info_extended(request: Request):
     return pack_json_result({"data": data})
 
 
+@router.get("/get-user-info-mini")
+def get_user_info_mini(request: Request):
+    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
+    user = get(user_id)
+    name, mail = resolve_user_name_and_email_by_id(user_id)
+
+    data = {
+        "userInfo": {
+            "id": user_id,
+            "organization": {"id": str(user.organization_id)},
+            "role": user.role,
+        }
+    }
+
+    return pack_json_result({"data": data})
+
+
 @router.get("/all-users")
 def get_all_user(request: Request):
     organization_id = str(
