@@ -9,7 +9,7 @@ fi
 migrate() {
     docker run --rm \
     --name refinery-gateway-migration \
-    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    -e POSTGRES=postgresql://postgres:kern@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
     --entrypoint /usr/local/bin/alembic \
@@ -19,7 +19,7 @@ migrate() {
 commit() {
     docker run --rm \
     --name refinery-gateway-migration \
-    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    -e POSTGRES=postgresql://postgres:kern@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
     --entrypoint /usr/local/bin/alembic \
@@ -29,7 +29,7 @@ commit() {
 alembic() {
     docker run --rm \
     --name refinery-gateway-migration \
-    -e POSTGRES=postgresql://postgres:onetask@graphql-postgres:5432 \
+    -e POSTGRES=postgresql://postgres:kern@graphql-postgres:5432 \
     --mount type=bind,source="$(pwd)"/,target=/app \
     --network dev-setup_default \
     --entrypoint /usr/local/bin/alembic \
