@@ -200,8 +200,21 @@ class LabelingFunctionSampleRecords:
         self.code_has_errors = code_has_errors
 
 
-class GatesIntegrationData(graphene.ObjectType):
-    status = graphene.String()
-    missing_tokenizer = graphene.Boolean()
-    missing_embeddings = graphene.List(graphene.String)
-    missing_information_sources = graphene.List(graphene.String)
+class GatesIntegrationData:
+    def __init__(
+        self,
+        status: str = None,
+        missing_tokenizer: bool = None,
+        missing_embeddings: List[str] = None,
+        missing_information_sources: List[str] = None,
+    ):
+        self.status = status
+        self.missing_tokenizer = missing_tokenizer
+        self.missing_embeddings = (
+            missing_embeddings if missing_embeddings is not None else []
+        )
+        self.missing_information_sources = (
+            missing_information_sources
+            if missing_information_sources is not None
+            else []
+        )
