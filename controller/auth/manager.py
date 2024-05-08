@@ -81,7 +81,7 @@ def check_project_access(info, project_id: str) -> None:
     project: Project = project_manager.get_project_with_orga_id(
         organization_id, project_id
     )
-    # TODO move graphql error into graphql layer
+
     if project is None:
         raise AuthManagerError("Project not found")
 
