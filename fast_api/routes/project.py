@@ -30,7 +30,7 @@ from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import (
-    pack_as_graphql,
+    pack_edges_node,
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
@@ -86,7 +86,7 @@ def get_all_projects(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
-    projects_graphql = pack_as_graphql(projects, "allProjects")
+    projects_graphql = pack_edges_node(projects, "allProjects")
     return pack_json_result(projects_graphql)
 
 
@@ -387,7 +387,7 @@ def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
 )
 def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
-    data_graphql = pack_as_graphql(data, "projectByProjectId")
+    data_graphql = pack_edges_node(data, "projectByProjectId")
     return pack_json_result(data_graphql)
 
 

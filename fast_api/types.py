@@ -3,7 +3,6 @@ import datetime
 import decimal
 from typing import List
 from uuid import UUID
-import graphene
 
 
 class ExtendedRecord:
