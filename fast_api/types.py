@@ -28,11 +28,11 @@ class ExtendedRecord:
 class ExtendedSearch:
     def __init__(
         self,
-        sql=None,
-        query_limit=None,
-        query_offset=None,
-        full_count=None,
-        session_id=None,
+        sql: str = None,
+        query_limit: int = None,
+        query_offset: int = None,
+        full_count: int = None,
+        session_id: UUID = None,
         record_list: ExtendedRecord = None,
     ):
         self.sql = sql
@@ -44,7 +44,14 @@ class ExtendedSearch:
 
 
 class ToolTip:
-    def __init__(self, key=None, title=None, text=None, href=None, href_caption=None):
+    def __init__(
+        self,
+        key: str = None,
+        title: str = None,
+        text: str = None,
+        href: str = None,
+        href_caption: str = None,
+    ):
         self.key = key
         self.title = title
         self.text = text
@@ -52,13 +59,22 @@ class ToolTip:
         self.href_caption = href_caption
 
 
-class ProjectSize(graphene.ObjectType):
-    order = graphene.Int()
-    table = graphene.String()
-    description = graphene.String()
-    default = graphene.Boolean()
-    byte_size = graphene.Float()  # int is to small therfore as float
-    byte_readable = graphene.String()
+class ProjectSize:
+    def __init__(
+        self,
+        order: int = None,
+        table: str = None,
+        description: str = None,
+        default: bool = None,
+        byte_size: float = None,
+        byte_readable: str = None,
+    ):
+        self.order = order
+        self.table = table
+        self.description = description
+        self.default = default
+        self.byte_size = byte_size
+        self.byte_readable = byte_readable
 
 
 class LabelConfidenceWrapper(graphene.ObjectType):
