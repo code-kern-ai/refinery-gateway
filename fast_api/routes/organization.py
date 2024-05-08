@@ -105,9 +105,7 @@ def get_user_info_mini(request: Request):
 
 @router.get("/all-users")
 def get_all_user(request: Request):
-    organization_id = str(
-        auth_manager.get_user_by_info(request.state.info).organization.id
-    )
+    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
     data = manager.get_all_users(organization_id)
     return {"data": {"allUsers": data}}
 
@@ -140,27 +138,24 @@ def get_all_users_with_record_count(
     request: Request,
     project_id: str,
 ):
-    organization_id = str(
-        auth_manager.get_user_by_info(request.state.info).organization.id
-    )
+    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
 
     results = manager.get_all_users_with_record_count(organization_id, project_id)
 
     data = []
     for res in results:
-        names, email = resolve_user_name_and_email_by_id(res.user.id)
+        names, email = resolve_user_name_and_email_by_id(res["user_id"])
         last_name = names.get("last", "")
         first_name = names.get("first", "")
         data.append(
             {
                 "user": {
-                    "id": res.user.id,
+                    "id": res["user_id"],
                     "mail": email,
                     "firstName": first_name,
                     "lastName": last_name,
-                    "__typename": "User",
                 },
-                "counts": json.dumps(res.counts),
+                "counts": json.dumps(res["counts"]),
             }
         )
 
