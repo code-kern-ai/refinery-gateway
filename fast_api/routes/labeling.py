@@ -136,7 +136,7 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
     if not record_item:
         return pack_json_result({"data": {"tokenizeRecord": None}})
 
-    # specific scenario where we should not delegate this call up to middleware
+    # Delegated here due to record_item dep
     auth_manager.check_project_access(request.state.info, record_item.project_id)
 
     tokenize_data = tokenization_manager.get_tokenized_record(
@@ -145,25 +145,25 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
 
     attributes = []
 
-    for attr in tokenize_data.attributes:
+    for attr in tokenize_data["attributes"]:
         tokens = None
-        if attr.tokens is not None:
+        if attr["tokens"] is not None:
             tokens = [
                 {
-                    "value": token.value,
-                    "idx": token.idx,
-                    "posStart": token.pos_start,
-                    "posEnd": token.pos_end,
-                    "type": token.type,
+                    "value": token["value"],
+                    "idx": token["idx"],
+                    "posStart": token["pos_start"],
+                    "posEnd": token["pos_end"],
+                    "type": token["type"],
                 }
-                for token in attr.tokens
+                for token in attr["tokens"]
             ]
         attributes.append(
             {
-                "raw": tokenize_data.attributes[0].raw,
+                "raw": tokenize_data["attributes"][0]["raw"],
                 "attribute": {
-                    "id": str(tokenize_data.attributes[0].attribute.id),
-                    "name": tokenize_data.attributes[0].attribute.name,
+                    "id": str(tokenize_data["attributes"][0]["attribute"].id),
+                    "name": tokenize_data["attributes"][0]["attribute"].name,
                 },
                 "tokens": tokens,
             }
