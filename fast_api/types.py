@@ -9,33 +9,6 @@ from submodules.model.business_objects import (
     task_queue,
 )
 from submodules.model import models
-from controller.auth import kratos
-
-
-class User(SQLAlchemyObjectType):
-    class Meta:
-        model = models.User
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-    mail = graphene.String()
-    first_name = graphene.String()
-    last_name = graphene.String()
-
-    def resolve_mail(self, info) -> str:
-        return kratos.resolve_user_mail_by_id(self.id)
-
-    def resolve_first_name(self, info):
-        user = kratos.resolve_user_name_by_id(self.id)
-        if user:
-            return user["first"]
-        return None
-
-    def resolve_last_name(self, info):
-        user = kratos.resolve_user_name_by_id(self.id)
-        if user:
-            return user["last"]
-        return None
 
 
 class Attribute(SQLAlchemyObjectType):
