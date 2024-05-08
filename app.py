@@ -117,12 +117,6 @@ fastapi_app.include_router(
 )
 
 routes = [
-    Route(
-        "/graphql/",
-        GraphQLApp(
-            schema=graphene.Schema(query=schema.Query, mutation=schema.Mutation)
-        ),
-    ),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}", ProjectDetails),
