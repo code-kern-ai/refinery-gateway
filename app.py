@@ -41,7 +41,7 @@ from starlette.graphql import GraphQLApp
 from starlette.middleware import Middleware
 from starlette.routing import Route, Mount
 
-from graphql_api import schema
+from fast_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (

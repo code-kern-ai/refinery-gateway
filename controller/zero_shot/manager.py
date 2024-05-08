@@ -4,7 +4,7 @@ import timeit
 
 from typing import List, Dict, Optional
 
-from graphql_api.types import (
+from fast_api.types import (
     ZeroShotTextResult,
     LabelConfidenceWrapper,
     ZeroShotNRecordsWrapper,

@@ -14,7 +14,7 @@ from fast_api.models import (
     UpdateDataSliceBody,
 )
 from fast_api.routes.client_response import pack_json_result
-from graphql_api.mutation.data_slice import handle_error
+from fast_api.mutation.data_slice import handle_error
 from util import notification
 from submodules.model.enums import NotificationType
 

@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from controller.auth import kratos
 
-from graphql_api import (
+from fast_api import (
     types,
 )  # here we have to used types. because otherwise import does not work properly
 from submodules.model import models

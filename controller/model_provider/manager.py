@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from typing import Any, List
-from graphql_api.types import ModelProviderInfoResult
+from fast_api.types import ModelProviderInfoResult
 
 from util import service_requests
 

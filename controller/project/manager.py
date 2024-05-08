@@ -21,7 +21,7 @@ from submodules.model.business_objects import (
     information_source,
     general,
 )
-from graphql_api.types import HuddleData, ProjectSize, GatesIntegrationData
+from fast_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
 from controller.task_queue import manager as task_queue_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope

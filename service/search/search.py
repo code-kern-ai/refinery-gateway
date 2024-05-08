@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import zlib
 from typing import Tuple, Dict, List, Any, Optional, Union
 
-from graphql_api.types import ExtendedSearch
+from fast_api.types import ExtendedSearch
 from submodules.model import UserSessions
 from util.notification import create_notification
 from submodules.model.enums import (

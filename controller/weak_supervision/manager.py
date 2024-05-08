@@ -1,6 +1,6 @@
 from typing import Optional, Dict
 
-from graphql_api.mutation.weak_supervisor import (
+from fast_api.mutation.weak_supervisor import (
     RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId,
 )
 from submodules.model import enums, WeakSupervisionTask

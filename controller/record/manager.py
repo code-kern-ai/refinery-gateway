@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 import os, copy
 
-from graphql_api.types import ExtendedSearch
+from fast_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
 from submodules.model.business_objects import (
     record,

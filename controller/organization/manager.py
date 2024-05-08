@@ -1,7 +1,7 @@
 from typing import Any, List, Dict, Optional, Union
 from controller.misc import config_service
 
-from graphql_api.types import UserCountsWrapper
+from fast_api.types import UserCountsWrapper
 from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException

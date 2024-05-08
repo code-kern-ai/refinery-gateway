@@ -1,7 +1,7 @@
-from graphql_api import types
+from fast_api import types
 import pandas as pd
 
-from graphql_api.types import ToolTip
+from fast_api.types import ToolTip
 
 
 def resolve_tooltip(key: str) -> ToolTip:
@@ -17,5 +17,7 @@ def resolve_tooltip(key: str) -> ToolTip:
         return tooltip
     else:
         return ToolTip(
-            key=key, title="Sorry :(", text="We are still working on this tooltip!",
+            key=key,
+            title="Sorry :(",
+            text="We are still working on this tooltip!",
         )

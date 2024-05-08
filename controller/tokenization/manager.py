@@ -3,7 +3,7 @@ from typing import Any, List, Dict
 import spacy
 from spacy.tokens import DocBin
 from controller.project import manager as project_manager
-from graphql_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
+from fast_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
 from submodules.model.business_objects import tokenization, attribute
 from submodules.model.business_objects.record import (
@@ -116,7 +116,7 @@ def __get_docs_from_db(project_id: str, record_id: str) -> Dict[str, Any]:
     doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
     docs = list(doc_bin_loaded.get_docs(vocab))
     doc_dict = {}
-    for (col, doc) in zip(table_entry.columns, docs):
+    for col, doc in zip(table_entry.columns, docs):
         doc_dict[col] = doc
     return doc_dict
 
@@ -131,7 +131,7 @@ def get_all_docs_from_db(
         record_id = str(table_entry.record_id)
         doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
         docs = list(doc_bin_loaded.get_docs(vocab))
-        for (col, doc) in zip(table_entry.columns, docs):
+        for col, doc in zip(table_entry.columns, docs):
             if record_id not in doc_dict:
                 doc_dict[record_id] = {}
             if not doc_dict.get(record_id):

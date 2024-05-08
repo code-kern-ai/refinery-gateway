@@ -1,6 +1,6 @@
 import time
 from typing import Dict, Union, Any, List
-from graphql_api.types import UserActivityWrapper
+from fast_api.types import UserActivityWrapper
 from submodules.model.business_objects import user_activity, general
 from util import daemon
 import os
@@ -52,7 +52,7 @@ def __read_backup_file() -> List[Any]:
 
 def resolve_all_users_activity() -> List[UserActivityWrapper]:
     # here to prevent always load and therfore test error
-    from graphql_api.types import UserActivityWrapper, User
+    from fast_api.types import UserActivityWrapper, User
 
     return_values = [
         UserActivityWrapper(
