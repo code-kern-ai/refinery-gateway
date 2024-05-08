@@ -176,10 +176,18 @@ class HuddleData:
         self.checked_at = checked_at
 
 
-class LabelingFunctionSampleRecordWrapper(graphene.ObjectType):
-    record_id = graphene.ID()
-    calculated_labels = graphene.List(graphene.String)
-    full_record_data = graphene.JSONString()
+class LabelingFunctionSampleRecordWrapper:
+    def __init__(
+        self,
+        record_id: str = None,
+        calculated_labels: List[str] = None,
+        full_record_data: str = None,
+    ):
+        self.record_id = record_id
+        self.calculated_labels = (
+            calculated_labels if calculated_labels is not None else []
+        )
+        self.full_record_data = full_record_data
 
 
 class LabelingFunctionSampleRecords(graphene.ObjectType):
