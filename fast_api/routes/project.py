@@ -170,7 +170,6 @@ def inter_annotator_matrix(
                     include_gold_star,
                     include_all_org_user,
                     only_on_static_slice,
-                    as_gql_type=False,
                 )
             }
         },
