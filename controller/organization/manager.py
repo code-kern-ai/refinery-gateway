@@ -4,7 +4,7 @@ from controller.misc import config_service
 from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
-from submodules.model.models import User as User_model, Organization, User
+from submodules.model.models import Organization, User
 from util import notification
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
