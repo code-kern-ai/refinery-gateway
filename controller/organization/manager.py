@@ -83,7 +83,7 @@ def get_all_users_with_record_count(organization_id: str, project_id: str):
     users = user.get_user_count(organization_id, project_id)
 
     for row in users:
-        values.append({"user_id": str(id=row[0]), "counts": row[1]})
+        values.append({"user_id": str(row[0]), "counts": row[1]})
 
     return values
 

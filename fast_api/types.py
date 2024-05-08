@@ -11,34 +11,13 @@ from submodules.model.business_objects import (
 from submodules.model import models
 
 
-class Attribute(SQLAlchemyObjectType):
-    class Meta:
-        model = models.Attribute
-        interfaces = (Node,)
+class ExtendedRecord:
+    def __init__(self, **fields):
+        self._fields = fields
 
-    id = graphene.ID(source="id", required=True)
-    state = graphene.String()
-
-    def resolve_state(self, info):
-        waiting_attribute = task_queue.get_waiting_by_attribute_id(
-            self.project_id, str(self.id)
-        )
-        if waiting_attribute:
-            return "QUEUED"
-        return self.state
-
-
-class InterAnnotatorElement(graphene.ObjectType):
-    user_id_a = graphene.String()
-    user_id_b = graphene.String()
-    percent = graphene.Float()
-
-
-class ExtendedRecord(graphene.ObjectType):
-    record_data = graphene.String()
-
-    def resolve_record_data(self, info):
+    def get_record_data(self):
         def alchemy_encoder(obj):
+            """Custom JSON encoder function for SQLAlchemy special types."""
             if isinstance(obj, datetime.date):
                 return obj.isoformat()
             elif isinstance(obj, decimal.Decimal):
@@ -46,19 +25,28 @@ class ExtendedRecord(graphene.ObjectType):
             elif isinstance(obj, UUID):
                 return str(obj)
 
+        # Serializes the attributes in _fields using the custom encoder
         return json.dumps(
-            {c: getattr(self, c) for c in self._fields},
-            default=alchemy_encoder,
+            {key: getattr(self, key) for key in self._fields}, default=alchemy_encoder
         )
 
 
-class ExtendedSearch(graphene.ObjectType):
-    sql = graphene.String()
-    query_limit = graphene.Int()
-    query_offset = graphene.Int()
-    full_count = graphene.Int()
-    session_id = graphene.UUID()
-    record_list = graphene.List(ExtendedRecord)
+class ExtendedSearch:
+    def __init__(
+        self,
+        sql="",
+        query_limit=0,
+        query_offset=0,
+        full_count=0,
+        session_id=None,
+        record_list: ExtendedRecord = None,
+    ):
+        self.sql = sql
+        self.query_limit = query_limit
+        self.query_offset = query_offset
+        self.full_count = full_count
+        self.session_id = session_id
+        self.record_list = record_list
 
 
 class ToolTip(graphene.ObjectType):

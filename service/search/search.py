@@ -122,6 +122,9 @@ def resolve_records_by_static_slice(
         local_seed,
     )
     extended_search.session_id = __write_user_session_entry(user_session_data)
+
+    print(extended_search.record_list)
+
     return extended_search
 
 
