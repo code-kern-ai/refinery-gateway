@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Set
+from typing import Any, Dict
 
 from fastapi import Request
-from graphene import ResolveInfo
 from controller.misc import config_service
 from exceptions.exceptions import NotAllowedInDemoError, ProjectAccessError
 import jwt
