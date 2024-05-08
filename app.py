@@ -3,7 +3,6 @@ import logging
 from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from api.misc import IsDemoRest, IsManagedRest
-import graphene
 from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
     AssociationsImport,
@@ -37,11 +36,9 @@ from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from middleware.database_session import DatabaseSessionHandler
 from starlette.applications import Starlette
-from starlette.graphql import GraphQLApp
 from starlette.middleware import Middleware
 from starlette.routing import Route, Mount
 
-from fast_api import schema
 from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (

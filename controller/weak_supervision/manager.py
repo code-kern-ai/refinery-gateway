@@ -1,8 +1,5 @@
 from typing import Optional, Dict
 
-from fast_api.mutation.weak_supervisor import (
-    RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId,
-)
 from submodules.model import enums, WeakSupervisionTask
 from submodules.model.business_objects import weak_supervision
 import traceback
@@ -155,7 +152,7 @@ def run_then_weak_supervision(
         project_id, information_source_id, user_id, asynchronous=False
     )
     if not payload.state == enums.PayloadState.FINISHED.value:
-        return RunInformationSourceAndInitiateWeakSupervisionByLabelingTaskId(ok=True)
+        return True
 
     source_names = []
     labeling_task_item = labeling_task.get(project_id, labeling_task_id)
