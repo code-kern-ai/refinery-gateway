@@ -3,12 +3,6 @@ import datetime
 import decimal
 from uuid import UUID
 import graphene
-from graphene.relay import Node
-from graphene_sqlalchemy.types import SQLAlchemyObjectType
-from submodules.model.business_objects import (
-    task_queue,
-)
-from submodules.model import models
 
 
 class ExtendedRecord:
@@ -34,10 +28,10 @@ class ExtendedRecord:
 class ExtendedSearch:
     def __init__(
         self,
-        sql="",
-        query_limit=0,
-        query_offset=0,
-        full_count=0,
+        sql=None,
+        query_limit=None,
+        query_offset=None,
+        full_count=None,
         session_id=None,
         record_list: ExtendedRecord = None,
     ):
@@ -49,12 +43,13 @@ class ExtendedSearch:
         self.record_list = record_list
 
 
-class ToolTip(graphene.ObjectType):
-    key = graphene.String()
-    title = graphene.String()
-    text = graphene.String()
-    href = graphene.String()
-    href_caption = graphene.String()
+class ToolTip:
+    def __init__(self, key=None, title=None, text=None, href=None, href_caption=None):
+        self.key = key
+        self.title = title
+        self.text = text
+        self.href = href
+        self.href_caption = href_caption
 
 
 class ProjectSize(graphene.ObjectType):

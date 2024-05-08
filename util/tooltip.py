@@ -1,6 +1,4 @@
-from fast_api import types
 import pandas as pd
-
 from fast_api.types import ToolTip
 
 
