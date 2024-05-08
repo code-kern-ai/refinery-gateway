@@ -1,9 +1,5 @@
 from typing import Dict, Any
 from controller.auth import kratos
-
-from fast_api import (
-    types,
-)  # here we have to used types. because otherwise import does not work properly
 from submodules.model import models
 from submodules.model.business_objects import data_slice
 from submodules.model import enums
