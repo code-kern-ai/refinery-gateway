@@ -1,9 +1,9 @@
 import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
 from exceptions.exceptions import (
+    DatabaseSessionError,
     NotAllowedInDemoError,
 )
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
@@ -47,7 +47,7 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
                 status_code=401,
                 content={"message": "Unauthorized access"},
             )
-        except GraphQLError as e:
+        except DatabaseSessionError as e:
             general.remove_and_refresh_session(request.state.session_token)
             return JSONResponse(
                 status_code=400,

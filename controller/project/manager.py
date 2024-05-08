@@ -5,10 +5,10 @@ import time
 import threading
 from typing import Any, Dict, List, Optional
 from controller.embedding.manager import recreate_embeddings
-from graphql import GraphQLError
 
 from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
+from exceptions.exceptions import ProjectManagerError
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
     labeling_task,
@@ -346,7 +346,7 @@ def get_gates_integration_data(
 ) -> GatesIntegrationData:
     project_item = project.get(project_id)
     if not project_item:
-        raise GraphQLError("Project not found")
+        raise ProjectManagerError("Project not found")
 
     missing_tokenizer = not __tokenizer_pickle_exists(project_item.tokenizer)
     missing_embeddings = __get_missing_embedding_pickles(project_id)

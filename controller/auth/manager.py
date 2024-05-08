@@ -1,9 +1,12 @@
 from typing import Any, Dict
 from fastapi import Request
 from controller.misc import config_service
-from exceptions.exceptions import NotAllowedInDemoError, ProjectAccessError
+from exceptions.exceptions import (
+    AuthManagerError,
+    NotAllowedInDemoError,
+    ProjectAccessError,
+)
 import jwt
-from graphql import GraphQLError
 from controller.project import manager as project_manager
 from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
@@ -18,7 +21,7 @@ DEV_USER_ID = "59e8dfca-ce56-44df-a8c7-5f05c61da499"
 def get_organization_id_by_info(info) -> Organization:
     user = get_user_by_info(info)
     if not user or not user.organization_id:
-        raise GraphQLError("User is not associated to an organization")
+        raise AuthManagerError("User is not associated to an organization")
     return str(user.organization_id)
 
 
@@ -54,7 +57,7 @@ def get_user_role_by_id(user_id: str) -> str:
 def get_organization_by_user_id(user_id: str) -> Organization:
     organization: Organization = user_manager.get_or_create_user(user_id).organization
     if not organization:
-        raise GraphQLError("User is not associated to an organization")
+        raise AuthManagerError("User is not associated to an organization")
     return organization
 
 
@@ -80,12 +83,12 @@ def check_project_access(info, project_id: str) -> None:
     )
     # TODO move graphql error into graphql layer
     if project is None:
-        raise GraphQLError("Project not found")
+        raise AuthManagerError("Project not found")
 
 
 def check_admin_access(info) -> None:
     if not check_is_admin(info.context["request"]):
-        raise GraphQLError("Admin access required")
+        raise AuthManagerError("Admin access required")
 
 
 def check_project_access_from_user_id(
