@@ -40,9 +40,9 @@ def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
     # ensure docs are in db (prio queue)
 
     docs = __get_docs_from_db(project_id, record_id)
-    tokenized_record = TokenizedRecord()
-    tokenized_record.record_id = record_id
-    tokenized_record.attributes = []
+    tokenized_record = {}
+    tokenized_record["record_id"] = record_id
+    tokenized_record["attributes"] = []
 
     for attribute_name in docs:
         attribute_item = attribute.get_by_name(project_id, attribute_name)
@@ -50,25 +50,25 @@ def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
             # the docs could contain already deleted user created attributes
             continue
 
-        tokenized_attribute = TokenizedAttribute()
-        tokenized_attribute.raw = docs[attribute_name].text
+        tokenized_attribute = {}
+        tokenized_attribute["raw"] = docs[attribute_name].text
         if attribute_item is not None and any(
             labeling_task.task_type
             == enums.LabelingTaskType.INFORMATION_EXTRACTION.value
             for labeling_task in attribute_item.labeling_tasks
         ):
-            tokenized_attribute.tokens = [
-                TokenWrapper(
-                    value=token.text,
-                    idx=token.i,
-                    pos_start=token.idx,
-                    pos_end=token.idx + len(token),
-                    type=token.ent_type_,
-                )
+            tokenized_attribute["tokens"] = [
+                {
+                    "value": token.text,
+                    "idx": token.i,
+                    "pos_start": token.idx,
+                    "pos_end": token.idx + len(token),
+                    "type": token.ent_type_,
+                }
                 for token in docs[attribute_name]
             ]
-        tokenized_attribute.attribute = attribute_item
-        tokenized_record.attributes.append(tokenized_attribute)
+        tokenized_attribute["attribute"] = attribute_item
+        tokenized_record["attributes"].append(tokenized_attribute)
     return tokenized_record
 
 
