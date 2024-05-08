@@ -41,7 +41,7 @@ class ExtendedSearch:
         self.query_offset = query_offset
         self.full_count = full_count
         self.session_id = session_id
-        self.record_list = record_list
+        self.record_list = record_list if record_list is not None else []
 
 
 class ToolTip:
@@ -93,7 +93,7 @@ class ZeroShotTextResult:
     ):
         self.config = config
         self.text = text
-        self.labels = labels
+        self.labels = labels if labels is not None else []
 
 
 class ZeroShotNRecords:
@@ -107,22 +107,33 @@ class ZeroShotNRecords:
         self.record_id = record_id
         self.checked_text = checked_text
         self.full_record_data = full_record_data
-        self.labels = labels
+        self.labels = labels if labels is not None else []
 
 
-# TODO
-class ZeroShotNRecordsWrapper(graphene.ObjectType):
-    duration = graphene.Float()
-    records = graphene.List(ZeroShotNRecords)
+class ZeroShotNRecordsWrapper:
+    def __init__(
+        self, duration: float = None, records: Optional[List[ZeroShotNRecords]] = None
+    ):
+        self.duration = duration
+        self.records = records if records is not None else []
 
 
-class ServiceVersionResult(graphene.ObjectType):
-    service = graphene.String()
-    installed_version = graphene.String()
-    remote_version = graphene.String()
-    last_checked = graphene.DateTime()
-    remote_has_newer = graphene.Boolean()
-    link = graphene.String()
+class ServiceVersionResult:
+    def __init__(
+        self,
+        service: str = None,
+        installed_version: str = None,
+        remote_version: str = None,
+        last_checked: datetime = None,
+        remote_has_newer: bool = None,
+        link: str = None,
+    ):
+        self.service = service
+        self.installed_version = installed_version
+        self.remote_version = remote_version
+        self.last_checked = last_checked
+        self.remote_has_newer = remote_has_newer
+        self.link = link
 
 
 class ModelProviderInfoResult(graphene.ObjectType):
