@@ -146,7 +146,7 @@ def get_all_users_activity(request: Request):
 
     for user in data:
         user_activity = []
-        if "user_activity" in user:
+        if "user_activity" in user and user["user_activity"] is not None:
             for activity_item in user["user_activity"]:
                 user_activity.append(json.dumps(activity_item))
 
