@@ -34,25 +34,6 @@ class InterAnnotatorElement(graphene.ObjectType):
     percent = graphene.Float()
 
 
-class TokenWrapper(graphene.ObjectType):
-    value = graphene.String()
-    idx = graphene.Int()
-    pos_start = graphene.Int()
-    pos_end = graphene.Int()
-    type = graphene.String()
-
-
-class TokenizedAttribute(graphene.ObjectType):
-    raw = graphene.String()
-    attribute = graphene.Field(Attribute)
-    tokens = graphene.List(TokenWrapper)
-
-
-class TokenizedRecord(graphene.ObjectType):
-    record_id = graphene.UUID()
-    attributes = graphene.List(TokenizedAttribute)
-
-
 class ExtendedRecord(graphene.ObjectType):
     record_data = graphene.String()
 

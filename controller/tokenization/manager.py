@@ -3,7 +3,6 @@ from typing import Any, List, Dict
 import spacy
 from spacy.tokens import DocBin
 from controller.project import manager as project_manager
-from fast_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
 from submodules.model.business_objects import tokenization, attribute
 from submodules.model.business_objects.record import (
@@ -36,7 +35,7 @@ def get_blank_tokenizer_vocab(project_id: str) -> Any:
     return __blank_tokenizer_vocab.get(project.tokenizer_blank)
 
 
-def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
+def get_tokenized_record(project_id: str, record_id: str):
     # ensure docs are in db (prio queue)
 
     docs = __get_docs_from_db(project_id, record_id)
