@@ -61,11 +61,6 @@ class InterAnnotatorElement(graphene.ObjectType):
     percent = graphene.Float()
 
 
-class UserCountsWrapper(graphene.ObjectType):
-    user = graphene.Field(User)
-    counts = graphene.JSONString()
-
-
 class TokenWrapper(graphene.ObjectType):
     value = graphene.String()
     idx = graphene.Int()
