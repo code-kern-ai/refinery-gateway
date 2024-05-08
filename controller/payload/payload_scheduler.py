@@ -58,8 +58,6 @@ import uuid
 
 __containers_running = {}
 
-# lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
-
 client = docker.from_env()
 __tz = pytz.timezone("Europe/Berlin")
 lf_exec_env_image = os.getenv("LF_EXEC_ENV_IMAGE")
