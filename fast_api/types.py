@@ -491,125 +491,7 @@ class Tensor(SQLAlchemyObjectType):
     id = graphene.ID(source="id", required=True)
 
 
-class RecordLabelAssociation(SQLAlchemyObjectType):
-    class Meta:
-        model = models.RecordLabelAssociation
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-    token_start_idx = graphene.Int()
-    token_end_idx = graphene.Int()
-    comment = graphene.String()
-
-    def resolve_token_start_idx(self, info):
-        if len(self.tokens) > 0:
-            return self.tokens[0].token_index
-
-    def resolve_token_end_idx(self, info):
-        if len(self.tokens) > 0:
-            return self.tokens[-1].token_index
-
-    def resolve_comment(self, info):
-        return "DUMMY_FROM_RESOLVER"
-
-
-class Record(SQLAlchemyObjectType):
-    class Meta:
-        model = models.Record
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
-class DataSlice(SQLAlchemyObjectType):
-    class Meta:
-        model = models.DataSlice
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
-class LabelingAccessLink(SQLAlchemyObjectType):
-    class Meta:
-        model = models.LabelingAccessLink
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-    name = graphene.String()
-
-    def resolve_name(self, info):
-        if self.link_type == enums.LinkTypes.HEURISTIC.value:
-            return information_source.get(self.project_id, self.heuristic_id).name
-        elif self.link_type == enums.LinkTypes.DATA_SLICE.value:
-            return data_slice.get(self.project_id, self.data_slice_id).name
-        return "Unknown type"
-
-
-class Notification(SQLAlchemyObjectType):
-    class Meta:
-        model = models.Notification
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-    title = graphene.String()
-    page = graphene.String()
-    docs = graphene.String()
-
-    def resolve_title(self, info):
-        return notification.get_notification_data(self.type).get(
-            "title",
-        )
-
-    def resolve_page(self, info):
-        return notification.get_notification_data(self.type).get(
-            "page",
-        )
-
-    def resolve_docs(self, info):
-        return notification.get_notification_data(self.type).get(
-            "docs",
-        )
-
-
-class PersonalAccessToken(graphene.ObjectType):
-    id = graphene.ID()
-    project_id = graphene.ID()
-    name = graphene.String()
-    scope = graphene.String()
-    created_by = graphene.String()
-    created_at = graphene.DateTime()
-    expires_at = graphene.DateTime()
-    last_used = graphene.DateTime()
-
-    def resolve_created_by(self, info):
-        name = kratos.resolve_user_name_by_id(self.user_id)
-        return f"{name.get('first')} {name.get('last')}"
-
-
-class KnowledgeBase(SQLAlchemyObjectType):
-    class Meta:
-        model = models.KnowledgeBase
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-    name_as_variable = graphene.String()
-    term_count = graphene.Int()
-
-    def resolve_name_as_variable(self, info):
-        return self.name.lower().replace(" ", "_")
-
-    def resolve_term_count(self, info):
-        return knowledge_term.count(self.project_id, self.id)
-
-
-class Term(SQLAlchemyObjectType):
-    class Meta:
-        model = models.KnowledgeTerm
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
+# USED
 class TokenWrapper(graphene.ObjectType):
     value = graphene.String()
     idx = graphene.Int()
@@ -618,23 +500,20 @@ class TokenWrapper(graphene.ObjectType):
     type = graphene.String()
 
 
+# USED
 class TokenizedAttribute(graphene.ObjectType):
     raw = graphene.String()
     attribute = graphene.Field(Attribute)
     tokens = graphene.List(TokenWrapper)
 
 
+# USED
 class TokenizedRecord(graphene.ObjectType):
     record_id = graphene.UUID()
     attributes = graphene.List(TokenizedAttribute)
 
 
-# SpaCy Tokenizer
-class LanguageModel(graphene.ObjectType):
-    name = graphene.String()
-    config_string = graphene.String()
-
-
+# USED
 class ExtendedRecord(graphene.ObjectType):
     record_data = graphene.String()
 
@@ -653,6 +532,7 @@ class ExtendedRecord(graphene.ObjectType):
         )
 
 
+# USED
 class ExtendedSearch(graphene.ObjectType):
     sql = graphene.String()
     query_limit = graphene.Int()
@@ -662,6 +542,7 @@ class ExtendedSearch(graphene.ObjectType):
     record_list = graphene.List(ExtendedRecord)
 
 
+# USED
 class ToolTip(graphene.ObjectType):
     key = graphene.String()
     title = graphene.String()
@@ -670,31 +551,7 @@ class ToolTip(graphene.ObjectType):
     href_caption = graphene.String()
 
 
-# Huggingface Encoder
-class Encoder(graphene.ObjectType):
-    config_string = graphene.String()
-    description = graphene.String()
-    tokenizers = graphene.List(graphene.String)
-    applicability = graphene.JSONString()
-    platform = graphene.String()
-
-
-class UploadTask(SQLAlchemyObjectType):
-    class Meta:
-        model = models.UploadTask
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
-class UserSession(SQLAlchemyObjectType):
-    class Meta:
-        model = models.UserSessions
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
+# USED
 class ProjectSize(graphene.ObjectType):
     order = graphene.Int()
     table = graphene.String()
@@ -704,14 +561,7 @@ class ProjectSize(graphene.ObjectType):
     byte_readable = graphene.String()
 
 
-class UserActivity(SQLAlchemyObjectType):
-    class Meta:
-        model = models.UserActivity
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
+# USED
 class UserActivityWrapper(graphene.ObjectType):
     user = graphene.Field(User)
     user_activity = graphene.List(graphene.JSONString)
@@ -719,33 +569,20 @@ class UserActivityWrapper(graphene.ObjectType):
     warning_text = graphene.String()
 
 
-class WeakSupervisionTask(SQLAlchemyObjectType):
-    class Meta:
-        model = models.WeakSupervisionTask
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
-class RecordTokenizationTask(SQLAlchemyObjectType):
-    class Meta:
-        model = models.RecordTokenizationTask
-        interfaces = (Node,)
-
-    id = graphene.ID(source="id", required=True)
-
-
+# USED
 class LabelConfidenceWrapper(graphene.ObjectType):
     label_name = graphene.String()
     confidence = graphene.Float()
 
 
+# USED
 class ZeroShotTextResult(graphene.ObjectType):
     config = graphene.String()
     text = graphene.String()
     labels = graphene.List(LabelConfidenceWrapper)
 
 
+# USED
 class ZeroShotNRecords(graphene.ObjectType):
     record_id = graphene.ID()
     checked_text = graphene.String()
@@ -753,11 +590,13 @@ class ZeroShotNRecords(graphene.ObjectType):
     labels = graphene.List(LabelConfidenceWrapper)
 
 
+# USED
 class ZeroShotNRecordsWrapper(graphene.ObjectType):
     duration = graphene.Float()
     records = graphene.List(ZeroShotNRecords)
 
 
+# USED
 class ServiceVersionResult(graphene.ObjectType):
     service = graphene.String()
     installed_version = graphene.String()
@@ -767,6 +606,7 @@ class ServiceVersionResult(graphene.ObjectType):
     link = graphene.String()
 
 
+# USED
 class ModelProviderInfoResult(graphene.ObjectType):
     name = graphene.String()
     revision = graphene.String()
