@@ -5,6 +5,7 @@ from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
 from controller.comment import manager as comment_manager
+from exceptions.exceptions import TooManyRecordsForStaticSliceException
 from fast_api.models import (
     CreateDataSliceBody,
     ListStringBody,
@@ -14,7 +15,7 @@ from fast_api.models import (
     UpdateDataSliceBody,
 )
 from fast_api.routes.client_response import pack_json_result
-from fast_api.mutation.data_slice import handle_error
+from submodules.model.business_objects import general
 from util import notification
 from submodules.model.enums import NotificationType
 
@@ -258,3 +259,18 @@ def update_data_slice(
         handle_error(e, user.id, project_id)
 
     return pack_json_result({"data": {"updateDataSlice": {"ok": ok}}})
+
+
+def handle_error(exception: Exception, user_id: str, project_id: str):
+    general.rollback()
+    if exception.__class__ == TooManyRecordsForStaticSliceException.__class__:
+        error = "Too many records for a static slice"
+    else:
+        error = str(exception.__class__.__name__)
+
+    notification.create_notification(
+        NotificationType.DATA_SLICE_UPDATE_FAILED,
+        user_id,
+        project_id,
+        error,
+    )
