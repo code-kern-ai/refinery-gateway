@@ -1,6 +1,7 @@
 import json
 import datetime
 import decimal
+from typing import List, Optional
 from uuid import UUID
 import graphene
 
@@ -33,7 +34,7 @@ class ExtendedSearch:
         query_offset: int = None,
         full_count: int = None,
         session_id: UUID = None,
-        record_list: ExtendedRecord = None,
+        record_list: Optional[List[ExtendedRecord]] = None,
     ):
         self.sql = sql
         self.query_limit = query_limit
@@ -77,24 +78,39 @@ class ProjectSize:
         self.byte_readable = byte_readable
 
 
-class LabelConfidenceWrapper(graphene.ObjectType):
-    label_name = graphene.String()
-    confidence = graphene.Float()
+class LabelConfidenceWrapper:
+    def __init__(self, label_name: str = None, confidence: float = None):
+        self.label_name = label_name
+        self.confidence = confidence
 
 
-class ZeroShotTextResult(graphene.ObjectType):
-    config = graphene.String()
-    text = graphene.String()
-    labels = graphene.List(LabelConfidenceWrapper)
+class ZeroShotTextResult:
+    def __init__(
+        self,
+        config: str = None,
+        text: str = None,
+        labels: Optional[List[LabelConfidenceWrapper]] = None,
+    ):
+        self.config = config
+        self.text = text
+        self.labels = labels
 
 
-class ZeroShotNRecords(graphene.ObjectType):
-    record_id = graphene.ID()
-    checked_text = graphene.String()
-    full_record_data = graphene.JSONString()
-    labels = graphene.List(LabelConfidenceWrapper)
+class ZeroShotNRecords:
+    def __init__(
+        self,
+        record_id: str = None,
+        checked_text: str = None,
+        full_record_data: json = None,
+        labels: Optional[List[LabelConfidenceWrapper]] = None,
+    ):
+        self.record_id = record_id
+        self.checked_text = checked_text
+        self.full_record_data = full_record_data
+        self.labels = labels
 
 
+# TODO
 class ZeroShotNRecordsWrapper(graphene.ObjectType):
     duration = graphene.Float()
     records = graphene.List(ZeroShotNRecords)
