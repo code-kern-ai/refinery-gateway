@@ -156,14 +156,24 @@ class ModelProviderInfoResult:
         self.zero_shot_pipeline = zero_shot_pipeline
 
 
-class HuddleData(graphene.ObjectType):
-    huddle_id = graphene.ID()
-    record_ids = graphene.List(graphene.ID)
-    huddle_type = graphene.String()
-    start_pos = graphene.Int()
-    allowed_task = graphene.String()
-    can_edit = graphene.Boolean()
-    checked_at = graphene.DateTime()
+class HuddleData:
+    def __init__(
+        self,
+        huddle_id: str = None,
+        record_ids: List[str] = None,
+        huddle_type: str = None,
+        start_pos: int = None,
+        allowed_task: str = None,
+        can_edit: bool = None,
+        checked_at: datetime = None,
+    ):
+        self.huddle_id = huddle_id
+        self.record_ids = record_ids if record_ids is not None else []
+        self.huddle_type = huddle_type
+        self.start_pos = start_pos
+        self.allowed_task = allowed_task
+        self.can_edit = can_edit
+        self.checked_at = checked_at
 
 
 class LabelingFunctionSampleRecordWrapper(graphene.ObjectType):
