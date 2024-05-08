@@ -1,7 +1,7 @@
 import json
 import datetime
 import decimal
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 import graphene
 
@@ -34,7 +34,7 @@ class ExtendedSearch:
         query_offset: int = None,
         full_count: int = None,
         session_id: UUID = None,
-        record_list: Optional[List[ExtendedRecord]] = None,
+        record_list: List[ExtendedRecord] = None,
     ):
         self.sql = sql
         self.query_limit = query_limit
@@ -89,7 +89,7 @@ class ZeroShotTextResult:
         self,
         config: str = None,
         text: str = None,
-        labels: Optional[List[LabelConfidenceWrapper]] = None,
+        labels: List[LabelConfidenceWrapper] = None,
     ):
         self.config = config
         self.text = text
@@ -102,7 +102,7 @@ class ZeroShotNRecords:
         record_id: str = None,
         checked_text: str = None,
         full_record_data: json = None,
-        labels: Optional[List[LabelConfidenceWrapper]] = None,
+        labels: List[LabelConfidenceWrapper] = None,
     ):
         self.record_id = record_id
         self.checked_text = checked_text
@@ -111,9 +111,7 @@ class ZeroShotNRecords:
 
 
 class ZeroShotNRecordsWrapper:
-    def __init__(
-        self, duration: float = None, records: Optional[List[ZeroShotNRecords]] = None
-    ):
+    def __init__(self, duration: float = None, records: List[ZeroShotNRecords] = None):
         self.duration = duration
         self.records = records if records is not None else []
 
@@ -190,10 +188,16 @@ class LabelingFunctionSampleRecordWrapper:
         self.full_record_data = full_record_data
 
 
-class LabelingFunctionSampleRecords(graphene.ObjectType):
-    records = graphene.List(LabelingFunctionSampleRecordWrapper)
-    container_logs = graphene.List(graphene.String)
-    code_has_errors = graphene.Boolean()
+class LabelingFunctionSampleRecords:
+    def __init__(
+        self,
+        records: List[LabelingFunctionSampleRecordWrapper] = None,
+        container_logs: List[str] = None,
+        code_has_errors: bool = None,
+    ):
+        self.records = records if records is not None else []
+        self.container_logs = container_logs if container_logs is not None else []
+        self.code_has_errors = code_has_errors
 
 
 class GatesIntegrationData(graphene.ObjectType):
