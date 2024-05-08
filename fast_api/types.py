@@ -136,23 +136,31 @@ class ServiceVersionResult:
         self.link = link
 
 
-class ModelProviderInfoResult(graphene.ObjectType):
-    name = graphene.String()
-    revision = graphene.String()
-    link = graphene.String()
-    date = graphene.DateTime()
-    size = graphene.Float()  # int is to small therfore as float
-    status = graphene.String()
-    zero_shot_pipeline = graphene.Boolean()
+class ModelProviderInfoResult:
+    def __init__(
+        self,
+        name: str = None,
+        revision: str = None,
+        link: str = None,
+        date: datetime = None,
+        size: float = None,
+        status: str = None,
+        zero_shot_pipeline: bool = None,
+    ):
+        self.name = name
+        self.revision = revision
+        self.link = link
+        self.date = date
+        self.size = size
+        self.status = status
+        self.zero_shot_pipeline = zero_shot_pipeline
 
 
 class HuddleData(graphene.ObjectType):
     huddle_id = graphene.ID()
     record_ids = graphene.List(graphene.ID)
     huddle_type = graphene.String()
-    # usually 0 if first unlabled is requested then the position of that
     start_pos = graphene.Int()
-    # only filled if nessecary
     allowed_task = graphene.String()
     can_edit = graphene.Boolean()
     checked_at = graphene.DateTime()
