@@ -86,8 +86,8 @@ def get_all_projects(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
-    projects_graphql = pack_edges_node(projects, "allProjects")
-    return pack_json_result(projects_graphql)
+    projects_packed = pack_edges_node(projects, "allProjects")
+    return pack_json_result(projects_packed)
 
 
 @router.get("/all-projects-mini")
@@ -387,8 +387,8 @@ def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
 )
 def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
-    data_graphql = pack_edges_node(data, "projectByProjectId")
-    return pack_json_result(data_graphql)
+    data_packed = pack_edges_node(data, "projectByProjectId")
+    return pack_json_result(data_packed)
 
 
 @router.get("/model-provider-info")
