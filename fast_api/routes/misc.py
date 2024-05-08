@@ -146,17 +146,18 @@ def get_all_users_activity(request: Request):
 
     for user in data:
         user_activity = []
-        if user.user_activity:
-            for activity_item in user.user_activity:
+        if "user_activity" in user:
+            for activity_item in user["user_activity"]:
                 user_activity.append(json.dumps(activity_item))
+
         activity.append(
             {
                 "user": {
-                    "id": str(user.user.id),
+                    "id": str(user["user_id"]),
                 },
                 "userActivity": user_activity,
-                "warning": user.warning,
-                "warningText": user.warning_text,
+                "warning": user["warning"],
+                "warningText": user["warning_text"],
             }
         )
 

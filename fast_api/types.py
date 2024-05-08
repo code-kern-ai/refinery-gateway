@@ -140,13 +140,6 @@ class ProjectSize(graphene.ObjectType):
     byte_readable = graphene.String()
 
 
-class UserActivityWrapper(graphene.ObjectType):
-    user = graphene.Field(User)
-    user_activity = graphene.List(graphene.JSONString)
-    warning = graphene.Boolean()
-    warning_text = graphene.String()
-
-
 class LabelConfidenceWrapper(graphene.ObjectType):
     label_name = graphene.String()
     confidence = graphene.Float()
