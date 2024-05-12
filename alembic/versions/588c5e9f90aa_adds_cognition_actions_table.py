@@ -53,6 +53,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("question", sa.String(), nullable=True),
+        sa.Column("root", sa.Boolean(), nullable=True),
         sa.Column("position_x", sa.Integer(), nullable=True),
         sa.Column("position_y", sa.Integer(), nullable=True),
         sa.Column("action_id", postgresql.UUID(as_uuid=True), nullable=True),
