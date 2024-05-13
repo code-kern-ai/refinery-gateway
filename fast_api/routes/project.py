@@ -320,6 +320,9 @@ def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
                     "id": str(embedding.id),
                     "name": embedding.name,
                     "state": embedding.state,
+                    # "attribute": {
+                    #     "dataType": embedding.a
+                    # }
                 }
             }
         )
