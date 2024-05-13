@@ -147,7 +147,7 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
 
     for attr in tokenize_data["attributes"]:
         tokens = None
-        if attr["tokens"] is not None:
+        if "tokens" in attr:
             tokens = [
                 {
                     "value": token["value"],
