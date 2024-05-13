@@ -101,3 +101,22 @@ def get_active_users(minutes: str, order_by_interaction: bool) -> User:
 @param_throttle(seconds=10)
 def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
+
+
+def get_users_ordered_interaction(offset: int, limit: int) -> User:
+    query = f"""
+    SELECT * 
+    FROM "user" u
+    ORDER BY u.last_interaction ASC
+    LIMIT {limit}
+    OFFSET {offset}
+    """
+    return general.execute_all(query)
+
+
+def get_full_count_users() -> int:
+    query = f"""
+    SELECT COUNT(*)
+    FROM "user" u
+    """
+    return general.execute_first(query)[0]
