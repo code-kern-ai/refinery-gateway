@@ -1,4 +1,5 @@
 from typing import Any, Dict
+
 from fastapi import Request
 from controller.misc import config_service
 from exceptions.exceptions import (
