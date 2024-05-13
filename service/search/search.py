@@ -411,12 +411,12 @@ def __build_subquery_data(
             select_add += f", {alias}.*"
             from_add += f"""
 INNER JOIN ( {query_text} ) {alias}
-	ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
+    ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
         else:
             where_add += f"\n    AND {alias}.rID IS NULL"
             from_add += f"""
 LEFT JOIN ( {query_text} ) {alias}
-	ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
+    ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
         c += 1
 
     if type_key == "WHITELIST":
