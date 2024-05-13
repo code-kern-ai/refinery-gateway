@@ -74,7 +74,7 @@ def get_user_info_extended(request: Request):
     data = {
         "userInfo": {
             "id": user_id,
-            "organizationId": {"id": str(user.organization_id)},
+            "organization": {"id": str(user.organization_id)},
             "firstName": name.get("first"),
             "lastName": name.get("last"),
             "mail": mail,
