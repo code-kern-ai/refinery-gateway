@@ -15,6 +15,7 @@ from fastapi import APIRouter, Body, Depends, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
+from controller.attribute import manager as attr_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
@@ -307,20 +308,16 @@ def labeling_tasks_by_project_id(project_id: str) -> str:
 def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
     embeddings = get_all_embeddings_by_project_id(project_id)
 
-    if embeddings is None or len(embeddings) == 0:
-        return pack_json_result("data", None)
-
     embeddings_edges = []
-
     for embedding in embeddings:
-
+        attribute = attr_manager.get_attribute(project_id, embedding.attribute_id)
         embeddings_edges.append(
             {
                 "node": {
                     "id": str(embedding.id),
                     "name": embedding.name,
                     "state": embedding.state,
-                    # "attribute": {"dataType": embedding.a},
+                    "attribute": {"dataType": attribute.data_type},
                 }
             }
         )
