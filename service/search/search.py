@@ -186,7 +186,7 @@ def resolve_labeling_session(
 
     user_session = __collect_user_session_data_from_db(project_id, session_id, user_id)
     attr = getattr(user_session, "session_record_ids", None)
-    if not attr:
+    if not attr and user_session:
         user_session.temp_session = False
         general.commit()
         collect_user_session_record_ids(user_session, project_id)
