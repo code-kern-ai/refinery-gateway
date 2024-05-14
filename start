@@ -19,19 +19,19 @@ else
     echo "architecture: $currentArch"
 fi
 
-INFERENCE_DIR=${PWD%/*}/dev-setup/inference/
-if [ ! -d "$INFERENCE_DIR" ] 
+DEV_SETUP_DIR=${PWD%/*}/dev-setup/
+if [ ! -d "$DEV_SETUP_DIR" ] 
 then
-    INFERENCE_DIR=${PWD%/*/*}/dev-setup/inference/
-    if [ ! -d "$INFERENCE_DIR" ] 
+    DEV_SETUP_DIR=${PWD%/*/*}/dev-setup/
+    if [ ! -d "$DEV_SETUP_DIR" ] 
     then
-        # to include volume for local development, use the dev-setup inference folder:  
-        # alternative use manual logic with
-        # -v /path/to/dev-setup/inference:/models \
-        echo "Can't find model data directory: $INFERENCE_DIR -> stopping" 
+        echo "Can't find dev setup directory: $DEV_SETUP_DIR -> stopping" 
         exit 1
     fi
 fi
+
+INFERENCE_DIR=${DEV_SETUP_DIR}inference/
+LOG_DIR=${DEV_SETUP_DIR}logs/
 
 echo -ne 'building container...'
 docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
@@ -79,6 +79,7 @@ docker run -d --rm \
 -e SECRET_KEY=default \
 -e POSTGRES_POOL_USE_LIFO=x \
 -v "$INFERENCE_DIR":/inference \
+-v "$LOG_DIR":/logs \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \

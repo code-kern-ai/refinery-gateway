@@ -9,6 +9,7 @@ from controller.project import manager as project_manager
 from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
 from submodules.model import enums, exceptions
+from submodules.model.business_objects import organization
 from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
 import sqlalchemy
@@ -147,3 +148,29 @@ def check_is_demo_without_info() -> None:
 
 def check_is_single_organization() -> bool:
     return len(organization_manager.get_all_organizations()) == 1
+
+
+def extract_state_info(request: Request, key: str) -> Any:
+    if key not in request.state.parsed:
+        value = None
+        if key == "user_id":
+            value = get_user_id_by_jwt_token(request.state.info)
+        elif key == "organization_id":
+            user = get_user_by_info(request.state.info)
+            if user and user.organization_id:
+                value = str(user.organization_id)
+        elif key == "is_admin":
+            value = check_is_admin(request)
+        elif key == "log_request":
+            # lazy and => db access only if admin is true
+            if extract_state_info(request, "is_admin"):
+                value = organization.log_admin_requests(
+                    extract_state_info(request, "organization_id")
+                )
+        else:
+            raise ValueError(f"unknown {key} in extract_state_info")
+
+        request.state.parsed[key] = value
+        return value
+
+    return request.state.parsed[key]

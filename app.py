@@ -65,6 +65,7 @@ from route_prefix import (
     PREFIX_LABELING_TASKS,
 )
 from util import security, clean_up
+from middleware import log_storage
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -161,3 +162,5 @@ check_in_deletion_projects()
 security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()
+
+log_storage.start_persist_thread()
