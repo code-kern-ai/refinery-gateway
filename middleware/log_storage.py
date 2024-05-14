@@ -6,6 +6,7 @@ import traceback
 from time import sleep
 from threading import Lock
 from util import daemon
+from fastapi import Request
 
 
 __not_yet_persisted = {}  # {log_path: List[Dict[str,Any]]}
@@ -81,5 +82,5 @@ def __write_log_entries(
         writer.writerow(log_entry)
 
 
-def extend_state_get_like(request):
+def extend_state_get_like(request: Request):
     request.state.get_like = True

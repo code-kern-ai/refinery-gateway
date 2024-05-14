@@ -100,6 +100,8 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
 
     async def set_body(self, request: Request):
         # await & body access in middleware aren't straightforward https://github.com/tiangolo/fastapi/issues/394
+        # fixed in newer versions https://github.com/tiangolo/fastapi/discussions/8187#discussioncomment-7962881
+        # so only relevant for refinery until we upgrade to the same fastapi version cognition uses
         receive_ = await request._receive()
 
         async def receive() -> Message:
@@ -130,6 +132,7 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
         log_path = f"/logs/admin/{org_id}/{now.strftime('%Y-%m-%d')}.csv"
         log_entry = {
             "timestamp": now.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "gateway": "REFINERY",
             "method": str(request.method),
             "path": str(request.url.path),
             "query_params": dict(request.query_params),
