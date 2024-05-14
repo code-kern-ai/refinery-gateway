@@ -132,6 +132,7 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
         log_path = f"/logs/admin/{org_id}/{now.strftime('%Y-%m-%d')}.csv"
         log_entry = {
             "timestamp": now.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "user_id": auth_manager.extract_state_info(request, "user_id"),
             "gateway": "REFINERY",
             "method": str(request.method),
             "path": str(request.url.path),
