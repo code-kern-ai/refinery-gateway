@@ -118,5 +118,6 @@ def get_full_count_users() -> int:
     query = f"""
     SELECT COUNT(*)
     FROM "user" u
+    WHERE u.last_interaction IS NOT NULL
     """
     return general.execute_first(query)[0]
