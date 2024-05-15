@@ -154,7 +154,7 @@ def extract_state_info(request: Request, key: str) -> Any:
     if key not in request.state.parsed:
         value = None
         if key == "user_id":
-            value = get_user_id_by_jwt_token(request.state.info)
+            value = get_user_id_by_jwt_token(request)
         elif key == "organization_id":
             user = get_user_by_info(request.state.info)
             if user and user.organization_id:
