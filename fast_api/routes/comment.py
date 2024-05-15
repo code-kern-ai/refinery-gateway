@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Request, Depends
 from controller.comment import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import (
@@ -10,12 +10,16 @@ from fast_api.models import (
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import CommentCategory
 from util import notification
+from middleware.log_storage import extend_state_get_like
 
 
 router = APIRouter()
 
 
-@router.post("/all-comments")
+@router.post(
+    "/all-comments",
+    dependencies=[Depends(extend_state_get_like)],
+)
 def get_all_comments(request: Request, commentsBody: AllCommentsBody = Body(...)):
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
     body = commentsBody.__root__
