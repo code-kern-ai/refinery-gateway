@@ -32,7 +32,6 @@ def get_attributes(
     project_id: str,
     state_filter: Union[List[str], None] = Query(default=None),
 ):
-
     data = manager.get_all_attributes(project_id, state_filter)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=ALL_ATTRIBUTES_WHITELIST)
     return pack_json_result({"data": {"attributesByProjectId": data_dict}})
@@ -46,6 +45,9 @@ def get_check_composite_key(
     request: Request,
     project_id: str,
 ):
+    for key, value in request.scope.items():
+        print(key, type(value), flush=True)
+    # print(dir(request.scope["endpoint"]), flush=True)
     user = auth_manager.get_user_by_info(request.state.info)
     is_valid = manager.check_composite_key(project_id)
     if not is_valid:
