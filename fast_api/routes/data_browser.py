@@ -15,6 +15,7 @@ from fast_api.models import (
     UpdateDataSliceBody,
 )
 from fast_api.routes.client_response import pack_json_result
+from service.search.search import resolve_extended_search
 from submodules.model.business_objects import general
 from util import notification
 from submodules.model.enums import NotificationType
@@ -78,6 +79,38 @@ def search_records_extended(
         "queryOffset": results.query_offset,
         "fullCount": results.full_count,
         "sessionId": results.session_id,
+    }
+
+    return pack_json_result({"data": {"searchRecordsExtended": data}})
+
+
+@router.post(
+    "/{project_id}/search-records-extended-cog",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def search_records_extended_cog(
+    request: Request,
+    project_id: str,
+    body: SearchRecordsExtendedBody = Body(...),
+):
+    filter_data = [json.loads(item) for item in body.filterData]
+    limit = body.limit
+    offset = body.offset
+
+    user_id = request.state.user_id
+
+    results = resolve_extended_search(project_id, user_id, filter_data, limit, offset)
+
+    record_list = sql_alchemy_to_dict(results.record_list, for_frontend=False)
+    record_list = to_frontend_obj_raw(record_list)
+    record_list_pop = [{"recordData": json.dumps(item)} for item in record_list]
+
+    data = {
+        "queryLimit": results.query_limit,
+        "queryOffset": results.query_offset,
+        "fullCount": results.full_count,
+        "sessionId": str(results.session_id),
+        "recordList": record_list_pop,
     }
 
     return pack_json_result({"data": {"searchRecordsExtended": data}})
