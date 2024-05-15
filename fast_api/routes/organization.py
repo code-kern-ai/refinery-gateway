@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
@@ -343,10 +344,15 @@ def archive_admin_message(
 
 
 @router.get("/users-ordered-interaction")
-def get_users_ordered_interaction(request: Request, offset: int = 0, limit: int = 100):
+def get_users_ordered_interaction(
+    request: Request,
+    offset: int,
+    limit: int,
+    filter_minutes: Optional[int] = None,
+):
     auth_manager.check_admin_access(request.state.info)
     users = sql_alchemy_to_dict(
-        user_manager.get_users_ordered_interaction(offset, limit)
+        user_manager.get_users_ordered_interaction(offset, limit, filter_minutes)
     )
     return pack_json_result({"data": {"usersOrderedInteraction": users}})
 

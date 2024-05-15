@@ -103,10 +103,20 @@ def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
 
 
-def get_users_ordered_interaction(offset: int, limit: int) -> User:
+def get_users_ordered_interaction(offset: int, limit: int, filter_minutes: int) -> User:
     query = f"""
     SELECT * 
     FROM "user" u
+    """
+    query += (
+        f"""
+    WHERE u.last_interaction > now() - interval '{filter_minutes} minutes'
+    """
+        if filter_minutes > 0
+        else ""
+    )
+
+    query += f"""
     ORDER BY u.last_interaction ASC
     LIMIT {limit}
     OFFSET {offset}
@@ -118,6 +128,5 @@ def get_full_count_users() -> int:
     query = f"""
     SELECT COUNT(*)
     FROM "user" u
-    WHERE u.last_interaction IS NOT NULL
     """
     return general.execute_first(query)[0]
