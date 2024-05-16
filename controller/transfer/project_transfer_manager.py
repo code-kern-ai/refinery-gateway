@@ -95,6 +95,10 @@ def import_sample_project(
         file_name = "sample_projects/conversational_ai_initial.zip"
     elif project_type == enums.SampleProjectType.CONVERSATIONAL_AI.value:
         file_name = "sample_projects/conversational_ai.zip"
+    elif project_type == enums.SampleProjectType.DEV_GLOBAL_GUARD_QUESTIONS.value:
+        file_name = "sample_projects/DEV_global_guard_questions.zip"
+    elif project_type == enums.SampleProjectType.DEV_GLOBAL_GUARD_REFERENCES.value:
+        file_name = "sample_projects/DEV_global_guard_references.zip"
     else:
         raise Exception("Unknown sample project" + project_type)
     if not project_name:
@@ -756,9 +760,9 @@ def import_file(
                 distinct_records=weak_supervision_item.get("distinct_records"),
                 result_count=weak_supervision_item.get("result_count"),
             )
-            weak_supervision_ids[
-                weak_supervision_item.get("id")
-            ] = weak_supervision_task.id
+            weak_supervision_ids[weak_supervision_item.get("id")] = (
+                weak_supervision_task.id
+            )
 
     send_progress_update_throttle(project_id, task_id, 80)
 

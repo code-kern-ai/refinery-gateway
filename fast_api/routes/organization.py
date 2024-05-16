@@ -12,6 +12,7 @@ from fast_api.models import (
     DeleteOrganizationBody,
     RemoveUserToOrganizationBody,
     UpdateConfigBody,
+    UserLanguageDisplay,
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
@@ -75,7 +76,7 @@ def get_user_info_extended(request: Request):
     data = {
         "userInfo": {
             "id": user_id,
-            "organization": {"id": str(user.organization_id)},
+            "organizationId": str(user.organization_id),
             "firstName": name.get("first"),
             "lastName": name.get("last"),
             "mail": mail,
@@ -284,6 +285,7 @@ def get_all_organizations(request: Request):
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,
                     "gdprCompliant": org.gdpr_compliant,
+                    "logAdminRequests": org.log_admin_requests,
                 }
             }
         )
@@ -362,3 +364,9 @@ def get_full_count_users(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user_manager.get_full_count_users()
     return pack_json_result({"data": {"fullCountUsers": data}})
+
+
+@router.post("/set-language-display")
+def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
+    user_manager.update_user_language_display(body.user_id, body.language_display)
+    return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})

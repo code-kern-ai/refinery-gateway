@@ -51,7 +51,7 @@ TASK_INFO = {
                     "Date",
                     "Time",
                     "Organization",
-                    "IP address",
+                    "IP Address",
                     "Phone number",
                     "URL",
                     "E-Mail",

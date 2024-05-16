@@ -401,3 +401,8 @@ class UpdateCommentBody(BaseModel):
 
 class TokenizedRecordBody(BaseModel):
     record_id: StrictStr
+
+
+class UserLanguageDisplay(BaseModel):
+    user_id: str
+    language_display: str

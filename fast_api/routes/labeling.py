@@ -413,6 +413,9 @@ def get_record_label_associations(
     project_id: str,
     record_id: str,
 ):
+    if record_id is None or record_id == "null":
+        return pack_json_result({"data": {"recordByRecordId": None}})
+
     record = record_manager.get_record(project_id, record_id)
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
