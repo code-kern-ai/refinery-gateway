@@ -45,9 +45,6 @@ def get_check_composite_key(
     request: Request,
     project_id: str,
 ):
-    for key, value in request.scope.items():
-        print(key, type(value), flush=True)
-    # print(dir(request.scope["endpoint"]), flush=True)
     user = auth_manager.get_user_by_info(request.state.info)
     is_valid = manager.check_composite_key(project_id)
     if not is_valid:

@@ -34,9 +34,8 @@ from fast_api.routes.record_ide import router as record_ide_router
 from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
-from middleware.database_session import DatabaseSessionHandler
+from middleware.database_session import handle_db_session
 from starlette.applications import Starlette
-from starlette.middleware import Middleware
 from starlette.routing import Route, Mount
 
 from controller.task_queue.task_queue import init_task_queues
@@ -144,9 +143,14 @@ routes = [
     Mount("/api", app=fastapi_app, name="REST API"),
 ]
 
-middleware = [Middleware(DatabaseSessionHandler)]
 
-app = Starlette(routes=routes, middleware=middleware)
+fastapi_app.middleware("http")(handle_db_session)
+
+
+app = Starlette(routes=routes)
+
+# middleware = [Middleware(DatabaseSessionHandler)]
+# app = Starlette(routes=routes, middleware=middleware)
 
 init_task_queues()
 check_in_deletion_projects()
