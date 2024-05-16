@@ -4,13 +4,10 @@
 -r common-requirements.txt
 alembic==1.7.1
 docker==5.0.0
-graphene==2.1.9
-graphene_sqlalchemy==2.3.0
-graphql-core==2.3.2
 openpyxl==3.0.10
 pyjwt==2.4.0
 spacy[ja]==3.4.2
-starlette==0.14.2
-fastapi==0.65.0
+starlette==0.37.2
+fastapi==0.110.3
 pyminizip==0.2.6
 rncryptor==3.3.0
