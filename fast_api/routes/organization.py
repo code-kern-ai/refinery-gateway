@@ -284,6 +284,7 @@ def get_all_organizations(request: Request):
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,
                     "gdprCompliant": org.gdpr_compliant,
+                    "logAdminRequests": org.log_admin_requests,
                 }
             }
         )
