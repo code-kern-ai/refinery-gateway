@@ -30,8 +30,9 @@ def __get_cached_values() -> Dict[str, Dict[str, Any]]:
 
 def __refresh_identity_cache():
     global KRATOS_IDENTITY_CACHE
-    request = requests.get(f"{KRATOS_ADMIN_URL}/identities")
+    request = requests.get(f"{KRATOS_ADMIN_URL}/admin/identities")
     if request.ok:
+
         collected = datetime.now()
         KRATOS_IDENTITY_CACHE = {
             identity["id"]: {
@@ -56,7 +57,7 @@ def __get_identity(user_id: str, only_simple: bool = True) -> Dict[str, Any]:
 
     if len(user_id) == 36:
         # check not new entry outside cache
-        request = requests.get(f"{KRATOS_ADMIN_URL}/identities/{user_id}")
+        request = requests.get(f"{KRATOS_ADMIN_URL}/admin/identities/{user_id}")
         if request.ok:
             identity = request.json()
             if identity["id"] == user_id:
