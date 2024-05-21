@@ -406,3 +406,11 @@ class TokenizedRecordBody(BaseModel):
 class UserLanguageDisplay(BaseModel):
     user_id: str
     language_display: str
+
+
+class MappedSortedPaginatedUsers(BaseModel):
+    active_users: List[Dict[str, str]]
+    sort_key: str
+    sort_direction: int
+    offset: int
+    limit: int

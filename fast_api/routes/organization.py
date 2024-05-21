@@ -10,6 +10,7 @@ from fast_api.models import (
     CreateAdminMessageBody,
     CreateOrganizationBody,
     DeleteOrganizationBody,
+    MappedSortedPaginatedUsers,
     RemoveUserToOrganizationBody,
     UpdateConfigBody,
     UserLanguageDisplay,
@@ -303,9 +304,9 @@ def delete_organization(request: Request, body: DeleteOrganizationBody = Body(..
 
 
 @router.get("/active-users")
-def get_active_users(request: Request):
+def get_active_users(request: Request, filter_minutes: Optional[int] = None):
     auth_manager.check_admin_access(request.state.info)
-    activeUsers = user_manager.get_active_users(None, None)
+    activeUsers = user_manager.get_active_users(filter_minutes, None)
 
     activeUsers = [
         {
@@ -313,11 +314,24 @@ def get_active_users(request: Request):
             "lastInteraction": (
                 user.last_interaction.isoformat() if user.last_interaction else None
             ),
+            "role": user.role,
+            "organizationName": (
+                organization_manager.get_organization_by_id(str(user.organization_id))[
+                    "name"
+                ]
+                if user.organization_id
+                else ""
+            ),
         }
         for user in activeUsers
     ]
 
-    return {"data": {"activeUsers": activeUsers}}
+    return {
+        "data": {
+            "activeUsers": activeUsers,
+            "fullCountUsers": len(activeUsers),
+        }
+    }
 
 
 @router.post("/create-admin-message")
@@ -348,8 +362,8 @@ def archive_admin_message(
 @router.get("/users-ordered-interaction")
 def get_users_ordered_interaction(
     request: Request,
-    offset: int,
-    limit: int,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
     filter_minutes: Optional[int] = None,
 ):
     auth_manager.check_admin_access(request.state.info)
@@ -370,3 +384,15 @@ def get_full_count_users(request: Request):
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
     user_manager.update_user_language_display(body.user_id, body.language_display)
     return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})
+
+
+@router.post("/mapped-sorted-paginated-users")
+def get_mapped_sorted_paginated_users(
+    request: Request, body: MappedSortedPaginatedUsers = Body(...)
+):
+    data = user_manager.get_mapped_sorted_paginated_users(
+        body.active_users, body.sort_key, body.sort_direction, body.offset, body.limit
+    )
+    return pack_json_result(
+        {"data": {"mappedSortedPaginatedUsers": data}}, wrap_for_frontend=False
+    )
