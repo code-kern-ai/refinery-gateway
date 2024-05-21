@@ -103,38 +103,6 @@ def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
 
 
-def get_users_ordered_interaction(offset: int, limit: int, filter_minutes: int) -> User:
-    query = f"""
-    SELECT * 
-    FROM "user" u
-    """
-    query += (
-        f"""
-    WHERE u.last_interaction > now() - interval '{filter_minutes} minutes'
-    """
-        if filter_minutes > 0
-        else ""
-    )
-
-    if limit > 0:
-        query += f"""
-        LIMIT {limit}
-        """
-    if offset > 0:
-        query += f"""
-        OFFSET {offset}
-        """
-    return general.execute_all(query)
-
-
-def get_full_count_users() -> int:
-    query = f"""
-    SELECT COUNT(*)
-    FROM "user" u
-    """
-    return general.execute_first(query)[0]
-
-
 def get_mapped_sorted_paginated_users(
     active_users: List[Dict[str, str]],
     sort_key: str,
