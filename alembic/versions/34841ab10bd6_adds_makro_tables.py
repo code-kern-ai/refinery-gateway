@@ -26,6 +26,7 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
+    sa.Column('group_key', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
@@ -100,6 +101,8 @@ def upgrade():
     )
     op.create_index(op.f('ix_cognition_macro_execution_link_execution_id'), 'macro_execution_link', ['execution_id'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_execution_link_other_id'), 'macro_execution_link', ['other_id'], unique=False, schema='cognition')
+    
+    op.add_column('project', sa.Column('macro_config', sa.JSON(), nullable=True), schema='cognition')
     # ### end Alembic commands ###
 
 
@@ -125,4 +128,5 @@ def downgrade():
     op.drop_index(op.f('ix_cognition_macro_project_id'), table_name='macro', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_created_by'), table_name='macro', schema='cognition')
     op.drop_table('macro', schema='cognition')
+    op.drop_column("project", "macro_config", schema="cognition")
     # ### end Alembic commands ###
