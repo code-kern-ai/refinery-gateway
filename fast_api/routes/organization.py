@@ -359,27 +359,6 @@ def archive_admin_message(
     return pack_json_result({"data": {"archiveAdminMessage": {"ok": True}}})
 
 
-@router.get("/users-ordered-interaction")
-def get_users_ordered_interaction(
-    request: Request,
-    offset: Optional[int] = None,
-    limit: Optional[int] = None,
-    filter_minutes: Optional[int] = None,
-):
-    auth_manager.check_admin_access(request.state.info)
-    users = sql_alchemy_to_dict(
-        user_manager.get_users_ordered_interaction(offset, limit, filter_minutes)
-    )
-    return pack_json_result({"data": {"usersOrderedInteraction": users}})
-
-
-@router.get("/full-count-users")
-def get_full_count_users(request: Request):
-    auth_manager.check_admin_access(request.state.info)
-    data = user_manager.get_full_count_users()
-    return pack_json_result({"data": {"fullCountUsers": data}})
-
-
 @router.post("/set-language-display")
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
     user_manager.update_user_language_display(body.user_id, body.language_display)
