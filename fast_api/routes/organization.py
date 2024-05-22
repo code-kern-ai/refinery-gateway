@@ -40,6 +40,7 @@ ACTIVE_ADMIN_MESSAGES_WHITELIST = {
     "id",
     "level",
     "text",
+    "scheduled_date",
 }
 
 
