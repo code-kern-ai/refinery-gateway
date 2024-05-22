@@ -68,13 +68,12 @@ def get_user_info(request: Request):
 
 @router.get("/get-user-info-extended")
 def get_user_info_extended(request: Request):
-    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
-    user = get(user_id)
-    name, mail = resolve_user_name_and_email_by_id(user_id)
+    user = auth_manager.get_user_by_info(request.state.info)
+    name, mail = resolve_user_name_and_email_by_id(user.id)
 
     data = {
         "userInfo": {
-            "id": user_id,
+            "id": str(user.id),
             "organizationId": str(user.organization_id),
             "firstName": name.get("first"),
             "lastName": name.get("last"),
@@ -89,13 +88,11 @@ def get_user_info_extended(request: Request):
 
 @router.get("/get-user-info-mini")
 def get_user_info_mini(request: Request):
-    user_id = str(auth_manager.get_user_by_info(request.state.info).id)
-    user = get(user_id)
-    name, mail = resolve_user_name_and_email_by_id(user_id)
+    user = auth_manager.get_user_by_info(request.state.info)
 
     data = {
         "userInfo": {
-            "id": user_id,
+            "id": str(user.id),
             "organization": {"id": str(user.organization_id)},
             "role": user.role,
         }
