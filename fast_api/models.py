@@ -409,7 +409,7 @@ class UserLanguageDisplay(BaseModel):
 
 
 class MappedSortedPaginatedUsers(BaseModel):
-    active_users: List[Dict[str, str]]
+    active_users: Dict[str, Any]
     sort_key: str
     sort_direction: int
     offset: int

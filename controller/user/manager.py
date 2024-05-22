@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 from submodules.model import User, enums
 from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
@@ -104,7 +104,7 @@ def update_last_interaction(user_id: str) -> None:
 
 
 def get_mapped_sorted_paginated_users(
-    active_users: List[Dict[str, str]],
+    active_users: Dict[str, Any],
     sort_key: str,
     sort_direction: int,
     offset: int,
@@ -114,18 +114,17 @@ def get_mapped_sorted_paginated_users(
     final_users = []
 
     # mapping users with the users in kratos
-    active_users_ids = [u["id"] for u in active_users]
+    active_users_ids = list(active_users.keys())
+
     for user_id in active_users_ids:
         get_user = kratos.__get_identity(user_id, False)["identity"]
         if get_user:
             get_user["email"] = get_user["traits"]["email"]
             get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
-            for active_user in active_users:
-                if active_user["id"] == user_id:
-                    get_user["last_interaction"] = active_user["lastInteraction"]
-                    get_user["role"] = active_user["role"]
-                    get_user["organization"] = active_user["organizationName"]
-                    break
+            active_user_by_id = active_users[user_id]
+            get_user["last_interaction"] = active_user_by_id["lastInteraction"]
+            get_user["role"] = active_user_by_id["role"]
+            get_user["organization"] = active_user_by_id["organizationName"]
 
             final_users.append(get_user)
 
