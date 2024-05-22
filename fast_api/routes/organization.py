@@ -27,7 +27,6 @@ from controller.misc import manager as misc
 from fast_api.routes.client_response import pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
-from submodules.model.business_objects import user as user_db_bo
 from submodules.model.util import sql_alchemy_to_dict
 from util import doc_ock, notification
 
