@@ -296,7 +296,7 @@ def update_data_slice(
 
 def handle_error(exception: Exception, user_id: str, project_id: str):
     general.rollback()
-    if exception.__class__ == TooManyRecordsForStaticSliceException.__class__:
+    if isinstance(exception,TooManyRecordsForStaticSliceException):
         error = "Too many records for a static slice"
     else:
         error = str(exception.__class__.__name__)
