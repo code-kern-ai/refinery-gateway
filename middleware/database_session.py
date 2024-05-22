@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 async def handle_db_session(request: Request, call_next):
     info = _prepare_info(request)
-    # await set_body(request)
     await request.body()
 
     request.state.session_token = general.get_ctx_token()
@@ -32,7 +31,7 @@ async def handle_db_session(request: Request, call_next):
         if access_response is not None:
             general.remove_and_refresh_session(request.state.session_token)
             return access_response
-    # sets states so called before actual request handling
+
     log_request = auth_manager.extract_state_info(request, "log_request")
     try:
         response = await call_next(request)
@@ -93,18 +92,6 @@ def _prepare_info(request):
         field_name=field_name,
         parent_type=parent_type,
     )
-
-
-# async def set_body(request: Request):
-#     # await & body access in middleware aren't straightforward https://github.com/tiangolo/fastapi/issues/394
-#     # fixed in newer versions https://github.com/tiangolo/fastapi/discussions/8187#discussioncomment-7962881
-#     # so only relevant for refinery until we upgrade to the same fastapi version cognition uses
-#     receive_ = await request._receive()
-
-#     async def receive() -> Message:
-#         return receive_
-
-#     request._receive = receive
 
 
 async def _log_request(request):
