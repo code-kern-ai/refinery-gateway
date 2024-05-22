@@ -97,7 +97,7 @@ def search_records_extended_cog(
     limit = body.limit
     offset = body.offset
 
-    user_id = request.state.user_id
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
 
     results = resolve_extended_search(project_id, user_id, filter_data, limit, offset)
 
