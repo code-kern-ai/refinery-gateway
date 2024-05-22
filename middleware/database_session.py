@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 async def handle_db_session(request: Request, call_next):
     info = _prepare_info(request)
-    await request.body()
 
     request.state.session_token = general.get_ctx_token()
     info.context = {"request": request}
@@ -33,6 +32,11 @@ async def handle_db_session(request: Request, call_next):
             return access_response
 
     log_request = auth_manager.extract_state_info(request, "log_request")
+    length = request.headers.get("content-length")
+
+    if log_request and length and int(length) > 0:
+        await request.body()
+
     try:
         response = await call_next(request)
     finally:
@@ -40,6 +44,7 @@ async def handle_db_session(request: Request, call_next):
             # after call next so the path_params are mapped
             await _log_request(request)
         general.remove_and_refresh_session(request.state.session_token)
+
     return response
 
 
