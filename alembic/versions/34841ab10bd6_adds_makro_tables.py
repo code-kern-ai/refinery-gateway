@@ -27,7 +27,6 @@ def upgrade():
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('state', sa.String(), nullable=True),
-    sa.Column('group_key', sa.String(), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
