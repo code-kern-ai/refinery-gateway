@@ -136,6 +136,9 @@ def get_record_by_record_id(
     project_id: str,
     record_id: str,
 ):
+    if record_id is None or record_id == "null":
+        return pack_json_result({"data": {"recordByRecordId": None}})
+
     record = record_manager.get_record(project_id, record_id)
 
     data = {

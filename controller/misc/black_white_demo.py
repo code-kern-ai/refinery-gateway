@@ -17,7 +17,6 @@ def get_black_white_demo() -> Dict[str, List[str]]:
 
 
 def __snake_case_to_camel_case(str: str):
-    # GraphQL uses camel case for resolving
     return "".join(
         [
             word.title() if idx > 0 else word.lower()

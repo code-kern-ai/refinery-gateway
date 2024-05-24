@@ -13,7 +13,7 @@ import traceback
 from dateutil import parser
 import datetime
 
-from graphql.error.base import GraphQLError
+from exceptions.exceptions import PayloadSchedulerError
 from submodules.model import enums, events
 from submodules.model.business_objects import (
     information_source,
@@ -57,8 +57,6 @@ import time
 import uuid
 
 __containers_running = {}
-
-# lf container is run in frankfurt, graphql-gateway is utc --> german time zone needs to be used to match
 
 client = docker.from_env()
 __tz = pytz.timezone("Europe/Berlin")
@@ -222,7 +220,7 @@ def create_payload(
         ):
             image = ml_exec_env_image
         else:
-            raise GraphQLError(
+            raise PayloadSchedulerError(
                 f"unknown information source type: {information_source_item.type}"
             )
 

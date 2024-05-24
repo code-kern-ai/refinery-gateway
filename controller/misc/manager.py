@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from controller.misc import config_service
 from controller.misc import black_white_demo
-from graphql_api.types import ServiceVersionResult
+from fast_api.types import ServiceVersionResult
 from datetime import datetime
 import os
 

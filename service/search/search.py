@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import zlib
 from typing import Tuple, Dict, List, Any, Optional, Union
 
-from graphql_api.types import ExtendedSearch
+from fast_api.types import ExtendedSearch
 from submodules.model import UserSessions
 from util.notification import create_notification
 from submodules.model.enums import (
@@ -122,6 +122,7 @@ def resolve_records_by_static_slice(
         local_seed,
     )
     extended_search.session_id = __write_user_session_entry(user_session_data)
+
     return extended_search
 
 
@@ -185,7 +186,7 @@ def resolve_labeling_session(
 
     user_session = __collect_user_session_data_from_db(project_id, session_id, user_id)
     attr = getattr(user_session, "session_record_ids", None)
-    if not attr:
+    if not attr and user_session:
         user_session.temp_session = False
         general.commit()
         collect_user_session_record_ids(user_session, project_id)
@@ -410,12 +411,12 @@ def __build_subquery_data(
             select_add += f", {alias}.*"
             from_add += f"""
 INNER JOIN ( {query_text} ) {alias}
-	ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
+    ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
         else:
             where_add += f"\n    AND {alias}.rID IS NULL"
             from_add += f"""
 LEFT JOIN ( {query_text} ) {alias}
-	ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
+    ON r.project_id = {alias}.pID AND r.id = {alias}.rID"""
         c += 1
 
     if type_key == "WHITELIST":

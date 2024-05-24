@@ -7,6 +7,9 @@ from time import sleep
 from threading import Lock
 from util import daemon
 from fastapi import Request
+from datetime import datetime
+from submodules.model.enums import AdminLogLevel, try_parse_enum_value
+from controller.auth import manager as auth_manager
 
 
 __not_yet_persisted = {}  # {log_path: List[Dict[str,Any]]}
@@ -84,3 +87,45 @@ def __write_log_entries(
 
 def extend_state_get_like(request: Request):
     request.state.get_like = True
+
+
+async def set_request_data(request: Request) -> bytes:
+    data = None
+    length = request.headers.get("content-length")
+    if length and int(length) > 0:
+        if request.headers.get("Content-Type") == "application/json":
+            data = await request.json()
+        else:
+            data = await request.body()
+    request.state.data = data
+
+
+async def log_request(request):
+    log_request = auth_manager.extract_state_info(request, "log_request")
+    log_lvl: AdminLogLevel = try_parse_enum_value(log_request, AdminLogLevel, False)
+    # lazy boolean resolution to avoid unnecessary calls
+    if (
+        not log_lvl
+        or not log_lvl.log_me(request.method)
+        or (log_lvl == AdminLogLevel.NO_GET and hasattr(request.state, "get_like"))
+    ):
+        return
+
+    data = None
+    if hasattr(request.state, "data"):
+        data = request.state.data
+
+    now = datetime.now()
+    org_id = auth_manager.extract_state_info(request, "organization_id")
+    log_path = f"/logs/admin/{org_id}/{now.strftime('%Y-%m-%d')}.csv"
+    log_entry = {
+        "timestamp": now.strftime("%Y-%m-%d %H:%M:%S.%f"),
+        "user_id": auth_manager.extract_state_info(request, "user_id"),
+        "gateway": "REFINERY",
+        "method": str(request.method),
+        "path": str(request.url.path),
+        "query_params": dict(request.query_params),
+        "path_params": dict(request.path_params),  # only after call next possible
+        "data": data,
+    }
+    add_to_persist_queue(log_path, log_entry)

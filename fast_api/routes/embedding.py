@@ -48,7 +48,7 @@ def language_models(request: Request) -> List:
     "/{project_id}/embeddings-by-project",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def get_embeddings(request: Request, project_id: str) -> List:
+def get_embeddings(project_id: str) -> List:
     embeddings = get_all_embeddings_by_project_id(project_id)
     number_records = len(project.get(project_id).records)
 

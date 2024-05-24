@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
-import os, copy
-
-from graphql_api.types import ExtendedSearch
+import os
+import copy
+from fast_api.types import ExtendedSearch
 from submodules.model import Record, Attribute
 from submodules.model.business_objects import (
     record,
@@ -167,7 +167,7 @@ def edit_records(
         while tokenization.is_doc_bin_creation_running_or_queued(project_id):
             time.sleep(0.5)
 
-    except Exception as e:
+    except Exception:
         __revert_record_data_changes(records, prepped["record_data_backup"])
         print(traceback.format_exc(), flush=True)
         return ["tokenization failed"]
@@ -177,7 +177,7 @@ def edit_records(
             project_id, prepped["embedding_rebuilds"]
         )
 
-    except Exception as e:
+    except Exception:
         __revert_record_data_changes(records, prepped["record_data_backup"])
         print(traceback.format_exc(), flush=True)
         return ["embedding failed"]

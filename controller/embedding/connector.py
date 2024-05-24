@@ -1,9 +1,9 @@
 import os
 from typing import Any, Dict, Union, List, Optional
 
+from exceptions.exceptions import EmbeddingConnectorError
 from util import service_requests
 import requests
-from graphql import GraphQLError
 
 BASE_URI = os.getenv("EMBEDDING_SERVICE")
 NEURAL_SEARCH_BASE_URI = os.getenv("NEURAL_SEARCH")
@@ -56,7 +56,7 @@ def update_attribute_payloads_for_neural_search(
     try:
         service_requests.post_call_or_raise(url, data)
         return True
-    except GraphQLError:
+    except EmbeddingConnectorError:
         print("couldn't update attribute payloads for neural search", flush=True)
         return False
 

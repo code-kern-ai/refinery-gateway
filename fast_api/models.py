@@ -204,13 +204,37 @@ class AddUserToOrganizationBody(BaseModel):
     organization_name: StrictStr
 
 
+class RemoveUserToOrganizationBody(BaseModel):
+    user_mail: StrictStr
+
+
 class ChangeOrganizationBody(BaseModel):
     org_id: StrictStr
     changes: StrictStr
 
 
+class DeleteOrganizationBody(BaseModel):
+    name: StrictStr
+
+
+class CreateAdminMessageBody(BaseModel):
+    text: StrictStr
+    level: StrictStr
+    archive_date: StrictStr
+
+
+class ArchiveAdminMessageBody(BaseModel):
+    message_id: StrictStr
+    archived_reason: StrictStr
+
+
 class UpdateConfigBody(BaseModel):
     dict_str: StrictStr
+
+
+class ChangeUserRoleBody(BaseModel):
+    user_id: StrictStr
+    role: StrictStr
 
 
 class CreatePersonalTokenBody(BaseModel):
@@ -377,3 +401,8 @@ class UpdateCommentBody(BaseModel):
 
 class TokenizedRecordBody(BaseModel):
     record_id: StrictStr
+
+
+class UserLanguageDisplay(BaseModel):
+    user_id: str
+    language_display: str

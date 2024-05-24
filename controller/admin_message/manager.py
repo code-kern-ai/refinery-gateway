@@ -29,8 +29,10 @@ def get_messages(limit: int = 100, active_only: bool = True) -> List[AdminMessag
 
 
 def create_admin_message(
-    text: str, level: str, archive_date: datetime, created_by: str
+    text: str, level: str, archive_date: str, created_by: str
 ) -> AdminMessage:
+    archive_date = datetime.fromisoformat(archive_date.replace("Z", "+00:00"))
+
     now = datetime.now().astimezone(archive_date.tzinfo)
 
     if archive_date < now:
