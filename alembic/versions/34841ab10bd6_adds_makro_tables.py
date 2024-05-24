@@ -38,7 +38,6 @@ def upgrade():
     op.create_index(op.f('ix_cognition_macro_project_id'), 'macro', ['project_id'], unique=False, schema='cognition')
     op.create_table('macro_execution',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('macro_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -46,16 +45,13 @@ def upgrade():
     sa.Column('meta_info', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['macro_id'], ['cognition.macro.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
     )
     op.create_index(op.f('ix_cognition_macro_execution_created_by'), 'macro_execution', ['created_by'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_execution_macro_id'), 'macro_execution', ['macro_id'], unique=False, schema='cognition')
-    op.create_index(op.f('ix_cognition_macro_execution_project_id'), 'macro_execution', ['project_id'], unique=False, schema='cognition')
     op.create_table('macro_node',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('macro_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -63,16 +59,13 @@ def upgrade():
     sa.Column('config', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['macro_id'], ['cognition.macro.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
     )
     op.create_index(op.f('ix_cognition_macro_node_created_by'), 'macro_node', ['created_by'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_node_macro_id'), 'macro_node', ['macro_id'], unique=False, schema='cognition')
-    op.create_index(op.f('ix_cognition_macro_node_project_id'), 'macro_node', ['project_id'], unique=False, schema='cognition')
     op.create_table('macro_edge',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('macro_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('from_node_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('to_node_id', postgresql.UUID(as_uuid=True), nullable=True),
@@ -82,7 +75,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['from_node_id'], ['cognition.macro_node.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['macro_id'], ['cognition.macro.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['to_node_id'], ['cognition.macro_node.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
@@ -90,7 +82,6 @@ def upgrade():
     op.create_index(op.f('ix_cognition_macro_edge_created_by'), 'macro_edge', ['created_by'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_edge_from_node_id'), 'macro_edge', ['from_node_id'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_edge_macro_id'), 'macro_edge', ['macro_id'], unique=False, schema='cognition')
-    op.create_index(op.f('ix_cognition_macro_edge_project_id'), 'macro_edge', ['project_id'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_edge_to_node_id'), 'macro_edge', ['to_node_id'], unique=False, schema='cognition')
     op.create_table('macro_execution_link',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -115,16 +106,13 @@ def downgrade():
     op.drop_index(op.f('ix_cognition_macro_execution_link_execution_id'), table_name='macro_execution_link', schema='cognition')
     op.drop_table('macro_execution_link', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_edge_to_node_id'), table_name='macro_edge', schema='cognition')
-    op.drop_index(op.f('ix_cognition_macro_edge_project_id'), table_name='macro_edge', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_edge_macro_id'), table_name='macro_edge', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_edge_from_node_id'), table_name='macro_edge', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_edge_created_by'), table_name='macro_edge', schema='cognition')
     op.drop_table('macro_edge', schema='cognition')
-    op.drop_index(op.f('ix_cognition_macro_node_project_id'), table_name='macro_node', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_node_macro_id'), table_name='macro_node', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_node_created_by'), table_name='macro_node', schema='cognition')
     op.drop_table('macro_node', schema='cognition')
-    op.drop_index(op.f('ix_cognition_macro_execution_project_id'), table_name='macro_execution', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_execution_macro_id'), table_name='macro_execution', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_execution_created_by'), table_name='macro_execution', schema='cognition')
     op.drop_table('macro_execution', schema='cognition')
