@@ -10,6 +10,7 @@ from fast_api.models import (
     CreateAdminMessageBody,
     CreateOrganizationBody,
     DeleteOrganizationBody,
+    DeleteUserBody,
     MappedSortedPaginatedUsers,
     RemoveUserToOrganizationBody,
     UpdateConfigBody,
@@ -375,3 +376,10 @@ def get_mapped_sorted_paginated_users(
     return pack_json_result(
         {"data": {"mappedSortedPaginatedUsers": data}}, wrap_for_frontend=False
     )
+
+
+@router.delete("/delete-user")
+def delete_user(request: Request, body: DeleteUserBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.delete_user(body.user_id)
+    return pack_json_result({"data": {"deleteUser": {"ok": True}}})

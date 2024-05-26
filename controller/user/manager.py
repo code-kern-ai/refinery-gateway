@@ -139,3 +139,8 @@ def get_mapped_sorted_paginated_users(
     final_users = final_users[offset : offset + limit]
 
     return final_users
+
+
+def delete_user(user_id: str) -> None:
+    user.delete(user_id, with_commit=True)
+    user_activity.delete_user_activity(user_id, with_commit=True)

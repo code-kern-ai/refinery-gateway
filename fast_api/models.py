@@ -414,3 +414,7 @@ class MappedSortedPaginatedUsers(BaseModel):
     sort_direction: int
     offset: int
     limit: int
+
+
+class DeleteUserBody(BaseModel):
+    user_id: StrictStr
