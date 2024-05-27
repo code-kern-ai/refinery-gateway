@@ -3,7 +3,6 @@ from typing import Any, List, Dict
 import spacy
 from spacy.tokens import DocBin
 from controller.project import manager as project_manager
-from graphql_api.types import TokenizedRecord, TokenizedAttribute, TokenWrapper
 from submodules.model import enums, Record
 from submodules.model.business_objects import tokenization, attribute
 from submodules.model.business_objects.record import (
@@ -36,13 +35,13 @@ def get_blank_tokenizer_vocab(project_id: str) -> Any:
     return __blank_tokenizer_vocab.get(project.tokenizer_blank)
 
 
-def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
+def get_tokenized_record(project_id: str, record_id: str):
     # ensure docs are in db (prio queue)
 
     docs = __get_docs_from_db(project_id, record_id)
-    tokenized_record = TokenizedRecord()
-    tokenized_record.record_id = record_id
-    tokenized_record.attributes = []
+    tokenized_record = {}
+    tokenized_record["record_id"] = record_id
+    tokenized_record["attributes"] = []
 
     for attribute_name in docs:
         attribute_item = attribute.get_by_name(project_id, attribute_name)
@@ -50,25 +49,25 @@ def get_tokenized_record(project_id: str, record_id: str) -> TokenizedRecord:
             # the docs could contain already deleted user created attributes
             continue
 
-        tokenized_attribute = TokenizedAttribute()
-        tokenized_attribute.raw = docs[attribute_name].text
+        tokenized_attribute = {}
+        tokenized_attribute["raw"] = docs[attribute_name].text
         if attribute_item is not None and any(
             labeling_task.task_type
             == enums.LabelingTaskType.INFORMATION_EXTRACTION.value
             for labeling_task in attribute_item.labeling_tasks
         ):
-            tokenized_attribute.tokens = [
-                TokenWrapper(
-                    value=token.text,
-                    idx=token.i,
-                    pos_start=token.idx,
-                    pos_end=token.idx + len(token),
-                    type=token.ent_type_,
-                )
+            tokenized_attribute["tokens"] = [
+                {
+                    "value": token.text,
+                    "idx": token.i,
+                    "pos_start": token.idx,
+                    "pos_end": token.idx + len(token),
+                    "type": token.ent_type_,
+                }
                 for token in docs[attribute_name]
             ]
-        tokenized_attribute.attribute = attribute_item
-        tokenized_record.attributes.append(tokenized_attribute)
+        tokenized_attribute["attribute"] = attribute_item
+        tokenized_record["attributes"].append(tokenized_attribute)
     return tokenized_record
 
 
@@ -116,7 +115,7 @@ def __get_docs_from_db(project_id: str, record_id: str) -> Dict[str, Any]:
     doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
     docs = list(doc_bin_loaded.get_docs(vocab))
     doc_dict = {}
-    for (col, doc) in zip(table_entry.columns, docs):
+    for col, doc in zip(table_entry.columns, docs):
         doc_dict[col] = doc
     return doc_dict
 
@@ -131,7 +130,7 @@ def get_all_docs_from_db(
         record_id = str(table_entry.record_id)
         doc_bin_loaded = DocBin().from_bytes(table_entry.bytes)
         docs = list(doc_bin_loaded.get_docs(vocab))
-        for (col, doc) in zip(table_entry.columns, docs):
+        for col, doc in zip(table_entry.columns, docs):
             if record_id not in doc_dict:
                 doc_dict[record_id] = {}
             if not doc_dict.get(record_id):

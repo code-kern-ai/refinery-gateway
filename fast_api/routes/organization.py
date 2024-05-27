@@ -3,12 +3,21 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
     AddUserToOrganizationBody,
+    ArchiveAdminMessageBody,
     ChangeOrganizationBody,
+    ChangeUserRoleBody,
+    CreateAdminMessageBody,
     CreateOrganizationBody,
+    DeleteOrganizationBody,
+    RemoveUserToOrganizationBody,
     UpdateConfigBody,
+    UserLanguageDisplay,
 )
 from controller.auth import manager as auth_manager
-from controller.auth.kratos import resolve_user_name_and_email_by_id
+from controller.auth.kratos import (
+    resolve_user_mail_by_id,
+    resolve_user_name_and_email_by_id,
+)
 from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
 from controller.organization import manager as organization_manager
@@ -56,11 +65,44 @@ def get_user_info(request: Request):
     return {"data": {"userInfo": data}}
 
 
+@router.get("/get-user-info-extended")
+def get_user_info_extended(request: Request):
+    user = auth_manager.get_user_by_info(request.state.info)
+    name, mail = resolve_user_name_and_email_by_id(user.id)
+
+    data = {
+        "userInfo": {
+            "id": str(user.id),
+            "organizationId": str(user.organization_id),
+            "firstName": name.get("first"),
+            "lastName": name.get("last"),
+            "mail": mail,
+            "role": user.role,
+            "languageDisplay": user.language_display,
+        }
+    }
+
+    return pack_json_result({"data": data})
+
+
+@router.get("/get-user-info-mini")
+def get_user_info_mini(request: Request):
+    user = auth_manager.get_user_by_info(request.state.info)
+
+    data = {
+        "userInfo": {
+            "id": str(user.id),
+            "organization": {"id": str(user.organization_id)},
+            "role": user.role,
+        }
+    }
+
+    return pack_json_result({"data": data})
+
+
 @router.get("/all-users")
 def get_all_user(request: Request):
-    organization_id = str(
-        auth_manager.get_user_by_info(request.state.info).organization.id
-    )
+    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
     data = manager.get_all_users(organization_id)
     return {"data": {"allUsers": data}}
 
@@ -75,6 +117,13 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
 
 
+@router.get("/all-admin-messages")
+def all_admin_messages(request: Request, limit: int = 100) -> str:
+    data = admin_message_manager.get_messages(limit, active_only=False)
+    data_dict = sql_alchemy_to_dict(data)
+    return pack_json_result({"data": {"allAdminMessages": data_dict}})
+
+
 @router.get(
     "/{project_id}/all-users-with-record-count",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
@@ -83,27 +132,24 @@ def get_all_users_with_record_count(
     request: Request,
     project_id: str,
 ):
-    organization_id = str(
-        auth_manager.get_user_by_info(request.state.info).organization.id
-    )
+    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
 
     results = manager.get_all_users_with_record_count(organization_id, project_id)
 
     data = []
     for res in results:
-        names, email = resolve_user_name_and_email_by_id(res.user.id)
+        names, email = resolve_user_name_and_email_by_id(res["user_id"])
         last_name = names.get("last", "")
         first_name = names.get("first", "")
         data.append(
             {
                 "user": {
-                    "id": res.user.id,
+                    "id": res["user_id"],
                     "mail": email,
                     "firstName": first_name,
                     "lastName": last_name,
-                    "__typename": "User",
                 },
-                "counts": json.dumps(res.counts),
+                "counts": json.dumps(res["counts"]),
             }
         )
 
@@ -143,6 +189,15 @@ def add_user_to_organization(
     return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
 
 
+@router.post("/remove-user-from-organization")
+def remove_user_from_organization(
+    request: Request, body: RemoveUserToOrganizationBody = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.remove_organization_from_user(body.user_mail)
+    return pack_json_result({"data": {"removeUserFromOrganization": {"ok": True}}})
+
+
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
     if config_service.get_config_value("is_managed"):
@@ -167,3 +222,122 @@ def update_config(request: Request, body: UpdateConfigBody = Body(...)):
         # send to all so all are notified about the change
         notification.send_organization_update(None, "config_updated", True, str(org.id))
     return pack_json_result({"data": {"updateConfig": {"ok": True}}})
+
+
+@router.get("/user-roles")
+def get_user_roles(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = user_manager.get_user_roles()
+    return {"data": {"userRoles": data}}
+
+
+@router.post("/change-user-role")
+def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.update_user_role(body.user_id, body.role)
+    return {"data": {"changeUserRole": {"ok": True}}}
+
+
+@router.get("/all-organizations")
+def get_all_organizations(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    organizations = manager.get_all_organizations()
+
+    edges = []
+
+    for org in organizations:
+        edges.append(
+            {
+                "node": {
+                    "id": str(org.id),
+                    "name": org.name,
+                    "createdAt": (
+                        org.created_at.isoformat()
+                        if org.created_at is not None
+                        else None
+                    ),
+                    "startedAt": (
+                        org.started_at.isoformat()
+                        if org.started_at is not None
+                        else None
+                    ),
+                    "isPaying": org.is_paying,
+                    "users": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": str(user.id),
+                                    "mail": resolve_user_mail_by_id(user.id),
+                                }
+                            }
+                            for user in org.users
+                        ]
+                    },
+                    "maxRows": org.max_rows,
+                    "maxCols": org.max_cols,
+                    "maxCharCount": org.max_char_count,
+                    "gdprCompliant": org.gdpr_compliant,
+                    "logAdminRequests": org.log_admin_requests,
+                }
+            }
+        )
+
+    data = {"edges": edges}
+
+    return pack_json_result({"data": {"allOrganizations": data}})
+
+
+@router.delete("/delete-organization")
+def delete_organization(request: Request, body: DeleteOrganizationBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    organization_manager.delete_organization(body.name)
+    return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
+
+
+@router.get("/active-users")
+def get_active_users(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    activeUsers = user_manager.get_active_users(None, None)
+
+    activeUsers = [
+        {
+            "id": str(user.id),
+            "lastInteraction": (
+                user.last_interaction.isoformat() if user.last_interaction else None
+            ),
+        }
+        for user in activeUsers
+    ]
+
+    return {"data": {"activeUsers": activeUsers}}
+
+
+@router.post("/create-admin-message")
+def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    admin_message_manager.create_admin_message(
+        body.text, body.level, body.archive_date, user_id
+    )
+    notification.send_global_update_for_all_organizations("admin_message")
+    return pack_json_result({"data": {"createAdminMessage": {"ok": True}}})
+
+
+@router.delete("/archive-admin-message")
+def archive_admin_message(
+    request: Request,
+    body: ArchiveAdminMessageBody = Body(...),
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    admin_message_manager.archive_admin_message(
+        body.message_id, user_id, body.archived_reason
+    )
+    notification.send_global_update_for_all_organizations("admin_message")
+    return pack_json_result({"data": {"archiveAdminMessage": {"ok": True}}})
+
+
+@router.post("/set-language-display")
+def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
+    user_manager.update_user_language_display(body.user_id, body.language_display)
+    return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})

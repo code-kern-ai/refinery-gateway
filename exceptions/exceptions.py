@@ -36,3 +36,27 @@ class ApiTokenImportError(Exception):
 
 class ProjectAccessError(Exception):
     pass
+
+
+class ServiceRequestsError(Exception):
+    pass
+
+
+class DatabaseSessionError(Exception):
+    pass
+
+
+class ProjectManagerError(Exception):
+    pass
+
+
+class PayloadSchedulerError(Exception):
+    pass
+
+
+class EmbeddingConnectorError(Exception):
+    pass
+
+
+class AuthManagerError(Exception):
+    pass

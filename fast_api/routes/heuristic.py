@@ -9,7 +9,7 @@ from controller.payload import manager as payload_manager
 from submodules.model.business_objects import information_source
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
 from submodules.model.enums import InformationSourceType
-from submodules.model.util import pack_as_graphql, sql_alchemy_to_dict
+from submodules.model.util import pack_edges_node, sql_alchemy_to_dict
 from util import notification
 from controller.task_queue import manager as task_queue_manager
 from submodules.model import enums
@@ -80,7 +80,7 @@ def get_heuristic_by_heuristic_id(
             project_id, heuristic_id
         )
     )
-    statistics = pack_as_graphql(
+    statistics = pack_edges_node(
         sql_alchemy_to_dict(
             information_source.get_source_statistics(project_id, heuristic_id)
         ),

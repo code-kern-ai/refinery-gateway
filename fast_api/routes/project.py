@@ -15,10 +15,13 @@ from fastapi import APIRouter, Body, Depends, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict, List
 from controller.auth import manager as auth_manager
+from controller.attribute import manager as attr_manager
 from controller.labeling_task import manager as task_manager
 from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
+from submodules.model.business_objects import information_source, labeling_task
 from submodules.model import enums, events
+from submodules.model.business_objects.embedding import get_all_embeddings_by_project_id
 from submodules.model.enums import LabelingTaskType
 from submodules.model.business_objects.project import get_project_by_project_id_sql
 from submodules.model.business_objects.labeling_task import (
@@ -28,7 +31,7 @@ from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import (
-    pack_as_graphql,
+    pack_edges_node,
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
@@ -81,12 +84,38 @@ def get_project_by_project_id(
 
 @router.get("/all-projects")
 def get_all_projects(request: Request) -> Dict:
-
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
-    projects_graphql = pack_as_graphql(projects, "allProjects")
-    return pack_json_result(projects_graphql)
+    projects_packed = pack_edges_node(projects, "allProjects")
+    return pack_json_result(projects_packed)
+
+
+@router.get("/all-projects-mini")
+def get_all_projects_mini(request: Request) -> Dict:
+    projects = manager.get_all_projects_by_user(
+        auth_manager.get_organization_id_by_info(request.state.info)
+    )
+
+    edges = []
+
+    for project in projects:
+        edges.append(
+            {
+                "node": {
+                    "id": str(project.get("id", None)),
+                    "name": str(project.get("name", None)),
+                    "description": str(project.get("description", None)),
+                    "status": str(project.get("status", None)),
+                }
+            }
+        )
+
+    data = {
+        "edges": edges,
+    }
+
+    return pack_json_result({"data": {"allProjects": data}})
 
 
 @router.get(
@@ -142,7 +171,6 @@ def inter_annotator_matrix(
                     include_gold_star,
                     include_all_org_user,
                     only_on_static_slice,
-                    as_gql_type=False,
                 )
             }
         },
@@ -274,13 +302,91 @@ def labeling_tasks_by_project_id(project_id: str) -> str:
 
 
 @router.get(
+    "/{project_id}/labeling-tasks-by-project-id-with-embeddings",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
+    embeddings = get_all_embeddings_by_project_id(project_id)
+
+    embeddings_edges = []
+    for embedding in embeddings:
+        attribute = attr_manager.get_attribute(project_id, embedding.attribute_id)
+        embeddings_edges.append(
+            {
+                "node": {
+                    "id": str(embedding.id),
+                    "name": embedding.name,
+                    "state": embedding.state,
+                    "attribute": {"dataType": attribute.data_type},
+                }
+            }
+        )
+
+    labeling_tasks_all = labeling_task.get_all(project_id)
+
+    labeling_tasks_edges = []
+
+    for labeling_task_item in labeling_tasks_all:
+        information_sources_ids = information_source.get_all_ids_by_labeling_task_id(
+            project_id, labeling_task_item.id
+        )
+
+        information_sources = []
+        for information_source_id in information_sources_ids:
+            is_val = information_source.get(project_id, information_source_id)
+            information_sources.append(is_val)
+
+        information_sources_edges = []
+        for information_source_item in information_sources:
+            last_payload = information_source.get_last_payload(
+                project_id, information_source_item.id
+            )
+            lastPayload = {}
+            if last_payload is not None:
+                lastPayload = {"state": last_payload.state}
+            information_sources_edges.append(
+                {
+                    "node": {
+                        "id": str(information_source_item.id),
+                        "name": information_source_item.name,
+                        "description": information_source_item.description,
+                        "type": information_source_item.type,
+                        "lastPayload": lastPayload,
+                    }
+                }
+            )
+
+        labeling_tasks_edges.append(
+            {
+                "node": {
+                    "id": str(labeling_task_item.id),
+                    "name": labeling_task_item.name,
+                    "taskType": labeling_task_item.task_type,
+                    "informationSources": {"edges": information_sources_edges},
+                }
+            }
+        )
+
+    data = {
+        "data": {
+            "projectByProjectId": {
+                "embeddings": {"edges": embeddings_edges},
+                "labelingTasks": {"edges": labeling_tasks_edges},
+            }
+        }
+    }
+
+    return pack_json_result(data)
+
+
+@router.get(
     "/{project_id}/record-export-by-project-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
-    data_graphql = pack_as_graphql(data, "projectByProjectId")
-    return pack_json_result(data_graphql)
+    data_packed = pack_edges_node(data, "projectByProjectId")
+    return pack_json_result(data_packed)
 
 
 @router.get("/model-provider-info")

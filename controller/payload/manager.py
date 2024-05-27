@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 from controller.payload import payload_scheduler
-from graphql_api.types import (
+from fast_api.types import (
     LabelingFunctionSampleRecordWrapper,
     LabelingFunctionSampleRecords,
 )

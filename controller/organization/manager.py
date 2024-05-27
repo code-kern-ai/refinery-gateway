@@ -1,11 +1,10 @@
 from typing import Any, List, Dict, Optional, Union
 from controller.misc import config_service
 
-from graphql_api.types import UserCountsWrapper
 from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
-from submodules.model.models import User as User_model, Organization, User
+from submodules.model.models import Organization, User
 from util import notification
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
@@ -75,13 +74,18 @@ def get_all_users(
     return all_users_expanded
 
 
-def get_all_users_with_record_count(
-    organization_id: str, project_id: str
-) -> List[UserCountsWrapper]:
+def get_all_users_with_record_count(organization_id: str, project_id: str):
+    values = []
+
+    if organization_id is None or project_id is None:
+        return values
+
     users = user.get_user_count(organization_id, project_id)
-    return [
-        UserCountsWrapper(user=User_model(id=row[0]), counts=row[1]) for row in users
-    ]
+
+    for row in users:
+        values.append({"user_id": str(row[0]), "counts": row[1]})
+
+    return values
 
 
 def create_organization(name: str) -> Organization:
@@ -99,6 +103,8 @@ def delete_organization(name: str) -> None:
 
 
 def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
+    if org_id is None:
+        return []
     return organization.get_organization_overview_stats(org_id)
 
 
