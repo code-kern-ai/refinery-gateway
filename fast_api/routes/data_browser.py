@@ -97,7 +97,7 @@ def search_records_extended_cog(
     limit = body.limit
     offset = body.offset
 
-    user_id = request.state.user_id
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
 
     results = resolve_extended_search(project_id, user_id, filter_data, limit, offset)
 
@@ -296,7 +296,7 @@ def update_data_slice(
 
 def handle_error(exception: Exception, user_id: str, project_id: str):
     general.rollback()
-    if exception.__class__ == TooManyRecordsForStaticSliceException.__class__:
+    if isinstance(exception, TooManyRecordsForStaticSliceException):
         error = "Too many records for a static slice"
     else:
         error = str(exception.__class__.__name__)
