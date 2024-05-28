@@ -43,6 +43,7 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('state', sa.String(), nullable=True),
     sa.Column('meta_info', sa.JSON(), nullable=True),
+    sa.Column('execution_group_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['macro_id'], ['cognition.macro.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
@@ -50,6 +51,7 @@ def upgrade():
     )
     op.create_index(op.f('ix_cognition_macro_execution_created_by'), 'macro_execution', ['created_by'], unique=False, schema='cognition')
     op.create_index(op.f('ix_cognition_macro_execution_macro_id'), 'macro_execution', ['macro_id'], unique=False, schema='cognition')
+    op.create_index(op.f('ix_cognition_macro_execution_execution_group_id'), 'macro_execution', ['execution_group_id'], unique=False, schema='cognition')
     op.create_table('macro_node',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('macro_id', postgresql.UUID(as_uuid=True), nullable=True),
@@ -115,6 +117,7 @@ def downgrade():
     op.drop_table('macro_node', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_execution_macro_id'), table_name='macro_execution', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_execution_created_by'), table_name='macro_execution', schema='cognition')
+    op.drop_index(op.f('ix_cognition_macro_execution_execution_group_id'), table_name='macro_execution', schema='cognition')    
     op.drop_table('macro_execution', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_project_id'), table_name='macro', schema='cognition')
     op.drop_index(op.f('ix_cognition_macro_created_by'), table_name='macro', schema='cognition')
