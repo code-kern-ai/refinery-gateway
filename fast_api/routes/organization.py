@@ -301,37 +301,6 @@ def delete_organization(request: Request, body: DeleteOrganizationBody = Body(..
     return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
 
 
-@router.get("/active-users")
-def get_active_users(request: Request, filter_minutes: Optional[int] = None):
-    auth_manager.check_admin_access(request.state.info)
-    activeUsers = user_manager.get_active_users(filter_minutes, None)
-
-    activeUsers = [
-        {
-            "id": str(user.id),
-            "lastInteraction": (
-                user.last_interaction.isoformat() if user.last_interaction else None
-            ),
-            "role": user.role,
-            "organizationName": (
-                organization_manager.get_organization_by_id(str(user.organization_id))[
-                    "name"
-                ]
-                if user.organization_id
-                else ""
-            ),
-        }
-        for user in activeUsers
-    ]
-
-    return {
-        "data": {
-            "activeUsers": activeUsers,
-            "fullCountUsers": len(activeUsers),
-        }
-    }
-
-
 @router.post("/create-admin-message")
 def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -367,11 +336,37 @@ def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)
 def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
 ):
+    active_users = user_manager.get_active_users(body.filter_minutes, None)
+    active_users = [
+        {
+            "id": str(user.id),
+            "lastInteraction": (
+                user.last_interaction.isoformat() if user.last_interaction else None
+            ),
+            "role": user.role,
+            "organizationName": (
+                organization_manager.get_organization_by_id(str(user.organization_id))[
+                    "name"
+                ]
+                if user.organization_id
+                else ""
+            ),
+        }
+        for user in active_users
+    ]
+    active_users = {user["id"]: user for user in active_users}
+
     data = user_manager.get_mapped_sorted_paginated_users(
-        body.active_users, body.sort_key, body.sort_direction, body.offset, body.limit
+        active_users, body.sort_key, body.sort_direction, body.offset, body.limit
     )
     return pack_json_result(
-        {"data": {"mappedSortedPaginatedUsers": data}}, wrap_for_frontend=False
+        {
+            "data": {
+                "mappedSortedPaginatedUsers": data,
+                "fullCountUsers": len(active_users),
+            }
+        },
+        wrap_for_frontend=False,
     )
 
 

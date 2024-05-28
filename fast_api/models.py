@@ -409,11 +409,11 @@ class UserLanguageDisplay(BaseModel):
 
 
 class MappedSortedPaginatedUsers(BaseModel):
-    active_users: Dict[str, Any]
     sort_key: str
     sort_direction: int
     offset: int
     limit: int
+    filter_minutes: int
 
 
 class DeleteUserBody(BaseModel):
