@@ -43,6 +43,7 @@ ACTIVE_ADMIN_MESSAGES_WHITELIST = {
     "id",
     "level",
     "text",
+    "scheduled_date",
 }
 
 
@@ -306,7 +307,7 @@ def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(.
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     admin_message_manager.create_admin_message(
-        body.text, body.level, body.archive_date, user_id
+        body.text, body.level, body.archive_date, body.scheduled_date, user_id
     )
     notification.send_global_update_for_all_organizations("admin_message")
     return pack_json_result({"data": {"createAdminMessage": {"ok": True}}})

@@ -221,6 +221,7 @@ class CreateAdminMessageBody(BaseModel):
     text: StrictStr
     level: StrictStr
     archive_date: StrictStr
+    scheduled_date: Optional[StrictStr] = None
 
 
 class ArchiveAdminMessageBody(BaseModel):
