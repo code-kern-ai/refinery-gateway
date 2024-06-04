@@ -27,7 +27,7 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 from controller.misc import manager as misc
 
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
 from submodules.model.business_objects.user import get
@@ -362,10 +362,8 @@ def get_mapped_sorted_paginated_users(
     )
     return pack_json_result(
         {
-            "data": {
-                "mappedSortedPaginatedUsers": data,
-                "fullCountUsers": len(active_users),
-            }
+            "mappedSortedPaginatedUsers": data,
+            "fullCountUsers": len(active_users),
         },
         wrap_for_frontend=False,
     )
@@ -375,4 +373,4 @@ def get_mapped_sorted_paginated_users(
 def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.delete_user(body.user_id)
-    return pack_json_result({"data": {"deleteUser": {"ok": True}}})
+    return get_silent_success()
