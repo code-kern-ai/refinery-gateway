@@ -124,7 +124,7 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
 @router.get("/all-admin-messages")
 def all_admin_messages(request: Request, limit: int = 100) -> str:
-
+    auth_manager.check_admin_access(request.state.info)
     data = admin_message_manager.get_messages(limit, active_only=False)
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
@@ -337,6 +337,7 @@ def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)
 def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
 ):
+    auth_manager.check_admin_access(request.state.info)
     active_users = user_manager.get_active_users(body.filter_minutes, None)
     active_users = [
         {

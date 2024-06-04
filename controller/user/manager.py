@@ -90,7 +90,7 @@ def remove_organization_from_user(user_mail: str) -> None:
     user.remove_organization(user_id, with_commit=True)
 
 
-def get_active_users(minutes: str, order_by_interaction: bool) -> User:
+def get_active_users(minutes: int, order_by_interaction: bool) -> User:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
     return user_activity.get_active_users_in_range(
