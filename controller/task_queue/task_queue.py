@@ -5,8 +5,9 @@ import time
 from submodules.model.models import TaskQueue as TaskQueueDBObj
 from . import manager
 from submodules.model.business_objects import general, task_queue as task_queue_db_bo
+from submodules.model.cognition_objects import macro as macro_db_bo
 import traceback
-from submodules.model.enums import TaskType
+from submodules.model.enums import TaskType, MacroExecutionState
 
 
 # custom class wrapping a list in order to make it thread safe
@@ -207,8 +208,21 @@ def init_task_queues() -> CustomTaskQueue:
         )
         if task.task_type == TaskType.TASK_QUEUE.value:
             task_queue_queue.add_task(task, start_func, check_func, check_every)
+        elif task.task_type == TaskType.RUN_COGNITION_MACRO.value:
+            # macros that were running when the server was restarted are set to failed since we dont have pointers to the running process
+            item = macro_db_bo.get_macro_execution(
+                task.task_info["execution_id"],
+                task.task_info["execution_group_id"],
+                MacroExecutionState.RUNNING,
+            )
+            if item is not None:
+                item.state = MacroExecutionState.FAILED.value
+                task_queue_db_bo.remove_task_from_queue(task.project_id, task.id)
+                continue
+            task_queue_queue.add_task(task, start_func, check_func, check_every)
         else:
             task_queue.add_task(task, start_func, check_func, check_every)
+    general.commit()
     return task_queue
 
 

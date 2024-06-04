@@ -15,6 +15,7 @@ from api.transfer import (
     CognitionImport,
     CognitionPrepareProject,
     CognitionParseMarkdownFile,
+    CognitionStartMacroExecutionGroup,
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
@@ -138,6 +139,10 @@ routes = [
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Route("/project", ProjectCreationFromWorkflow),
+    Route(
+        "/macro/{macro_id:str}/execution-group/{group_id:str}/queue",
+        CognitionStartMacroExecutionGroup,
+    ),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),

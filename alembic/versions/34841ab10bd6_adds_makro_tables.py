@@ -88,10 +88,12 @@ def upgrade():
     op.create_table('macro_execution_link',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('execution_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('execution_node_id', postgresql.UUID(as_uuid=True), nullable=True),    
     sa.Column('action', sa.String(), nullable=True),
     sa.Column('other_id_target', sa.String(), nullable=True),
     sa.Column('other_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['execution_id'], ['cognition.macro_execution.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['execution_node_id'], ['cognition.macro_node.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
     )
