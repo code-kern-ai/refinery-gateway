@@ -29,9 +29,14 @@ def get_messages(limit: int = 100, active_only: bool = True) -> List[AdminMessag
 
 
 def create_admin_message(
-    text: str, level: str, archive_date: str, created_by: str
+    text: str, level: str, archive_date: str, scheduled_date: str, created_by: str
 ) -> AdminMessage:
     archive_date = datetime.fromisoformat(archive_date.replace("Z", "+00:00"))
+    scheduled_date = (
+        datetime.fromisoformat(scheduled_date.replace("Z", "+00:00"))
+        if scheduled_date
+        else None
+    )
 
     now = datetime.now().astimezone(archive_date.tzinfo)
 
@@ -41,6 +46,7 @@ def create_admin_message(
         text=text,
         level=level,
         archive_date=archive_date,
+        scheduled_date=scheduled_date,
         created_by=created_by,
         with_commit=True,
     )
