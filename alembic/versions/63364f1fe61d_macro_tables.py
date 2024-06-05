@@ -1,7 +1,7 @@
 """Macro tables
 
 Revision ID: 194838aa0431
-Revises: a14f1a9b12b0
+Revises: 63364f1fe61d
 Create Date: 2024-06-05 11:42:56.258816
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '194838aa0431'
-down_revision = 'a14f1a9b12b0'
+down_revision = '63364f1fe61d'
 branch_labels = None
 depends_on = None
 
