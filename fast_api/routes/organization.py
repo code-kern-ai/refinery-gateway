@@ -366,7 +366,7 @@ def get_mapped_sorted_paginated_users(
             "mappedSortedPaginatedUsers": data,
             "fullCountUsers": len(active_users),
         },
-        wrap_for_frontend=False,
+        wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
     )
 
 

@@ -122,7 +122,7 @@ def get_mapped_sorted_paginated_users(
             get_user["email"] = get_user["traits"]["email"]
             get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
             active_user_by_id = active_users[user_id]
-            get_user["last_interaction"] = active_user_by_id["lastInteraction"]
+            get_user["lastInteraction"] = active_user_by_id["lastInteraction"]
             get_user["role"] = active_user_by_id["role"]
             get_user["organization"] = active_user_by_id["organizationName"]
 
