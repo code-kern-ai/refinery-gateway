@@ -131,11 +131,7 @@ def get_mapped_sorted_paginated_users(
     final_users = sorted(
         final_users,
         key=lambda x: x[sort_key] if sort_key in x else None,
-        reverse=(
-            sort_direction == -1
-            if sort_key in ["last_interaction", "created_at"]
-            else sort_direction == 1
-        ),
+        reverse=sort_direction == -1,
     )
 
     # paginating users
