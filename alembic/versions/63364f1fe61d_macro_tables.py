@@ -41,6 +41,7 @@ def upgrade():
     op.create_index(op.f('ix_cognition_macro_scope'), 'macro', ['scope'], unique=False, schema='cognition')
     op.create_table('macro_execution',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('organization_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('macro_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -48,6 +49,7 @@ def upgrade():
     sa.Column('execution_group_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('meta_info', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['macro_id'], ['cognition.macro.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
@@ -90,12 +92,14 @@ def upgrade():
     op.create_index(op.f('ix_cognition_macro_edge_to_node_id'), 'macro_edge', ['to_node_id'], unique=False, schema='cognition')
     op.create_table('macro_execution_link',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('organization_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('execution_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('execution_node_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('action', sa.String(), nullable=True),
     sa.Column('other_id_target', sa.String(), nullable=True),
     sa.Column('other_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['execution_id'], ['cognition.macro_execution.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['execution_node_id'], ['cognition.macro_node.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='cognition'
