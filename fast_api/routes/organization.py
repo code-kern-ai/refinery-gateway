@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
@@ -9,6 +10,8 @@ from fast_api.models import (
     CreateAdminMessageBody,
     CreateOrganizationBody,
     DeleteOrganizationBody,
+    DeleteUserBody,
+    MappedSortedPaginatedUsers,
     RemoveUserToOrganizationBody,
     UpdateConfigBody,
     UserLanguageDisplay,
@@ -24,9 +27,10 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 from controller.misc import manager as misc
 
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
+from submodules.model.business_objects.user import get
 from submodules.model.util import sql_alchemy_to_dict
 from util import doc_ock, notification
 
@@ -120,6 +124,7 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
 @router.get("/all-admin-messages")
 def all_admin_messages(request: Request, limit: int = 100) -> str:
+    auth_manager.check_admin_access(request.state.info)
     data = admin_message_manager.get_messages(limit, active_only=False)
     data_dict = sql_alchemy_to_dict(data)
     return pack_json_result({"data": {"allAdminMessages": data_dict}})
@@ -295,24 +300,6 @@ def delete_organization(request: Request, body: DeleteOrganizationBody = Body(..
     return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
 
 
-@router.get("/active-users")
-def get_active_users(request: Request):
-    auth_manager.check_admin_access(request.state.info)
-    activeUsers = user_manager.get_active_users(None, None)
-
-    activeUsers = [
-        {
-            "id": str(user.id),
-            "lastInteraction": (
-                user.last_interaction.isoformat() if user.last_interaction else None
-            ),
-        }
-        for user in activeUsers
-    ]
-
-    return {"data": {"activeUsers": activeUsers}}
-
-
 @router.post("/create-admin-message")
 def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -342,3 +329,47 @@ def archive_admin_message(
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
     user_manager.update_user_language_display(body.user_id, body.language_display)
     return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})
+
+
+@router.post("/mapped-sorted-paginated-users")
+def get_mapped_sorted_paginated_users(
+    request: Request, body: MappedSortedPaginatedUsers = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    active_users = user_manager.get_active_users(body.filter_minutes, None)
+    active_users = [
+        {
+            "id": str(user.id),
+            "lastInteraction": (
+                user.last_interaction.isoformat() if user.last_interaction else None
+            ),
+            "role": user.role,
+            "organizationName": (
+                organization_manager.get_organization_by_id(str(user.organization_id))[
+                    "name"
+                ]
+                if user.organization_id
+                else ""
+            ),
+        }
+        for user in active_users
+    ]
+    active_users = {user["id"]: user for user in active_users}
+
+    data = user_manager.get_mapped_sorted_paginated_users(
+        active_users, body.sort_key, body.sort_direction, body.offset, body.limit
+    )
+    return pack_json_result(
+        {
+            "mappedSortedPaginatedUsers": data,
+            "fullCountUsers": len(active_users),
+        },
+        wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
+    )
+
+
+@router.delete("/delete-user")
+def delete_user(request: Request, body: DeleteUserBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    user_manager.delete_user(body.user_id)
+    return get_silent_success()
