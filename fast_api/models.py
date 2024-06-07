@@ -407,15 +407,3 @@ class TokenizedRecordBody(BaseModel):
 class UserLanguageDisplay(BaseModel):
     user_id: str
     language_display: str
-
-
-class MappedSortedPaginatedUsers(BaseModel):
-    sort_key: str
-    sort_direction: int
-    offset: int
-    limit: int
-    filter_minutes: int
-
-
-class DeleteUserBody(BaseModel):
-    user_id: StrictStr

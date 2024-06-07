@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Dict
 from submodules.model import User, enums
 from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
@@ -90,9 +90,9 @@ def remove_organization_from_user(user_mail: str) -> None:
     user.remove_organization(user_id, with_commit=True)
 
 
-def get_active_users(minutes: int, order_by_interaction: bool) -> User:
+def get_active_users(minutes: str, order_by_interaction: bool) -> User:
     now = datetime.now()
-    last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
+    last_interaction_range = (now - timedelta(minutes=minutes)) if minutes else None
     return user_activity.get_active_users_in_range(
         last_interaction_range, order_by_interaction
     )
@@ -101,45 +101,3 @@ def get_active_users(minutes: int, order_by_interaction: bool) -> User:
 @param_throttle(seconds=10)
 def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
-
-
-def get_mapped_sorted_paginated_users(
-    active_users: Dict[str, Any],
-    sort_key: str,
-    sort_direction: int,
-    offset: int,
-    limit: int,
-) -> List[Dict[str, str]]:
-
-    final_users = []
-
-    # mapping users with the users in kratos
-    active_users_ids = list(active_users.keys())
-
-    for user_id in active_users_ids:
-        get_user = kratos.__get_identity(user_id, False)["identity"]
-        if get_user:
-            get_user["email"] = get_user["traits"]["email"]
-            get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
-            active_user_by_id = active_users[user_id]
-            get_user["lastInteraction"] = active_user_by_id["lastInteraction"]
-            get_user["role"] = active_user_by_id["role"]
-            get_user["organization"] = active_user_by_id["organizationName"]
-
-            final_users.append(get_user)
-
-    final_users = sorted(
-        final_users,
-        key=lambda x: x[sort_key] if sort_key in x else None,
-        reverse=sort_direction == -1,
-    )
-
-    # paginating users
-    final_users = final_users[offset : offset + limit]
-
-    return final_users
-
-
-def delete_user(user_id: str) -> None:
-    user.delete(user_id, with_commit=True)
-    user_activity.delete_user_activity(user_id, with_commit=True)
