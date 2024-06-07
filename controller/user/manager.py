@@ -118,7 +118,7 @@ def get_mapped_sorted_paginated_users(
 
     for user_id in active_users_ids:
         get_user = kratos.__get_identity(user_id, False)["identity"]
-        if get_user:
+        if get_user and get_user["traits"]["email"] is not None:
             get_user["email"] = get_user["traits"]["email"]
             get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
             active_user_by_id = active_users[user_id]
