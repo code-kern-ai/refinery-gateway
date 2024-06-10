@@ -356,14 +356,11 @@ def get_mapped_sorted_paginated_users(
     ]
     active_users = {user["id"]: user for user in active_users}
 
-    data = user_manager.get_mapped_sorted_paginated_users(
+    data, final_len = user_manager.get_mapped_sorted_paginated_users(
         active_users, body.sort_key, body.sort_direction, body.offset, body.limit
     )
     return pack_json_result(
-        {
-            "mappedSortedPaginatedUsers": data,
-            "fullCountUsers": len(data),
-        },
+        {"mappedSortedPaginatedUsers": data, "fullCountUsers": final_len},
         wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
     )
 
