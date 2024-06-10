@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
@@ -30,7 +29,6 @@ from controller.misc import manager as misc
 from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
-from submodules.model.business_objects.user import get
 from submodules.model.util import sql_alchemy_to_dict
 from util import doc_ock, notification
 
