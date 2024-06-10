@@ -132,7 +132,7 @@ def get_mapped_sorted_paginated_users(
 
     final_users = sorted(
         final_users,
-        key=lambda x: x[sort_key] if sort_key in x else None,
+        key=lambda x: (x[sort_key] is None, x.get(sort_key, "")),
         reverse=sort_direction == -1,
     )
 
