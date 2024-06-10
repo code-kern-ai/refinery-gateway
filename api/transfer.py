@@ -315,7 +315,6 @@ class CognitionStartMacroExecutionGroup(HTTPEndpoint):
                 )
             general.commit()
             general.remove_and_refresh_session(token, False)
-            sleep(0.2)
 
         daemon.run(queue_tasks)
 
