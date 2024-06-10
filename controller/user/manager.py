@@ -109,9 +109,10 @@ def get_mapped_sorted_paginated_users(
     sort_direction: int,
     offset: int,
     limit: int,
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, Any]]:
 
     final_users = []
+    save_len_final_users = 0
 
     # mapping users with the users in kratos
     active_users_ids = list(active_users.keys())
@@ -122,22 +123,23 @@ def get_mapped_sorted_paginated_users(
             get_user["email"] = get_user["traits"]["email"]
             get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
             active_user_by_id = active_users[user_id]
-            get_user["lastInteraction"] = active_user_by_id["lastInteraction"]
+            get_user["last_interaction"] = active_user_by_id["last_interaction"]
             get_user["role"] = active_user_by_id["role"]
             get_user["organization"] = active_user_by_id["organizationName"]
 
             final_users.append(get_user)
+            save_len_final_users += 1
 
     final_users = sorted(
         final_users,
-        key=lambda x: x[sort_key] if sort_key in x else None,
+        key=lambda x: (x[sort_key] is None, x.get(sort_key, "")),
         reverse=sort_direction == -1,
     )
 
     # paginating users
     final_users = final_users[offset : offset + limit]
 
-    return final_users
+    return final_users, save_len_final_users
 
 
 def delete_user(user_id: str) -> None:
