@@ -340,7 +340,7 @@ def get_mapped_sorted_paginated_users(
     active_users = [
         {
             "id": str(user.id),
-            "lastInteraction": (
+            "last_interaction": (
                 user.last_interaction.isoformat() if user.last_interaction else None
             ),
             "role": user.role,
