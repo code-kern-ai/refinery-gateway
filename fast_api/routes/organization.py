@@ -275,6 +275,7 @@ def get_all_organizations(request: Request):
                                 }
                             }
                             for user in org.users
+                            if resolve_user_mail_by_id(user.id) is not None
                         ]
                     },
                     "maxRows": org.max_rows,
