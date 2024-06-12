@@ -218,11 +218,13 @@ def update_config(request: Request, body: UpdateConfigBody = Body(...)):
         print(
             "config should only be changed for open source/local version to prevent limit issues"
         )
+        return
     misc.update_config(body.dict_str)
     misc.refresh_config()
     orgs = organization.get_all()
     if not orgs or len(orgs) != 1:
         print("local version should only have one organization")
+        return
 
     for org in orgs:
         # send to all so all are notified about the change
