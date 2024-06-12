@@ -76,7 +76,9 @@ def get_user_info_extended(request: Request):
     data = {
         "userInfo": {
             "id": str(user.id),
-            "organizationId": str(user.organization_id),
+            "organizationId": (
+                str(user.organization_id) if user.organization_id else None
+            ),
             "firstName": name.get("first"),
             "lastName": name.get("last"),
             "mail": mail,
