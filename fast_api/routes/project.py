@@ -305,11 +305,18 @@ def labeling_tasks_by_project_id(project_id: str) -> str:
     "/{project_id}/labeling-tasks-by-project-id-with-embeddings",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def labeling_tasks_by_project_id_with_embeddings(project_id: str) -> str:
+def labeling_tasks_by_project_id_with_embeddings(
+    project_id: str, only_on_attribute: bool = False
+) -> str:
     embeddings = get_all_embeddings_by_project_id(project_id)
 
     embeddings_edges = []
     for embedding in embeddings:
+        if (
+            only_on_attribute
+            and embedding.type != enums.EmbeddingType.ON_ATTRIBUTE.value
+        ):
+            continue
         attribute = attr_manager.get_attribute(project_id, embedding.attribute_id)
         embeddings_edges.append(
             {
