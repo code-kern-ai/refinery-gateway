@@ -119,6 +119,7 @@ def get_mapped_sorted_paginated_users(
 
     for user_id in active_users_ids:
         get_user = kratos.__get_identity(user_id, False)["identity"]
+        print(type(get_user), flush=True)
         if get_user and get_user["traits"]["email"] is not None:
             get_user["email"] = get_user["traits"]["email"]
             get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
@@ -126,6 +127,14 @@ def get_mapped_sorted_paginated_users(
             get_user["last_interaction"] = active_user_by_id["last_interaction"]
             get_user["role"] = active_user_by_id["role"]
             get_user["organization"] = active_user_by_id["organizationName"]
+            print(type(get_user), flush=True)
+
+            public_meta = get_user["metadata_public"]
+            get_user["sso_provider"] = (
+                public_meta.get("registration_scope", {}).get("provider_id", None)
+                if public_meta
+                else None
+            )
 
             final_users.append(get_user)
             save_len_final_users += 1
