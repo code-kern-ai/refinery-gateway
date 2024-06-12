@@ -419,3 +419,9 @@ class MappedSortedPaginatedUsers(BaseModel):
 
 class DeleteUserBody(BaseModel):
     user_id: StrictStr
+
+
+class CancelTaskBody(BaseModel):
+    project_id: StrictStr
+    task_id: StrictStr
+    task_type: StrictStr

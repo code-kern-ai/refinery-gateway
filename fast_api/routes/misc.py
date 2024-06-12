@@ -2,6 +2,7 @@ import json
 from fastapi import APIRouter, Body, Request
 from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
+    CancelTaskBody,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
 )
@@ -108,9 +109,15 @@ def get_all_tasks(request: Request, only_running: bool):
 
 
 @router.post("/cancel-task")
-def cancel_task(request: Request, project_id: str, task_id: str, task_type: str):
+def cancel_task(
+    request: Request,
+    body: CancelTaskBody = Body(...),
+):
 
     auth.check_admin_access(request.state.info)
+    task_type = body.task_type
+    project_id = body.project_id
+    task_id = body.task_id
 
     if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
         controller_manager.cancel_attribute_calculation(project_id, task_id)
