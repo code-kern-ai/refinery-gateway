@@ -72,6 +72,11 @@ def get_all_users(
         all_users, column_whitelist=USER_INFO_WHITELIST
     )
     all_users_expanded = kratos.expand_user_mail_name(all_users_dict)
+    all_users_expanded = [
+        user
+        for user in all_users_expanded
+        if user["firstName"] is not None and user["lastName"] is not None
+    ]
     return all_users_expanded
 
 

@@ -127,6 +127,13 @@ def get_mapped_sorted_paginated_users(
             get_user["role"] = active_user_by_id["role"]
             get_user["organization"] = active_user_by_id["organizationName"]
 
+            public_meta = get_user["metadata_public"]
+            get_user["sso_provider"] = (
+                public_meta.get("registration_scope", {}).get("provider_id", None)
+                if public_meta
+                else None
+            )
+
             final_users.append(get_user)
             save_len_final_users += 1
 

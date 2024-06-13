@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from api.healthcheck import Healthcheck
+from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
 from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
@@ -36,6 +37,7 @@ from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from middleware.database_session import handle_db_session
+from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
@@ -151,11 +153,8 @@ routes = [
 
 fastapi_app.middleware("http")(handle_db_session)
 
-
-app = Starlette(routes=routes)
-
-# middleware = [Middleware(DatabaseSessionHandler)]
-# app = Starlette(routes=routes, middleware=middleware)
+middleware = [Middleware(DatabaseSessionHandler)]
+app = Starlette(routes=routes, middleware=middleware)
 
 init_task_queues()
 check_in_deletion_projects()

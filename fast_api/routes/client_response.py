@@ -1,6 +1,6 @@
 import json
 from typing import Any, Optional
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from fastapi import status
 from sqlalchemy.engine.row import Row
 from submodules.model.models import Base
@@ -47,6 +47,12 @@ def wrap_content_for_frontend(content: Any):
 SILENT_SUCCESS_RESPONSE = JSONResponse(
     status_code=status.HTTP_200_OK,
     content={"message": "Success"},
+)
+
+
+GENERIC_FAILURE_RESPONSE = PlainTextResponse(
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    content="An error occurred",
 )
 
 

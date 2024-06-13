@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
@@ -122,6 +123,19 @@ def get_userid_from_mail(user_mail: str) -> str:
             continue
         if values[key]["simple"]["mail"] == user_mail:
             return key
+    # not in cached values, try search kratos
+    return __search_kratos_for_user_mail(user_mail)
+
+
+def __search_kratos_for_user_mail(user_mail: str) -> str:
+    request = requests.get(
+        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(user_mail)}"
+    )
+    if request.ok:
+        identities = request.json()
+        for i in identities:
+            if i["traits"]["email"].lower() == user_mail.lower():
+                return i["id"]
     return None
 
 

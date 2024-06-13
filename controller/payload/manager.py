@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 from controller.payload import payload_scheduler
 from fast_api.types import (
-    LabelingFunctionSampleRecordWrapper,
     LabelingFunctionSampleRecords,
 )
 from submodules.model import InformationSourcePayload, enums
@@ -74,7 +73,7 @@ def get_labeling_function_on_10_records(
             }
             for record_item in sample_records
         ],
-        "containerLogs": container_logs,
+        "containerLogs": [log for log in container_logs if "progress: " not in log],
         "codeHasErrors": code_has_errors,
     }
 
