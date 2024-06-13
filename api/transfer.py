@@ -2,7 +2,6 @@ import logging
 import traceback
 import time
 from typing import Optional, Dict
-from time import sleep
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
@@ -302,19 +301,21 @@ class CognitionStartMacroExecutionGroup(HTTPEndpoint):
 
         def queue_tasks():
             token = general.get_ctx_token()
-            for entry in execution_entries:
-                task_queue_manager.add_task(
-                    refinery_prj_id,
-                    TaskType.RUN_COGNITION_MACRO,
-                    entry.created_by,
-                    {
-                        "macro_id": macro_id,
-                        "execution_id": str(entry.id),
-                        "execution_group_id": group_id,
-                    },
-                )
-            general.commit()
-            general.remove_and_refresh_session(token, False)
+            try:
+                for entry in execution_entries:
+                    task_queue_manager.add_task(
+                        refinery_prj_id,
+                        TaskType.RUN_COGNITION_MACRO,
+                        entry.created_by,
+                        {
+                            "macro_id": macro_id,
+                            "execution_id": str(entry.id),
+                            "execution_group_id": group_id,
+                        },
+                    )
+                general.commit()
+            finally:
+                general.remove_and_refresh_session(token, False)
 
         daemon.run(queue_tasks)
 

@@ -17,7 +17,7 @@ from submodules.model.models import Organization, Project, User
 from controller.misc import manager as misc_manager
 import sqlalchemy
 
-DEV_USER_ID = "59e8dfca-ce56-44df-a8c7-5f05c61da499"
+DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
 
 def get_organization_id_by_info(info) -> Organization:
