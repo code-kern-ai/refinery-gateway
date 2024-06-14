@@ -17,7 +17,8 @@ from .handler import (
     attribute_calculation as attribute_calculation_handler,
     task_queue as task_queue_handler,
     markdown_file as markdown_file_handler,
-    parse_cognition_tmp_file as cognition_tmp_file,
+    parse_cognition_tmp_file as cognition_tmp_file_handler,
+    macro as macro_handler,
 )
 from .util import if_task_queue_send_websocket
 
@@ -92,14 +93,20 @@ def get_task_function_by_type(task_type: str) -> Tuple[Callable, Callable, int]:
     if task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
         return markdown_file_handler.get_task_functions()
     if task_type == enums.TaskType.PARSE_COGNITION_TMP_FILE.value:
-        return cognition_tmp_file.get_task_functions()
+        return cognition_tmp_file_handler.get_task_functions()
+    if task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
+        return macro_handler.get_task_functions()
     raise ValueError(f"Task type {task_type} not supported yet")
 
 
 def add_task_to_task_queue(task: TaskQueueDBObj) -> int:
     start_func, check_func, check_every = get_task_function_by_type(task.task_type)
     queue = None
-    if task.task_type == enums.TaskType.TASK_QUEUE.value:
+    if (
+        task.task_type == enums.TaskType.TASK_QUEUE.value
+        or task.task_type == enums.TaskType.RUN_COGNITION_MACRO.value
+    ):
+        # macros have tasks (e.g. etl parsing) inside so the execution shouldn't block own queue items
         queue = task_queue.get_task_queue_queue()
     else:
         queue = task_queue.get_task_queue()

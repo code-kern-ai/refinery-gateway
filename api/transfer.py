@@ -2,7 +2,6 @@ import logging
 import traceback
 import time
 from typing import Optional, Dict
-
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
@@ -22,7 +21,10 @@ from submodules.model.business_objects import (
     project as refinery_project,
 )
 
-from submodules.model.cognition_objects import project as cognition_project
+from submodules.model.cognition_objects import (
+    project as cognition_project,
+    macro as macro_db_bo,
+)
 
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
@@ -277,6 +279,48 @@ class CognitionParseMarkdownFile(HTTPEndpoint):
             )
         finally:
             general.remove_and_refresh_session(ctx_token, False)
+
+
+class CognitionStartMacroExecutionGroup(HTTPEndpoint):
+    def put(self, request) -> PlainTextResponse:
+        macro_id = request.path_params["macro_id"]
+        group_id = request.path_params["group_id"]
+
+        execution_entries = macro_db_bo.get_all_macro_executions(macro_id, group_id)
+
+        if len(execution_entries) == 0:
+            return PlainTextResponse("No executions found", status_code=400)
+        if not (cognition_prj_id := execution_entries[0].meta_info.get("project_id")):
+            return PlainTextResponse("No project id found", status_code=400)
+        cognition_prj = cognition_project.get(cognition_prj_id)
+        refinery_prj_id = str(
+            refinery_project.get_or_create_queue_project(
+                cognition_prj.organization_id, cognition_prj.created_by, True
+            ).id
+        )
+        cached = {str(e.id): str(e.created_by) for e in execution_entries}
+
+        def queue_tasks():
+            token = general.get_ctx_token()
+            try:
+                for exec_id in cached:
+                    task_queue_manager.add_task(
+                        refinery_prj_id,
+                        TaskType.RUN_COGNITION_MACRO,
+                        cached[exec_id],
+                        {
+                            "macro_id": macro_id,
+                            "execution_id": exec_id,
+                            "execution_group_id": group_id,
+                        },
+                    )
+                general.commit()
+            finally:
+                general.remove_and_refresh_session(token, False)
+
+        daemon.run(queue_tasks)
+
+        return PlainTextResponse("OK")
 
 
 class AssociationsImport(HTTPEndpoint):

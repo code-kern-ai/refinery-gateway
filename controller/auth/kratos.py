@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
@@ -33,16 +34,38 @@ def __refresh_identity_cache():
     request = requests.get(f"{KRATOS_ADMIN_URL}/identities")
     if request.ok:
         collected = datetime.now()
+        identities = request.json()
+
+        # maybe more pages https://www.ory.sh/docs/ecosystem/api-design#pagination
+        while next_link := __get_link_from_kratos_request(request):
+            request = requests.get(next_link)
+            if request.ok:
+                identities.extend(request.json())
+
         KRATOS_IDENTITY_CACHE = {
             identity["id"]: {
                 "identity": identity,
                 "simple": __parse_identity_to_simple(identity),
             }
-            for identity in request.json()
+            for identity in identities
         }
+
         KRATOS_IDENTITY_CACHE["collected"] = collected
     else:
         KRATOS_IDENTITY_CACHE = {}
+
+
+def __get_link_from_kratos_request(request: requests.Response) -> str:
+    # rel=next only if there is more than 1 page
+    # </admin/identities?page_size=1&page_token=00000000-0000-0000-0000-000000000000>; rel="first",</admin/identities?page_size=1&page_token=08f30706-9919-4776-9018-6a56c4fa8bb9>; rel="next"
+    link = request.headers.get("Link")
+    if link:
+        if 'rel="next"' in link:
+            parts = link.split("<")
+            for part in parts:
+                if 'rel="next"' in part:
+                    return part.split(">")[0].replace("/admin", KRATOS_ADMIN_URL)
+    return None
 
 
 def __get_identity(user_id: str, only_simple: bool = True) -> Dict[str, Any]:
@@ -100,6 +123,19 @@ def get_userid_from_mail(user_mail: str) -> str:
             continue
         if values[key]["simple"]["mail"] == user_mail:
             return key
+    # not in cached values, try search kratos
+    return __search_kratos_for_user_mail(user_mail)
+
+
+def __search_kratos_for_user_mail(user_mail: str) -> str:
+    request = requests.get(
+        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(user_mail)}"
+    )
+    if request.ok:
+        identities = request.json()
+        for i in identities:
+            if i["traits"]["email"].lower() == user_mail.lower():
+                return i["id"]
     return None
 
 

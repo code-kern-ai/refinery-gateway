@@ -8,6 +8,7 @@ from submodules.model.models import Organization, User
 from util import notification
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.s3 import controller as s3
 
 USER_INFO_WHITELIST = {"id", "role"}
 ORGANIZATION_WHITELIST = {
@@ -71,6 +72,11 @@ def get_all_users(
         all_users, column_whitelist=USER_INFO_WHITELIST
     )
     all_users_expanded = kratos.expand_user_mail_name(all_users_dict)
+    all_users_expanded = [
+        user
+        for user in all_users_expanded
+        if user["firstName"] is not None and user["lastName"] is not None
+    ]
     return all_users_expanded
 
 
@@ -94,6 +100,7 @@ def create_organization(name: str) -> Organization:
             f"Organization with name {name} already exists"
         )
     organization_item = organization.create(name, with_commit=True)
+    s3.create_bucket(str(organization_item.id))
     return organization_item
 
 

@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from api.healthcheck import Healthcheck
+from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
 from api.project import ProjectDetails, ProjectCreationFromWorkflow
 from api.transfer import (
@@ -15,6 +16,7 @@ from api.transfer import (
     CognitionImport,
     CognitionPrepareProject,
     CognitionParseMarkdownFile,
+    CognitionStartMacroExecutionGroup,
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
@@ -35,6 +37,7 @@ from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from middleware.database_session import handle_db_session
+from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
@@ -138,6 +141,10 @@ routes = [
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Route("/project", ProjectCreationFromWorkflow),
+    Route(
+        "/macro/{macro_id:str}/execution-group/{group_id:str}/queue",
+        CognitionStartMacroExecutionGroup,
+    ),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),
@@ -146,11 +153,8 @@ routes = [
 
 fastapi_app.middleware("http")(handle_db_session)
 
-
-app = Starlette(routes=routes)
-
-# middleware = [Middleware(DatabaseSessionHandler)]
-# app = Starlette(routes=routes, middleware=middleware)
+middleware = [Middleware(DatabaseSessionHandler)]
+app = Starlette(routes=routes, middleware=middleware)
 
 init_task_queues()
 check_in_deletion_projects()
