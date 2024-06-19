@@ -27,10 +27,6 @@ def __start_task(task: Dict[str, Any]) -> bool:
     action = task["task_info"]
     conversation_id = action["conversation_id"]
     cognition_project_id = action["cognition_project_id"]
-    print(
-        f"Conversation ID: {conversation_id}, cognition_project_id: {cognition_project_id}",
-        action["org_id"],
-    )
     requests.post(
         f"{BASE_URI}/api/v1/converters/internal/projects/{cognition_project_id}/conversation/{conversation_id}/parse-tmp-file",
         json={
