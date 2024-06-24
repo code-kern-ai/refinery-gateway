@@ -34,7 +34,7 @@ async def handle_db_session(request: Request, call_next):
         log_request = auth_manager.extract_state_info(request, "log_request")
         length = request.headers.get("content-length")
 
-        if log_request and length and int(length) > 0:
+        if length and int(length) > 0:
             await log_storage.set_request_data(request)
 
         response = await call_next(request)

@@ -6,8 +6,9 @@ alembic==1.7.1
 docker==5.0.0
 openpyxl==3.0.10
 pyjwt==2.4.0
-spacy[ja]==3.4.2
+spacy[ja]==3.7.5
 starlette==0.37.2
 fastapi==0.110.3
 pyminizip==0.2.6
 rncryptor==3.3.0
+pydantic==2.7.4
