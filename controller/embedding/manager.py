@@ -331,11 +331,21 @@ def update_embedding_payload(
         project_id=project_id,
         message=f"upload_embedding_payload:{str(embedding_id)}:start",
     )
+    embedding_item = embedding.get(project_id, embedding_id)
+    if not embedding_item:
+        return False
+    # commit to ensure the values are set correct for the embedding container to request
+    previous_attributes = set(embedding_item.filter_attributes)
+    embedding_item.filter_attributes = filter_attributes
+    general.commit()
     if connector.update_attribute_payloads_for_neural_search(project_id, embedding_id):
         embedding.update_embedding_filter_attributes(
             project_id, embedding_id, filter_attributes, with_commit=True
         )
         return True
+    embedding.update_embedding_filter_attributes(
+        project_id, embedding_id, previous_attributes, with_commit=True
+    )
     return False
 
 
