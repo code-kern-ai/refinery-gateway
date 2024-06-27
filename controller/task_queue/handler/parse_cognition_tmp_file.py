@@ -32,7 +32,6 @@ def __start_task(task: Dict[str, Any]) -> bool:
         json={
             "minio_path": action["minio_path"],
             "bucket": action["bucket"],
-            "org_id": action["org_id"],
         },
     )
     return True

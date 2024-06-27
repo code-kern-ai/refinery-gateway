@@ -38,7 +38,6 @@ def handle_cognition_file_upload(path_parts: List[str]):
             {
                 "cognition_project_id": cognition_project_id,
                 "conversation_id": conversation_id,
-                "org_id": str(cognition_prj.organization_id),
                 "minio_path": "/".join(path_parts[1:]),
                 "bucket": path_parts[0],
             },
