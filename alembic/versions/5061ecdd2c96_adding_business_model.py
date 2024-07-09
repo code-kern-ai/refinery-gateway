@@ -1,8 +1,8 @@
 """adding business model
 
-Revision ID: 0b6ba72d9c7d
+Revision ID: 5061ecdd2c96
 Revises: 3d0f69f9c513
-Create Date: 2024-07-09 09:42:46.527255
+Create Date: 2024-07-09 12:35:34.766587
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '0b6ba72d9c7d'
+revision = '5061ecdd2c96'
 down_revision = '3d0f69f9c513'
 branch_labels = None
 depends_on = None
@@ -24,11 +24,22 @@ def upgrade():
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('llm_config', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     schema='data_manager'
     )
     op.create_index(op.f('ix_data_manager_business_models_organization_id'), 'business_models', ['organization_id'], unique=False, schema='data_manager')
+    op.create_table('business_model_questions',
+    sa.Column('business_model_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('question_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.ForeignKeyConstraint(['business_model_id'], ['data_manager.business_models.id'], ),
+    sa.ForeignKeyConstraint(['question_id'], ['data_manager.organization_questions.id'], ),
+    sa.PrimaryKeyConstraint('business_model_id', 'question_id'),
+    schema='data_manager'
+    )
+    op.create_index(op.f('ix_data_manager_business_model_questions_business_model_id'), 'business_model_questions', ['business_model_id'], unique=False, schema='data_manager')
+    op.create_index(op.f('ix_data_manager_business_model_questions_question_id'), 'business_model_questions', ['question_id'], unique=False, schema='data_manager')
     op.create_table('data_concepts',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('business_model_id', postgresql.UUID(as_uuid=True), nullable=True),
@@ -86,6 +97,9 @@ def downgrade():
     op.drop_index(op.f('ix_data_manager_data_concepts_created_by'), table_name='data_concepts', schema='data_manager')
     op.drop_index(op.f('ix_data_manager_data_concepts_business_model_id'), table_name='data_concepts', schema='data_manager')
     op.drop_table('data_concepts', schema='data_manager')
+    op.drop_index(op.f('ix_data_manager_business_model_questions_question_id'), table_name='business_model_questions', schema='data_manager')
+    op.drop_index(op.f('ix_data_manager_business_model_questions_business_model_id'), table_name='business_model_questions', schema='data_manager')
+    op.drop_table('business_model_questions', schema='data_manager')
     op.drop_index(op.f('ix_data_manager_business_models_organization_id'), table_name='business_models', schema='data_manager')
     op.drop_table('business_models', schema='data_manager')
     # ### end Alembic commands ###
