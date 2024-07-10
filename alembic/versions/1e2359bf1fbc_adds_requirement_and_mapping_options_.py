@@ -25,6 +25,7 @@ def upgrade():
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('field', sa.String(), nullable=True),
+    sa.Column('is_input', sa.Boolean(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['project_id'], ['cognition.project.id'], ondelete='CASCADE'),
