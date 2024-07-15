@@ -31,9 +31,11 @@ def upgrade():
     update_dataset_sql = """
         UPDATE cognition.markdown_dataset
         SET llm_config = jsonb_build_object(
-            'llmIdentifier', 'OPEN_AI',
-            'model', 'gpt-4-1106-preview',
-            'envVarId', environment_variable_id::text
+            'transformation', jsonb_build_object(
+                'llmIdentifier', 'OPEN_AI',
+                'model', 'gpt-4-1106-preview',
+                'envVarId', environment_variable_id::text
+            )
         )
     """
     connection.execute(update_dataset_sql)
@@ -58,9 +60,11 @@ def upgrade():
     update_project_sql = """
         UPDATE cognition.project
         SET llm_config = jsonb_build_object(
-            'llmIdentifier', 'OPEN_AI',
-            'model', 'gpt-4-1106-preview',
-            'envVarId', open_ai_env_var_id::text
+            'transformation', jsonb_build_object(
+                'llmIdentifier', 'OPEN_AI',
+                'model', 'gpt-4-1106-preview',
+                'envVarId', open_ai_env_var_id::text
+            )
         )
         WHERE open_ai_env_var_id IS NOT NULL
     """
@@ -96,9 +100,9 @@ def downgrade():
 
     reverse_update_project_sql = """
         UPDATE cognition.project
-        SET open_ai_env_var_id = (llm_config->>'envVarId')::uuid
+        SET open_ai_env_var_id = (llm_config->transformation->>'envVarId')::uuid
         WHERE llm_config IS NOT NULL
-        AND llm_config->>'envVarId' IS NOT NULL;
+        AND llm_config->transformation->>'envVarId' IS NOT NULL;
     """
     connection.execute(reverse_update_project_sql)
 
@@ -133,7 +137,7 @@ def downgrade():
 
     reverse_update_dataset_sql = """
         UPDATE cognition.markdown_dataset
-        SET environment_variable_id = (llm_config->>'envVarId')::uuid
+        SET environment_variable_id = (llm_config->transformation->>'envVarId')::uuid
         WHERE llm_config IS NOT NULL
     """
     connection.execute(reverse_update_dataset_sql)
