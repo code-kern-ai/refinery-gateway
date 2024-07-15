@@ -34,7 +34,13 @@ def upgrade():
             'transformation', jsonb_build_object(
                 'llmIdentifier', 'OPEN_AI',
                 'model', 'gpt-4-1106-preview',
-                'envVarId', environment_variable_id::text
+                'envVarId', environment_variable_id::text,
+                'temperature', 0,
+                'maxLength', 1024,
+                'stopSequences', [],
+                'topP', 1,
+                'frequencyPenalty', 0,
+                'presencePenalty', 0
             )
         )
     """
@@ -63,7 +69,13 @@ def upgrade():
             'transformation', jsonb_build_object(
                 'llmIdentifier', 'OPEN_AI',
                 'model', 'gpt-4-1106-preview',
-                'envVarId', open_ai_env_var_id::text
+                'envVarId', open_ai_env_var_id::text,
+                'temperature', 0,
+                'maxLength', 1024,
+                'stopSequences', [],
+                'topP', 1,
+                'frequencyPenalty', 0,
+                'presencePenalty', 0
             )
         )
         WHERE open_ai_env_var_id IS NOT NULL
