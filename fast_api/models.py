@@ -7,7 +7,7 @@ from pydantic import (
     StrictStr,
     ConfigDict,
 )
-
+from submodules.model.enums import CustomerButtonType, CustomerButtonLocation
 
 """
 Pydantic models for FastAPI.
@@ -436,3 +436,20 @@ class CancelTaskBody(BaseModel):
     project_id: StrictStr
     task_id: StrictStr
     task_type: StrictStr
+
+
+class CreateCustomerButton(BaseModel):
+    org_id: StrictStr
+    type: CustomerButtonType
+    location: CustomerButtonLocation
+    visible: StrictBool
+    config: Dict[StrictStr, Any]
+
+
+class UpdateCustomerButton(BaseModel):
+    org_id: StrictStr  # used for validation
+
+    type: Optional[CustomerButtonType] = None
+    location: Optional[CustomerButtonLocation] = None
+    visible: Optional[StrictBool] = None
+    config: Optional[Dict[StrictStr, Any]] = None

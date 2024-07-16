@@ -2,8 +2,13 @@ from typing import Any, Dict, List
 from controller.misc import config_service
 from controller.misc import black_white_demo
 from fast_api.types import ServiceVersionResult
+from submodules.model.global_objects import customer_button
 from datetime import datetime
 import os
+from controller.auth import kratos
+from submodules.model.util import sql_alchemy_to_dict
+from submodules.model import enums
+
 
 from util import service_requests
 
@@ -72,3 +77,75 @@ def __updater_update_to_newest() -> None:
 def __update_versions_to_newest() -> None:
     url = f"{BASE_URI_UPDATER}/update_versions_to_newest"
     return service_requests.post_call_or_raise(url, {})
+
+
+# def get_all_customer_buttons() -> List[Dict[str, str]]:
+#     return finalize_customer_buttons(
+#         [sql_alchemy_to_dict(button) for button in customer_button.get_all()]
+#     )
+
+
+def get_org_customer_buttons(org_id: str) -> List[Dict[str, str]]:
+    return finalize_customer_buttons(
+        [
+            sql_alchemy_to_dict(button)
+            for button in customer_button.get_by_org_id(org_id)
+        ]
+    )
+
+
+def finalize_customer_buttons(
+    buttons: List[Dict[str, str]], for_wrapped: bool = False
+) -> Dict[str, str]:
+    key = "createdBy" if for_wrapped else "created_by"
+    key_name = "createdByName" if for_wrapped else "created_by_name"
+    key_org_name = "organizationName" if for_wrapped else "organization_name"
+
+    user_ids = {str(e[key]) for e in buttons}  # set comprehension
+    name_lookup = {u_id: kratos.resolve_user_name_by_id(u_id) for u_id in user_ids}
+
+    for e in buttons:
+        e[key_name] = name_lookup[str(e[key])]
+        e[key_name] = (
+            (e[key_name]["first"] + " " + e[key_name]["last"])
+            if e[key_name]
+            else "Unknown"
+        )
+        # name comes from the join with organization
+        e[key_org_name] = e["name"]
+        del e["name"]
+    return buttons
+
+
+def check_config_for_type(
+    type: enums.CustomerButtonType, config: Dict[str, Any], raise_me: bool = True
+) -> str:
+    if not config:
+        return __raise_or_return(raise_me, "Button must have a config")
+    if config.get("icon") is None:
+        return __raise_or_return(raise_me, "Button must have an icon")
+    t = config.get("tooltip")
+    if t is not None and len(t) < 10:
+        return __raise_or_return(
+            raise_me, "Button tooltip should be at least 10 characters long"
+        )
+    if type == enums.CustomerButtonType.DATA_MAPPER:
+        if config.get("url") is None:
+            return __raise_or_return(raise_me, "No url provided for data mapper button")
+
+        # maybe add URL check here
+        return  # returns None so "no error"
+    return __raise_or_return(raise_me, f"Unknown customer button type: {type}")
+
+    # e.g. for DATA_MAPPER
+    # {
+    #     "url":"<endpoint_url>", # including access key for e.g. external mapper
+    #     "icon":"<icon_name>",
+    #     "tooltip":"Map results to HDI D&O Excel"
+    # }
+
+
+def __raise_or_return(raise_me: bool, message: str) -> str:
+    if raise_me:
+        raise Exception(message)
+    return message
