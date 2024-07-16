@@ -37,7 +37,7 @@ def upgrade():
                 'envVarId', environment_variable_id::text,
                 'temperature', 0,
                 'maxLength', 1024,
-                'stopSequences', [],
+                'stopSequences', jsonb_build_array(),
                 'topP', 1,
                 'frequencyPenalty', 0,
                 'presencePenalty', 0
@@ -72,7 +72,7 @@ def upgrade():
                 'envVarId', open_ai_env_var_id::text,
                 'temperature', 0,
                 'maxLength', 1024,
-                'stopSequences', [],
+                'stopSequences', jsonb_build_array(),
                 'topP', 1,
                 'frequencyPenalty', 0,
                 'presencePenalty', 0
@@ -112,9 +112,10 @@ def downgrade():
 
     reverse_update_project_sql = """
         UPDATE cognition.project
-        SET open_ai_env_var_id = (llm_config->transformation->>'envVarId')::uuid
+        SET open_ai_env_var_id = (llm_config->'transformation'->>'envVarId')::uuid
         WHERE llm_config IS NOT NULL
-        AND llm_config->transformation->>'envVarId' IS NOT NULL;
+        AND llm_config->'transformation' IS NOT NULL
+        AND llm_config->'transformation'->>'envVarId' IS NOT NULL;
     """
     connection.execute(reverse_update_project_sql)
 
@@ -149,8 +150,10 @@ def downgrade():
 
     reverse_update_dataset_sql = """
         UPDATE cognition.markdown_dataset
-        SET environment_variable_id = (llm_config->transformation->>'envVarId')::uuid
+        SET environment_variable_id = (llm_config->'transformation'->>'envVarId')::uuid
         WHERE llm_config IS NOT NULL
+        AND llm_config->'transformation' IS NOT NULL
+        AND llm_config->'transformation'->>'envVarId' IS NOT NULL;
     """
     connection.execute(reverse_update_dataset_sql)
     op.create_foreign_key(
