@@ -9,7 +9,7 @@ from fast_api.models import (
     CreateCustomerButton,
     UpdateCustomerButton,
 )
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 from typing import Dict, Optional
 from controller.auth import manager as auth
 from controller.misc import manager
@@ -234,9 +234,8 @@ def add_customer_button(creation_request: CreateCustomerButton, request: Request
 def delete_customer_buttons(button_id: str, request: Request):
     # all (only for admins on admin page!)
     auth.check_admin_access(request.state.info)
-    return pack_json_result(
-        customer_button_db_go.delete(button_id), wrap_for_frontend=False
-    )
+    customer_button_db_go.delete(button_id)
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.post("/update-customer-button/{button_id}")
