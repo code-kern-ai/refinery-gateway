@@ -66,6 +66,9 @@ def upgrade():
     update_project_sql = """
         UPDATE cognition.project
         SET llm_config = jsonb_build_object(
+            'extraction', jsonb_build_object(
+                'extractor', 'pdf2markdown',
+                ),
             'transformation', jsonb_build_object(
                 'llmIdentifier', 'OPEN_AI',
                 'model', 'gpt-4-1106-preview',
