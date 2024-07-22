@@ -1,7 +1,7 @@
 """Rename and moving env var
 
 Revision ID: 0d587af700ce
-Revises: 706d5611a73e
+Revises: 6f13fbbdf3fa
 Create Date: 2024-06-27 14:48:45.251675
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0d587af700ce"
-down_revision = "706d5611a73e"
+down_revision = "6f13fbbdf3fa"
 branch_labels = None
 depends_on = None
 
