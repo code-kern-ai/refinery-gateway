@@ -2,7 +2,6 @@ from fastapi import APIRouter, Body, Request, Depends
 from controller.comment import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import (
-    AllCommentsBody,
     CreateCommentBody,
     DeleteCommentBody,
     UpdateCommentBody,
@@ -20,9 +19,10 @@ router = APIRouter()
     "/all-comments",
     dependencies=[Depends(extend_state_get_like)],
 )
-def get_all_comments(request: Request, commentsBody: AllCommentsBody = Body(...)):
+def get_all_comments(request: Request):
     user_id = str(auth_manager.get_user_by_info(request.state.info).id)
-    body = commentsBody.__root__
+
+    body = request.state.data
 
     to_return = {}
     for key in body:

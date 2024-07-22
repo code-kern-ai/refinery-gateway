@@ -461,7 +461,7 @@ def upload_credentials_and_id(
     project_id: str,
     upload_credentials: UploadCredentialsAndIdBody = Body(...),
 ):
-    user_id = auth_manager.get_user_by_info(request.state.info).id
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = transfer_manager.get_upload_credentials_and_id(
         project_id,
         user_id,

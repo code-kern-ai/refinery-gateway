@@ -1,5 +1,12 @@
 from typing import Any, List, Dict, Optional, Union
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import (
+    BaseModel,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    ConfigDict,
+)
 
 
 """
@@ -18,20 +25,20 @@ class ListStringBody(BaseModel):
 class SearchRecordsBySimilarityBody(BaseModel):
     embeddingId: StrictStr
     recordId: StrictStr
-    attFilter: Any
-    recordSubKey: Any
+    attFilter: Any = None
+    recordSubKey: Any = None
 
 
 class SearchRecordsExtendedBody(BaseModel):
-    filterData: Any
+    filterData: Any = None
     offset: StrictInt
     limit: StrictInt
 
 
 class RecordsByStaticSliceBody(BaseModel):
-    orderBy: Any
-    offset: Any
-    limit: Any
+    orderBy: Any = None
+    offset: Any = None
+    limit: Any = None
 
 
 class ZeroShot10Body(BaseModel):
@@ -67,7 +74,7 @@ class CreateDataSliceBody(BaseModel):
     name: StrictStr
     static: StrictBool
     filterRaw: StrictStr
-    filterData: Any
+    filterData: Any = None
 
 
 class AvailableLinksBody(BaseModel):
@@ -110,7 +117,7 @@ class UploadCredentialsAndIdBody(BaseModel):
     file_type: StrictStr
     file_import_options: StrictStr
     upload_type: StrictStr
-    key: StrictStr = None
+    key: Optional[StrictStr] = None
 
 
 class RecordIdeBody(BaseModel):
@@ -138,8 +145,10 @@ class CreateHeuristicBody(BaseModel):
 
 
 class InitWeakSuperVisionBody(BaseModel):
-    overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]]
-    overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]]
+    overwrite_default_precision: Optional[Union[StrictFloat, StrictInt]] = None
+    overwrite_weak_supervision: Optional[Dict[str, Union[StrictFloat, StrictInt]]] = (
+        None
+    )
 
 
 class CreateZeroShotBody(BaseModel):
@@ -169,19 +178,19 @@ class AddClassificationLabelBody(BaseModel):
     record_id: StrictStr
     labeling_task_id: StrictStr
     label_id: StrictStr
-    as_gold_star: Optional[StrictBool]
-    source_id: Optional[StrictStr]
+    as_gold_star: Optional[StrictBool] = None
+    source_id: Optional[StrictStr] = None
 
 
 class AddExtractionLabelBody(BaseModel):
     record_id: StrictStr
     labeling_task_id: StrictStr
     label_id: StrictStr
-    as_gold_star: Optional[StrictBool]
-    token_start_index: Optional[StrictInt]
-    token_end_index: Optional[StrictInt]
-    value: Optional[StrictStr]
-    source_id: Optional[StrictStr]
+    as_gold_star: Optional[StrictBool] = None
+    token_start_index: Optional[StrictInt] = None
+    token_end_index: Optional[StrictInt] = None
+    value: Optional[StrictStr] = None
+    source_id: Optional[StrictStr] = None
 
 
 class SetGoldStarBody(BaseModel):
@@ -251,8 +260,8 @@ class CreateNewAttributeBody(BaseModel):
 
 class UpdateKnowledgeBaseBody(BaseModel):
     knowledge_base_id: StrictStr
-    name: Optional[StrictStr]
-    description: Optional[StrictStr]
+    name: Optional[StrictStr] = None
+    description: Optional[StrictStr] = None
 
 
 class AddTermToKnowledgeBaseBody(BaseModel):
@@ -276,11 +285,11 @@ class UpdateTermBody(BaseModel):
 
 class UpdateAttributeBody(BaseModel):
     attribute_id: StrictStr
-    name: Optional[StrictStr]
-    data_type: Optional[StrictStr]
-    is_primary_key: Optional[StrictBool]
-    source_code: Optional[StrictStr]
-    visibility: Optional[StrictStr]
+    name: Optional[StrictStr] = None
+    data_type: Optional[StrictStr] = None
+    is_primary_key: Optional[StrictBool] = None
+    source_code: Optional[StrictStr] = None
+    visibility: Optional[StrictStr] = None
 
 
 class CalculateUserAttributeAllRecordsBody(BaseModel):
@@ -288,10 +297,16 @@ class CalculateUserAttributeAllRecordsBody(BaseModel):
 
 
 class ModelProviderDeleteModelBody(BaseModel):
+    # model_config is not an actual field, but configuration for Pydantic
+    # https://docs.pydantic.dev/latest/api/config/
+    model_config = ConfigDict(protected_namespaces=())
     model_name: StrictStr
 
 
 class ModelProviderDownloadModelBody(BaseModel):
+    # model_config is not an actual field, but configuration for Pydantic
+    # https://docs.pydantic.dev/latest/api/config/
+    model_config = ConfigDict(protected_namespaces=())
     model_name: StrictStr
 
 
@@ -330,12 +345,12 @@ class UpdateProjectStatusBody(BaseModel):
 
 
 class PrepareProjectExportBody(BaseModel):
-    export_options: Any
+    export_options: Any = None
     key: Optional[StrictStr] = None
 
 
 class PrepareRecordExportBody(BaseModel):
-    export_options: Any
+    export_options: Any = None
     key: Optional[StrictStr] = None
 
 
@@ -353,13 +368,13 @@ class UpdateLabelingTaskBody(BaseModel):
     labeling_task_id: StrictStr
     labeling_task_name: StrictStr
     labeling_task_type: StrictStr
-    labeling_task_target_id: Optional[StrictStr]
+    labeling_task_target_id: Optional[StrictStr] = None
 
 
 class CreateLabelingTaskBody(BaseModel):
     labeling_task_name: StrictStr
     labeling_task_type: StrictStr
-    labeling_task_target_id: Optional[StrictStr]
+    labeling_task_target_id: Optional[StrictStr] = None
 
 
 class UpdateLabelColorBody(BaseModel):
@@ -375,10 +390,6 @@ class UpdateLabelHotkeyBody(BaseModel):
 class UpdateLabelNameBody(BaseModel):
     label_id: StrictStr
     new_name: StrictStr
-
-
-class AllCommentsBody(BaseModel):
-    __root__: Dict[StrictStr, Any]
 
 
 class CreateCommentBody(BaseModel):
