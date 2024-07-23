@@ -97,6 +97,13 @@ def upgrade():
         type_="foreignkey",
     )
     op.drop_column("project", "open_ai_env_var_id", schema="cognition")
+
+    op.add_column(
+        "project",
+        sa.Column("tokenizer", sa.String(), nullable=True),
+        schema="cognition",
+    )
+
     # ### end Alembic commands ###
 
 
@@ -178,4 +185,6 @@ def downgrade():
         schema="cognition",
     )
     op.drop_column("markdown_dataset", "llm_config", schema="cognition")
+
+    op.drop_column("project", "tokenizer", schema="cognition")
     # ### end Alembic commands ###
