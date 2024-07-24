@@ -1,7 +1,7 @@
 """New Customer Button Table
 
 Revision ID: 37d138040614
-Revises: 706d5611a73e
+Revises: 6f13fbbdf3fa
 Create Date: 2024-07-02 05:31:32.053272
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '37d138040614'
-down_revision = '706d5611a73e'
+down_revision = '6f13fbbdf3fa'
 branch_labels = None
 depends_on = None
 
