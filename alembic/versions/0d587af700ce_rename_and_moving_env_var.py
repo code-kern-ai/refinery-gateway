@@ -104,6 +104,12 @@ def upgrade():
         schema="cognition",
     )
 
+    op.add_column(
+        "markdown_file",
+        sa.Column("meta_data", sa.JSON(), nullable=True),
+        schema="cognition",
+    )
+
     # ### end Alembic commands ###
 
 
@@ -187,4 +193,6 @@ def downgrade():
     op.drop_column("markdown_dataset", "llm_config", schema="cognition")
 
     op.drop_column("project", "tokenizer", schema="cognition")
+
+    op.drop_column("markdown_file", "meta_data", schema="cognition")
     # ### end Alembic commands ###
