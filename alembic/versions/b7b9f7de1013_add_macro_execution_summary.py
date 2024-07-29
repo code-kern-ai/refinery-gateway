@@ -1,8 +1,8 @@
-"""add macro folder summary
+"""add macro execution summary
 
-Revision ID: c72835ae2765
-Revises: 6f13fbbdf3fa
-Create Date: 2024-07-29 15:04:57.365944
+Revision ID: b7b9f7de1013
+Revises: 0d587af700ce
+Create Date: 2024-07-29 16:27:34.759906
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'c72835ae2765'
-down_revision = '6f13fbbdf3fa'
+revision = 'b7b9f7de1013'
+down_revision = '0d587af700ce'
 branch_labels = None
 depends_on = None
 
