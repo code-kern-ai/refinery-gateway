@@ -20,7 +20,11 @@ from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
 from submodules.model.util import sql_alchemy_to_dict
-from submodules.model.enums import try_parse_enum_value, CustomerButtonType
+from submodules.model.enums import (
+    try_parse_enum_value,
+    CustomerButtonType,
+    CustomerButtonLocation,
+)
 
 router = APIRouter()
 
@@ -177,8 +181,10 @@ def get_all_users_activity(request: Request):
     return pack_json_result({"data": {"allUsersActivity": activity}})
 
 
-@router.get("/my-customer-buttons")
-def get_my_customer_buttons(request: Request):
+# this endpoint is meant to be used by the frontend to get the customer buttons for the current user
+# location is a filter to prevent the frontend from having to filter the buttons itself
+@router.get("/my-customer-buttons/{location}")
+def get_my_customer_buttons(request: Request, location: CustomerButtonLocation):
     # only of users org & filters for visible
     # to be used by everyone, filters for only visible
     org_id = auth.get_user_by_info(request.state.info).organization_id
@@ -186,8 +192,7 @@ def get_my_customer_buttons(request: Request):
         return pack_json_result([])
     org_id = str(org_id)
     return pack_json_result(
-        customer_button_db_go.get_by_org_id(org_id, True),
-        wrap_for_frontend=False,
+        customer_button_db_go.get_by_org_id(org_id, True, location),
     )
 
 
