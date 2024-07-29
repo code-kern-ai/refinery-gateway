@@ -20,6 +20,7 @@ from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.enums import try_parse_enum_value, CustomerButtonType
 
 router = APIRouter()
 
@@ -252,7 +253,9 @@ def update_customer_buttons(
             content="Button not found",
         )
 
-    check_type = update_request.type or button.type
+    check_type = update_request.type or try_parse_enum_value(
+        button.type, CustomerButtonType
+    )
     check_config = update_request.config or button.config
 
     if msg := manager.check_config_for_type(check_type, check_config, True):
@@ -267,6 +270,7 @@ def update_customer_buttons(
             update_request.type,
             update_request.location,
             update_request.config,
+            None,  # creation user
             update_request.visible,
         )
     )
