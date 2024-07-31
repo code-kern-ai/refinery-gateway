@@ -8,6 +8,7 @@ import os
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import enums
+import requests
 
 
 from util import service_requests
@@ -130,10 +131,27 @@ def check_config_for_type(
             raise_me, "Button tooltip should be at least 10 characters long"
         )
     if type == enums.CustomerButtonType.DATA_MAPPER:
-        if config.get("url") is None:
+        if (url := config.get("url")) is None:
             return __raise_or_return(raise_me, "No url provided for data mapper button")
+        if "localhost:9060" in url:
+            # localhost dev version needs to be mapped to the "refinery" localhost url
+            # it's not meant to be in the same network but for development purposes the start script adds the dev network!
+            url = url.replace("localhost:9060", "external-data-mapper:80")
+        if "?" in url:
+            url += "&ping=true"
+        else:
+            url += "?ping=true"
+        try:
+            x = requests.post(url, json={"rows": [[]]}, timeout=2)
+            print(x.text, flush=True)
+            if not x.ok or "pong" not in x.text:
+                return __raise_or_return(
+                    raise_me, f"URL {url} answered with {x.status_code}"
+                )
+        except Exception:
 
-        # maybe add URL check here
+            return __raise_or_return(raise_me, f"URL {url} is not reachable")
+
         return  # returns None so "no error"
     return __raise_or_return(raise_me, f"Unknown customer button type: {type}")
 
