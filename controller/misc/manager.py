@@ -142,13 +142,17 @@ def check_config_for_type(
         else:
             url += "?ping=true"
         try:
+
+            # Note that python requests dont set the options preflight + origin so they are tested without CORS
             x = requests.post(url, json={"rows": [[]]}, timeout=2)
             if not x.ok or "pong" not in x.text:
                 return __raise_or_return(
                     raise_me, f"URL {url} answered with {x.status_code}"
                 )
         except Exception:
+            import traceback
 
+            print(traceback.format_exc(), flush=True)
             return __raise_or_return(raise_me, f"URL {url} is not reachable")
 
         return  # returns None so "no error"

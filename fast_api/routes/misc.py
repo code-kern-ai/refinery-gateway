@@ -216,7 +216,7 @@ def add_customer_button(creation_request: CreateCustomerButton, request: Request
     # all (only for admins on admin page!)
     auth.check_admin_access(request.state.info)
     if msg := manager.check_config_for_type(
-        creation_request.type, creation_request.config, True
+        creation_request.type, creation_request.config, False
     ):
         return PlainTextResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -263,7 +263,7 @@ def update_customer_buttons(
     )
     check_config = update_request.config or button.config
 
-    if msg := manager.check_config_for_type(check_type, check_config, True):
+    if msg := manager.check_config_for_type(check_type, check_config, False):
         return PlainTextResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=msg,
