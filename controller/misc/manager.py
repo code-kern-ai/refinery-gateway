@@ -143,7 +143,6 @@ def check_config_for_type(
             url += "?ping=true"
         try:
             x = requests.post(url, json={"rows": [[]]}, timeout=2)
-            print(x.text, flush=True)
             if not x.ok or "pong" not in x.text:
                 return __raise_or_return(
                     raise_me, f"URL {url} answered with {x.status_code}"
@@ -154,13 +153,6 @@ def check_config_for_type(
 
         return  # returns None so "no error"
     return __raise_or_return(raise_me, f"Unknown customer button type: {type}")
-
-    # e.g. for DATA_MAPPER
-    # {
-    #     "url":"<endpoint_url>", # including access key for e.g. external mapper
-    #     "icon":"<icon_name>",
-    #     "tooltip":"Map results to HDI D&O Excel"
-    # }
 
 
 def __raise_or_return(raise_me: bool, message: str) -> str:
