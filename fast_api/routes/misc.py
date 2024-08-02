@@ -183,6 +183,7 @@ def get_all_users_activity(request: Request):
 
 # this endpoint is meant to be used by the frontend to get the customer buttons for the current user
 # location is a filter to prevent the frontend from having to filter the buttons itself
+# also doesn't convert the key!
 @router.get("/my-customer-buttons/{location}")
 def get_my_customer_buttons(request: Request, location: CustomerButtonLocation):
     # only of users org & filters for visible
@@ -196,6 +197,7 @@ def get_my_customer_buttons(request: Request, location: CustomerButtonLocation):
     )
 
 
+# admin endpoint that converts the keys back to readable format!
 @router.get("/all-customer-buttons")
 def get_all_customer_buttons(request: Request, only_visible: Optional[bool] = None):
     # all (only for admins on admin page!)
@@ -206,7 +208,9 @@ def get_all_customer_buttons(request: Request, only_visible: Optional[bool] = No
             [
                 sql_alchemy_to_dict(obj)
                 for obj in customer_button_db_go.get_all(only_visible)
-            ]
+            ],
+            False,
+            True,
         )
     )
 
@@ -215,6 +219,7 @@ def get_all_customer_buttons(request: Request, only_visible: Optional[bool] = No
 def add_customer_button(creation_request: CreateCustomerButton, request: Request):
     # all (only for admins on admin page!)
     auth.check_admin_access(request.state.info)
+    manager.convert_config_url_key_with_base64(creation_request.config)
     if msg := manager.check_config_for_type(
         creation_request.type, creation_request.config, False
     ):
@@ -261,6 +266,8 @@ def update_customer_buttons(
     check_type = update_request.type or try_parse_enum_value(
         button.type, CustomerButtonType
     )
+    if update_request.config:
+        manager.convert_config_url_key_with_base64(update_request.config)
     check_config = update_request.config or button.config
 
     if msg := manager.check_config_for_type(check_type, check_config, False):

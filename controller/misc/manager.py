@@ -9,6 +9,9 @@ from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import enums
 import requests
+from urllib.parse import urlparse, urlencode, parse_qsl, parse_qs
+
+import base64
 
 
 from util import service_requests
@@ -80,12 +83,6 @@ def __update_versions_to_newest() -> None:
     return service_requests.post_call_or_raise(url, {})
 
 
-# def get_all_customer_buttons() -> List[Dict[str, str]]:
-#     return finalize_customer_buttons(
-#         [sql_alchemy_to_dict(button) for button in customer_button.get_all()]
-#     )
-
-
 def get_org_customer_buttons(org_id: str) -> List[Dict[str, str]]:
     return finalize_customer_buttons(
         [
@@ -96,7 +93,9 @@ def get_org_customer_buttons(org_id: str) -> List[Dict[str, str]]:
 
 
 def finalize_customer_buttons(
-    buttons: List[Dict[str, str]], for_wrapped: bool = False
+    buttons: List[Dict[str, str]],
+    for_wrapped: bool = False,
+    deobfuscate_url: bool = False,
 ) -> Dict[str, str]:
     key = "createdBy" if for_wrapped else "created_by"
     key_name = "createdByName" if for_wrapped else "created_by_name"
@@ -115,6 +114,9 @@ def finalize_customer_buttons(
         # name comes from the join with organization
         e[key_org_name] = e["name"]
         del e["name"]
+    if deobfuscate_url:
+        for e in buttons:
+            convert_config_url_key_with_base64(e["config"], False)
     return buttons
 
 
@@ -163,3 +165,29 @@ def __raise_or_return(raise_me: bool, message: str) -> str:
     if raise_me:
         raise Exception(message)
     return message
+
+
+def convert_config_url_key_with_base64(
+    config: Dict[str, Any], to: bool = True
+) -> Dict[str, Any]:
+    if url := config.get("url"):
+        if "key" not in url:
+            return
+        parsed_url = urlparse(url)
+        old_key = parse_qs(parsed_url.query)["key"][0]
+        if to:
+            config["url"] = __patch_url(
+                url, key=base64.b64encode(old_key.encode("ascii"))
+            )
+        else:
+            config["url"] = __patch_url(
+                url, key=base64.b64decode(old_key.encode("ascii") + b"==")
+            )
+
+
+def __patch_url(url: str, **kwargs):
+    return (
+        urlparse(url)
+        ._replace(query=urlencode(dict(parse_qsl(urlparse(url).query), **kwargs)))
+        .geturl()
+    )
