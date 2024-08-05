@@ -59,6 +59,7 @@ from route_prefix import (
     PREFIX_RECORD,
     PREFIX_WEAK_SUPERVISION,
     PREFIX_LABELING_TASKS,
+    PREFIX_TASK_EXECUTION,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -113,6 +114,10 @@ fastapi_app.include_router(
     labeling_tasks_router, prefix=PREFIX_LABELING_TASKS, tags=["labeling-tasks"]
 )
 
+fastapi_app_internal = FastAPI()
+fastapi_app_internal.include_router(
+    task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
+)
 routes = [
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
@@ -137,6 +142,9 @@ routes = [
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),
+    Mount(
+        "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"
+    ),  # task master requesting
 ]
 
 

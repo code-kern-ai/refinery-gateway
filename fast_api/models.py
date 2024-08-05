@@ -436,3 +436,8 @@ class CancelTaskBody(BaseModel):
     project_id: StrictStr
     task_id: StrictStr
     task_type: StrictStr
+
+
+class AttributeCalculationTaskExecutionBody(BaseModel):
+    user_id: StrictStr
+    attribute_id: StrictStr
