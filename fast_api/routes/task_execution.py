@@ -1,14 +1,23 @@
-from controller.attribute import manager
-from controller.auth import manager as auth_manager
-from typing import List, Union
-from fast_api.models import AttributeCalculationTaskExecutionBody
-from fast_api.routes.client_response import pack_json_result
-from fastapi import APIRouter, Body, Depends, Query, Request
-from submodules.model.enums import NotificationType
-from submodules.model.util import sql_alchemy_to_dict
-from util.notification import create_notification
+from controller.attribute import manager as attribute_manager
+from controller.tokenization import manager as tokenization_manager
+from fast_api.models import (
+    AttributeCalculationTaskExecutionBody,
+    TokenizationTaskExecutionBody,
+)
+from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+SILENT_SUCCESS_RESPONSE = JSONResponse(
+    status_code=status.HTTP_200_OK,
+    content={"message": "Success"},
+)
+
+
+@router.get("/ping")
+def ping():
+    return "pong"
 
 
 @router.post(
@@ -18,8 +27,20 @@ def calculate_attributes(
     project_id: str,
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
-    manager.calculate_user_attribute_all_records(
+    attribute_manager.calculate_user_attribute_all_records(
         project_id,
         attribute_calculation_task_execution.user_id,
         attribute_calculation_task_execution.attribute_id,
     )
+    return SILENT_SUCCESS_RESPONSE
+
+
+@router.post(
+    "/{project_id}/tokenization",
+)
+def tokenization(
+    project_id: str,
+    tokenization_task_execution: TokenizationTaskExecutionBody,
+):
+    # tokenization_manager
+    return SILENT_SUCCESS_RESPONSE

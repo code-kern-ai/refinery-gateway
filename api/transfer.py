@@ -18,6 +18,7 @@ from submodules.model.business_objects import (
     general,
     organization,
     tokenization,
+    project,
 )
 
 from submodules.model.cognition_objects import (
@@ -39,7 +40,7 @@ from submodules.model.models import UploadTask
 from util import daemon, notification
 from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
 
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 
 
@@ -322,11 +323,14 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         )
     if task.file_type != "knowledge_base":
         only_usable_attributes = task.file_type == "records_add"
-        task_queue_manager.add_task(
-            project_id,
+        project_item = project.get(project_id)
+        org_id = str(project_item.organization_id)
+        task_master_manager.queue_task(
+            str(org_id),
+            str(task.user_id),
             TaskType.TOKENIZATION,
-            task.user_id,
             {
+                "project_id": str(project_id),
                 "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": only_usable_attributes,

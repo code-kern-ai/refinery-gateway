@@ -34,6 +34,7 @@ from fast_api.routes.record_ide import router as record_ide_router
 from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
+from fast_api.routes.task_execution import router as task_execution_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette

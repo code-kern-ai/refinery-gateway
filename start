@@ -73,6 +73,7 @@ docker run -d --rm \
 -e GATES=http://gates-gateway:80 \
 -e COGNITION_GATEWAY=http://cognition-gateway:80 \
 -e KRATOS_ADMIN_URL=http://kratos:4434 \
+-e TASK_MASTER=http://cognition-task-master:80 \
 -e TASK_QUEUE_SLOTS=1 \
 -e PRIORITY_TASK_QUEUE_SLOTS=1 \
 -e INFERENCE_DIR=$INFERENCE_DIR \

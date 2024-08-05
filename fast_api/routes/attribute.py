@@ -92,7 +92,3 @@ def delete_user_attribute(
 ):
     manager.delete_attribute(project_id, body.attribute_id)
     return pack_json_result({"data": {"deleteUserAttribute": {"ok": True}}})
-
-@router.post(
-    "{project}"
-)
