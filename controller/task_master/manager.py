@@ -22,3 +22,9 @@ def queue_task(
         "priority": priority,
     }
     return requests.put(f"{TASK_MASTER_URL}/task/queue", json=task_payload)
+
+
+def delete_task(org_id: str, task_id: str) -> requests.Response:
+    return requests.delete(
+        f"{TASK_MASTER_URL}/task/queue", json={"orgId": org_id, "taskId": task_id}
+    )
