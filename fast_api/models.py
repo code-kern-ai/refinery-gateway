@@ -443,5 +443,8 @@ class AttributeCalculationTaskExecutionBody(BaseModel):
     attribute_id: StrictStr
 
 
-class TokenizationTaskExecutionBody(BaseModel):
-    pass
+class InformationSourceTaskExecutionBody(BaseModel):
+    project_id: StrictStr
+    information_source_id: StrictStr
+    information_source_type: StrictStr
+    user_id: StrictStr

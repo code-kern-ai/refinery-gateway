@@ -1,11 +1,14 @@
 from controller.attribute import manager as attribute_manager
-from controller.tokenization import manager as tokenization_manager
+from controller.zero_shot import manager as zero_shot_manager
+from controller.payload import manager as payload_manager
 from fast_api.models import (
     AttributeCalculationTaskExecutionBody,
-    TokenizationTaskExecutionBody,
+    InformationSourceTaskExecutionBody,
 )
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
+from util import daemon
+from submodules.model.enums import PayloadState, InformationSourceType
 
 router = APIRouter()
 
@@ -27,20 +30,32 @@ def calculate_attributes(
     project_id: str,
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
-    attribute_manager.calculate_user_attribute_all_records(
+    daemon.run(
+        attribute_manager.calculate_user_attribute_all_records,
         project_id,
         attribute_calculation_task_execution.user_id,
         attribute_calculation_task_execution.attribute_id,
     )
+
     return SILENT_SUCCESS_RESPONSE
 
 
 @router.post(
-    "/{project_id}/tokenization",
+    "/information-source",
 )
-def tokenization(
+def information_source(
     project_id: str,
-    tokenization_task_execution: TokenizationTaskExecutionBody,
+    information_source_task_execution: InformationSourceTaskExecutionBody,
 ):
-    # tokenization_manager
+    project_id = information_source_task_execution.project_id
+    information_source_id = information_source_task_execution.information_source_id
+    information_source_type = information_source_task_execution.information_source_type
+    user_id = information_source_task_execution.user_id
+    if information_source_type == InformationSourceType.ZERO_SHOT.value:
+        zero_shot_manager.start_zero_shot_for_project_thread(
+            project_id, information_source_id, user_id
+        )
+    else:
+        payload_manager.create_payload(project_id, information_source_id, user_id)
+
     return SILENT_SUCCESS_RESPONSE
