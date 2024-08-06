@@ -5,17 +5,12 @@ from fast_api.models import (
     AttributeCalculationTaskExecutionBody,
     InformationSourceTaskExecutionBody,
 )
-from fastapi import APIRouter, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter
 from util import daemon
-from submodules.model.enums import PayloadState, InformationSourceType
+from submodules.model.enums import InformationSourceType
+from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 
 router = APIRouter()
-
-SILENT_SUCCESS_RESPONSE = JSONResponse(
-    status_code=status.HTTP_200_OK,
-    content={"message": "Success"},
-)
 
 
 @router.get("/ping")
@@ -51,11 +46,14 @@ def information_source(
     information_source_id = information_source_task_execution.information_source_id
     information_source_type = information_source_task_execution.information_source_type
     user_id = information_source_task_execution.user_id
+    # already threaded in managers
     if information_source_type == InformationSourceType.ZERO_SHOT.value:
-        zero_shot_manager.start_zero_shot_for_project_thread(
+        payload_id = zero_shot_manager.start_zero_shot_for_project_thread(
             project_id, information_source_id, user_id
         )
     else:
-        payload_manager.create_payload(project_id, information_source_id, user_id)
+        payload_id = payload_manager.create_payload(
+            project_id, information_source_id, user_id
+        )
 
-    return SILENT_SUCCESS_RESPONSE
+    return pack_json_result({"payload_id": payload_id})
