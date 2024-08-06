@@ -19,15 +19,14 @@ def ping():
 
 
 @router.post(
-    "/{project_id}/attribute-calculation",
+    "/attribute-calculation",
 )
 def calculate_attributes(
-    project_id: str,
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
     daemon.run(
         attribute_manager.calculate_user_attribute_all_records,
-        project_id,
+        attribute_calculation_task_execution.project_id,
         attribute_calculation_task_execution.organization_id,
         attribute_calculation_task_execution.user_id,
         attribute_calculation_task_execution.attribute_id,
@@ -40,7 +39,6 @@ def calculate_attributes(
     "/information-source",
 )
 def information_source(
-    project_id: str,
     information_source_task_execution: InformationSourceTaskExecutionBody,
 ):
     project_id = information_source_task_execution.project_id

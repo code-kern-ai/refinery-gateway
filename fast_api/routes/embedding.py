@@ -6,6 +6,7 @@ from controller.misc import manager as misc
 from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
 from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.business_objects import project
@@ -147,6 +148,7 @@ def create_embedding(
     body: CreateEmbeddingBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
+    org_id = user.organization_id
     body.config = json.loads(body.config)
     embedding_type = body.config[
         "embeddingType"
@@ -166,11 +168,12 @@ def create_embedding(
             "version": body.config.get("version"),
         }
 
-    task_queue_manager.add_task(
-        project_id,
-        TaskType.EMBEDDING,
+    task_master_manager.queue_task(
+        org_id,
         user.id,
+        TaskType.EMBEDDING,
         {
+            "project_id": project_id,
             "embedding_type": embedding_type,
             "attribute_id": body.attribute_id,
             "embedding_name": manager.get_embedding_name(
