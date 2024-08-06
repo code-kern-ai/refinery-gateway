@@ -23,7 +23,7 @@ from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as label_manager
 from controller.information_source import manager as information_source_manager
 from controller.attribute import manager as attribute_manager
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from controller.embedding import manager as embedding_manager
 
 from .bricks_loader import get_bricks_code_from_group, get_bricks_code_from_endpoint
@@ -112,6 +112,7 @@ def __finalize_setup(
     __finalize_setup_for(
         CognitionProjects.REFERENCE,
         reference_project_id,
+        organization_id,
         user_id,
         project_language,
         file_additional_info,
@@ -127,6 +128,7 @@ def __finalize_setup(
     __finalize_setup_for(
         CognitionProjects.QUESTION,
         question_project_id,
+        organization_id,
         user_id,
         project_language,
         file_additional_info,
@@ -168,7 +170,7 @@ def __finalize_setup(
         organization_id=organization_id,
     )
 
-    __add_start_gates_for(reference_project_id, task_list)
+    __add_start_gates_for(reference_project_id, organization_id, task_list)
 
     # currently disabled since not part of initial offering
     # __add_start_gates_for(question_project_id, task_list)
@@ -176,6 +178,7 @@ def __finalize_setup(
 
     task_list.append(
         {
+            "organization_id": organization_id,
             "project_id": reference_project_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": {
@@ -207,8 +210,8 @@ def __finalize_setup(
             continue
         break
 
-    task_id, position = task_queue_manager.add_task(
-        reference_project_id, enums.TaskType.TASK_QUEUE, user_id, task_list
+    task_id, position = task_master_manager.queue_task(
+        organization_id, user_id, enums.TaskType.TASK_QUEUE, task_list
     )
 
     notification.send_organization_update(
@@ -270,7 +273,7 @@ def __add_websocket_message_queue_item(
         action["organization_id"] = organization_id
     task_list.append(
         {
-            "project_id": sender_project_id,
+            "organization_id": organization_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": action,
         }
@@ -279,14 +282,16 @@ def __add_websocket_message_queue_item(
 
 def __add_weakly_supervise_all_valid(
     project_id: str,
+    org_id: str,
     task_list: List[Dict[str, str]],
 ) -> None:
     task_list.append(
         {
-            "project_id": project_id,
+            "organization_id": org_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": {
                 "action_type": enums.TaskQueueAction.RUN_WEAK_SUPERVISION.value,
+                "project_id": project_id,
             },
         }
     )
@@ -294,11 +299,12 @@ def __add_weakly_supervise_all_valid(
 
 def __add_start_gates_for(
     project_id: str,
+    org_id: str,
     task_list: List[Dict[str, str]],
 ) -> None:
     task_list.append(
         {
-            "project_id": project_id,
+            "organization_id": org_id,
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": {
                 "action_type": enums.TaskQueueAction.START_GATES.value,
@@ -312,6 +318,7 @@ def __add_start_gates_for(
 def __finalize_setup_for(
     project_type: CognitionProjects,
     project_id: str,
+    org_id: str,
     user_id: str,
     project_language: str,
     file_additional_info: Dict[str, Any],
@@ -333,6 +340,7 @@ def __finalize_setup_for(
             if bricks:
                 __load_ac_from_bricks_group(
                     project_id,
+                    org_id,
                     bricks["group"],
                     bricks.get("type", "generator"),
                     bricks.get("type_lookup", {}),
@@ -355,6 +363,7 @@ def __finalize_setup_for(
                     )
                 __create_attribute_with(
                     project_id,
+                    org_id,
                     code,
                     attribute["name"],
                     attribute["type"],
@@ -400,6 +409,7 @@ def __finalize_setup_for(
                     project_id,
                     labeling_task_id,
                     user_id,
+                    org_id,
                     bricks["group"],
                     bricks.get("type", "classifier"),
                     target_data,
@@ -451,7 +461,7 @@ def __finalize_setup_for(
                     target_data,
                     name_prefix=bricks.get("function_prefix"),
                 )
-    __add_weakly_supervise_all_valid(project_id, task_list)
+    __add_weakly_supervise_all_valid(project_id, org_id, task_list)
     token_ref.request_new()
 
 
@@ -482,6 +492,7 @@ def __load_lf_from_bricks_group(
     target_project_id: str,
     target_task_id: str,
     user_id: str,
+    org_id: str,
     group_key: str,
     bricks_type: str,
     target_data: Dict[str, str],
@@ -511,6 +522,7 @@ def __load_lf_from_bricks_group(
         if append_to_task_list:
             task_list.append(
                 {
+                    "organization_id": org_id,
                     "project_id": target_project_id,
                     "task_type": enums.TaskType.INFORMATION_SOURCE.value,
                     "information_source_id": str(item.id),
@@ -553,6 +565,7 @@ def __load_active_learner_from_bricks_group(
 
 def __load_ac_from_bricks_group(
     target_project_id: str,
+    org_id: str,
     group_key: str,
     bricks_type: str,
     data_type_lookup: Dict[str, str],
@@ -577,6 +590,7 @@ def __load_ac_from_bricks_group(
         )
         __create_attribute_with(
             target_project_id,
+            org_id,
             code,
             name,
             data_type,
@@ -587,6 +601,7 @@ def __load_ac_from_bricks_group(
 
 def __add_embedding(
     target_project_id: str,
+    org_id: str,
     target_info: Dict[str, str],
     project_language: str,
     filter_columns: List[str],
@@ -618,6 +633,7 @@ def __add_embedding(
     )
     task_list.append(
         {
+            "organization_id": org_id,
             "project_id": target_project_id,
             "task_type": enums.TaskType.EMBEDDING.value,
             "embedding_type": target_embedding_type,
@@ -635,6 +651,7 @@ def __add_embedding(
     if create_outlier_slice:
         task_list.append(
             {
+                "organization_id": org_id,
                 "project_id": target_project_id,
                 "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
                 "action": {
@@ -648,6 +665,7 @@ def __add_embedding(
 
 def __create_attribute_with(
     project_id: str,
+    org_id: str,
     code: str,
     name: str,
     attribute_type: str,
@@ -663,6 +681,7 @@ def __create_attribute_with(
     if append_to_task_list:
         task_list.append(
             {
+                "organization_id": org_id,
                 "project_id": project_id,
                 "task_type": enums.TaskType.ATTRIBUTE_CALCULATION.value,
                 "attribute_id": attribute_id,
