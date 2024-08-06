@@ -1,9 +1,11 @@
 from controller.attribute import manager as attribute_manager
 from controller.zero_shot import manager as zero_shot_manager
 from controller.payload import manager as payload_manager
+from controller.data_slice import manager as data_slice_manager
 from fast_api.models import (
     AttributeCalculationTaskExecutionBody,
     InformationSourceTaskExecutionBody,
+    DataSliceActionExecutionBody,
 )
 from fastapi import APIRouter
 from util import daemon
@@ -56,3 +58,37 @@ def information_source(
         )
 
     return pack_json_result({"payload_id": payload_id})
+
+
+@router.post(
+    "/data-slice",
+)
+def data_slice(
+    data_slice_action_execution: DataSliceActionExecutionBody,
+):
+    project_id = data_slice_action_execution.project_id
+    embedding_id = data_slice_action_execution.embedding_id
+    user_id = data_slice_action_execution.user_id
+
+    daemon.run(
+        data_slice_manager.create_outlier_slice, project_id, user_id, str(embedding_id)
+    )
+
+    return SILENT_SUCCESS_RESPONSE
+
+
+@router.post(
+    "/start-gates",
+)
+def start_gates(
+    start_gates_action_execution: StartGatesActionExecutionBody,
+):
+    project_id = data_slice_action_execution.project_id
+    embedding_id = data_slice_action_execution.embedding_id
+    user_id = data_slice_action_execution.user_id
+
+    daemon.run(
+        data_slice_manager.create_outlier_slice, project_id, user_id, str(embedding_id)
+    )
+
+    return SILENT_SUCCESS_RESPONSE

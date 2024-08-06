@@ -3,7 +3,7 @@ from submodules.model.cognition_objects import project as cognition_project
 from submodules.model.business_objects import project
 from submodules.model.cognition_objects import conversation
 from submodules.model.enums import TaskType
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 
 
 def handle_cognition_file_upload(path_parts: List[str]):
@@ -18,26 +18,17 @@ def handle_cognition_file_upload(path_parts: List[str]):
         if not cognition_prj:
             return
 
-        project_id = None
-        if cognition_prj.refinery_references_project_id:
-            project_id = str(cognition_prj.refinery_references_project_id)
-        else:
-            project_id = str(
-                project.get_or_create_queue_project(
-                    cognition_prj.organization_id, cognition_prj.created_by, True
-                ).id
-            )
         conversation_item = conversation.get(cognition_project_id, conversation_id)
         if not conversation_item:
             return
 
-        task_queue_manager.add_task(
-            project_id,
+        task_master_manager.queue_task(
+            str(cognition_prj.organization_id),
+            str(conversation_item.created_by),
             TaskType.PARSE_COGNITION_TMP_FILE,
-            conversation_item.created_by,
             {
-                "cognition_project_id": cognition_project_id,
-                "conversation_id": conversation_id,
+                "cognition_project_id": str(cognition_project_id),
+                "conversation_id": str(conversation_id),
                 "minio_path": "/".join(path_parts[1:]),
                 "bucket": path_parts[0],
             },

@@ -450,3 +450,9 @@ class InformationSourceTaskExecutionBody(BaseModel):
     information_source_id: StrictStr
     information_source_type: StrictStr
     user_id: StrictStr
+
+
+class DataSliceActionExecutionBody(BaseModel):
+    project_id: StrictStr
+    user_id: StrictStr
+    embedding_id: StrictStr
