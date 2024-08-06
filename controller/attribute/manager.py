@@ -18,7 +18,7 @@ from submodules.model.enums import (
 )
 from util import daemon, notification
 
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
 from . import util
 from sqlalchemy import sql
@@ -147,7 +147,11 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
 
 
 def add_running_id(
-    user_id: str, project_id: str, attribute_name: str, for_retokenization: bool = True
+    user_id: str,
+    org_id: str,
+    project_id: str,
+    attribute_name: str,
+    for_retokenization: bool = True,
 ) -> None:
     if attribute.get_by_name(project_id, attribute_name):
         raise ValueError(f"attribute with name {attribute_name} already exists")
@@ -155,35 +159,49 @@ def add_running_id(
 
     # added threading for session management because otherwise this can sometimes create a deadlock
     thread = daemon.prepare_thread(
-        __add_running_id, user_id, project_id, attribute_name, for_retokenization
+        __add_running_id,
+        user_id,
+        org_id,
+        project_id,
+        attribute_name,
+        for_retokenization,
     )
     thread.start()
     thread.join()
 
 
 def __add_running_id(
-    user_id: str, project_id: str, attribute_name: str, for_retokenization: bool = True
+    user_id: str,
+    org_id: str,
+    project_id: str,
+    attribute_name: str,
+    for_retokenization: bool = True,
 ):
     session_token = general.get_ctx_token()
     attribute.add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
     if for_retokenization:
-        task_queue_manager.add_task(
-            project_id,
+        task_master_manager.queue_task(
+            str(org_id),
+            str(user_id),
             TaskType.TOKENIZATION,
-            user_id,
             {
                 "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": False,
+                "project_id": str(project_id),
             },
         )
     general.remove_and_refresh_session(session_token)
 
 
 def calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str, include_rats: bool = True
+    project_id: str,
+    org_id: str,
+    user_id: str,
+    attribute_id: str,
+    include_rats: bool = True,
 ) -> None:
     if attribute.get_all(
         project_id=project_id, state_filter=[AttributeState.RUNNING.value]
@@ -231,6 +249,7 @@ def calculate_user_attribute_all_records(
     daemon.run(
         __calculate_user_attribute_all_records,
         project_id,
+        org_id,
         user_id,
         attribute_id,
         include_rats,
@@ -238,7 +257,7 @@ def calculate_user_attribute_all_records(
 
 
 def __calculate_user_attribute_all_records(
-    project_id: str, user_id: str, attribute_id: str, include_rats: bool
+    project_id: str, org_id: str, user_id: str, attribute_id: str, include_rats: bool
 ) -> None:
     session_token = general.get_ctx_token()
     try:
@@ -295,14 +314,15 @@ def __calculate_user_attribute_all_records(
             project_id, attribute_id, "Triggering tokenization."
         )
         try:
-            task_queue_manager.add_task(
-                project_id,
+            task_master_manager.queue_task(
+                str(org_id),
                 TaskType.TOKENIZATION,
-                user_id,
+                str(user_id),
                 {
                     "scope": RecordTokenizationScope.ATTRIBUTE.value,
                     "attribute_id": str(attribute_item.id),
                     "include_rats": include_rats,
+                    "project_id": str(project_id),
                 },
             )
 

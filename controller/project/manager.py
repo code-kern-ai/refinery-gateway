@@ -315,7 +315,11 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
 
 
 def add_workflow_store_data_to_project(
-    project_id: str, user_id: str, file_name: str, data: List[Dict[str, Any]]
+    project_id: str,
+    org_id: str,
+    user_id: str,
+    file_name: str,
+    data: List[Dict[str, Any]],
 ):
     upload_task = upload_task_manager.create_upload_task(
         user_id=user_id,
@@ -332,7 +336,7 @@ def add_workflow_store_data_to_project(
         upload_task,
         enums.RecordCategory.SCALE.value,
     )
-    check_and_add_running_id(project_id, user_id)
+    check_and_add_running_id(project_id, org_id, user_id)
 
     upload_task_manager.update_upload_task_to_finished(upload_task)
 

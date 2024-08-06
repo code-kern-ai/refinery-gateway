@@ -40,7 +40,7 @@ from sqlalchemy.sql import text as sql_text
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
 from submodules.model.business_objects import record_label_association as rla
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 
 
@@ -140,7 +140,7 @@ def import_records_from_json(
         os.remove(file_path)
 
 
-def check_and_add_running_id(project_id: str, user_id: str):
+def check_and_add_running_id(project_id: str, org_id: str, user_id: str):
     attributes = attribute.get_all(project_id)
     add_running_id = True
     for att in attributes:
@@ -148,7 +148,9 @@ def check_and_add_running_id(project_id: str, user_id: str):
             add_running_id = False
             break
     if add_running_id:
-        attribute_manager.add_running_id(user_id, project_id, "running_id", False)
+        attribute_manager.add_running_id(
+            user_id, org_id, project_id, "running_id", False
+        )
 
 
 def import_project(project_id: str, task: UploadTask) -> None:
@@ -304,7 +306,7 @@ def generate_labelstudio_template(
     )
 
 
-def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
+def import_label_studio_file(project_id: str, org_id: str, upload_task_id: str) -> None:
     ctx_token = general.get_ctx_token()
     try:
         if attribute.get_all(project_id):
@@ -312,14 +314,15 @@ def import_label_studio_file(project_id: str, upload_task_id: str) -> None:
         else:
             project_creation_manager.manage_data_import(project_id, upload_task_id)
             task = upload_task.get(project_id, upload_task_id)
-            task_queue_manager.add_task(
-                project_id,
-                TaskType.TOKENIZATION,
+            task_master_manager.queue_task(
+                str(org_id),
                 str(task.user_id),
+                TaskType.TOKENIZATION,
                 {
                     "scope": RecordTokenizationScope.PROJECT.value,
                     "include_rats": True,
                     "only_uploaded_attributes": False,
+                    "project_id": str(project_id),
                 },
             )
         upload_task.update(

@@ -28,6 +28,7 @@ def calculate_attributes(
     daemon.run(
         attribute_manager.calculate_user_attribute_all_records,
         project_id,
+        attribute_calculation_task_execution.organization_id,
         attribute_calculation_task_execution.user_id,
         attribute_calculation_task_execution.attribute_id,
     )
