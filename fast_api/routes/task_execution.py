@@ -75,20 +75,3 @@ def data_slice(
     )
 
     return SILENT_SUCCESS_RESPONSE
-
-
-@router.post(
-    "/start-gates",
-)
-def start_gates(
-    start_gates_action_execution: StartGatesActionExecutionBody,
-):
-    project_id = data_slice_action_execution.project_id
-    embedding_id = data_slice_action_execution.embedding_id
-    user_id = data_slice_action_execution.user_id
-
-    daemon.run(
-        data_slice_manager.create_outlier_slice, project_id, user_id, str(embedding_id)
-    )
-
-    return SILENT_SUCCESS_RESPONSE
