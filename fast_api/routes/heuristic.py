@@ -195,17 +195,19 @@ def set_payload(
         information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
     )
 
-    queue_id, _ = task_master_manager.queue_task(
-        org_id,
-        user.id,
+    task_master_response = task_master_manager.queue_task(
+        str(org_id),
+        str(user.id),
         enums.TaskType.INFORMATION_SOURCE,
         {
-            "project_id": project_id,
-            "information_source_id": heuristic_id,
+            "project_id": str(project_id),
+            "information_source_id": str(heuristic_id),
             "source_type": information_source_item.type,
         },
         priority=priority,
     )
+
+    queue_id = task_master_response.json().get("task_id")
 
     return pack_json_result({"data": {"createPayload": {"queueId": queue_id}}})
 

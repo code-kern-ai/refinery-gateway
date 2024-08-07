@@ -44,17 +44,19 @@ def information_source(
     information_source_id = information_source_task_execution.information_source_id
     information_source_type = information_source_task_execution.information_source_type
     user_id = information_source_task_execution.user_id
+    payload_id = None
     # already threaded in managers
     if information_source_type == InformationSourceType.ZERO_SHOT.value:
         payload_id = zero_shot_manager.start_zero_shot_for_project_thread(
             project_id, information_source_id, user_id
         )
     else:
-        payload_id = payload_manager.create_payload(
+        payload = payload_manager.create_payload(
             project_id, information_source_id, user_id
         )
-
-    return pack_json_result({"payload_id": payload_id})
+        if payload:
+            payload_id = payload.id
+    return pack_json_result({"payload_id": str(payload_id)}, wrap_for_frontend=False)
 
 
 @router.post(
