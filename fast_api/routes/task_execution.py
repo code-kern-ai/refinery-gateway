@@ -15,11 +15,6 @@ from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RES
 router = APIRouter()
 
 
-@router.get("/ping")
-def ping():
-    return "pong"
-
-
 @router.post(
     "/attribute-calculation",
 )
