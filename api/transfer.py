@@ -1,7 +1,7 @@
 import logging
 import traceback
 import time
-from typing import Optional, Dict
+from typing import Optional
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
