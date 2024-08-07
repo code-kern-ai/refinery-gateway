@@ -2,10 +2,12 @@ from controller.attribute import manager as attribute_manager
 from controller.zero_shot import manager as zero_shot_manager
 from controller.payload import manager as payload_manager
 from controller.data_slice import manager as data_slice_manager
+from controller.weak_supervision import manager as weak_supervision_manager
 from fast_api.models import (
     AttributeCalculationTaskExecutionBody,
     InformationSourceTaskExecutionBody,
     DataSliceActionExecutionBody,
+    WeakSupervisionActionExecutionBody,
 )
 from fastapi import APIRouter
 from util import daemon
@@ -67,6 +69,24 @@ def data_slice(
 
     daemon.run(
         data_slice_manager.create_outlier_slice, project_id, user_id, str(embedding_id)
+    )
+
+    return SILENT_SUCCESS_RESPONSE
+
+
+@router.post(
+    "/weak-supervision",
+)
+def weak_supervision(
+    weak_supervision_action_execution: WeakSupervisionActionExecutionBody,
+):
+    project_id = weak_supervision_action_execution.project_id
+    user_id = weak_supervision_action_execution.user_id
+
+    daemon.run(
+        weak_supervision_manager.run_weak_supervision,
+        project_id,
+        user_id,
     )
 
     return SILENT_SUCCESS_RESPONSE

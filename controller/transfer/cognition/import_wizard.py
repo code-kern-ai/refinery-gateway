@@ -34,6 +34,7 @@ from .constants import (
     FREE_API_REQUEST_URL,
 )
 from .util import send_log_message
+import traceback
 
 
 class TokenRef:
@@ -53,6 +54,7 @@ def prepare_and_finalize_setup(cognition_project_id: str, task_id: str) -> None:
         __finalize_setup(token_ref, cognition_project_id, task_id)
     except Exception as e:
         print(f"Error during wizard setup: {str(e)}", flush=True)
+        print(traceback.format_exc())
     finally:
         token_ref.cleanup()
 
@@ -158,6 +160,7 @@ def __finalize_setup(
     __finalize_setup_for(
         CognitionProjects.RELEVANCE,
         relevance_project_id,
+        organization_id,
         user_id,
         project_language,
         file_additional_info,
@@ -210,9 +213,16 @@ def __finalize_setup(
             continue
         break
 
-    task_id, position = task_master_manager.queue_task(
-        organization_id, user_id, enums.TaskType.TASK_QUEUE, task_list
+    queue_response = task_master_manager.queue_task(
+        organization_id,
+        user_id,
+        enums.TaskType.TASK_QUEUE,
+        {"project_id": cognition_project_id, "task_list": task_list},
     )
+    queue_info = queue_response.json()
+    print(queue_info, flush=True)
+    task_id = queue_info["task_id"]
+    position = queue_info.get("position")
 
     notification.send_organization_update(
         cognition_project_id,
@@ -435,6 +445,7 @@ def __finalize_setup_for(
                 filter_columns = []
             embedding_name = __add_embedding(
                 project_id,
+                org_id,
                 embedding.get("target", {}),
                 project_language,
                 filter_columns,

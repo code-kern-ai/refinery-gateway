@@ -456,3 +456,8 @@ class DataSliceActionExecutionBody(BaseModel):
     project_id: StrictStr
     user_id: StrictStr
     embedding_id: StrictStr
+
+
+class WeakSupervisionActionExecutionBody(BaseModel):
+    project_id: StrictStr
+    user_id: StrictStr

@@ -1,6 +1,5 @@
 from typing import List
 from submodules.model.cognition_objects import project as cognition_project
-from submodules.model.business_objects import project
 from submodules.model.cognition_objects import conversation
 from submodules.model.enums import TaskType
 from controller.task_master import manager as task_master_manager
