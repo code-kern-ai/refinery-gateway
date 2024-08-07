@@ -668,6 +668,7 @@ def __add_embedding(
                 "action": {
                     "action_type": enums.TaskQueueAction.CREATE_OUTLIER_SLICE.value,
                     "embedding_name": embedding_name,
+                    "project_id": target_project_id,
                 },
             }
         )
