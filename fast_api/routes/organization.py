@@ -105,6 +105,14 @@ def get_user_info_mini(request: Request):
     return pack_json_result({"data": data})
 
 
+@router.get("/org-id-name-map")
+def get_org_id_name_map(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    return pack_json_result(
+        organization.get_org_id_to_name_map(), wrap_for_frontend=False
+    )
+
+
 @router.get("/all-users")
 def get_all_user(request: Request):
     organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
