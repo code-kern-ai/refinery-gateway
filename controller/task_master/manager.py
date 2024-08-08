@@ -26,5 +26,6 @@ def queue_task(
 
 def delete_task(org_id: str, task_id: str) -> requests.Response:
     return requests.delete(
-        f"{TASK_MASTER_URL}/task/queue", json={"orgId": org_id, "taskId": task_id}
+        f"{TASK_MASTER_URL}/task/queue",
+        json={"orgId": str(org_id), "taskId": str(task_id)},
     )
