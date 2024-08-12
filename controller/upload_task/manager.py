@@ -39,7 +39,7 @@ def create_upload_task(
     file_type: str,
     file_import_options: str,
     upload_type: str,
-    key: str
+    key: str,
 ) -> UploadTask:
     task = upload_task.create(
         user_id,
@@ -59,7 +59,6 @@ def update_upload_task_to_finished(task: UploadTask) -> None:
     update_task(
         task.project_id, task.id, state=enums.UploadStates.DONE.value, progress=100.0
     )
-
 
 
 def update_task(
