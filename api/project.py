@@ -10,7 +10,7 @@ from submodules.model import exceptions
 from submodules.model import events
 from util import doc_ock, notification, adapter
 
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.DEBUG)
@@ -71,17 +71,22 @@ class ProjectCreationFromWorkflow(HTTPEndpoint):
         adapter.check(data, project.id, user.id)
 
         project_manager.add_workflow_store_data_to_project(
-            user_id=user.id, project_id=project.id, file_name=name, data=data
+            user_id=user.id,
+            project_id=project.id,
+            org_id=project.organization_id,
+            file_name=name,
+            data=data,
         )
 
-        task_queue_manager.add_task(
-            str(project.id),
-            TaskType.TOKENIZATION,
+        task_master_manager.queue_task(
+            str(organization.id),
             str(user.id),
+            TaskType.TOKENIZATION,
             {
                 "scope": RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": False,
+                "project_id": str(project.id),
             },
         )
 

@@ -438,6 +438,31 @@ class CancelTaskBody(BaseModel):
     task_type: StrictStr
 
 
+class AttributeCalculationTaskExecutionBody(BaseModel):
+    organization_id: StrictStr
+    project_id: StrictStr
+    user_id: StrictStr
+    attribute_id: StrictStr
+
+
+class InformationSourceTaskExecutionBody(BaseModel):
+    project_id: StrictStr
+    information_source_id: StrictStr
+    information_source_type: StrictStr
+    user_id: StrictStr
+
+
+class DataSliceActionExecutionBody(BaseModel):
+    project_id: StrictStr
+    user_id: StrictStr
+    embedding_id: StrictStr
+
+
+class WeakSupervisionActionExecutionBody(BaseModel):
+    project_id: StrictStr
+    user_id: StrictStr
+
+
 class CreateCustomerButton(BaseModel):
     org_id: StrictStr
     type: CustomerButtonType

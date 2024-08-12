@@ -15,8 +15,6 @@ from api.transfer import (
     UploadTaskInfo,
     CognitionImport,
     CognitionPrepareProject,
-    CognitionParseMarkdownFile,
-    CognitionStartMacroExecutionGroup,
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
@@ -36,12 +34,12 @@ from fast_api.routes.record_ide import router as record_ide_router
 from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
+from fast_api.routes.task_execution import router as task_execution_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
-from controller.task_queue.task_queue import init_task_queues
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
     PREFIX_ORGANIZATION,
@@ -62,6 +60,7 @@ from route_prefix import (
     PREFIX_RECORD,
     PREFIX_WEAK_SUPERVISION,
     PREFIX_LABELING_TASKS,
+    PREFIX_TASK_EXECUTION,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -116,6 +115,10 @@ fastapi_app.include_router(
     labeling_tasks_router, prefix=PREFIX_LABELING_TASKS, tags=["labeling-tasks"]
 )
 
+fastapi_app_internal = FastAPI()
+fastapi_app_internal.include_router(
+    task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
+)
 routes = [
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
@@ -135,19 +138,14 @@ routes = [
         "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
         CognitionPrepareProject,
     ),
-    Route(
-        "/project/{project_id:str}/cognition/datasets/{dataset_id:str}/files/{file_id:str}/queue",
-        CognitionParseMarkdownFile,
-    ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Route("/project", ProjectCreationFromWorkflow),
-    Route(
-        "/macro/{macro_id:str}/execution-group/{group_id:str}/queue",
-        CognitionStartMacroExecutionGroup,
-    ),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),
+    Mount(
+        "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"
+    ),  # task master requests
 ]
 
 
@@ -156,7 +154,6 @@ fastapi_app.middleware("http")(handle_db_session)
 middleware = [Middleware(DatabaseSessionHandler)]
 app = Starlette(routes=routes, middleware=middleware)
 
-init_task_queues()
 check_in_deletion_projects()
 security.check_secret_key()
 clean_up.clean_up_database()

@@ -4,7 +4,6 @@ from typing import List, Optional
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import (
-    general,
     labeling_task,
     information_source,
     payload,
@@ -12,7 +11,6 @@ from submodules.model.business_objects import (
 from controller.misc import config_service
 from controller.labeling_access_link import manager as link_manager
 from controller.record_label_association import manager as rla_manager
-from controller.payload import manager as payload_manager
 from util import daemon
 
 
@@ -169,4 +167,3 @@ def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True, is_model_callback=True
     )
-

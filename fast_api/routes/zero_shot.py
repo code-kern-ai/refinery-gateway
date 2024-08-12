@@ -8,7 +8,7 @@ from fast_api.models import (
 from fast_api.routes.client_response import pack_json_result
 from controller.auth import manager as auth_manager
 from fastapi import APIRouter, Body, Depends, Request
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from controller.zero_shot import manager as zero_shot_manager
 from submodules.model.enums import TaskType
 from util import notification
@@ -98,12 +98,14 @@ def init_zeroshot(
     project_id: str,
     heuristic_id: str,
 ):
-    user_id = auth_manager.get_user_id_by_info(request.state.info)
-    task_queue_manager.add_task(
-        project_id,
+    user = auth_manager.get_user_by_info(request.state.info)
+
+    task_master_manager.queue_task(
+        user.organization_id,
+        user.id,
         TaskType.INFORMATION_SOURCE,
-        user_id,
         {
+            "project_id,": project_id,
             "information_source_id": heuristic_id,
         },
     )

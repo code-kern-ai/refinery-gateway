@@ -11,7 +11,6 @@ from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
 
 from fastapi.responses import JSONResponse
-from controller.task_queue import manager
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
@@ -19,6 +18,8 @@ from controller.labeling_task_label import manager as label_manager
 from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from controller.record import manager as record_manager
+from controller.task_master import manager as task_master_manager
+from controller.task_queue import manager as task_queue_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
@@ -55,7 +56,7 @@ def get_queued_tasks(
     project_id: str,
     task_type: str,
 ) -> Dict:
-    data = manager.get_all_waiting_by_type(project_id, task_type)
+    data = task_queue_manager.get_all_waiting_by_type(project_id, task_type)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=QUEUED_TASKS_WHITELIST)
     return pack_json_result({"data": {"queuedTasks": data_dict}})
 
@@ -265,14 +266,16 @@ def calculate_user_attribute_all_records(
     project_id: str,
     body: CalculateUserAttributeAllRecordsBody = Body(...),
 ):
-    user_id = auth_manager.get_user_by_info(request.state.info).id
-
-    manager.add_task(
-        project_id,
+    user = auth_manager.get_user_by_info(request.state.info)
+    user_id = user.id
+    org_id = user.organization_id
+    task_master_manager.queue_task(
+        str(org_id),
+        str(user_id),
         TaskType.ATTRIBUTE_CALCULATION,
-        user_id,
         {
-            "attribute_id": body.attribute_id,
+            "project_id": str(project_id),
+            "attribute_id": str(body.attribute_id),
         },
         True,
     )
