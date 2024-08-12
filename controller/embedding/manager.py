@@ -335,7 +335,11 @@ def update_embedding_payload(
     if not embedding_item:
         return False
     # commit to ensure the values are set correct for the embedding container to request
-    previous_attributes = set(embedding_item.filter_attributes)
+    previous_attributes = (
+        set()
+        if not embedding_item.filter_attributes
+        else set(embedding_item.filter_attributes)
+    )
     embedding_item.filter_attributes = filter_attributes
     general.commit()
     if connector.update_attribute_payloads_for_neural_search(project_id, embedding_id):
