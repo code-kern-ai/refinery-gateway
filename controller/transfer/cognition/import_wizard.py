@@ -219,22 +219,22 @@ def __finalize_setup(
         enums.TaskType.TASK_QUEUE,
         {"project_id": cognition_project_id, "task_list": task_list},
     )
-    queue_info = queue_response.json()
-    print(queue_info, flush=True)
-    task_id = queue_info["task_id"]
-    position = queue_info.get("position")
+    if queue_response.ok:
+        queue_info = queue_response.json()
+        task_id = queue_info["task_id"]
+        position = queue_info.get("position")
 
-    notification.send_organization_update(
-        cognition_project_id,
-        f"cognition_wizard:task_queue:{task_id}:{len(task_list)}",
-        organization_id=organization_id,
-    )
-    if position:
         notification.send_organization_update(
             cognition_project_id,
-            f"task_queue:{str(task_id)}:QUEUE_POSITION:{position}",
+            f"cognition_wizard:task_queue:{task_id}:{len(task_list)}",
             organization_id=organization_id,
         )
+        if position:
+            notification.send_organization_update(
+                cognition_project_id,
+                f"task_queue:{str(task_id)}:QUEUE_POSITION:{position}",
+                organization_id=organization_id,
+            )
 
 
 # function called from queue as last entry

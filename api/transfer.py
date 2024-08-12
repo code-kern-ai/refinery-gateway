@@ -324,7 +324,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
     if task.file_type != "knowledge_base":
         only_usable_attributes = task.file_type == "records_add"
         project_item = project.get(project_id)
-        org_id = str(project_item.organization_id)
+        org_id = project_item.organization_id
         task_master_manager.queue_task(
             str(org_id),
             str(task.user_id),

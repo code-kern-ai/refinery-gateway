@@ -206,8 +206,9 @@ def set_payload(
         },
         priority=priority,
     )
-
-    queue_id = task_master_response.json().get("task_id")
+    queue_id = None
+    if task_master_response.ok:
+        queue_id = task_master_response.json().get("task_id")
 
     return pack_json_result({"data": {"createPayload": {"queueId": queue_id}}})
 

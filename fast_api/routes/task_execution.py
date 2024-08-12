@@ -40,19 +40,22 @@ def calculate_attributes(
 def information_source(
     information_source_task_execution: InformationSourceTaskExecutionBody,
 ):
-    project_id = information_source_task_execution.project_id
-    information_source_id = information_source_task_execution.information_source_id
-    information_source_type = information_source_task_execution.information_source_type
-    user_id = information_source_task_execution.user_id
-    payload_id = None
+
     # already threaded in managers
-    if information_source_type == InformationSourceType.ZERO_SHOT.value:
+    if (
+        information_source_task_execution.information_source_type
+        == InformationSourceType.ZERO_SHOT.value
+    ):
         payload_id = zero_shot_manager.start_zero_shot_for_project_thread(
-            project_id, information_source_id, user_id
+            information_source_task_execution.project_id,
+            information_source_task_execution.information_source_id,
+            information_source_task_execution.user_id,
         )
     else:
         payload = payload_manager.create_payload(
-            project_id, information_source_id, user_id
+            information_source_task_execution.project_id,
+            information_source_task_execution.information_source_id,
+            information_source_task_execution.user_id,
         )
         if payload:
             payload_id = payload.id
@@ -65,12 +68,12 @@ def information_source(
 def data_slice(
     data_slice_action_execution: DataSliceActionExecutionBody,
 ):
-    project_id = data_slice_action_execution.project_id
-    embedding_id = data_slice_action_execution.embedding_id
-    user_id = data_slice_action_execution.user_id
 
     daemon.run(
-        data_slice_manager.create_outlier_slice, project_id, user_id, str(embedding_id)
+        data_slice_manager.create_outlier_slice,
+        data_slice_action_execution.project_id,
+        data_slice_action_execution.user_id,
+        data_slice_action_execution.embedding_id,
     )
 
     return SILENT_SUCCESS_RESPONSE
@@ -82,13 +85,11 @@ def data_slice(
 def weak_supervision(
     weak_supervision_action_execution: WeakSupervisionActionExecutionBody,
 ):
-    project_id = weak_supervision_action_execution.project_id
-    user_id = weak_supervision_action_execution.user_id
 
     daemon.run(
         weak_supervision_manager.run_weak_supervision,
-        project_id,
-        user_id,
+        weak_supervision_action_execution.project_id,
+        weak_supervision_action_execution.user_id,
     )
 
     return SILENT_SUCCESS_RESPONSE
