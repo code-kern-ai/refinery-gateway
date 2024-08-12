@@ -145,7 +145,7 @@ routes = [
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"
-    ),  # task master requesting
+    ),  # task master requests
 ]
 
 
