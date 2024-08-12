@@ -11,7 +11,7 @@ from submodules.model.business_objects.payload import get_payload_with_heuristic
 from submodules.model.enums import InformationSourceType
 from submodules.model.util import pack_edges_node, sql_alchemy_to_dict
 from util import notification
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from controller.auth import kratos
 
@@ -187,6 +187,7 @@ def set_payload(
     heuristic_id: str,
 ):
     user = auth_manager.get_user_by_info(request.state.info)
+    org_id = user.organization_id
     information_source_item = information_source.get(project_id, heuristic_id)
     if information_source_item.type == enums.InformationSourceType.CROWD_LABELER.value:
         return pack_json_result({"data": {"createPayload": None}})
@@ -194,16 +195,20 @@ def set_payload(
         information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
     )
 
-    queue_id, _ = task_queue_manager.add_task(
-        project_id,
+    task_master_response = task_master_manager.queue_task(
+        str(org_id),
+        str(user.id),
         enums.TaskType.INFORMATION_SOURCE,
-        user.id,
         {
-            "information_source_id": heuristic_id,
+            "project_id": str(project_id),
+            "information_source_id": str(heuristic_id),
             "source_type": information_source_item.type,
         },
         priority=priority,
     )
+    queue_id = None
+    if task_master_response.ok:
+        queue_id = task_master_response.json().get("task_id")
 
     return pack_json_result({"data": {"createPayload": {"queueId": queue_id}}})
 

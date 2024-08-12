@@ -15,7 +15,7 @@ from controller.tokenization.tokenization_service import (
     request_tokenize_record,
 )
 import logging
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.INFO)
@@ -91,15 +91,16 @@ def start_record_tokenization(project_id: str, record_id: str) -> None:
     )
 
 
-def start_project_tokenization(project_id: str, user_id: str) -> None:
-    task_queue_manager.add_task(
-        project_id,
+def start_project_tokenization(project_id: str, org_id: str, user_id: str) -> None:
+    task_master_manager.queue_task(
+        str(org_id),
+        str(user_id),
         TaskType.TOKENIZATION,
-        user_id,
         {
             "scope": RecordTokenizationScope.PROJECT.value,
             "include_rats": True,
             "only_uploaded_attributes": False,
+            "project_id": str(project_id),
         },
     )
 
