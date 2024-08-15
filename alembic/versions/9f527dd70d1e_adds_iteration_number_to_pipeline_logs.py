@@ -1,17 +1,18 @@
 """adds iteration number to pipeline logs
 
 Revision ID: 9f527dd70d1e
-Revises: 706d5611a73e
+Revises: b7b9f7de1013
 Create Date: 2024-07-09 09:46:54.139282
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9f527dd70d1e'
-down_revision = '706d5611a73e'
+revision = "9f527dd70d1e"
+down_revision = "b7b9f7de1013"
 branch_labels = None
 depends_on = None
 
