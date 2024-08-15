@@ -23,7 +23,7 @@ from submodules.model.business_objects import (
 )
 from fast_api.types import HuddleData, ProjectSize, GatesIntegrationData
 from util import daemon, notification
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
@@ -177,11 +177,12 @@ def import_sample_project(
     project_item = handler.import_sample_project(
         user_id, organization_id, name, project_type
     )
-    task_queue_manager.add_task(
-        str(project_item.id),
+    task_master_manager.queue_task(
+        str(organization_id),
+        str(user_id),
         TaskType.TOKENIZATION,
-        user_id,
         {
+            "project_id": str(project_item.id),
             "scope": RecordTokenizationScope.PROJECT.value,
             "include_rats": True,
             "only_uploaded_attributes": False,
@@ -314,7 +315,11 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
 
 
 def add_workflow_store_data_to_project(
-    project_id: str, user_id: str, file_name: str, data: List[Dict[str, Any]]
+    project_id: str,
+    org_id: str,
+    user_id: str,
+    file_name: str,
+    data: List[Dict[str, Any]],
 ):
     upload_task = upload_task_manager.create_upload_task(
         user_id=user_id,
@@ -331,7 +336,7 @@ def add_workflow_store_data_to_project(
         upload_task,
         enums.RecordCategory.SCALE.value,
     )
-    check_and_add_running_id(project_id, user_id)
+    check_and_add_running_id(project_id, org_id, user_id)
 
     upload_task_manager.update_upload_task_to_finished(upload_task)
 

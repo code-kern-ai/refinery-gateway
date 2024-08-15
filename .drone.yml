@@ -43,7 +43,7 @@ steps:
     image: appleboy/drone-ssh
     failure: ignore
     settings:
-      host: app.dev.kern.ai
+      host: app.legacy.kern.ai
       username:
         from_secret: ssh_user
       key:

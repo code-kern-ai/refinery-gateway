@@ -5,7 +5,7 @@ from fast_api.routes.client_response import pack_json_result
 from controller.misc import manager as misc
 from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
-from controller.task_queue import manager as task_queue_manager
+from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.business_objects import project
@@ -114,10 +114,10 @@ def get_embeddings(project_id: str) -> List:
 )
 def delete_from_task_queue(
     request: Request,
-    project_id: str,
     task_id: str,
 ):
-    task_queue_manager.remove_task_from_queue(project_id, task_id)
+    org_id = auth_manager.get_user_by_info(request.state.info).organization_id
+    task_master_manager.delete_task(org_id, task_id)
     return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
 
 
@@ -166,11 +166,12 @@ def create_embedding(
             "version": body.config.get("version"),
         }
 
-    task_queue_manager.add_task(
-        project_id,
+    task_master_manager.queue_task(
+        str(user.organization_id),
+        str(user.id),
         TaskType.EMBEDDING,
-        user.id,
         {
+            "project_id": project_id,
             "embedding_type": embedding_type,
             "attribute_id": body.attribute_id,
             "embedding_name": manager.get_embedding_name(
