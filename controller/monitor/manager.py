@@ -2,8 +2,8 @@ from typing import Any, List
 from submodules.model.business_objects import monitor as task_monitor
 
 
-def monitor_all_tasks(project_id: str = None, only_running: bool = True) -> List[Any]:
-    return task_monitor.get_all_tasks(project_id, only_running)
+def monitor_all_tasks(page: int, limit: int, only_running: bool) -> List[Any]:
+    return task_monitor.get_all_tasks(page, limit, only_running)
 
 
 def cancel_all_running_tasks(project_id: str = None) -> None:

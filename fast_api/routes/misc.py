@@ -86,36 +86,12 @@ def model_provider_download_model(
 
 
 @router.get("/all-tasks")
-def get_all_tasks(request: Request, only_running: bool):
+def get_all_tasks(request: Request, page: int = 1, limit: int = 100, only_running=True):
     auth.check_admin_access(request.state.info)
-    tasks = controller_manager.monitor_all_tasks(only_running=only_running)
-
-    all_tasks = []
-
-    for task in tasks:
-        started_at = None
-        if task.started_at:
-            started_at = task.started_at.isoformat()
-
-        finished_at = None
-        if task.finished_at:
-            finished_at = task.finished_at.isoformat()
-
-        all_tasks.append(
-            {
-                "projectId": str(task.project_id),
-                "state": task.state,
-                "taskType": task.task_type,
-                "id": str(task.id),
-                "createdBy": task.created_by,
-                "organizationName": task.organization_name,
-                "projectName": task.project_name,
-                "startedAt": started_at,
-                "finishedAt": finished_at,
-            }
-        )
-
-    return pack_json_result({"data": {"allTasks": all_tasks}})
+    tasks = controller_manager.monitor_all_tasks(
+        page=page, limit=limit, only_running=only_running
+    )
+    return pack_json_result(tasks)
 
 
 @router.post("/cancel-task")
