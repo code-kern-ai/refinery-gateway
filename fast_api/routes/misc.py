@@ -16,6 +16,7 @@ from controller.misc import manager
 from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
@@ -92,6 +93,19 @@ def get_all_tasks(request: Request, page: int = 1, limit: int = 100, only_runnin
         page=page, limit=limit, only_running=only_running
     )
     return pack_json_result(tasks)
+
+
+@router.delete(
+    "/delete-from-task-queue-db",
+)
+def delete_from_task_queue_db(
+    request: Request,
+    task_id: str,
+    org_id: str,
+):
+    auth.check_admin_access(request.state.info)
+    task_master_manager.delete_task(org_id, task_id)
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.post("/cancel-task")

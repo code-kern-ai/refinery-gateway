@@ -112,7 +112,7 @@ def get_embeddings(project_id: str) -> List:
     "/{project_id}/{task_id}/delete-from-task-queue",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def delete_from_w(
+def delete_from_task_queue(
     request: Request,
     task_id: str,
 ):
