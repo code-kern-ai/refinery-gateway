@@ -1,9 +1,35 @@
 from typing import Any, List
 from submodules.model.business_objects import monitor as task_monitor
+from controller.auth import kratos
+from submodules.model.util import sql_alchemy_to_dict
 
 
 def monitor_all_tasks(page: int, limit: int, only_running: bool) -> List[Any]:
-    return task_monitor.get_all_tasks(page, limit, only_running)
+    tasks = task_monitor.get_all_tasks(page, limit, only_running)
+    tasks_dict = sql_alchemy_to_dict(tasks)
+    user_ids = {str(t["created_by"]) for t in tasks}  # set comprehension
+    name_lookup = {u_id: kratos.resolve_user_name_by_id(u_id) for u_id in user_ids}
+
+    for t in tasks_dict:
+        created_by_first_last = name_lookup[str(t["created_by"])]
+        print(
+            (
+                created_by_first_last["first"] + " " + created_by_first_last["last"]
+                if created_by_first_last
+                else "Unknown"
+            )
+        )
+        t["created_by"] = (
+            created_by_first_last["first"] + " " + created_by_first_last["last"]
+            if created_by_first_last
+            else "Unknown"
+        )
+
+        # name comes from the join with organization
+        t["organization_name"] = t["name"]
+        del t["name"]
+
+    return tasks_dict
 
 
 def cancel_all_running_tasks(project_id: str = None) -> None:

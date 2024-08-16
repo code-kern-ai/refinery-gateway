@@ -23,6 +23,8 @@ router = APIRouter()
 def calculate_attributes(
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
+    # REMOVE BEFORE MERGE
+    return
     daemon.run(
         attribute_manager.calculate_user_attribute_all_records,
         attribute_calculation_task_execution.project_id,
