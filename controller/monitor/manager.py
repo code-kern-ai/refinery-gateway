@@ -12,13 +12,6 @@ def monitor_all_tasks(page: int, limit: int, only_running: bool) -> List[Any]:
 
     for t in tasks_dict:
         created_by_first_last = name_lookup[str(t["created_by"])]
-        print(
-            (
-                created_by_first_last["first"] + " " + created_by_first_last["last"]
-                if created_by_first_last
-                else "Unknown"
-            )
-        )
         t["created_by"] = (
             created_by_first_last["first"] + " " + created_by_first_last["last"]
             if created_by_first_last
