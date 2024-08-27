@@ -16,6 +16,7 @@ from controller.misc import manager
 from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
@@ -152,6 +153,13 @@ def cancel_all_running_tasks(request: Request):
     auth.check_admin_access(request.state.info)
     controller_manager.cancel_all_running_tasks()
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
+
+
+@router.get("/pause-task-queue")
+def pause_task_queue(request: Request, task_queue_pause: bool):
+    auth.check_admin_access(request.state.info)
+    task_master_manager.pause_task_queue(task_queue_pause)
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.get("/all-users-activity")
