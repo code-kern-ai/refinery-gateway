@@ -29,3 +29,9 @@ def delete_task(org_id: str, task_id: str) -> requests.Response:
         f"{TASK_MASTER_URL}/task/queue",
         json={"orgId": str(org_id), "taskId": str(task_id)},
     )
+
+
+def pause_task_queue(task_queue_pause: bool) -> requests.Response:
+    return requests.post(
+        f"{TASK_MASTER_URL}/task/queue/pause?task_queue_pause={task_queue_pause}"
+    )
