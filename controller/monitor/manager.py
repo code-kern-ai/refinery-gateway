@@ -4,8 +4,8 @@ from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
 
-def monitor_all_tasks(page: int, limit: int, only_running: bool) -> List[Any]:
-    tasks = task_monitor.get_all_tasks(page, limit, only_running)
+def monitor_all_tasks(page: int, limit: int) -> List[Any]:
+    tasks = task_monitor.get_all_tasks(page, limit)
     tasks_dict = sql_alchemy_to_dict(tasks)
     user_ids = {str(t["created_by"]) for t in tasks}  # set comprehension
     name_lookup = {u_id: kratos.resolve_user_name_by_id(u_id) for u_id in user_ids}
