@@ -142,6 +142,13 @@ def cancel_all_running_tasks(request: Request):
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
 
 
+@router.get("/pause-task-queue")
+def pause_task_queue(request: Request, task_queue_pause: bool):
+    auth.check_admin_access(request.state.info)
+    task_master_manager.pause_task_queue(task_queue_pause)
+    return SILENT_SUCCESS_RESPONSE
+
+
 @router.get("/all-users-activity")
 def get_all_users_activity(request: Request):
     auth.check_admin_access(request.state.info)
