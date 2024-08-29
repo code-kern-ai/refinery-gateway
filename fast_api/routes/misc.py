@@ -87,11 +87,9 @@ def model_provider_download_model(
 
 
 @router.get("/all-tasks")
-def get_all_tasks(request: Request, page: int = 1, limit: int = 100, only_running=True):
+def get_all_tasks(request: Request, page: int = 1, limit: int = 100):
     auth.check_admin_access(request.state.info)
-    tasks = controller_manager.monitor_all_tasks(
-        page=page, limit=limit, only_running=only_running
-    )
+    tasks = controller_manager.monitor_all_tasks(page=page, limit=limit)
     return pack_json_result(tasks)
 
 
