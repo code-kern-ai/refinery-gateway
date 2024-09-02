@@ -1,8 +1,8 @@
-"""add_smart_routing
+"""Adds smart routing
 
-Revision ID: 21dcbd2fac3f
+Revision ID: 3e59ce51739c
 Revises: b7b9f7de1013
-Create Date: 2024-09-02 11:46:16.735351
+Create Date: 2024-09-02 12:32:23.493855
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '21dcbd2fac3f'
+revision = '3e59ce51739c'
 down_revision = 'b7b9f7de1013'
 branch_labels = None
 depends_on = None
