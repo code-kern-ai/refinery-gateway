@@ -16,6 +16,7 @@ from controller.misc import manager
 from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
+from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
@@ -86,36 +87,23 @@ def model_provider_download_model(
 
 
 @router.get("/all-tasks")
-def get_all_tasks(request: Request, only_running: bool):
+def get_all_tasks(request: Request, page: int = 1, limit: int = 100):
     auth.check_admin_access(request.state.info)
-    tasks = controller_manager.monitor_all_tasks(only_running=only_running)
+    tasks = controller_manager.monitor_all_tasks(page=page, limit=limit)
+    return pack_json_result(tasks)
 
-    all_tasks = []
 
-    for task in tasks:
-        started_at = None
-        if task.started_at:
-            started_at = task.started_at.isoformat()
-
-        finished_at = None
-        if task.finished_at:
-            finished_at = task.finished_at.isoformat()
-
-        all_tasks.append(
-            {
-                "projectId": str(task.project_id),
-                "state": task.state,
-                "taskType": task.task_type,
-                "id": str(task.id),
-                "createdBy": task.created_by,
-                "organizationName": task.organization_name,
-                "projectName": task.project_name,
-                "startedAt": started_at,
-                "finishedAt": finished_at,
-            }
-        )
-
-    return pack_json_result({"data": {"allTasks": all_tasks}})
+@router.delete(
+    "/delete-from-task-queue-db",
+)
+def delete_from_task_queue_db(
+    request: Request,
+    task_id: str,
+    org_id: str,
+):
+    auth.check_admin_access(request.state.info)
+    task_master_manager.delete_task(org_id, task_id)
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.post("/cancel-task")
@@ -152,6 +140,13 @@ def cancel_all_running_tasks(request: Request):
     auth.check_admin_access(request.state.info)
     controller_manager.cancel_all_running_tasks()
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
+
+
+@router.get("/pause-task-queue")
+def pause_task_queue(request: Request, task_queue_pause: bool):
+    auth.check_admin_access(request.state.info)
+    task_master_manager.pause_task_queue(task_queue_pause)
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.get("/all-users-activity")
