@@ -429,7 +429,11 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 continue
             elif current_att.state == enums.AttributeState.INITIAL.value:
                 attribute_manager.calculate_user_attribute_all_records(
-                    project_id, user_id, current_att_id, True
+                    project_id,
+                    project.get_org_id(project_id),
+                    user_id,
+                    current_att_id,
+                    True,
                 )
             else:
                 if tokenization.is_doc_bin_creation_running_for_attribute(
