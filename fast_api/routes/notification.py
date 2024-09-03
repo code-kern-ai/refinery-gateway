@@ -6,6 +6,7 @@ from controller.auth import manager as auth_manager
 from controller.auth import manager as auth
 from submodules.model.business_objects.notification import get_filtered_notification
 from submodules.model.util import sql_alchemy_to_dict
+from controller.notification.notification_data import __notification_data
 
 
 router = APIRouter()
@@ -42,4 +43,10 @@ def get_notifications(
     )
 
     data = sql_alchemy_to_dict(notifications)
+    for notification in data:
+        notification_data = __notification_data.get(notification["type"])
+        notification["docs"] = notification_data["docs"]
+        notification["page"] = notification_data["page"]
+        notification["title"] = notification_data["title"]
+
     return pack_json_result({"data": {"notifications": data}})
