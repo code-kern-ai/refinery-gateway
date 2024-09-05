@@ -145,7 +145,7 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
 
     attributes = []
 
-    for attr in tokenize_data["attributes"]:
+    for idx, attr in enumerate(tokenize_data["attributes"]):
         tokens = None
         if "tokens" in attr:
             tokens = [
@@ -160,10 +160,10 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
             ]
         attributes.append(
             {
-                "raw": tokenize_data["attributes"][0]["raw"],
+                "raw": tokenize_data["attributes"][idx]["raw"],
                 "attribute": {
-                    "id": str(tokenize_data["attributes"][0]["attribute"].id),
-                    "name": tokenize_data["attributes"][0]["attribute"].name,
+                    "id": str(tokenize_data["attributes"][idx]["attribute"].id),
+                    "name": tokenize_data["attributes"][idx]["attribute"].name,
                 },
                 "tokens": tokens,
             }
