@@ -243,22 +243,6 @@ def label_distribution(
 
 
 @router.get(
-    "/{project_id}/gates-integration-data",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def gates_integration_data(project_id: str) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "getGatesIntegrationData": manager.get_gates_integration_data(
-                    project_id, False
-                )
-            }
-        },
-    )
-
-
-@router.get(
     "/{project_id}/project-tokenization",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )

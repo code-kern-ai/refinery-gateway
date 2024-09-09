@@ -197,23 +197,3 @@ class LabelingFunctionSampleRecords:
         self.records = records if records is not None else []
         self.container_logs = container_logs if container_logs is not None else []
         self.code_has_errors = code_has_errors
-
-
-class GatesIntegrationData:
-    def __init__(
-        self,
-        status: str = None,
-        missing_tokenizer: bool = None,
-        missing_embeddings: List[str] = None,
-        missing_information_sources: List[str] = None,
-    ):
-        self.status = status
-        self.missing_tokenizer = missing_tokenizer
-        self.missing_embeddings = (
-            missing_embeddings if missing_embeddings is not None else []
-        )
-        self.missing_information_sources = (
-            missing_information_sources
-            if missing_information_sources is not None
-            else []
-        )
