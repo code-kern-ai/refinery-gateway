@@ -49,6 +49,14 @@ def upgrade():
     op.drop_column('project', 'refinery_relevance_project_id', schema='cognition')
     op.drop_column('project', 'execute_query_enrichment_if_source_code', schema='cognition')
 
+    # ------------------------ sync table ------------------------	
+    connection.execute("DROP TABLE IF EXISTS migration_sync_dummy")
+    connection.execute("SELECT * INTO migration_sync_dummy FROM refinery_synchronization_task")
+    
+    op.drop_index('ix_cognition_refinery_synchronization_task_cognition_project_id', table_name='refinery_synchronization_task', schema='cognition')
+    op.drop_index('ix_cognition_refinery_synchronization_task_created_by', table_name='refinery_synchronization_task', schema='cognition')
+    op.drop_index('ix_cognition_refinery_synchronization_task_refinery_project_id', table_name='refinery_synchronization_task', schema='cognition')
+    op.drop_table('refinery_synchronization_task', schema='cognition')
     # ### end Alembic commands ###
 
 
@@ -101,4 +109,30 @@ def downgrade():
         FROM cognition.migration_project_dummy m
         WHERE p.id = m.id;""")
     connection.execute("DROP TABLE IF EXISTS migration_project_dummy")
+    
+    # ------------------------ sync table ------------------------	
+
+    op.create_table('refinery_synchronization_task',
+    sa.Column('id', postgresql.UUID(), autoincrement=False, nullable=False),
+    sa.Column('cognition_project_id', postgresql.UUID(), autoincrement=False, nullable=True),
+    sa.Column('refinery_project_id', postgresql.UUID(), autoincrement=False, nullable=True),
+    sa.Column('created_by', postgresql.UUID(), autoincrement=False, nullable=True),
+    sa.Column('created_at', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+    sa.Column('finished_at', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
+    sa.Column('state', sa.VARCHAR(), autoincrement=False, nullable=True),
+    sa.Column('logs', postgresql.ARRAY(sa.VARCHAR()), autoincrement=False, nullable=True),
+    sa.Column('num_records_created', sa.INTEGER(), autoincrement=False, nullable=True),
+    sa.ForeignKeyConstraint(['cognition_project_id'], ['cognition.project.id'], name='refinery_synchronization_task_cognition_project_id_fkey', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], name='refinery_synchronization_task_created_by_fkey', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['refinery_project_id'], ['project.id'], name='refinery_synchronization_task_refinery_project_id_fkey', ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name='refinery_synchronization_task_pkey'),
+    schema='cognition'
+    )
+    op.create_index('ix_cognition_refinery_synchronization_task_refinery_project_id', 'refinery_synchronization_task', ['refinery_project_id'], unique=False, schema='cognition')
+    op.create_index('ix_cognition_refinery_synchronization_task_created_by', 'refinery_synchronization_task', ['created_by'], unique=False, schema='cognition')
+    op.create_index('ix_cognition_refinery_synchronization_task_cognition_project_id', 'refinery_synchronization_task', ['cognition_project_id'], unique=False, schema='cognition')
+
+    connection.execute("INSERT INTO refinery_synchronization_task SELECT * FROM migration_sync_dummy")
+    connection.execute("DROP TABLE IF EXISTS migration_sync_dummy")
+
     # ### end Alembic commands ###
