@@ -51,7 +51,7 @@ def upgrade():
 
     # ------------------------ sync table ------------------------	
     connection.execute("DROP TABLE IF EXISTS migration_sync_dummy")
-    connection.execute("SELECT * INTO migration_sync_dummy FROM refinery_synchronization_task")
+    connection.execute("SELECT * INTO migration_sync_dummy FROM cognition.refinery_synchronization_task")
     
     op.drop_index('ix_cognition_refinery_synchronization_task_cognition_project_id', table_name='refinery_synchronization_task', schema='cognition')
     op.drop_index('ix_cognition_refinery_synchronization_task_created_by', table_name='refinery_synchronization_task', schema='cognition')
@@ -132,7 +132,7 @@ def downgrade():
     op.create_index('ix_cognition_refinery_synchronization_task_created_by', 'refinery_synchronization_task', ['created_by'], unique=False, schema='cognition')
     op.create_index('ix_cognition_refinery_synchronization_task_cognition_project_id', 'refinery_synchronization_task', ['cognition_project_id'], unique=False, schema='cognition')
 
-    connection.execute("INSERT INTO refinery_synchronization_task SELECT * FROM migration_sync_dummy")
+    connection.execute("INSERT INTO cognition.refinery_synchronization_task SELECT * FROM migration_sync_dummy")
     connection.execute("DROP TABLE IF EXISTS migration_sync_dummy")
 
     # ### end Alembic commands ###
