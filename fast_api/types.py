@@ -83,38 +83,6 @@ class LabelConfidenceWrapper:
         self.confidence = confidence
 
 
-class ZeroShotTextResult:
-    def __init__(
-        self,
-        config: str = None,
-        text: str = None,
-        labels: List[LabelConfidenceWrapper] = None,
-    ):
-        self.config = config
-        self.text = text
-        self.labels = labels if labels is not None else []
-
-
-class ZeroShotNRecords:
-    def __init__(
-        self,
-        record_id: str = None,
-        checked_text: str = None,
-        full_record_data: json = None,
-        labels: List[LabelConfidenceWrapper] = None,
-    ):
-        self.record_id = record_id
-        self.checked_text = checked_text
-        self.full_record_data = full_record_data
-        self.labels = labels if labels is not None else []
-
-
-class ZeroShotNRecordsWrapper:
-    def __init__(self, duration: float = None, records: List[ZeroShotNRecords] = None):
-        self.duration = duration
-        self.records = records if records is not None else []
-
-
 class ServiceVersionResult:
     def __init__(
         self,
@@ -142,7 +110,6 @@ class ModelProviderInfoResult:
         date: datetime = None,
         size: float = None,
         status: str = None,
-        zero_shot_pipeline: bool = None,
     ):
         self.name = name
         self.revision = revision
@@ -150,7 +117,6 @@ class ModelProviderInfoResult:
         self.date = date
         self.size = size
         self.status = status
-        self.zero_shot_pipeline = zero_shot_pipeline
 
 
 class HuddleData:

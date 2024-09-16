@@ -189,9 +189,7 @@ def set_payload(
     user = auth_manager.get_user_by_info(request.state.info)
     org_id = user.organization_id
     information_source_item = information_source.get(project_id, heuristic_id)
-    priority = (
-        information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
-    )
+    priority = True
 
     task_master_response = task_master_manager.queue_task(
         str(org_id),

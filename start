@@ -67,7 +67,6 @@ docker run -d --rm \
 -e MODEL_PROVIDER=http://refinery-model-provider:80 \
 -e WEAK_SUPERVISION=http://refinery-weak-supervisor:80 \
 -e EMBEDDING_SERVICE=http://refinery-embedder:80 \
--e ZERO_SHOT=http://refinery-zero-shot:80 \
 -e TOKENIZER=http://refinery-tokenizer:80 \
 -e DOC_OCK=http://refinery-doc-ock:80 \
 -e GATES=http://gates-gateway:80 \

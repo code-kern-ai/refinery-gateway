@@ -286,11 +286,7 @@ def __no_huddle_id(data_id: str) -> bool:
 
 def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
     information_source_item = information_source.get(project_id, is_id)
-    if (
-        not information_source_item
-        or information_source_item.type
-        != enums.InformationSourceType.CROWD_LABELER.value
-    ):
+    if not information_source_item:
         raise ValueError(
             "only crowd labeler information source can be used to get a slice id"
         )
