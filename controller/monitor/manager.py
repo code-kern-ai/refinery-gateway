@@ -97,8 +97,8 @@ def cancel_macro_execution_task(
 def cancel_markdown_file_task(
     task_info: Dict[str, Any],
 ) -> None:
-    markdown_file_id = task_info.get("markdown_file_id")
-    org_id = task_info.get("organization_id")
+    markdown_file_id = task_info.get("fileId")
+    org_id = task_info.get("orgId")
     task_monitor.set_markdown_file_task_to_failed(
         markdown_file_id, org_id, with_commit=True
     )

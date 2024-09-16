@@ -26,6 +26,7 @@ from submodules.model.enums import (
     CustomerButtonType,
     CustomerButtonLocation,
 )
+from submodules.model.business_objects import task_queue as task_queue_bo
 
 router = APIRouter()
 
@@ -115,6 +116,7 @@ def cancel_task(
     auth.check_admin_access(request.state.info)
     task_type = body.task_type
     task_info = body.task_info
+    task_id = body.task_id
 
     if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
         controller_manager.cancel_attribute_calculation(task_info)
@@ -135,6 +137,7 @@ def cancel_task(
     else:
         raise ValueError(f"{task_type} is no valid task type")
 
+    task_queue_bo.delete_by_task_id(task_id, True)
     return pack_json_result({"data": {"cancelTask": {"ok": True}}})
 
 
