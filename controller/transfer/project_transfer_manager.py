@@ -506,13 +506,6 @@ def import_file(
                     information_source_object.source_code, attribute_ids_by_old_id
                 )
             )
-        if (
-            information_source_object.type
-            == enums.InformationSourceType.CROWD_LABELER.value
-        ):
-            information_source_object.source_code = json.dumps(
-                {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
-            )
         information_source_ids[
             information_source_item.get(
                 "id",

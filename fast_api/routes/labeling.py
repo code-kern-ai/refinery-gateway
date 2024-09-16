@@ -59,10 +59,7 @@ def get_available_links(
         return pack_json_result({"data": {"availableLinks": []}})
     if assumed_heuristic_id:
         is_item = information_source.get(project_id, assumed_heuristic_id)
-        if (
-            not is_item
-            or is_item.type != enums.InformationSourceType.CROWD_LABELER.value
-        ):
+        if not is_item:
             raise ValueError("Unknown heuristic id")
         settings = json.loads(is_item.source_code)
         user = user_manager.get(settings["annotator_id"])

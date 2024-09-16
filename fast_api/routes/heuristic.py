@@ -189,8 +189,6 @@ def set_payload(
     user = auth_manager.get_user_by_info(request.state.info)
     org_id = user.organization_id
     information_source_item = information_source.get(project_id, heuristic_id)
-    if information_source_item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        return pack_json_result({"data": {"createPayload": None}})
     priority = (
         information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
     )
@@ -239,21 +237,15 @@ def create_heuristic(
     body: CreateHeuristicBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    if body.type == InformationSourceType.CROWD_LABELER.value:
-        information_source = manager.create_crowd_information_source(
-            str(user.id), project_id, body.labeling_task_id, body.name, body.description
-        )
-
-    else:
-        information_source = manager.create_information_source(
-            project_id,
-            user.id,
-            body.labeling_task_id,
-            body.name,
-            body.source_code,
-            body.description,
-            body.type,
-        )
+    information_source = manager.create_information_source(
+        project_id,
+        user.id,
+        body.labeling_task_id,
+        body.name,
+        body.source_code,
+        body.description,
+        body.type,
+    )
     notification.send_organization_update(
         project_id, f"information_source_created:{str(information_source.id)}"
     )

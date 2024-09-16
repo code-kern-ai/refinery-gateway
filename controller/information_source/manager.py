@@ -55,33 +55,6 @@ def create_information_source(
     return source
 
 
-def create_crowd_information_source(
-    creation_user_id: str,
-    project_id: str,
-    labeling_task_id: str,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-) -> InformationSource:
-    parameter = {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
-    parameter = json.dumps(parameter)
-    if not description:
-        description = "Heuristic to provide annotators with a link"
-    if not name:
-        name = "Crowd Heuristic"
-
-    crowd = create_information_source(
-        project_id=project_id,
-        user_id=creation_user_id,
-        labeling_task_id=labeling_task_id,
-        name=name,
-        source_code=parameter,
-        description=description,
-        type=enums.InformationSourceType.CROWD_LABELER.value,
-    )
-
-    return crowd
-
-
 def update_information_source(
     project_id: str,
     source_id: str,
@@ -107,16 +80,6 @@ def update_information_source(
         with_commit=True,
     )
 
-    if item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        link_id = json.loads(item.source_code)["access_link_id"]
-        if link_id:
-            if new_payload_needed and len(item.payloads) > 0:
-                delete_information_source_payload(
-                    project_id, source_id, str(item.payloads[0].id)
-                )
-            rla_manager.update_annotator_progress(
-                project_id, source_id, item.created_by
-            )
     link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
@@ -147,9 +110,6 @@ def __delete_active_learner_from_inference_dir(project_id: str, source_id: str) 
 def delete_information_source_payload(
     project_id: str, information_source_id: str, payload_id: str
 ) -> None:
-    information_source_item = information_source.get(project_id, information_source_id)
-    if information_source_item.type != enums.InformationSourceType.CROWD_LABELER.value:
-        raise ValueError("Information source is not a crowd labeler")
     payload.remove(project_id, information_source_id, payload_id, with_commit=True)
 
 

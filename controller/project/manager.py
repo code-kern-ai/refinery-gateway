@@ -305,8 +305,6 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         slices = data_slice.get_all(project_id, enums.SliceTypes.STATIC_DEFAULT)
         if slices and len(slices) > 0:
             return slices[0].id
-    elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-        return information_source.get_first_crowd_is_for_annotator(project_id, user_id)
     else:
         raise ValueError("invalid huddle type")
 

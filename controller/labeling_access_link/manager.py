@@ -40,8 +40,6 @@ def generate_heuristic_access_link(
     information_source_item = information_source.get(project_id, heuristic_id)
     if not information_source_item:
         raise ValueError(f"Invalid Heuristic ID: {heuristic_id}")
-    if information_source_item.type != enums.InformationSourceType.CROWD_LABELER.value:
-        raise ValueError(f"Heuristic {heuristic_id} not meant for crowd labeling")
 
     link = f"/projects/{project_id}/labeling/{heuristic_id}?pos=1&type={enums.LinkTypes.HEURISTIC.value}"
     return labeling_access_link.create(

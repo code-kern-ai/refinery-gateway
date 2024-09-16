@@ -17,9 +17,6 @@ def create_payload(
     user_id: str,
     asynchronous: Optional[bool] = True,
 ) -> InformationSourcePayload:
-    information_source_item = information_source.get(project_id, information_source_id)
-    if information_source_item.type == enums.InformationSourceType.CROWD_LABELER:
-        return None
     return payload_scheduler.create_payload(
         project_id, information_source_id, user_id, asynchronous
     )
