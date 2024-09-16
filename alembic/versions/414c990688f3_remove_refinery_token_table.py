@@ -106,7 +106,7 @@ def downgrade():
                 refinery_relevance_project_id = m.refinery_relevance_project_id,
                 refinery_synchronization_interval_option = m.refinery_synchronization_interval_option,
                 execute_query_enrichment_if_source_code = m.execute_query_enrichment_if_source_code
-        FROM cognition.migration_project_dummy m
+        FROM migration_project_dummy m
         WHERE p.id = m.id;""")
     connection.execute("DROP TABLE IF EXISTS migration_project_dummy")
     
