@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
@@ -33,36 +33,72 @@ def cancel_upload_task(project_id: str = None, upload_task_id: str = None) -> No
     task_monitor.set_upload_task_to_failed(project_id, upload_task_id, with_commit=True)
 
 
-def cancel_weak_supervision(project_id: str = None, payload_id: str = None) -> None:
+def cancel_weak_supervision(
+    task_info: Dict[str, Any],
+) -> None:
+    project_id = task_info.get("project_id")
+    payload_id = task_info.get("payload_id")
     task_monitor.set_weak_supervision_to_failed(
         project_id, payload_id, with_commit=True
     )
 
 
 def cancel_attribute_calculation(
-    project_id: str = None, attribute_id: str = None
+    task_info: Dict[str, Any],
 ) -> None:
+
+    project_id = task_info.get("project_id")
+    attribute_id = task_info.get("attribute_id")
     task_monitor.set_attribute_calculation_to_failed(
         project_id, attribute_id, with_commit=True
     )
 
 
-def cancel_embedding(project_id: str = None, embedding_id: str = None) -> None:
+def cancel_embedding(
+    task_info: Dict[str, Any],
+) -> None:
+    project_id = task_info.get("project_id")
+    embedding_id = task_info.get("embedding_id")
+
     task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
 
 
 def cancel_information_source_payload(
-    project_id: str = None, payload_id: str = None
+    task_info: Dict[str, Any],
 ) -> None:
+    project_id = task_info.get("project_id")
+    payload_id = task_info.get("payload_id")
+
     task_monitor.set_information_source_payloads_to_failed(
         project_id, payload_id, with_commit=True
     )
 
 
 def cancel_record_tokenization_task(
-    project_id: str = None,
-    tokenization_task_id: str = None,
+    task_info: Dict[str, Any],
 ) -> None:
+    project_id = task_info.get("project_id")
+    tokenization_task_id = task_info.get("tokenization_id")
     task_monitor.set_record_tokenization_task_to_failed(
         project_id, tokenization_task_id, with_commit=True
+    )
+
+
+def cancel_macro_execution_task(
+    task_info: Dict[str, Any],
+) -> None:
+    macro_execution_id = task_info.get("macro_execution_id")
+    macro_execution_group_id = task_info.get("macro_execution_group_id")
+    task_monitor.set_macro_execution_task_to_failed(
+        macro_execution_id, macro_execution_group_id, with_commit=True
+    )
+
+
+def cancel_markdown_file_task(
+    task_info: Dict[str, Any],
+) -> None:
+    markdown_file_id = task_info.get("markdown_file_id")
+    org_id = task_info.get("organization_id")
+    task_monitor.set_markdown_file_task_to_failed(
+        markdown_file_id, org_id, with_commit=True
     )
