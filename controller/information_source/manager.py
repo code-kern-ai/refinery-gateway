@@ -26,8 +26,8 @@ def get_all_information_sources(project_id: str) -> List[InformationSource]:
     return information_source.get_all(project_id)
 
 
-def get_overview_data(project_id: str, is_model_callback: bool = False) -> str:
-    return information_source.get_overview_data(project_id, is_model_callback)
+def get_overview_data(project_id: str) -> str:
+    return information_source.get_overview_data(project_id)
 
 
 def create_information_source(
@@ -120,10 +120,4 @@ def toggle_information_source(project_id: str, source_id: str) -> None:
 def set_all_information_source_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True
-    )
-
-
-def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
-    information_source.update_is_selected_for_project(
-        project_id, value, with_commit=True, is_model_callback=True
     )

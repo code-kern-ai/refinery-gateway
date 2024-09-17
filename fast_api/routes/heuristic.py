@@ -116,18 +116,6 @@ def get_labeling_function_on_10_records(
 
 
 @router.get(
-    "/{project_id}/model-callbacks-overview-data",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def get_model_callbacks_overview_data(
-    request: Request,
-    project_id: str,
-):
-    data = manager.get_overview_data(project_id, is_model_callback=True)
-    return pack_json_result({"data": {"modelCallbacksOverviewData": data}})
-
-
-@router.get(
     "/{project_id}/access-link",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
