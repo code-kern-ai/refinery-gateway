@@ -244,6 +244,9 @@ class CognitionPrepareProject(HTTPEndpoint):
 
 class AssociationsImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
+        # Will be removed as part of the python sdk removal
+        return JSONResponse({"error": "Not supported anymore"}, status_code=404)
+
         project_id = request.path_params["project_id"]
         request_body = await request.json()
         user_id = request_body["user_id"]
