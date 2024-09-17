@@ -183,7 +183,6 @@ def build_query_template(
         template = template.replace("@@LABELING_TASK_ID@@", filter_values[0])
     elif target in [
         SearchQueryTemplate.SUBQUERY_RLA_CONFIDENCE,
-        SearchQueryTemplate.SUBQUERY_CALLBACK_CONFIDENCE,
     ]:
         lower, upper = filter_values
         if isinstance(lower, str):
