@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
-from api.project import ProjectDetails, ProjectCreationFromWorkflow
+from api.project import ProjectDetails
 from api.transfer import (
     AssociationsImport,
     FileExport,
@@ -134,7 +134,6 @@ routes = [
         CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
-    Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),

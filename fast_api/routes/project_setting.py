@@ -245,19 +245,6 @@ def update_attribute(
 
 
 @router.post(
-    "/{project_id}/update-project-gates",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def update_project_for_gates(
-    request: Request,
-    project_id,
-):
-    user_id = auth_manager.get_user_by_info(request.state.info).id
-    project_manager.update_project_for_gates(project_id, user_id)
-    return pack_json_result({"data": {"updateProjectGates": {"ok": True}}})
-
-
-@router.post(
     "/{project_id}/calculate-user-attribute-all-records",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )

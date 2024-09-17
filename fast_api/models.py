@@ -223,12 +223,6 @@ class ChangeUserRoleBody(BaseModel):
     role: StrictStr
 
 
-class CreatePersonalTokenBody(BaseModel):
-    name: StrictStr
-    scope: StrictStr
-    expires_at: StrictStr
-
-
 class CreateNewAttributeBody(BaseModel):
     name: StrictStr
     data_type: StrictStr
