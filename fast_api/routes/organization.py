@@ -138,38 +138,6 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allAdminMessages": data_dict}})
 
 
-@router.get(
-    "/{project_id}/all-users-with-record-count",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def get_all_users_with_record_count(
-    request: Request,
-    project_id: str,
-):
-    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
-
-    results = manager.get_all_users_with_record_count(organization_id, project_id)
-
-    data = []
-    for res in results:
-        names, email = resolve_user_name_and_email_by_id(res["user_id"])
-        last_name = names.get("last", "")
-        first_name = names.get("first", "")
-        data.append(
-            {
-                "user": {
-                    "id": res["user_id"],
-                    "mail": email,
-                    "firstName": first_name,
-                    "lastName": last_name,
-                },
-                "counts": json.dumps(res["counts"]),
-            }
-        )
-
-    return pack_json_result({"data": {"allUsersWithRecordCount": data}})
-
-
 @router.get("/can-create-local-org")
 def can_create_local_org(request: Request):
     data = manager.can_create_local()

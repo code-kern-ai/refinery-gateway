@@ -173,9 +173,6 @@ def build_query_template(
                 in_values += ", "
             in_values += part
         template = template.replace("@@IN_VALUES@@", in_values)
-    elif target == SearchQueryTemplate.SUBQUERY_RLA_CREATED_BY:
-        in_values = "'" + "', '".join(filter_values) + "'"
-        template = template.replace("@@IN_VALUES@@", in_values)
     elif target in [
         SearchQueryTemplate.SUBQUERY_RLA_DIFFERENT_IS_CLASSIFICATION,
         SearchQueryTemplate.SUBQUERY_RLA_DIFFERENT_IS_EXTRACTION,
@@ -334,13 +331,6 @@ FROM record_label_association rla
 WHERE rla.project_id = '@@PROJECT_ID@@'
     AND rla.source_type = '@@SOURCE_TYPE@@'
     AND rla.source_id IN (@@IN_VALUES@@)
-GROUP BY rla.project_id, rla.record_id """,
-    SearchQueryTemplate.SUBQUERY_RLA_CREATED_BY: """
-SELECT rla.project_id pID, rla.record_id rID
-FROM record_label_association rla
-WHERE rla.project_id = '@@PROJECT_ID@@'
-    AND rla.source_type = 'MANUAL'
-    AND rla.created_by IN (@@IN_VALUES@@)
 GROUP BY rla.project_id, rla.record_id """,
     SearchQueryTemplate.SUBQUERY_RLA_CONFIDENCE: """
 SELECT rla.project_id pID, rla.record_id rID
