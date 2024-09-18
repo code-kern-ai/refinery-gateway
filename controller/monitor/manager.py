@@ -111,5 +111,4 @@ def cancel_tmp_doc_retrieval_task(
 ) -> None:
     bucket = task_info.get("bucket")
     minio_path = task_info.get("minioPath")
-    print(task_info, bucket, minio_path, flush=True)
     s3.delete_object(bucket, minio_path)
