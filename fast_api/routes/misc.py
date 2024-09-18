@@ -118,24 +118,26 @@ def cancel_task(
     task_info = body.task_info
     task_id = body.task_id
 
-    if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
-        controller_manager.cancel_attribute_calculation(task_info)
-    elif task_type == enums.TaskType.EMBEDDING.value:
-        controller_manager.cancel_embedding(task_info)
-    elif task_type == enums.TaskType.INFORMATION_SOURCE.value:
-        controller_manager.cancel_information_source_payload(task_info)
-    elif task_type == enums.TaskType.TOKENIZATION.value:
-        controller_manager.cancel_record_tokenization_task(task_info)
-    elif task_type == enums.TaskType.UPLOAD_TASK.value:
-        controller_manager.cancel_upload_task(task_info)
-    elif task_type == enums.TaskType.WEAK_SUPERVISION.value:
-        controller_manager.cancel_weak_supervision(task_info)
-    elif task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
-        controller_manager.cancel_macro_execution_task(task_info)
-    elif task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
-        controller_manager.cancel_markdown_file_task(task_info)
-    else:
-        raise ValueError(f"{task_type} is no valid task type")
+    task_entity = task_queue_bo.get(task_id)
+    if task_entity and task_entity.is_active:
+        if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
+            controller_manager.cancel_attribute_calculation(task_info)
+        elif task_type == enums.TaskType.EMBEDDING.value:
+            controller_manager.cancel_embedding(task_info)
+        elif task_type == enums.TaskType.INFORMATION_SOURCE.value:
+            controller_manager.cancel_information_source_payload(task_info)
+        elif task_type == enums.TaskType.TOKENIZATION.value:
+            controller_manager.cancel_record_tokenization_task(task_info)
+        elif task_type == enums.TaskType.UPLOAD_TASK.value:
+            controller_manager.cancel_upload_task(task_info)
+        elif task_type == enums.TaskType.WEAK_SUPERVISION.value:
+            controller_manager.cancel_weak_supervision(task_info)
+        elif task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
+            controller_manager.cancel_macro_execution_task(task_info)
+        elif task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
+            controller_manager.cancel_markdown_file_task(task_info)
+        else:
+            raise ValueError(f"{task_type} is no valid task type")
 
     task_queue_bo.delete_by_task_id(task_id, True)
     return pack_json_result({"data": {"cancelTask": {"ok": True}}})

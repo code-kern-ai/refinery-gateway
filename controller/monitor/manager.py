@@ -87,8 +87,9 @@ def cancel_record_tokenization_task(
 def cancel_macro_execution_task(
     task_info: Dict[str, Any],
 ) -> None:
-    macro_execution_id = task_info.get("macro_execution_id")
-    macro_execution_group_id = task_info.get("macro_execution_group_id")
+
+    macro_execution_id = task_info.get("executionId")
+    macro_execution_group_id = task_info.get("groupExecutionId")
     task_monitor.set_macro_execution_task_to_failed(
         macro_execution_id, macro_execution_group_id, with_commit=True
     )
