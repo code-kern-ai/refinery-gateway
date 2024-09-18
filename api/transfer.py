@@ -6,7 +6,6 @@ from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
-from controller.transfer.labelstudio import import_preperator
 from controller.transfer.cognition import (
     import_preparator as cognition_preparator,
     import_wizard as cognition_import_wizard,
@@ -301,9 +300,6 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
     if "records" in task.file_type:
         if task.upload_type == enums.UploadTypes.COGNITION.value:
             cognition_preparator.prepare_cognition_import(project_id, task)
-        elif task.upload_type == enums.UploadTypes.LABEL_STUDIO.value:
-            # deprecated
-            import_preperator.prepare_label_studio_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
         daemon.run(
