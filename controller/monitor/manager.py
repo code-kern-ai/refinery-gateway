@@ -2,6 +2,7 @@ from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.s3 import controller as s3
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -103,3 +104,12 @@ def cancel_markdown_file_task(
     task_monitor.set_markdown_file_task_to_failed(
         markdown_file_id, org_id, with_commit=True
     )
+
+
+def cancel_tmp_doc_retrieval_task(
+    task_info: Dict[str, Any],
+) -> None:
+    bucket = task_info.get("bucket")
+    minio_path = task_info.get("minioPath")
+    print(task_info, bucket, minio_path, flush=True)
+    s3.delete_object(bucket, minio_path)
