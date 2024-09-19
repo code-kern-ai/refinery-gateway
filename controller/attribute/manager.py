@@ -320,8 +320,8 @@ def __calculate_user_attribute_all_records(
         try:
             task_master_manager.queue_task(
                 str(org_id),
-                TaskType.TOKENIZATION,
                 str(user_id),
+                TaskType.TOKENIZATION,
                 {
                     "scope": RecordTokenizationScope.ATTRIBUTE.value,
                     "attribute_id": str(attribute_item.id),
