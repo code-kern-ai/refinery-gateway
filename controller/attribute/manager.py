@@ -309,7 +309,11 @@ def __calculate_user_attribute_all_records(
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
     attribute_item = attribute.get(project_id, attribute_id)
-    if attribute_item.data_type == DataTypes.TEXT.value:
+    if (
+        attribute_item
+        and attribute_item.data_type == DataTypes.TEXT.value
+        and not attribute_item.state == AttributeState.FAILED.value
+    ):
         util.add_log_to_attribute_logs(
             project_id, attribute_id, "Triggering tokenization."
         )
@@ -346,6 +350,15 @@ def __calculate_user_attribute_all_records(
         )
         request_reupload_docbins(project_id)
 
+    attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item.state == AttributeState.FAILED.value:
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Writing to the database failed.",
+        )
+        general.remove_and_refresh_session(session_token)
+        return
     util.set_progress(project_id, attribute_item, 1.0)
     attribute.update(
         project_id=project_id,
