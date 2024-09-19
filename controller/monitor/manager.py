@@ -37,22 +37,24 @@ def cancel_upload_task(project_id: str = None, upload_task_id: str = None) -> No
 def cancel_weak_supervision(
     task_info: Dict[str, Any],
 ) -> None:
-    project_id = task_info.get("project_id")
-    payload_id = task_info.get("payload_id")
-    task_monitor.set_weak_supervision_to_failed(
-        project_id, payload_id, with_commit=True
-    )
+    project_id = task_info.get("projectId")
+    payload_id = task_info.get("payloadId")
+    if project_id and payload_id:
+        task_monitor.set_weak_supervision_to_failed(
+            project_id, payload_id, with_commit=True
+        )
 
 
 def cancel_attribute_calculation(
     task_info: Dict[str, Any],
 ) -> None:
 
-    project_id = task_info.get("project_id")
-    attribute_id = task_info.get("attribute_id")
-    task_monitor.set_attribute_calculation_to_failed(
-        project_id, attribute_id, with_commit=True
-    )
+    project_id = task_info.get("projectId")
+    attribute_id = task_info.get("attributeId")
+    if project_id and attribute_id:
+        task_monitor.set_attribute_calculation_to_failed(
+            project_id, attribute_id, with_commit=True
+        )
 
 
 def cancel_embedding(
@@ -60,19 +62,21 @@ def cancel_embedding(
 ) -> None:
     project_id = task_info.get("project_id")
     embedding_id = task_info.get("embedding_id")
-
-    task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
+    if project_id and embedding_id:
+        task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
 
 
 def cancel_information_source_payload(
     task_info: Dict[str, Any],
 ) -> None:
-    project_id = task_info.get("project_id")
-    payload_id = task_info.get("payload_id")
-
-    task_monitor.set_information_source_payloads_to_failed(
-        project_id, payload_id, with_commit=True
-    )
+    project_id = task_info.get("projectId")
+    information_source_id = task_info.get("informationSourceId")
+    print(project_id, information_source_id, flush=True)
+    if project_id and information_source_id:
+        print("setting to failed", flush=True)
+        task_monitor.set_information_source_payloads_to_failed(
+            project_id, information_source_id, with_commit=True
+        )
 
 
 def cancel_record_tokenization_task(
@@ -80,9 +84,10 @@ def cancel_record_tokenization_task(
 ) -> None:
     project_id = task_info.get("project_id")
     tokenization_task_id = task_info.get("tokenization_id")
-    task_monitor.set_record_tokenization_task_to_failed(
-        project_id, tokenization_task_id, with_commit=True
-    )
+    if project_id and tokenization_task_id:
+        task_monitor.set_record_tokenization_task_to_failed(
+            project_id, tokenization_task_id, with_commit=True
+        )
 
 
 def cancel_macro_execution_task(
@@ -91,6 +96,7 @@ def cancel_macro_execution_task(
 
     macro_execution_id = task_info.get("executionId")
     macro_execution_group_id = task_info.get("groupExecutionId")
+
     task_monitor.set_macro_execution_task_to_failed(
         macro_execution_id, macro_execution_group_id, with_commit=True
     )
