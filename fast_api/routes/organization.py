@@ -30,7 +30,7 @@ from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
 from submodules.model.business_objects import organization
 from submodules.model.util import sql_alchemy_to_dict
-from util import doc_ock, notification
+from util import notification
 
 router = APIRouter()
 
@@ -164,10 +164,7 @@ def add_user_to_organization(
     else:
         if not organization_manager.can_create_local(False):
             auth_manager.check_admin_access(request.state.info)
-    user = auth_manager.get_user_by_email(body.user_mail)
     user_manager.update_organization_of_user(body.organization_name, body.user_mail)
-    doc_ock.register_user(user)
-    doc_ock.post_event(str(user.id), events.SignUp())
     return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
 
 

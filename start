@@ -68,7 +68,6 @@ docker run -d --rm \
 -e WEAK_SUPERVISION=http://refinery-weak-supervisor:80 \
 -e EMBEDDING_SERVICE=http://refinery-embedder:80 \
 -e TOKENIZER=http://refinery-tokenizer:80 \
--e DOC_OCK=http://refinery-doc-ock:80 \
 -e COGNITION_GATEWAY=http://cognition-gateway:80 \
 -e KRATOS_ADMIN_URL=http://kratos:4434 \
 -e TASK_MASTER=http://cognition-task-master:80 \

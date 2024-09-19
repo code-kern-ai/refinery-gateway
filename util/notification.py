@@ -13,7 +13,6 @@ from submodules.model.business_objects.notification import get_duplicated, creat
 from submodules.model.business_objects.organization import get_organization_id
 from submodules.model.enums import NotificationType
 from submodules.model.models import Notification
-from util import doc_ock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -89,7 +88,6 @@ def create_notification(
         send_organization_update(
             project_id, f"notification_created:{user_id}", True, organization_id
         )
-    doc_ock.post_event(user_id, events.AddNotification(Level=level, Message=message))
     return new_notification
 
 
