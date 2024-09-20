@@ -60,8 +60,8 @@ def cancel_attribute_calculation(
 def cancel_embedding(
     task_info: Dict[str, Any],
 ) -> None:
-    project_id = task_info.get("project_id")
-    embedding_id = task_info.get("embedding_id")
+    project_id = task_info.get("projectId")
+    embedding_id = task_info.get("embeddingId")
     if project_id and embedding_id:
         task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
 
@@ -70,20 +70,18 @@ def cancel_information_source_payload(
     task_info: Dict[str, Any],
 ) -> None:
     project_id = task_info.get("projectId")
-    information_source_id = task_info.get("informationSourceId")
-    print(project_id, information_source_id, flush=True)
-    if project_id and information_source_id:
-        print("setting to failed", flush=True)
+    payload_id = task_info.get("payloadId")
+    if project_id and payload_id:
         task_monitor.set_information_source_payloads_to_failed(
-            project_id, information_source_id, with_commit=True
+            project_id, payload_id, with_commit=True
         )
 
 
 def cancel_record_tokenization_task(
     task_info: Dict[str, Any],
 ) -> None:
-    project_id = task_info.get("project_id")
-    tokenization_task_id = task_info.get("tokenization_id")
+    project_id = task_info.get("projectId")
+    tokenization_task_id = task_info.get("recordTokenizationTaskId")
     if project_id and tokenization_task_id:
         task_monitor.set_record_tokenization_task_to_failed(
             project_id, tokenization_task_id, with_commit=True
