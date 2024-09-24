@@ -21,7 +21,7 @@ from submodules.model.business_objects import (
 from controller.user import manager as user_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
-from util import doc_ock, file, security
+from util import file, security
 from submodules.s3 import controller as s3
 from submodules.model import enums, events, UploadTask, Attribute
 from util import category
@@ -143,12 +143,6 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
 
     user = user_manager.get_or_create_user(upload_task.user_id)
     project_item = project.get(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.UploadRecords(
-            ProjectName=f"{project_item.name}-{project_item.id}", Records=number_records
-        ),
-    )
     general.commit()
 
 

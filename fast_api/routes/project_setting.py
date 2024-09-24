@@ -24,7 +24,7 @@ from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import events
-from util import doc_ock, notification
+from util import notification
 import traceback
 import json
 
@@ -187,19 +187,8 @@ def create_labels(
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)
 
-    user = auth_manager.get_user_by_info(request.state.info)
     created_labels = label_manager.create_labels(project_id, labeling_task_id, labels)
-    task = task_manager.get_labeling_task(project_id, labeling_task_id)
-    project = project_manager.get_project(project_id)
     for label in created_labels:
-        doc_ock.post_event(
-            str(user.id),
-            events.AddLabel(
-                ProjectName=f"{project.name}-{project_id}",
-                Name=label.name,
-                LabelingTaskName=task.name,
-            ),
-        )
         notification.send_organization_update(
             project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
         )
@@ -281,9 +270,6 @@ def create_task_and_labels(
     project_id: str,
     body: CreateTaskAndLabelsBody = Body(...),
 ):
-    user = auth_manager.get_user_by_info(request.state.info)
-    project = project_manager.get_project(project_id)
-
     item = task_manager.create_labeling_task(
         project_id,
         body.labeling_task_name,
@@ -293,15 +279,6 @@ def create_task_and_labels(
 
     if body.labels is not None:
         label_manager.create_labels(project_id, str(item.id), body.labels)
-
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabelingTask(
-            ProjectName=f"{project.name}-{project.id}",
-            Name=body.labeling_task_name,
-            Type=body.labeling_task_type,
-        ),
-    )
 
     notification.send_organization_update(
         project_id, f"labeling_task_created:{str(item.id)}"

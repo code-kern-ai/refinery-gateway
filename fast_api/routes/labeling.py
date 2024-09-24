@@ -34,7 +34,7 @@ from submodules.model.business_objects import (
     data_slice,
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
-from util import doc_ock, notification
+from util import notification
 from controller.auth import kratos
 
 
@@ -59,10 +59,7 @@ def get_available_links(
         return pack_json_result({"data": {"availableLinks": []}})
     if assumed_heuristic_id:
         is_item = information_source.get(project_id, assumed_heuristic_id)
-        if (
-            not is_item
-            or is_item.type != enums.InformationSourceType.CROWD_LABELER.value
-        ):
+        if not is_item:
             raise ValueError("Unknown heuristic id")
         settings = json.loads(is_item.source_code)
         user = user_manager.get(settings["annotator_id"])
@@ -322,15 +319,6 @@ def add_classification_labels_to_record(
         body.source_id,
     )
 
-    # this below seems not optimal positioned here
-    project = project_manager.get_project(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabelsToRecord(
-            ProjectName=f"{project.name}-{project.id}",
-            Type=enums.LabelingTaskType.CLASSIFICATION.value,
-        ),
-    )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
     return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
 
@@ -355,14 +343,6 @@ def add_extraction_label_to_record(
         body.as_gold_star,
         body.source_id,
     )
-    project = project_manager.get_project(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabelsToRecord(
-            ProjectName=f"{project.name}-{project.id}",
-            Type=enums.LabelingTaskType.INFORMATION_EXTRACTION.value,
-        ),
-    )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
     return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})
 
@@ -372,19 +352,6 @@ def add_extraction_label_to_record(
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
-    user = auth_manager.get_user_by_info(request.state.info)
-    task_type = rla_manager.create_gold_star_association(
-        project_id, body.record_id, body.labeling_task_id, body.gold_user_id, user.id
-    )
-
-    project = project_manager.get_project(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabelsToRecord(
-            ProjectName=f"{project.name}-{project.id}",
-            Type=task_type,
-        ),
-    )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
     return pack_json_result({"data": {"setGoldStarAnnotationForTask": {"ok": True}}})
 

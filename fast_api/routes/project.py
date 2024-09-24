@@ -32,7 +32,7 @@ from submodules.model.util import (
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
-from util import notification, doc_ock
+from util import notification
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
@@ -506,13 +506,6 @@ def create_project(
         project.id, f"project_created:{str(project.id)}", True
     )
 
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{body.name}-{project.id}", Description=body.description
-        ),
-    )
-
     data = {
         "project": {
             "id": str(project.id),
@@ -555,13 +548,6 @@ def create_sample_project(
 
     project = manager.import_sample_project(
         user.id, str(user.organization_id), body.name, body.project_type
-    )
-
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{project.name}-{project.id}", Description=project.description
-        ),
     )
 
     data = {

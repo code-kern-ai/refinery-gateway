@@ -36,10 +36,7 @@ def import_associations(
 
     if information_source is None:
 
-        if source_type == "model_callback":
-            description = "This is a model callback"
-            type = enums.LabelSource.MODEL_CALLBACK.value
-        elif source_type == "heuristic":
+        if source_type == "heuristic":
             description = "This is a heuristic"
             type = enums.LabelSource.INFORMATION_SOURCE.value
         else:

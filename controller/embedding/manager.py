@@ -50,27 +50,26 @@ def get_recommended_encoders(is_managed: bool) -> List[Any]:
     else:
         existing_models = []
     for model in existing_models:
-        if not model["zero_shot_pipeline"]:
-            not_yet_known = (
-                len(
-                    list(
-                        filter(
-                            lambda rec: rec["config_string"] == model["name"],
-                            recommendations,
-                        )
+        not_yet_known = (
+            len(
+                list(
+                    filter(
+                        lambda rec: rec["config_string"] == model["name"],
+                        recommendations,
                     )
                 )
-                == 0
             )
-            if not_yet_known:
-                recommendations.append(
-                    {
-                        "config_string": model["name"],
-                        "description": "User downloaded model",
-                        "tokenizers": ["all"],
-                        "applicability": {"attribute": True, "token": True},
-                    }
-                )
+            == 0
+        )
+        if not_yet_known:
+            recommendations.append(
+                {
+                    "config_string": model["name"],
+                    "description": "User downloaded model",
+                    "tokenizers": ["all"],
+                    "applicability": {"attribute": True, "token": True},
+                }
+            )
     return recommendations
 
 

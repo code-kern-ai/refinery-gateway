@@ -274,11 +274,7 @@ def __no_huddle_id(data_id: str) -> bool:
 
 def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
     information_source_item = information_source.get(project_id, is_id)
-    if (
-        not information_source_item
-        or information_source_item.type
-        != enums.InformationSourceType.CROWD_LABELER.value
-    ):
+    if not information_source_item:
         raise ValueError(
             "only crowd labeler information source can be used to get a slice id"
         )
@@ -293,8 +289,6 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         slices = data_slice.get_all(project_id, enums.SliceTypes.STATIC_DEFAULT)
         if slices and len(slices) > 0:
             return slices[0].id
-    elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-        return information_source.get_first_crowd_is_for_annotator(project_id, user_id)
     else:
         raise ValueError("invalid huddle type")
 
