@@ -119,6 +119,8 @@ def cancel_task(
     task_id = body.task_id
 
     task_entity = task_queue_bo.get(task_id)
+    if not task_entity:
+        return pack_json_result({"data": {"cancelTask": {"ok": False}}})
     if task_entity and task_entity.is_active:
         if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
             controller_manager.cancel_attribute_calculation(task_info)
@@ -152,11 +154,30 @@ def cancel_all_running_tasks(request: Request):
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
 
 
-@router.get("/pause-task-queue")
+@router.post("/pause-task-queue")
 def pause_task_queue(request: Request, task_queue_pause: bool):
     auth.check_admin_access(request.state.info)
-    task_master_manager.pause_task_queue(task_queue_pause)
-    return SILENT_SUCCESS_RESPONSE
+    task_queue_pause_response = task_master_manager.pause_task_queue(task_queue_pause)
+    task_queue_pause = False
+    if task_queue_pause_response.ok:
+        try:
+            task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
+        except Exception:
+            task_queue_pause = False
+    return pack_json_result({"taskQueuePause": task_queue_pause})
+
+
+@router.get("/pause-task-queue")
+def get_task_queue_pause(request: Request):
+    auth.check_admin_access(request.state.info)
+    task_queue_pause_response = task_master_manager.get_task_queue_pause()
+    task_queue_pause = False
+    if task_queue_pause_response.ok:
+        try:
+            task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
+        except Exception:
+            task_queue_pause = False
+    return pack_json_result({"taskQueuePause": task_queue_pause})
 
 
 @router.get("/all-users-activity")
