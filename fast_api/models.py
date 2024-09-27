@@ -433,8 +433,8 @@ class DeleteUserBody(BaseModel):
 
 
 class CancelTaskBody(BaseModel):
-    project_id: StrictStr
     task_id: StrictStr
+    task_info: Dict[StrictStr, Any]
     task_type: StrictStr
 
 
