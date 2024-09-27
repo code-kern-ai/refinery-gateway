@@ -121,7 +121,9 @@ def cancel_task(
     task_entity = task_queue_bo.get(task_id)
     if not task_entity:
         return pack_json_result({"data": {"cancelTask": {"ok": False}}})
-    if task_entity and task_entity.is_active:
+    if task_entity and (
+        task_entity.is_active or task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value
+    ):
         if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
             controller_manager.cancel_attribute_calculation(task_info)
         elif task_type == enums.TaskType.EMBEDDING.value:
