@@ -57,6 +57,13 @@ def upgrade():
     op.drop_index('ix_cognition_refinery_synchronization_task_created_by', table_name='refinery_synchronization_task', schema='cognition')
     op.drop_index('ix_cognition_refinery_synchronization_task_refinery_project_id', table_name='refinery_synchronization_task', schema='cognition')
     op.drop_table('refinery_synchronization_task', schema='cognition')
+
+
+    #### Delete of unused types comment in for final merge
+    
+    # connection.execute("SELECT * INTO migration_sync_dummy FROM cognition.refinery_synchronization_task")
+
+
     # ### end Alembic commands ###
 
 

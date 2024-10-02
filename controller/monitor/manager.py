@@ -1,7 +1,8 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.s3 import controller as s3
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -33,36 +34,85 @@ def cancel_upload_task(project_id: str = None, upload_task_id: str = None) -> No
     task_monitor.set_upload_task_to_failed(project_id, upload_task_id, with_commit=True)
 
 
-def cancel_weak_supervision(project_id: str = None, payload_id: str = None) -> None:
-    task_monitor.set_weak_supervision_to_failed(
-        project_id, payload_id, with_commit=True
-    )
+def cancel_weak_supervision(
+    task_info: Dict[str, Any],
+) -> None:
+    project_id = task_info.get("projectId")
+    payload_id = task_info.get("payloadId")
+    if project_id and payload_id:
+        task_monitor.set_weak_supervision_to_failed(
+            project_id, payload_id, with_commit=True
+        )
 
 
 def cancel_attribute_calculation(
-    project_id: str = None, attribute_id: str = None
+    task_info: Dict[str, Any],
 ) -> None:
-    task_monitor.set_attribute_calculation_to_failed(
-        project_id, attribute_id, with_commit=True
-    )
+
+    project_id = task_info.get("projectId")
+    attribute_id = task_info.get("attributeId")
+    if project_id and attribute_id:
+        task_monitor.set_attribute_calculation_to_failed(
+            project_id, attribute_id, with_commit=True
+        )
 
 
-def cancel_embedding(project_id: str = None, embedding_id: str = None) -> None:
-    task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
+def cancel_embedding(
+    task_info: Dict[str, Any],
+) -> None:
+    project_id = task_info.get("projectId")
+    embedding_id = task_info.get("embeddingId")
+    if project_id and embedding_id:
+        task_monitor.set_embedding_to_failed(project_id, embedding_id, with_commit=True)
 
 
 def cancel_information_source_payload(
-    project_id: str = None, payload_id: str = None
+    task_info: Dict[str, Any],
 ) -> None:
-    task_monitor.set_information_source_payloads_to_failed(
-        project_id, payload_id, with_commit=True
-    )
+    project_id = task_info.get("projectId")
+    payload_id = task_info.get("payloadId")
+    if project_id and payload_id:
+        task_monitor.set_information_source_payloads_to_failed(
+            project_id, payload_id, with_commit=True
+        )
 
 
 def cancel_record_tokenization_task(
-    project_id: str = None,
-    tokenization_task_id: str = None,
+    task_info: Dict[str, Any],
 ) -> None:
-    task_monitor.set_record_tokenization_task_to_failed(
-        project_id, tokenization_task_id, with_commit=True
+    project_id = task_info.get("projectId")
+    tokenization_task_id = task_info.get("recordTokenizationTaskId")
+    if project_id and tokenization_task_id:
+        task_monitor.set_record_tokenization_task_to_failed(
+            project_id, tokenization_task_id, with_commit=True
+        )
+
+
+def cancel_macro_execution_task(
+    task_info: Dict[str, Any],
+) -> None:
+
+    macro_execution_id = task_info.get("executionId")
+    macro_execution_group_id = task_info.get("groupExecutionId")
+
+    task_monitor.set_macro_execution_task_to_failed(
+        macro_execution_id, macro_execution_group_id, with_commit=True
     )
+
+
+def cancel_markdown_file_task(
+    task_info: Dict[str, Any],
+) -> None:
+    markdown_file_id = task_info.get("fileId")
+    org_id = task_info.get("orgId")
+    task_monitor.set_markdown_file_task_to_failed(
+        markdown_file_id, org_id, with_commit=True
+    )
+
+
+def cancel_tmp_doc_retrieval_task(
+    task_info: Dict[str, Any],
+) -> None:
+    bucket = task_info.get("bucket")
+    minio_path = task_info.get("minioPath")
+    s3.delete_object(bucket, minio_path)

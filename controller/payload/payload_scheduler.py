@@ -521,6 +521,21 @@ def update_records(
 ) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     tmp_log_store = information_source_payload.logs
+
+    if information_source_payload.state == enums.PayloadState.FAILED.value:
+        berlin_now = datetime.datetime.now(__tz)
+        tmp_log_store.append(
+            " ".join(
+                [
+                    berlin_now.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "Information source task cancelled.",
+                ]
+            )
+        )
+        information_source_payload.logs = tmp_log_store
+        flag_modified(information_source_payload, "logs")
+        general.commit()
+        return True
     try:
         output_data = json.loads(
             s3.get_object(
