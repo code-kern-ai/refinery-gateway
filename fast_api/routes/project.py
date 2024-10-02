@@ -1,9 +1,7 @@
 import json
 from typing import Optional
 
-from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import (
-    CreatePersonalTokenBody,
     CreateProjectBody,
     CreateSampleProjectBody,
     UpdateProjectNameAndDescriptionBody,
@@ -17,7 +15,6 @@ from typing import Dict, List
 from controller.auth import manager as auth_manager
 from controller.attribute import manager as attr_manager
 from controller.labeling_task import manager as task_manager
-from controller.personal_access_token import manager as token_manager
 from controller.upload_task import manager as upload_task_manager
 from submodules.model.business_objects import information_source, labeling_task
 from submodules.model import enums, events
@@ -35,7 +32,7 @@ from submodules.model.util import (
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
-from util import notification, doc_ock
+from util import notification
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,
@@ -243,22 +240,6 @@ def label_distribution(
 
 
 @router.get(
-    "/{project_id}/gates-integration-data",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def gates_integration_data(project_id: str) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "getGatesIntegrationData": manager.get_gates_integration_data(
-                    project_id, False
-                )
-            }
-        },
-    )
-
-
-@router.get(
     "/{project_id}/project-tokenization",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
@@ -419,27 +400,6 @@ def is_rats_running(
 
 
 @router.get(
-    "/{project_id}/access-tokens",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def get_access_tokens(
-    request: Request,
-    project_id: str,
-) -> Dict:
-    data = sql_alchemy_to_dict(
-        token_manager.get_all_personal_access_tokens(project_id),
-        column_whitelist=TOKENS_WHITELIST,
-    )
-    for token in data:
-        names, email = resolve_user_name_and_email_by_id(token["user_id"])
-        last_name = names.get("last", "")
-        first_name = names.get("first", "")
-        token["created_by"] = f"{first_name} {last_name}"
-
-    return pack_json_result({"data": {"allPersonalAccessTokens": data}})
-
-
-@router.get(
     "/{project_id}/last-export-credentials",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
@@ -490,37 +450,6 @@ def upload_task_by_id(
     return pack_json_result(
         {"data": {"uploadTaskById": data_dict}}, wrap_for_frontend=False
     )
-
-
-@router.post(
-    "/{project_id}/create-personal-token",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def create_personal_access_token(
-    request: Request,
-    project_id: str,
-    body: CreatePersonalTokenBody = Body(...),
-):
-    auth_manager.check_admin_access(request.state.info)
-    user_id = auth_manager.get_user_by_info(request.state.info).id
-    token = token_manager.create_personal_access_token(
-        project_id, user_id, body.name, body.scope, body.expires_at
-    )
-    return pack_json_result({"data": {"createPersonalAccessToken": token}})
-
-
-@router.delete(
-    "/{project_id}/{token_id}/delete-personal-token",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def delete_personal_access_token(
-    request: Request,
-    project_id: str,
-    token_id: str,
-):
-    auth_manager.check_admin_access(request.state.info)
-    token_manager.delete_personal_access_token(project_id, token_id)
-    return pack_json_result({"data": {"deletePersonalAccessToken": {"ok": True}}})
 
 
 @router.post(
@@ -577,13 +506,6 @@ def create_project(
         project.id, f"project_created:{str(project.id)}", True
     )
 
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{body.name}-{project.id}", Description=body.description
-        ),
-    )
-
     data = {
         "project": {
             "id": str(project.id),
@@ -626,13 +548,6 @@ def create_sample_project(
 
     project = manager.import_sample_project(
         user.id, str(user.organization_id), body.name, body.project_type
-    )
-
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{project.name}-{project.id}", Description=project.description
-        ),
     )
 
     data = {

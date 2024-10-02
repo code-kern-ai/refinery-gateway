@@ -7,12 +7,6 @@ from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 from submodules.model import exceptions
 
-from submodules.model import events
-from util import doc_ock, notification, adapter
-
-from controller.task_master import manager as task_master_manager
-from submodules.model.enums import TaskType, RecordTokenizationScope
-
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -48,54 +42,3 @@ class ProjectDetails(HTTPEndpoint):
             "knowledge_base_ids": [str(list.id) for list in project.knowledge_bases],
         }
         return JSONResponse(result)
-
-
-class ProjectCreationFromWorkflow(HTTPEndpoint):
-    async def post(self, request_body) -> JSONResponse:
-        (
-            user_id,
-            name,
-            description,
-            tokenizer,
-            store_id,
-        ) = await adapter.unpack_request_body(request_body)
-
-        user = auth_manager.get_user_by_id(user_id)
-        organization = auth_manager.get_organization_by_user_id(user.id)
-
-        project = project_manager.create_project(
-            str(organization.id), name, description, user.id
-        )
-        project_manager.update_project(project_id=project.id, tokenizer=tokenizer)
-        data = adapter.get_records_from_store(store_id)
-        adapter.check(data, project.id, user.id)
-
-        project_manager.add_workflow_store_data_to_project(
-            user_id=user.id,
-            project_id=project.id,
-            org_id=project.organization_id,
-            file_name=name,
-            data=data,
-        )
-
-        task_master_manager.queue_task(
-            str(organization.id),
-            str(user.id),
-            TaskType.TOKENIZATION,
-            {
-                "scope": RecordTokenizationScope.PROJECT.value,
-                "include_rats": True,
-                "only_uploaded_attributes": False,
-                "project_id": str(project.id),
-            },
-        )
-
-        notification.send_organization_update(
-            project.id, f"project_created:{str(project.id)}", True
-        )
-        doc_ock.post_event(
-            str(user.id),
-            events.CreateProject(Name=f"{name}-{project.id}", Description=description),
-        )
-
-        return JSONResponse({"project_id": str(project.id)})

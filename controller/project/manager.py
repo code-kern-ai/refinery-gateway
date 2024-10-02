@@ -2,13 +2,10 @@ import json
 import os
 import shutil
 import time
-import threading
-from typing import Any, Dict, List, Optional
-from controller.embedding.manager import recreate_embeddings
+from typing import Dict, List, Optional
 
 from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
-from exceptions.exceptions import ProjectManagerError
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
     labeling_task,
@@ -17,24 +14,16 @@ from submodules.model.business_objects import (
     record,
     record_label_association,
     data_slice,
-    embedding,
     information_source,
     general,
 )
-from fast_api.types import HuddleData, ProjectSize, GatesIntegrationData
-from util import daemon, notification
+from fast_api.types import HuddleData, ProjectSize
+from util import daemon
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
 from submodules.s3 import controller as s3
 from service.search import search
-from controller.tokenization.tokenization_service import request_save_tokenizer
-from controller.payload.util import has_active_learner_running
-from controller.payload import manager as payload_manager
-from controller.transfer.record_transfer_manager import import_records_and_rlas
-from controller.transfer.manager import check_and_add_running_id
-from controller.upload_task import manager as upload_task_manager
-from controller.gates import gates_service
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
@@ -156,7 +145,6 @@ def delete_project(project_id: str) -> None:
 def __background_cleanup(org_id: str, project_id: str) -> None:
     __delete_project_data_from_minio(org_id, project_id)
     __delete_project_data_from_inference_dir(project_id)
-    gates_service.stop_gates_project(project_id, ignore_404=True)
 
 
 def __delete_project_data_from_minio(org_id, project_id: str) -> None:
@@ -286,11 +274,7 @@ def __no_huddle_id(data_id: str) -> bool:
 
 def __get_crowd_label_is_data(project_id: str, is_id: str) -> Dict[str, str]:
     information_source_item = information_source.get(project_id, is_id)
-    if (
-        not information_source_item
-        or information_source_item.type
-        != enums.InformationSourceType.CROWD_LABELER.value
-    ):
+    if not information_source_item:
         raise ValueError(
             "only crowd labeler information source can be used to get a slice id"
         )
@@ -305,192 +289,8 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
         slices = data_slice.get_all(project_id, enums.SliceTypes.STATIC_DEFAULT)
         if slices and len(slices) > 0:
             return slices[0].id
-    elif huddle_type == enums.LinkTypes.HEURISTIC.value:
-        return information_source.get_first_crowd_is_for_annotator(project_id, user_id)
     else:
         raise ValueError("invalid huddle type")
-
-
-# WORKFLOW
-
-
-def add_workflow_store_data_to_project(
-    project_id: str,
-    org_id: str,
-    user_id: str,
-    file_name: str,
-    data: List[Dict[str, Any]],
-):
-    upload_task = upload_task_manager.create_upload_task(
-        user_id=user_id,
-        project_id=project_id,
-        file_name=file_name,
-        file_type=enums.RecordImportFileTypes.JSON.value,
-        file_import_options="",
-        upload_type=enums.UploadTypes.WORKFLOW_STORE.value,
-    )
-    import_records_and_rlas(
-        project_id,
-        user_id,
-        data,
-        upload_task,
-        enums.RecordCategory.SCALE.value,
-    )
-    check_and_add_running_id(project_id, org_id, user_id)
-
-    upload_task_manager.update_upload_task_to_finished(upload_task)
-
-
-# GATES
-projects_updating = set()
-projects_updating_lock = threading.Lock()
-
-
-def get_gates_integration_data(
-    project_id: str, for_gql: bool = True
-) -> GatesIntegrationData:
-    project_item = project.get(project_id)
-    if not project_item:
-        raise ProjectManagerError("Project not found")
-
-    missing_tokenizer = not __tokenizer_pickle_exists(project_item.tokenizer)
-    missing_embeddings = __get_missing_embedding_pickles(project_id)
-    missing_information_sources = __get_missing_information_source_pickles(project_id)
-
-    if project_id in projects_updating:
-        status = enums.GatesIntegrationStatus.UPDATING.value
-    elif (
-        missing_tokenizer
-        or len(missing_embeddings) > 0
-        or len(missing_information_sources) > 0
-    ):
-        status = enums.GatesIntegrationStatus.NOT_READY.value
-    else:
-        status = enums.GatesIntegrationStatus.READY.value
-
-    if for_gql:
-        return GatesIntegrationData(
-            status=status,
-            missing_tokenizer=missing_tokenizer,
-            missing_embeddings=missing_embeddings,
-            missing_information_sources=missing_information_sources,
-        )
-    return {
-        "status": status,
-        "missing_tokenizer": missing_tokenizer,
-        "missing_embeddings": missing_embeddings,
-        "missing_information_sources": missing_information_sources,
-    }
-
-
-def __tokenizer_pickle_exists(config_string: str) -> bool:
-    tokenizer_path = os.path.join(
-        "/inference/tokenizers", f"tokenizer-{config_string}.pkl"
-    )
-    return os.path.exists(tokenizer_path)
-
-
-def __get_missing_embedding_pickles(project_id: str) -> List[str]:
-    missing = []
-    embedding_items = embedding.get_finished_embeddings(project_id)
-    for embedding_item in embedding_items:
-        embedding_id = str(embedding_item.id)
-        emb_path = os.path.join(
-            "/inference", project_id, f"embedder-{embedding_id}.pkl"
-        )
-        if not os.path.exists(emb_path):
-            missing.append(embedding_id)
-    return missing
-
-
-def __get_missing_information_source_pickles(project_id: str) -> List[str]:
-    missing = []
-    is_items = information_source.get_all(project_id)
-    for is_item in is_items:
-        if is_item.type != enums.InformationSourceType.ACTIVE_LEARNING.value:
-            # only active learning information sources are pickled
-            continue
-        is_id = str(is_item.id)
-        last_payload = information_source.get_last_payload(project_id, is_id)
-        if not last_payload:
-            continue
-        if last_payload.state == enums.PayloadState.FINISHED.value:
-            al_path = os.path.join(
-                "/inference", project_id, f"active-learner-{is_id}.pkl"
-            )
-            if not os.path.exists(al_path):
-                missing.append(is_id)
-    return missing
-
-
-def update_project_for_gates(project_id: str, user_id: str) -> None:
-    project_item = project.get(project_id)
-    if not project_item:
-        return
-
-    global projects_updating
-    with projects_updating_lock:
-        if project_id in projects_updating:
-            return
-        projects_updating.add(project_id)
-
-    notification.send_organization_update(project_id, "gates_integration:started")
-
-    daemon.run(
-        __update_project_for_gates_thread,
-        project_id,
-        user_id,
-        project_item,
-    )
-
-
-def __update_project_for_gates_thread(
-    project_id: str, user_id: str, project_item: Project
-) -> None:
-    try:
-        session_token = general.get_ctx_token()
-
-        if not __tokenizer_pickle_exists(project_item.tokenizer):
-            request_save_tokenizer(project_item.tokenizer)
-
-        session_token = __create_missing_embedding_pickles(project_id, session_token)
-        session_token = __create_missing_information_source_pickles(
-            project_id, user_id, session_token
-        )
-
-    except Exception as e:
-        print(f"Error while updating project {project_id} for gates: {e}")
-    finally:
-        global projects_updating
-        with projects_updating_lock:
-            if project_id in projects_updating:
-                projects_updating.remove(project_id)
-        notification.send_organization_update(project_id, "gates_integration:finished")
-        general.remove_and_refresh_session(session_token)
-
-
-def __create_missing_embedding_pickles(project_id: str, session_token: Any) -> Any:
-    missing_emb_pickles = __get_missing_embedding_pickles(project_id)
-    recreate_embeddings(project_id, missing_emb_pickles)
-    return session_token
-
-
-def __create_missing_information_source_pickles(
-    project_id: str,
-    user_id: str,
-    session_token: Any,
-) -> Any:
-    missing_is_ids = __get_missing_information_source_pickles(project_id)
-    for is_id in missing_is_ids:
-        session_token = general.remove_and_refresh_session(
-            session_token, request_new=True
-        )
-        payload_manager.create_payload(project_id, is_id, user_id)
-        time.sleep(1)
-        while has_active_learner_running(project_id):
-            time.sleep(1)
-
-    return session_token
 
 
 def check_in_deletion_projects() -> None:

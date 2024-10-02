@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
-from api.project import ProjectDetails, ProjectCreationFromWorkflow
+from api.project import ProjectDetails
 from api.transfer import (
     AssociationsImport,
     FileExport,
@@ -21,7 +21,6 @@ from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
-from fast_api.routes.zero_shot import router as zero_shot_router
 from fast_api.routes.attribute import router as attribute_router
 from fast_api.routes.embedding import router as embedding_router
 from fast_api.routes.notification import router as notification_router
@@ -47,7 +46,6 @@ from route_prefix import (
     PREFIX_PROJECT_SETTING,
     PREFIX_MISC,
     PREFIX_COMMENT,
-    PREFIX_ZERO_SHOT,
     PREFIX_ATTRIBUTE,
     PREFIX_EMBEDDING,
     PREFIX_NOTIFICATION,
@@ -79,9 +77,6 @@ fastapi_app.include_router(
 )
 fastapi_app.include_router(misc_router, prefix=PREFIX_MISC, tags=["misc"])
 fastapi_app.include_router(comment_router, prefix=PREFIX_COMMENT, tags=["comment"])
-fastapi_app.include_router(
-    zero_shot_router, prefix=PREFIX_ZERO_SHOT, tags=["zero-shot"]
-)
 fastapi_app.include_router(
     attribute_router, prefix=PREFIX_ATTRIBUTE, tags=["attribute"]
 )
@@ -139,7 +134,6 @@ routes = [
         CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
-    Route("/project", ProjectCreationFromWorkflow),
     Route("/is_managed", IsManagedRest),
     Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),

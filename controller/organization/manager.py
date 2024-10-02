@@ -80,20 +80,6 @@ def get_all_users(
     return all_users_expanded
 
 
-def get_all_users_with_record_count(organization_id: str, project_id: str):
-    values = []
-
-    if organization_id is None or project_id is None:
-        return values
-
-    users = user.get_user_count(organization_id, project_id)
-
-    for row in users:
-        values.append({"user_id": str(row[0]), "counts": row[1]})
-
-    return values
-
-
 def create_organization(name: str) -> Organization:
     if organization.get_by_name(name):
         raise EntityAlreadyExistsException(

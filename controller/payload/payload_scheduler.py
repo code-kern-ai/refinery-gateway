@@ -46,7 +46,7 @@ from submodules.model.models import (
     RecordLabelAssociation,
     InformationSourcePayload,
 )
-from util import daemon, doc_ock, notification
+from util import daemon, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
 from controller.misc import config_service
@@ -307,18 +307,6 @@ def create_payload(
                 general.commit()
             except Exception:
                 print(traceback.format_exc())
-
-        project_item = project.get(project_id)
-        doc_ock.post_event(
-            user_id,
-            events.AddInformationSourceRun(
-                ProjectName=f"{project_item.name}-{project_item.id}",
-                Type=information_source_item.type,
-                Code=information_source_item.source_code,
-                Logs=payload_item.logs,
-                RunTime=stop - start,
-            ),
-        )
 
     if asynchronous:
         daemon.run(

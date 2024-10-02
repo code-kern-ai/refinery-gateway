@@ -26,10 +26,6 @@ def get_records_by_options_query_data(
     sources_options = column_options.get("sources")
     with_user_id = column_options.get("with_user_id")
 
-    with_user_id = (
-        export_options.get("format") == enums.RecordExportFormats.LABEL_STUDIO.value
-    )
-
     tasks = labeling_task.get_all(project_id)
     labeling_task_names = {
         str(lt.id): lt.name for lt in tasks if str(lt.id) in task_options
@@ -364,8 +360,6 @@ def __source_constraint(source_id: str, source_type: str) -> str:  # TODO enums 
         return __manual_source_filtering()
     elif source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         return __information_source_source_filtering(source_id)
-    elif source_type == enums.LabelSource.MODEL_CALLBACK.value:
-        return __model_source_filtering()
     elif source_type == enums.LabelSource.WEAK_SUPERVISION.value:
         return __weak_supervision_source_filtering()
     else:
@@ -381,10 +375,6 @@ def __manual_source_filtering() -> str:
 def __information_source_source_filtering(source_id: str) -> str:
     return f"""rla.source_type = '{enums.LabelSource.INFORMATION_SOURCE.value}'
                 AND rla.source_id = '{source_id}'"""
-
-
-def __model_source_filtering() -> str:
-    return f"rla.source_type = '{enums.LabelSource.MODEL_CALLBACK.value}'"
 
 
 def __weak_supervision_source_filtering() -> str:
@@ -460,7 +450,7 @@ def __get_extraction_data_query_and_select(
     elif source_type_parsed == enums.LabelSource.INFORMATION_SOURCE:
         on_add += f" AND ed.source_id = '{source['id']}' "
     else:
-        # WEAK_SUPERVISION & MODEL_CALLBACK -> nothing to do
+        # WEAK_SUPERVISION -> nothing to do
         pass
     query_alias = "ed" + str(query_counter)
 
