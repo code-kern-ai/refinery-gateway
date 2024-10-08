@@ -1,5 +1,4 @@
 from controller.attribute import manager as attribute_manager
-from controller.zero_shot import manager as zero_shot_manager
 from controller.payload import manager as payload_manager
 from controller.data_slice import manager as data_slice_manager
 from controller.weak_supervision import manager as weak_supervision_manager
@@ -42,23 +41,13 @@ def information_source(
 ):
 
     # already threaded in managers
-    if (
-        information_source_task_execution.information_source_type
-        == InformationSourceType.ZERO_SHOT.value
-    ):
-        payload_id = zero_shot_manager.start_zero_shot_for_project_thread(
-            information_source_task_execution.project_id,
-            information_source_task_execution.information_source_id,
-            information_source_task_execution.user_id,
-        )
-    else:
-        payload = payload_manager.create_payload(
-            information_source_task_execution.project_id,
-            information_source_task_execution.information_source_id,
-            information_source_task_execution.user_id,
-        )
-        if payload:
-            payload_id = payload.id
+    payload = payload_manager.create_payload(
+        information_source_task_execution.project_id,
+        information_source_task_execution.information_source_id,
+        information_source_task_execution.user_id,
+    )
+    if payload:
+        payload_id = payload.id
     return pack_json_result({"payload_id": str(payload_id)}, wrap_for_frontend=False)
 
 

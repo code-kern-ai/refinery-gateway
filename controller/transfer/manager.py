@@ -15,11 +15,6 @@ from controller.transfer.project_transfer_manager import (
 from controller.transfer.record_export_manager import get_records_by_options_query_data
 from controller.transfer.record_transfer_manager import import_file
 from controller.attribute import manager as attribute_manager
-from controller.transfer.labelstudio import (
-    template_generator as labelstudio_template_generator,
-    project_creation_manager,
-    project_update_manager,
-)
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects.export import build_full_record_sql_export
 from submodules.model.business_objects import (
@@ -296,57 +291,3 @@ def __get_last_export_credentials(project_id: str, path_prefix: str) -> str:
             org_id,
             o,
         )
-
-
-def generate_labelstudio_template(
-    project_id: str, labeling_task_ids: List[str], attribute_ids: List[str]
-) -> str:
-    return labelstudio_template_generator.generate_template(
-        project_id, labeling_task_ids, attribute_ids
-    )
-
-
-def import_label_studio_file(project_id: str, org_id: str, upload_task_id: str) -> None:
-    ctx_token = general.get_ctx_token()
-    try:
-        if attribute.get_all(project_id):
-            project_update_manager.manage_data_import(project_id, upload_task_id)
-        else:
-            project_creation_manager.manage_data_import(project_id, upload_task_id)
-            task = upload_task.get(project_id, upload_task_id)
-            task_master_manager.queue_task(
-                str(org_id),
-                str(task.user_id),
-                TaskType.TOKENIZATION,
-                {
-                    "scope": RecordTokenizationScope.PROJECT.value,
-                    "include_rats": True,
-                    "only_uploaded_attributes": False,
-                    "project_id": str(project_id),
-                },
-            )
-        upload_task.update(
-            project_id, upload_task_id, state=enums.UploadStates.DONE.value
-        )
-    except Exception:
-        general.rollback()
-        task = upload_task.get(project_id, upload_task_id)
-        task.state = enums.UploadStates.ERROR.value
-        general.commit()
-        create_notification(
-            enums.NotificationType.IMPORT_FAILED,
-            task.user_id,
-            task.project_id,
-            task.file_type,
-        )
-        logger.error(
-            upload_task_manager.get_upload_task_message(
-                task,
-            )
-        )
-        print(traceback.format_exc(), flush=True)
-        notification.send_organization_update(
-            project_id, f"file_upload:{str(task.id)}:state:{task.state}", False
-        )
-    finally:
-        general.remove_and_refresh_session(ctx_token)

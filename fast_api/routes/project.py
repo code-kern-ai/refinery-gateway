@@ -32,7 +32,7 @@ from submodules.model.util import (
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
-from util import notification, doc_ock
+from util import notification
 from util.inter_annotator.functions import (
     resolve_inter_annotator_matrix_classification,
     resolve_inter_annotator_matrix_extraction,

@@ -20,6 +20,7 @@ from submodules.model.models import Attribute
 from submodules.s3 import controller as s3
 from util import daemon, notification
 from controller.knowledge_base import util as knowledge_base
+from submodules.model import enums
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -189,7 +190,11 @@ def read_container_logs_thread(
         c += 1
         if c > 100:
             ctx_token = general.remove_and_refresh_session(ctx_token, True)
-            attribute_item = attribute.get(project_id, attribute_id)
+        attribute_item = attribute.get(project_id, attribute_id)
+        if not attribute_item:
+            break
+        if attribute_item.state == enums.AttributeState.FAILED.value:
+            break
         if not name in __containers_running:
             break
         try:

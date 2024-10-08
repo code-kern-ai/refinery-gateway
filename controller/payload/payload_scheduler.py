@@ -46,7 +46,7 @@ from submodules.model.models import (
     RecordLabelAssociation,
     InformationSourcePayload,
 )
-from util import daemon, doc_ock, notification
+from util import daemon, notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
 from controller.misc import config_service
@@ -308,18 +308,6 @@ def create_payload(
             except Exception:
                 print(traceback.format_exc())
 
-        project_item = project.get(project_id)
-        doc_ock.post_event(
-            user_id,
-            events.AddInformationSourceRun(
-                ProjectName=f"{project_item.name}-{project_item.id}",
-                Type=information_source_item.type,
-                Code=information_source_item.source_code,
-                Logs=payload_item.logs,
-                RunTime=stop - start,
-            ),
-        )
-
     if asynchronous:
         daemon.run(
             prepare_and_run_execution_pipeline,
@@ -533,6 +521,21 @@ def update_records(
 ) -> bool:
     org_id = organization.get_id_by_project_id(project_id)
     tmp_log_store = information_source_payload.logs
+
+    if information_source_payload.state == enums.PayloadState.FAILED.value:
+        berlin_now = datetime.datetime.now(__tz)
+        tmp_log_store.append(
+            " ".join(
+                [
+                    berlin_now.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "Information source task cancelled.",
+                ]
+            )
+        )
+        information_source_payload.logs = tmp_log_store
+        flag_modified(information_source_payload, "logs")
+        general.commit()
+        return True
     try:
         output_data = json.loads(
             s3.get_object(

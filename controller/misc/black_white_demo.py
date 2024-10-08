@@ -52,7 +52,6 @@ __whitelist_mutation_demo = {
     # "DeleteInformationSource",
     "ToggleInformationSource",
     "SetAllInformationSourceSelected",
-    "CreateZeroShotInformationSource",
     # "UpdateInformationSource",
     "CreateKnowledgeBase",
     # "DeleteKnowledgeBase",

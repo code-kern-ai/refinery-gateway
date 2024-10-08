@@ -26,6 +26,7 @@ from submodules.model.enums import (
     CustomerButtonType,
     CustomerButtonLocation,
 )
+from submodules.model.business_objects import task_queue as task_queue_bo
 
 router = APIRouter()
 
@@ -114,24 +115,37 @@ def cancel_task(
 
     auth.check_admin_access(request.state.info)
     task_type = body.task_type
-    project_id = body.project_id
+    task_info = body.task_info
     task_id = body.task_id
 
-    if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
-        controller_manager.cancel_attribute_calculation(project_id, task_id)
-    elif task_type == enums.TaskType.EMBEDDING.value:
-        controller_manager.cancel_embedding(project_id, task_id)
-    elif task_type == enums.TaskType.INFORMATION_SOURCE.value:
-        controller_manager.cancel_information_source_payload(project_id, task_id)
-    elif task_type == enums.TaskType.TOKENIZATION.value:
-        controller_manager.cancel_record_tokenization_task(project_id, task_id)
-    elif task_type == enums.TaskType.UPLOAD_TASK.value:
-        controller_manager.cancel_upload_task(project_id, task_id)
-    elif task_type == enums.TaskType.WEAK_SUPERVISION.value:
-        controller_manager.cancel_weak_supervision(project_id, task_id)
-    else:
-        raise ValueError(f"{task_type} is no valid task type")
+    task_entity = task_queue_bo.get(task_id)
+    if not task_entity:
+        return pack_json_result({"data": {"cancelTask": {"ok": False}}})
+    if task_entity and (
+        task_entity.is_active or task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value
+    ):
+        if task_type == enums.TaskType.ATTRIBUTE_CALCULATION.value:
+            controller_manager.cancel_attribute_calculation(task_info)
+        elif task_type == enums.TaskType.EMBEDDING.value:
+            controller_manager.cancel_embedding(task_info)
+        elif task_type == enums.TaskType.INFORMATION_SOURCE.value:
+            controller_manager.cancel_information_source_payload(task_info)
+        elif task_type == enums.TaskType.TOKENIZATION.value:
+            controller_manager.cancel_record_tokenization_task(task_info)
+        elif task_type == enums.TaskType.UPLOAD_TASK.value:
+            controller_manager.cancel_upload_task(task_info)
+        elif task_type == enums.TaskType.WEAK_SUPERVISION.value:
+            controller_manager.cancel_weak_supervision(task_info)
+        elif task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
+            controller_manager.cancel_macro_execution_task(task_info)
+        elif task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
+            controller_manager.cancel_markdown_file_task(task_info)
+        elif task_type == enums.TaskType.PARSE_COGNITION_TMP_FILE.value:
+            controller_manager.cancel_tmp_doc_retrieval_task(task_info)
+        else:
+            raise ValueError(f"{task_type} is no valid task type")
 
+    task_queue_bo.delete_by_task_id(task_id, True)
     return pack_json_result({"data": {"cancelTask": {"ok": True}}})
 
 
@@ -142,11 +156,30 @@ def cancel_all_running_tasks(request: Request):
     return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
 
 
-@router.get("/pause-task-queue")
+@router.post("/pause-task-queue")
 def pause_task_queue(request: Request, task_queue_pause: bool):
     auth.check_admin_access(request.state.info)
-    task_master_manager.pause_task_queue(task_queue_pause)
-    return SILENT_SUCCESS_RESPONSE
+    task_queue_pause_response = task_master_manager.pause_task_queue(task_queue_pause)
+    task_queue_pause = False
+    if task_queue_pause_response.ok:
+        try:
+            task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
+        except Exception:
+            task_queue_pause = False
+    return pack_json_result({"taskQueuePause": task_queue_pause})
+
+
+@router.get("/pause-task-queue")
+def get_task_queue_pause(request: Request):
+    auth.check_admin_access(request.state.info)
+    task_queue_pause_response = task_master_manager.get_task_queue_pause()
+    task_queue_pause = False
+    if task_queue_pause_response.ok:
+        try:
+            task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
+        except Exception:
+            task_queue_pause = False
+    return pack_json_result({"taskQueuePause": task_queue_pause})
 
 
 @router.get("/all-users-activity")

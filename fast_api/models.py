@@ -41,19 +41,6 @@ class RecordsByStaticSliceBody(BaseModel):
     limit: Any = None
 
 
-class ZeroShot10Body(BaseModel):
-    heuristicId: StrictStr
-    labelNames: List[StrictStr]
-
-
-class ZeroShotTextBody(BaseModel):
-    heuristicId: StrictStr
-    config: StrictStr
-    text: StrictStr
-    runIndividually: StrictBool
-    labelNames: List[StrictStr]
-
-
 class CreateLabelsBody(BaseModel):
     labelingTaskId: StrictStr
     labels: List[StrictStr]
@@ -151,12 +138,6 @@ class InitWeakSuperVisionBody(BaseModel):
     )
 
 
-class CreateZeroShotBody(BaseModel):
-    target_config: StrictStr
-    labeling_task_id: StrictStr
-    attribute_id: StrictStr
-
-
 class UpdateHeuristicBody(BaseModel):
     labeling_task_id: StrictStr
     code: StrictStr
@@ -167,11 +148,6 @@ class UpdateHeuristicBody(BaseModel):
 class RunThenWeakSupervisionBody(BaseModel):
     heuristic_id: StrictStr
     labeling_task_id: StrictStr
-
-
-class CancelZeroShotBody(BaseModel):
-    heuristic_id: StrictStr
-    payload_id: StrictStr
 
 
 class AddClassificationLabelBody(BaseModel):
@@ -245,12 +221,6 @@ class UpdateConfigBody(BaseModel):
 class ChangeUserRoleBody(BaseModel):
     user_id: StrictStr
     role: StrictStr
-
-
-class CreatePersonalTokenBody(BaseModel):
-    name: StrictStr
-    scope: StrictStr
-    expires_at: StrictStr
 
 
 class CreateNewAttributeBody(BaseModel):
@@ -433,8 +403,8 @@ class DeleteUserBody(BaseModel):
 
 
 class CancelTaskBody(BaseModel):
-    project_id: StrictStr
     task_id: StrictStr
+    task_info: Dict[StrictStr, Any]
     task_type: StrictStr
 
 

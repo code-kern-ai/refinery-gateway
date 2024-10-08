@@ -172,13 +172,6 @@ def __finalize_setup(
         "cognition_wizard:prep:RELEVANCE:COMPLETE",
         organization_id=organization_id,
     )
-
-    __add_start_gates_for(reference_project_id, organization_id, task_list)
-
-    # currently disabled since not part of initial offering
-    # __add_start_gates_for(question_project_id, task_list)
-    # __add_start_gates_for(relevance_project_id, task_list)
-
     task_list.append(
         {
             "organization_id": organization_id,
@@ -301,23 +294,6 @@ def __add_weakly_supervise_all_valid(
             "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
             "action": {
                 "action_type": enums.TaskQueueAction.RUN_WEAK_SUPERVISION.value,
-                "project_id": project_id,
-            },
-        }
-    )
-
-
-def __add_start_gates_for(
-    project_id: str,
-    org_id: str,
-    task_list: List[Dict[str, str]],
-) -> None:
-    task_list.append(
-        {
-            "organization_id": org_id,
-            "task_type": enums.TaskType.TASK_QUEUE_ACTION.value,
-            "action": {
-                "action_type": enums.TaskQueueAction.START_GATES.value,
                 "project_id": project_id,
             },
         }
