@@ -1,9 +1,7 @@
 import json
 from typing import Optional
 
-from controller.auth.kratos import resolve_user_name_and_email_by_id
 from fast_api.models import (
-    CreatePersonalTokenBody,
     CreateProjectBody,
     CreateSampleProjectBody,
     UpdateProjectNameAndDescriptionBody,
@@ -238,22 +236,6 @@ def label_distribution(
             }
         },
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
-    )
-
-
-@router.get(
-    "/{project_id}/gates-integration-data",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def gates_integration_data(project_id: str) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "getGatesIntegrationData": manager.get_gates_integration_data(
-                    project_id, False
-                )
-            }
-        },
     )
 
 
@@ -524,13 +506,6 @@ def create_project(
         project.id, f"project_created:{str(project.id)}", True
     )
 
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{body.name}-{project.id}", Description=body.description
-        ),
-    )
-
     data = {
         "project": {
             "id": str(project.id),
@@ -573,13 +548,6 @@ def create_sample_project(
 
     project = manager.import_sample_project(
         user.id, str(user.organization_id), body.name, body.project_type
-    )
-
-    doc_ock.post_event(
-        str(user.id),
-        events.CreateProject(
-            Name=f"{project.name}-{project.id}", Description=project.description
-        ),
     )
 
     data = {
