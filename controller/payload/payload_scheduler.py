@@ -6,7 +6,6 @@ from typing import Any, Tuple, Dict, List
 import pytz
 import json
 import docker
-import timeit
 import traceback
 
 # from datetime import datetime
@@ -14,7 +13,7 @@ from dateutil import parser
 import datetime
 
 from exceptions.exceptions import PayloadSchedulerError
-from submodules.model import enums, events
+from submodules.model import enums
 from submodules.model.business_objects import (
     information_source,
     embedding,
@@ -26,6 +25,7 @@ from submodules.model.business_objects import (
     project,
     organization,
 )
+from submodules.model import daemon
 from submodules.model.business_objects.embedding import get_embedding_record_ids
 from submodules.model.business_objects.information_source import (
     get_exclusion_record_ids,
@@ -46,7 +46,7 @@ from submodules.model.models import (
     RecordLabelAssociation,
     InformationSourcePayload,
 )
-from util import daemon, notification
+from util import notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
 from controller.misc import config_service
@@ -232,7 +232,6 @@ def create_payload(
                 project_id,
                 information_source_item.name,
             )
-            start = timeit.default_timer()
             run_container(
                 payload_item,
                 project_id,
@@ -289,7 +288,6 @@ def create_payload(
                 project_id,
                 f"payload_failed:{information_source_item.id}:{payload_item.id}:{information_source_item.type}",
             )
-        stop = timeit.default_timer()
         general.commit()
 
         org_id = organization.get_id_by_project_id(project_id)
@@ -309,7 +307,7 @@ def create_payload(
                 print(traceback.format_exc())
 
     if asynchronous:
-        daemon.run(
+        daemon.run_without_db_token(
             prepare_and_run_execution_pipeline,
             str(payload.id),
             project_id,
@@ -386,7 +384,7 @@ def run_container(
     )
     set_payload_progress(project_id, information_source_payload, 0.05)
     __containers_running[container_name] = True
-    daemon.run(
+    daemon.run_without_db_token(
         read_container_logs_thread,
         project_id,
         container_name,
