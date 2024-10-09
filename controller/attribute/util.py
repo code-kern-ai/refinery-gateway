@@ -18,9 +18,10 @@ from submodules.model.business_objects import (
 )
 from submodules.model.models import Attribute
 from submodules.s3 import controller as s3
-from util import daemon, notification
+from util import notification
 from controller.knowledge_base import util as knowledge_base
 from submodules.model import enums
+from submodules.model import daemon
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -118,7 +119,7 @@ def run_attribute_calculation_exec_env(
     )
     set_progress(project_id, attribute_item, 0.05)
     __containers_running[container_name] = True
-    daemon.run(
+    daemon.run_without_db_token(
         read_container_logs_thread,
         project_id,
         container_name,
