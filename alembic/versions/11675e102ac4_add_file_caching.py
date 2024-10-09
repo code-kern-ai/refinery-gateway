@@ -1,8 +1,8 @@
 """add file caching
 
-Revision ID: 21bf4b4fbe3b
-Revises: 3e59ce51739c
-Create Date: 2024-09-30 11:10:07.856077
+Revision ID: 11675e102ac4
+Revises: 414c990688f3
+Create Date: 2024-10-09 15:37:46.744638
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '21bf4b4fbe3b'
-down_revision = '3e59ce51739c'
+revision = '11675e102ac4'
+down_revision = '414c990688f3'
 branch_labels = None
 depends_on = None
 
@@ -29,6 +29,8 @@ def upgrade():
     sa.Column('file_size_bytes', sa.BigInteger(), nullable=True),
     sa.Column('content_type', sa.String(), nullable=True),
     sa.Column('original_file_name', sa.String(), nullable=True),
+    sa.Column('state', sa.String(), nullable=True),
+    sa.Column('meta_data', sa.JSON(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
@@ -47,6 +49,7 @@ def upgrade():
     sa.Column('bucket', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('state', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['file_reference_id'], ['cognition.file_reference.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
@@ -66,6 +69,7 @@ def upgrade():
     sa.Column('bucket', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('state', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['file_extraction_id'], ['cognition.file_extraction.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
