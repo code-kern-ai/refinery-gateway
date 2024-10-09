@@ -3,6 +3,7 @@ from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.s3 import controller as s3
+from submodules.model import enums
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -100,19 +101,15 @@ def cancel_macro_execution_task(
     )
 
 
-def cancel_markdown_file_task(
+def cancel_parse_cognition_file_task(
     task_info: Dict[str, Any],
 ) -> None:
-    markdown_file_id = task_info.get("fileId")
-    org_id = task_info.get("orgId")
-    task_monitor.set_markdown_file_task_to_failed(
-        markdown_file_id, org_id, with_commit=True
-    )
-
-
-def cancel_tmp_doc_retrieval_task(
-    task_info: Dict[str, Any],
-) -> None:
-    bucket = task_info.get("bucket")
-    minio_path = task_info.get("minioPath")
-    s3.delete_object(bucket, minio_path)
+    parse_scope = task_info.get("parse_scope")
+    file_reference_id = task_info.get("file_reference_id")
+    file_extraction_id = task_info.get("file_extraction_id")
+    file_transformation_id = task_info.get("file_transformation_id")
+    if parse_scope == enums.FileCachingProcessingScope.EXTRACT_TRANSFORM.value:
+        pass
+    elif parse_scope == enums.FileCachingProcessingScope.TRANSFORM.value:
+        task_monitor
+        pass

@@ -138,10 +138,8 @@ def cancel_task(
             controller_manager.cancel_weak_supervision(task_info)
         elif task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
             controller_manager.cancel_macro_execution_task(task_info)
-        elif task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
-            controller_manager.cancel_markdown_file_task(task_info)
-        elif task_type == enums.TaskType.PARSE_COGNITION_TMP_FILE.value:
-            controller_manager.cancel_tmp_doc_retrieval_task(task_info)
+        elif task_type == enums.TaskType.PARSE_COGNITION_FILE.value:
+            controller_manager.cancel_parse_cognition_file_task(task_info)
         else:
             raise ValueError(f"{task_type} is no valid task type")
 
