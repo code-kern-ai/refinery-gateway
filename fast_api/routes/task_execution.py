@@ -9,8 +9,7 @@ from fast_api.models import (
     WeakSupervisionActionExecutionBody,
 )
 from fastapi import APIRouter
-from util import daemon
-from submodules.model.enums import InformationSourceType
+from submodules.model import daemon
 from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 
 router = APIRouter()
@@ -22,7 +21,7 @@ router = APIRouter()
 def calculate_attributes(
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
-    daemon.run(
+    daemon.run_with_db_token(
         attribute_manager.calculate_user_attribute_all_records,
         attribute_calculation_task_execution.project_id,
         attribute_calculation_task_execution.organization_id,
@@ -58,7 +57,7 @@ def data_slice(
     data_slice_action_execution: DataSliceActionExecutionBody,
 ):
 
-    daemon.run(
+    daemon.run_with_db_token(
         data_slice_manager.create_outlier_slice,
         data_slice_action_execution.project_id,
         data_slice_action_execution.user_id,
@@ -75,7 +74,7 @@ def weak_supervision(
     weak_supervision_action_execution: WeakSupervisionActionExecutionBody,
 ):
 
-    daemon.run(
+    daemon.run_with_db_token(
         weak_supervision_manager.run_weak_supervision,
         weak_supervision_action_execution.project_id,
         weak_supervision_action_execution.user_id,

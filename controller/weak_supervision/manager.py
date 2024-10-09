@@ -19,7 +19,8 @@ from submodules.model.business_objects.labeling_task import (
     get_selected_labeling_task_names,
 )
 from submodules.model.enums import NotificationType
-from util import daemon, notification
+from util import notification
+from submodules.model import daemon
 from controller.weak_supervision.weak_supervision_service import (
     initiate_weak_supervision,
 )
@@ -102,7 +103,7 @@ def run_weak_supervision(
         finally:
             general.reset_ctx_token(ctx_token)
 
-    daemon.run(
+    daemon.run_without_db_token(
         execution_pipeline,
         project_id,
         str(user_id),

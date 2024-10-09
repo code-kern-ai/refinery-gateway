@@ -5,7 +5,7 @@ import os
 import traceback
 from time import sleep
 from threading import Lock
-from util import daemon
+from submodules.model import daemon
 from fastapi import Request
 from datetime import datetime
 from submodules.model.enums import AdminLogLevel, try_parse_enum_value
@@ -31,7 +31,7 @@ def add_to_persist_queue(log_path: str, data: Dict[str, Any]):
 
 
 def start_persist_thread():
-    daemon.run(__persist_log_loop)
+    daemon.run_without_db_token(__persist_log_loop)
 
 
 def __persist_log_loop():

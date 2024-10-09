@@ -28,7 +28,8 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import daemon, notification, file, security
+from util import notification, file, security
+from submodules.model import daemon
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -899,7 +900,7 @@ def import_file(
             )
 
     general.commit()
-    daemon.run(
+    daemon.run_without_db_token(
         __post_processing_import_threaded,
         project_id,
         task_id,

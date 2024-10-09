@@ -6,13 +6,12 @@ import docker
 from controller.tokenization import manager as tokenization_manager
 import pickle
 import tarfile
-from submodules.model.business_objects import attribute, tokenization
 from submodules.model.business_objects import record
 from submodules.model.business_objects.record import get_tokenized_record_from_db
 import time
 import uuid
 
-from util import daemon
+from submodules.model import daemon
 
 client = docker.from_env()
 image = os.getenv("RECORD_IDE_IMAGE")
@@ -70,7 +69,7 @@ def run_record_ide(
             f"{container.name}:/{knowledge_base_bytes_path}",
             knowledge_base_tar_path,
         )
-        daemon.run(cancel_container, container_name, container)
+        daemon.run_without_db_token(cancel_container, container_name, container)
         __containers_running[container_name] = True
         container.start()
         logs_arr = [
