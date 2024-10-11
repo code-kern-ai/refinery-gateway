@@ -21,7 +21,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             or file_reference.state == enums.FileCachingState.COMPLETED.value
         ):
             return
-        file_reference.status = enums.FileCachingState.RUNNING.value
+        file_reference.state = enums.FileCachingState.COMPLETED.value
         general.commit()
 
         prio = (
