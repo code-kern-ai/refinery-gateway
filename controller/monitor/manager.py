@@ -2,8 +2,6 @@ from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
-from submodules.s3 import controller as s3
-from submodules.model import enums
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -102,14 +100,18 @@ def cancel_macro_execution_task(
 
 
 def cancel_parse_cognition_file_task(
+    org_id: str,
     task_info: Dict[str, Any],
 ) -> None:
-    parse_scope = task_info.get("parse_scope")
-    file_reference_id = task_info.get("file_reference_id")
-    file_extraction_id = task_info.get("file_extraction_id")
-    file_transformation_id = task_info.get("file_transformation_id")
-    if parse_scope == enums.FileCachingProcessingScope.EXTRACT_TRANSFORM.value:
-        pass
-    elif parse_scope == enums.FileCachingProcessingScope.TRANSFORM.value:
-        task_monitor
-        pass
+
+    file_reference_id = task_info.get("fileReferenceId")
+    extraction_key = task_info.get("extractionKey")
+    transformation_key = task_info.get("transformationKey")
+
+    task_monitor.set_parse_cognition_file_task_to_failed(
+        org_id,
+        file_reference_id,
+        extraction_key,
+        transformation_key,
+        with_commit=True,
+    )
