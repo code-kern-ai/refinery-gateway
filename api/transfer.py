@@ -36,7 +36,8 @@ from submodules.model import enums, exceptions
 from util.notification import create_notification
 from submodules.model.enums import NotificationType
 from submodules.model.models import UploadTask
-from util import daemon, notification
+from util import notification
+from submodules.model import daemon
 from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
 
 from controller.task_master import manager as task_master_manager
@@ -232,7 +233,7 @@ class CognitionPrepareProject(HTTPEndpoint):
             return PlainTextResponse("Bad project id", status_code=400)
         task_id = request.path_params["task_id"]
 
-        daemon.run(
+        daemon.run_without_db_token(
             cognition_import_wizard.prepare_and_finalize_setup,
             cognition_project_id=cognition_project_id,
             task_id=task_id,
@@ -302,7 +303,7 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
             cognition_preparator.prepare_cognition_import(project_id, task)
         else:
             transfer_manager.import_records_from_file(project_id, task)
-        daemon.run(
+        daemon.run_with_db_token(
             __recalculate_missing_attributes_and_embeddings,
             project_id,
             str(task.user_id),
@@ -378,7 +379,6 @@ def __recalculate_missing_attributes_and_embeddings(
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     # wait a second to ensure that the process is started in the tokenization service
     time.sleep(5)
-    ctx_token = general.get_ctx_token()
     attributes_usable = attribute.get_all_ordered(
         project_id,
         True,
@@ -387,7 +387,6 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
         ],
     )
     if len(attributes_usable) == 0:
-        general.remove_and_refresh_session(ctx_token, False)
         return
 
     # stored as list so connection results do not affect
@@ -405,7 +404,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             i += 1
             if i >= 60:
                 i = 0
-                ctx_token = general.remove_and_refresh_session(ctx_token, True)
+                daemon.reset_session_token_in_thread()
             if tokenization.is_doc_bin_creation_running_or_queued(project_id):
                 time.sleep(2)
                 continue
@@ -420,7 +419,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 break
             if i >= 60:
                 i = 0
-                ctx_token = general.remove_and_refresh_session(ctx_token, True)
+                daemon.reset_session_token_in_thread()
 
             current_att_id = attribute_ids[0]
             current_att = attribute.get(project_id, current_att_id)
@@ -468,4 +467,3 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             project_id=project_id,
             message="calculate_attribute:finished:all",
         )
-        general.remove_and_refresh_session(ctx_token, False)

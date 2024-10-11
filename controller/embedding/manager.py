@@ -4,7 +4,7 @@ from exceptions.exceptions import ApiTokenImportError
 
 from submodules.model import enums
 from submodules.model.models import Embedding
-from util import daemon, notification
+from util import notification
 from . import util
 from . import connector
 from .terms import TERMS_INFO
@@ -16,6 +16,7 @@ from submodules.model.business_objects import (
     general,
     project,
 )
+from submodules.model import daemon
 from submodules.model.util import sql_alchemy_to_dict
 from controller.embedding.connector import collection_on_qdrant
 
@@ -74,14 +75,14 @@ def get_recommended_encoders(is_managed: bool) -> List[Any]:
 
 
 def create_embedding(project_id: str, embedding_id: str) -> None:
-    daemon.run(connector.request_embedding, project_id, embedding_id)
+    daemon.run_without_db_token(connector.request_embedding, project_id, embedding_id)
 
 
 def create_embeddings_one_by_one(
     project_id: str,
     embeddings_ids: List[str],
 ) -> None:
-    daemon.run(__embed_one_by_one_helper, project_id, embeddings_ids)
+    daemon.run_without_db_token(__embed_one_by_one_helper, project_id, embeddings_ids)
 
 
 def request_tensor_upload(project_id: str, embedding_id: str) -> Any:
@@ -319,7 +320,9 @@ def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
         general.commit()
 
     connector.request_deleting_embedding(project_id, old_id)
-    daemon.run(connector.request_embedding, project_id, new_embedding_item.id)
+    daemon.run_without_db_token(
+        connector.request_embedding, project_id, new_embedding_item.id
+    )
     return new_embedding_item
 
 

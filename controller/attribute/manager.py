@@ -16,7 +16,9 @@ from submodules.model.enums import (
     RecordTokenizationScope,
     AttributeVisibility,
 )
-from util import daemon, notification
+from util import notification
+
+from submodules.model import daemon
 
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
@@ -246,7 +248,7 @@ def calculate_user_attribute_all_records(
     notification.send_organization_update(
         project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
     )
-    daemon.run(
+    daemon.run_without_db_token(
         __calculate_user_attribute_all_records,
         project_id,
         org_id,

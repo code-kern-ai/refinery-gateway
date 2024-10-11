@@ -18,9 +18,10 @@ from submodules.model.business_objects import (
 )
 from submodules.model.models import Attribute
 from submodules.s3 import controller as s3
-from util import daemon, notification
+from util import notification
 from controller.knowledge_base import util as knowledge_base
 from submodules.model import enums
+from submodules.model import daemon
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -118,7 +119,7 @@ def run_attribute_calculation_exec_env(
     )
     set_progress(project_id, attribute_item, 0.05)
     __containers_running[container_name] = True
-    daemon.run(
+    daemon.run_without_db_token(
         read_container_logs_thread,
         project_id,
         container_name,
@@ -163,7 +164,7 @@ def extend_logs(
     if not attribute.logs:
         attribute.logs = logs
     else:
-        all_logs = [l for l in attribute.logs]
+        all_logs = [ll for ll in attribute.logs]
         all_logs += logs
         attribute.logs = all_logs
     general.commit()
@@ -195,7 +196,7 @@ def read_container_logs_thread(
             break
         if attribute_item.state == enums.AttributeState.FAILED.value:
             break
-        if not name in __containers_running:
+        if name not in __containers_running:
             break
         try:
             # timestamps included to filter out logs that have already been read
@@ -205,11 +206,13 @@ def read_container_logs_thread(
                 timestamps=True,
                 since=last_timestamp,
             )
-        except:
+        except Exception:
             # failsafe for containers that shut down during the read
             break
         current_logs = [
-            l for l in str(log_lines.decode("utf-8")).split("\n") if len(l.strip()) > 0
+            ll
+            for ll in str(log_lines.decode("utf-8")).split("\n")
+            if len(ll.strip()) > 0
         ]
         if len(current_logs) == 0:
             continue
@@ -218,8 +221,8 @@ def read_container_logs_thread(
         last_timestamp = parser.parse(last_timestamp_str).replace(
             tzinfo=None
         ) + datetime.timedelta(seconds=1)
-        non_progress_logs = [l for l in current_logs if "progress" not in l]
-        progress_logs = [l for l in current_logs if "progress" in l]
+        non_progress_logs = [ll for ll in current_logs if "progress" not in ll]
+        progress_logs = [ll for ll in current_logs if "progress" in ll]
         if len(non_progress_logs) > 0:
             extend_logs(project_id, attribute_item, non_progress_logs)
         if len(progress_logs) == 0:

@@ -314,3 +314,31 @@ def update_customer_buttons(
             update_request.visible,
         )
     )
+
+
+@router.get("/dummy/create/wrong/session")
+def dummy():
+
+    def something():
+        from submodules.model.business_objects import general
+
+        # general.get_ctx_token()
+        from submodules.model.business_objects import organization
+
+        print("organization", organization.get_all(), flush=True)
+        import json
+
+        print(
+            json.dumps(
+                general.get_session_lookup(exclude_last_x_seconds=-1),
+                indent=4,
+                default=str,
+            ),
+            flush=True,
+        )
+
+    from submodules.model import daemon
+
+    daemon.run_with_db_token(something)
+
+    return SILENT_SUCCESS_RESPONSE

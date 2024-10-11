@@ -1,6 +1,5 @@
-import json
 import os
-from typing import List, Optional
+from typing import List
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import (
@@ -10,8 +9,7 @@ from submodules.model.business_objects import (
 )
 from controller.misc import config_service
 from controller.labeling_access_link import manager as link_manager
-from controller.record_label_association import manager as rla_manager
-from util import daemon
+from submodules.model import daemon
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
@@ -65,11 +63,7 @@ def update_information_source(
 ) -> None:
     labeling_task_item: LabelingTask = labeling_task.get(project_id, labeling_task_id)
     return_type: str = resolve_source_return_type(labeling_task_item)
-    item = information_source.get(project_id, source_id)
-    new_payload_needed = (
-        str(item.source_code) != code or str(item.labeling_task_id) != labeling_task_id
-    )
-    item = information_source.update(
+    information_source.update(
         project_id,
         source_id,
         labeling_task_id=labeling_task_id,
@@ -94,7 +88,9 @@ def delete_information_source(project_id: str, source_id: str) -> None:
         == enums.InformationSourceType.ACTIVE_LEARNING.value
         and config_service.get_config_value("is_managed")
     ):
-        daemon.run(__delete_active_learner_from_inference_dir, project_id, source_id)
+        daemon.run_without_db_token(
+            __delete_active_learner_from_inference_dir, project_id, source_id
+        )
 
     information_source.delete(project_id, source_id, with_commit=True)
 
