@@ -109,7 +109,7 @@ def get_records_by_extended_search(
 
 def delete_record(project_id: str, record_id: str) -> None:
     record.delete(project_id, record_id, with_commit=True)
-    daemon.run_without_db_token(__reupload_embeddings, project_id)
+    daemon.run(__reupload_embeddings, project_id)
 
 
 def delete_all_records(project_id: str) -> None:

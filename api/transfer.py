@@ -233,7 +233,7 @@ class CognitionPrepareProject(HTTPEndpoint):
             return PlainTextResponse("Bad project id", status_code=400)
         task_id = request.path_params["task_id"]
 
-        daemon.run_without_db_token(
+        daemon.run(
             cognition_import_wizard.prepare_and_finalize_setup,
             cognition_project_id=cognition_project_id,
             task_id=task_id,

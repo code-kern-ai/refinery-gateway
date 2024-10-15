@@ -139,7 +139,7 @@ def delete_project(project_id: str) -> None:
     org_id = organization.get_id_by_project_id(project_id)
     project.delete_by_id(project_id, with_commit=True)
 
-    daemon.run_without_db_token(__background_cleanup, org_id, project_id)
+    daemon.run(__background_cleanup, org_id, project_id)
 
 
 def __background_cleanup(org_id: str, project_id: str) -> None:
@@ -295,7 +295,7 @@ def __get_first_data_id(project_id: str, user_id: str, huddle_type: str) -> str:
 
 def check_in_deletion_projects() -> None:
     # this is only supposed to be called during startup of the application
-    daemon.run_without_db_token(__check_in_deletion_projects)
+    daemon.run(__check_in_deletion_projects)
 
 
 def __check_in_deletion_projects() -> None:

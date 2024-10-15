@@ -125,7 +125,7 @@ def create_manual_classification_label(
     )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         update_annotator_progress(project_id, source_id, user_id)
-    daemon.run_without_db_token(
+    daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
@@ -137,7 +137,7 @@ def create_manual_classification_label(
     )
     if not as_gold_star:
         label_ids = [str(row.id) for row in label_ids.all()]
-        daemon.run_without_db_token(
+        daemon.run(
             __check_label_duplication_classification_and_react,
             project_id,
             record_id,
@@ -216,7 +216,7 @@ def create_manual_extraction_label(
         )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         update_annotator_progress(project_id, source_id, user_id)
-    daemon.run_without_db_token(
+    daemon.run(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,

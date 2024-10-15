@@ -103,7 +103,7 @@ def run_weak_supervision(
         finally:
             general.reset_ctx_token(ctx_token)
 
-    daemon.run_without_db_token(
+    daemon.run(
         execution_pipeline,
         project_id,
         str(user_id),

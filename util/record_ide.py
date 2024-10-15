@@ -69,7 +69,7 @@ def run_record_ide(
             f"{container.name}:/{knowledge_base_bytes_path}",
             knowledge_base_tar_path,
         )
-        daemon.run_without_db_token(cancel_container, container_name, container)
+        daemon.run(cancel_container, container_name, container)
         __containers_running[container_name] = True
         container.start()
         logs_arr = [
