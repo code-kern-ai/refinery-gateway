@@ -38,6 +38,7 @@ from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
+from submodules.model import session
 
 from controller.project.manager import check_in_deletion_projects
 from route_prefix import (
@@ -153,4 +154,5 @@ security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()
 
+session.start_session_cleanup_thread()
 log_storage.start_persist_thread()
