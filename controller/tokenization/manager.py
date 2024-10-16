@@ -84,7 +84,7 @@ def delete_docbins(project_id: str, records: List[Record]) -> None:
 
 
 def start_record_tokenization(project_id: str, record_id: str) -> None:
-    daemon.run(
+    daemon.run_without_db_token(
         request_tokenize_record,
         project_id,
         record_id,

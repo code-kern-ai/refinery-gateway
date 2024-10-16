@@ -31,7 +31,7 @@ def add_to_persist_queue(log_path: str, data: Dict[str, Any]):
 
 
 def start_persist_thread():
-    daemon.run(__persist_log_loop)
+    daemon.run_without_db_token(__persist_log_loop)
 
 
 def __persist_log_loop():

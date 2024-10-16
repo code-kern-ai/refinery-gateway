@@ -307,7 +307,7 @@ def create_payload(
                 print(traceback.format_exc())
 
     if asynchronous:
-        daemon.run(
+        daemon.run_without_db_token(
             prepare_and_run_execution_pipeline,
             str(payload.id),
             project_id,
@@ -384,7 +384,7 @@ def run_container(
     )
     set_payload_progress(project_id, information_source_payload, 0.05)
     __containers_running[container_name] = True
-    daemon.run(
+    daemon.run_without_db_token(
         read_container_logs_thread,
         project_id,
         container_name,

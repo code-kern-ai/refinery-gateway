@@ -154,5 +154,5 @@ security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()
 
-log_storage.start_persist_thread()
 session.start_session_cleanup_thread()
+log_storage.start_persist_thread()

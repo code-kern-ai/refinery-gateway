@@ -88,7 +88,9 @@ def delete_information_source(project_id: str, source_id: str) -> None:
         == enums.InformationSourceType.ACTIVE_LEARNING.value
         and config_service.get_config_value("is_managed")
     ):
-        daemon.run(__delete_active_learner_from_inference_dir, project_id, source_id)
+        daemon.run_without_db_token(
+            __delete_active_learner_from_inference_dir, project_id, source_id
+        )
 
     information_source.delete(project_id, source_id, with_commit=True)
 

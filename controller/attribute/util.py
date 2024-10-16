@@ -119,7 +119,7 @@ def run_attribute_calculation_exec_env(
     )
     set_progress(project_id, attribute_item, 0.05)
     __containers_running[container_name] = True
-    daemon.run(
+    daemon.run_without_db_token(
         read_container_logs_thread,
         project_id,
         container_name,

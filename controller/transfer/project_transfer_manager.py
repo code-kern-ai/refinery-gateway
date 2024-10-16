@@ -900,7 +900,7 @@ def import_file(
             )
 
     general.commit()
-    daemon.run(
+    daemon.run_without_db_token(
         __post_processing_import_threaded,
         project_id,
         task_id,
