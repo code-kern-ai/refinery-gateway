@@ -10,7 +10,7 @@ annotated-types==0.7.0
     # via
     #   -r requirements/common-requirements.txt
     #   pydantic
-anyio==4.4.0
+anyio==4.6.2.post1
     # via
     #   -r requirements/common-requirements.txt
     #   starlette
@@ -28,12 +28,12 @@ catalogue==2.0.10
     #   spacy
     #   srsly
     #   thinc
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   -r requirements/common-requirements.txt
     #   minio
     #   requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via
     #   -r requirements/common-requirements.txt
     #   requests
@@ -61,15 +61,13 @@ exceptiongroup==1.2.2
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
-fastapi==0.110.3
-    # via
-    #   -r requirements/common-requirements.txt
-    #   -r requirements/requirements.in
+fastapi==0.115.2
+    # via -r requirements/common-requirements.txt
 h11==0.14.0
     # via
     #   -r requirements/common-requirements.txt
     #   uvicorn
-idna==3.8
+idna==3.10
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
@@ -146,7 +144,7 @@ python-dateutil==2.9.0.post0
     #   -r requirements/common-requirements.txt
     #   botocore
     #   pandas
-pytz==2024.1
+pytz==2024.2
     # via
     #   -r requirements/common-requirements.txt
     #   pandas
@@ -188,10 +186,9 @@ srsly==2.4.8
     #   spacy
     #   thinc
     #   weasel
-starlette==0.37.2
+starlette==0.40.0
     # via
     #   -r requirements/common-requirements.txt
-    #   -r requirements/requirements.in
     #   fastapi
 sudachidict-core==20240409
     # via spacy
@@ -216,7 +213,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   starlette
-urllib3==1.26.19
+urllib3==1.26.20
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
