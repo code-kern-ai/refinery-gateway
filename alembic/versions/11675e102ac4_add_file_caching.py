@@ -1,7 +1,7 @@
 """add file caching
 
 Revision ID: 11675e102ac4
-Revises: 414c990688f3
+Revises: 1118c7327b96
 Create Date: 2024-10-09 15:37:46.744638
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '11675e102ac4'
-down_revision = '414c990688f3'
+down_revision = '1118c7327b96'
 branch_labels = None
 depends_on = None
 
