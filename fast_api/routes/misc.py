@@ -138,10 +138,10 @@ def cancel_task(
             controller_manager.cancel_weak_supervision(task_info)
         elif task_type == enums.TaskType.RUN_COGNITION_MACRO.value:
             controller_manager.cancel_macro_execution_task(task_info)
-        elif task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value:
-            controller_manager.cancel_markdown_file_task(task_info)
-        elif task_type == enums.TaskType.PARSE_COGNITION_TMP_FILE.value:
-            controller_manager.cancel_tmp_doc_retrieval_task(task_info)
+        elif task_type == enums.TaskType.PARSE_COGNITION_FILE.value:
+            controller_manager.cancel_parse_cognition_file_task(
+                task_entity.organization_id, task_info
+            )
         else:
             raise ValueError(f"{task_type} is no valid task type")
 
@@ -314,31 +314,3 @@ def update_customer_buttons(
             update_request.visible,
         )
     )
-
-
-@router.get("/dummy/create/wrong/session")
-def dummy():
-
-    def something():
-        from submodules.model.business_objects import general
-
-        # general.get_ctx_token()
-        from submodules.model.business_objects import organization
-
-        print("organization", organization.get_all(), flush=True)
-        import json
-
-        print(
-            json.dumps(
-                general.get_session_lookup(exclude_last_x_seconds=-1),
-                indent=4,
-                default=str,
-            ),
-            flush=True,
-        )
-
-    from submodules.model import daemon
-
-    daemon.run_with_db_token(something)
-
-    return SILENT_SUCCESS_RESPONSE

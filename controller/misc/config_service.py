@@ -27,7 +27,7 @@ def refresh_config():
         )
     global __config
     __config = response.json()
-    daemon.run_with_db_token(invalidate_after, 3600)  # one hour as failsave
+    daemon.run_without_db_token(invalidate_after, 3600)  # one hour as failsave
 
 
 def get_config_value(

@@ -2,7 +2,6 @@ from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
-from submodules.s3 import controller as s3
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -100,19 +99,19 @@ def cancel_macro_execution_task(
     )
 
 
-def cancel_markdown_file_task(
+def cancel_parse_cognition_file_task(
+    org_id: str,
     task_info: Dict[str, Any],
 ) -> None:
-    markdown_file_id = task_info.get("fileId")
-    org_id = task_info.get("orgId")
-    task_monitor.set_markdown_file_task_to_failed(
-        markdown_file_id, org_id, with_commit=True
+
+    file_reference_id = task_info.get("fileReferenceId")
+    extraction_key = task_info.get("extractionKey")
+    transformation_key = task_info.get("transformationKey")
+
+    task_monitor.set_parse_cognition_file_task_to_failed(
+        org_id,
+        file_reference_id,
+        extraction_key,
+        transformation_key,
+        with_commit=True,
     )
-
-
-def cancel_tmp_doc_retrieval_task(
-    task_info: Dict[str, Any],
-) -> None:
-    bucket = task_info.get("bucket")
-    minio_path = task_info.get("minioPath")
-    s3.delete_object(bucket, minio_path)
