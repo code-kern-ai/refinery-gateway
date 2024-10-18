@@ -55,7 +55,7 @@ class Notify(HTTPEndpoint):
 
         parts = file_path.split("/")
 
-        if parts[1] == "_cognition" and parts[2] == "files":
+        if parts[1] == "_cognition":
             handle_cognition_file_upload(parts)
             return PlainTextResponse("OK")
 
