@@ -175,6 +175,9 @@ def run_then_weak_supervision(
             "Weak Supervision Task",
         )
         notification.send_organization_update(project_id, "weak_supervision_started")
+        source_names = (
+            ", ".join(source_names) if isinstance(source_names, list) else source_names
+        )
 
         weak_supervision_task = ws_manager.create_task(
             project_id=project_id,
