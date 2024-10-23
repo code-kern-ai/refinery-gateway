@@ -126,7 +126,10 @@ def __extract_table_meta_classification_data(
             break
         task = tasks_by_id.get(task_id)
 
-        if task.task_type == enums.LabelingTaskType.INFORMATION_EXTRACTION.value:
+        if (
+            not task
+            or task.task_type == enums.LabelingTaskType.INFORMATION_EXTRACTION.value
+        ):
             continue
 
         attribute_name = attribute_names.get(str(task.attribute_id))
