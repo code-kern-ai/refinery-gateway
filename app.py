@@ -1,6 +1,6 @@
 import logging
-
-from fastapi import FastAPI
+import json
+from fastapi import FastAPI, status, responses
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
@@ -16,7 +16,7 @@ from api.transfer import (
     CognitionImport,
     CognitionPrepareProject,
 )
-from config_handler import SERVICES_TO_NOTIFY, init_config
+from config_handler import SERVICES_TO_NOTIFY, init_config, change_config, get_config
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
@@ -65,11 +65,40 @@ from route_prefix import (
 from util import security, clean_up
 from middleware import log_storage
 from submodules.model import session
+from fast_api.models import (
+    ChangeRequest,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 fastapi_app = FastAPI()
+
+"""
+Config routes (un-routed exposure)
+"""
+
+
+@fastapi_app.post("/change_config")
+def change(request: ChangeRequest) -> responses.PlainTextResponse:
+    if change_config(json.loads(request.dict_string)):
+        notify_others_about_change_thread(SERVICES_TO_NOTIFY)
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+
+
+@fastapi_app.get("/full_config")
+def full_config() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(False)
+    )
+
+
+@fastapi_app.get("/base_config")
+def base_config() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(True)
+    )
+
 
 fastapi_app.include_router(
     org_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
@@ -117,6 +146,7 @@ fastapi_app_internal = FastAPI()
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
 )
+
 routes = [
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
