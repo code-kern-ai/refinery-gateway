@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends, Request, Body
+from fastapi import APIRouter, Request, Body
 from controller.misc import config_service
 from fast_api.models import (
     AddUserToOrganizationBody,
@@ -27,7 +27,6 @@ from controller.user import manager as user_manager
 from controller.misc import manager as misc
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model import events
 from submodules.model.business_objects import organization
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
