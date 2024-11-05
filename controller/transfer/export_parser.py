@@ -13,6 +13,8 @@ from util.miscellaneous_functions import first_item, get_max_length_of_task_labe
 
 from util.sql_helper import parse_sql_text
 
+ILLEGAL_CHARACTER_REG_EX = r"[\000-\010]|[\013-\014]|[\016-\037]"
+
 
 def parse(
     project_id: str,
@@ -43,6 +45,10 @@ def parse(
     elif file_type == enums.RecordExportFileTypes.CSV.value:
         df.to_csv(file_path, index=False)
     elif file_type == enums.RecordExportFileTypes.XLSX.value:
+        for column in df.columns:
+            type_name = df[column].dtype.name
+            if type_name == "object":
+                df[column] = df[column].str.replace(ILLEGAL_CHARACTER_REG_EX, "")
         df.to_excel(file_path)
     else:
         message = f"File type {file_type} not supported."
