@@ -1,14 +1,9 @@
 from typing import Dict, Any, Optional, Union
-import requests
 import time
+from fast_api.routes.misc import change, full_config
 from submodules.model import daemon
-from util import service_requests
 
 __config = None
-
-# these are ment to be constant values since os variables will sooner or later be removed for addresses (and used with values from config-service)
-REQUEST_URL = "http://refinery-config:80/full_config"
-CHANGE_URL = "http://refinery-config:80/change_config"
 
 
 def __get_config() -> Dict[str, Any]:
@@ -20,14 +15,14 @@ def __get_config() -> Dict[str, Any]:
 
 
 def refresh_config():
-    response = requests.get(REQUEST_URL)
+    response = full_config()
     if response.status_code != 200:
         raise ValueError(
             f"Config service cant be reached -- response.code{response.status_code}"
         )
     global __config
     __config = response.json()
-    daemon.run_without_db_token(invalidate_after, 3600)  # one hour as failsave
+    daemon.run_without_db_token(invalidate_after, 3600)  # one hour as fail safe
 
 
 def get_config_value(
@@ -55,4 +50,4 @@ def invalidate_after(sec: int) -> None:
 
 def change_config(dict_str: str) -> None:
     data = {"dict_string": dict_str}
-    service_requests.post_call_or_raise(CHANGE_URL, data)
+    return change(data).text
