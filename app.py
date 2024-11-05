@@ -16,6 +16,7 @@ from api.transfer import (
     CognitionImport,
     CognitionPrepareProject,
 )
+from config_handler import SERVICES_TO_NOTIFY, init_config
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
@@ -40,6 +41,7 @@ from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
 from controller.project.manager import check_in_deletion_projects
+from notify_handler import notify_others_about_change_thread
 from route_prefix import (
     PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
@@ -153,6 +155,9 @@ check_in_deletion_projects()
 security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()
+
+init_config()
+notify_others_about_change_thread(SERVICES_TO_NOTIFY)
 
 session.start_session_cleanup_thread()
 log_storage.start_persist_thread()

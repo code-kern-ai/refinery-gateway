@@ -1,6 +1,7 @@
 import json
-from fastapi import APIRouter, Body, Request, status
+from fastapi import APIRouter, Body, Request, status, responses
 from fastapi.responses import PlainTextResponse
+from config_handler import SERVICES_TO_NOTIFY, change_config, get_config
 from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
     CancelTaskBody,
@@ -8,6 +9,7 @@ from fast_api.models import (
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
     UpdateCustomerButton,
+    ChangeRequest,
 )
 from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 from typing import Dict, Optional
@@ -17,6 +19,7 @@ from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
 from controller.task_master import manager as task_master_manager
+from notify_handler import notify_others_about_change_thread
 from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
 import util.user_activity
@@ -45,6 +48,27 @@ def get_is_demo(request: Request) -> Dict:
     except Exception:
         is_demo = True
     return pack_json_result({"data": {"isDemo": is_demo}})
+
+
+@router.post("/change_config")
+def change(request: ChangeRequest) -> responses.PlainTextResponse:
+    if change_config(json.loads(request.dict_string)):
+        notify_others_about_change_thread(SERVICES_TO_NOTIFY)
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+
+
+@router.get("/full_config")
+def full_config() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(False)
+    )
+
+
+@router.get("/base_config")
+def base_config() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(True)
+    )
 
 
 @router.get("/version-overview")

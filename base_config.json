@@ -1,0 +1,14 @@
+{
+    "is_managed": null,
+    "is_demo": null,
+    "allow_data_tracking": true,
+    "s3_region": null,
+    "spacy_downloads": [
+        "en_core_web_sm",
+        "de_core_news_sm"
+    ],
+    "tokens": {
+        "INTERCOM": ""
+    },
+    "KERN_S3_ENDPOINT": null
+}

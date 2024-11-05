@@ -448,3 +448,7 @@ class UpdateCustomerButton(BaseModel):
     location: Optional[CustomerButtonLocation] = None
     visible: Optional[StrictBool] = None
     config: Optional[Dict[StrictStr, Any]] = None
+
+
+class ChangeRequest(BaseModel):
+    dict_string: str
