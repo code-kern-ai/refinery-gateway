@@ -28,7 +28,8 @@ from submodules.model.business_objects import (
 )
 from submodules.model.enums import NotificationType
 from controller.labeling_access_link import manager as link_manager
-from util import daemon, notification, file, security
+from util import notification, file, security
+from submodules.model import daemon
 from util.decorator import param_throttle
 from controller.embedding import manager as embedding_manager
 from util.notification import create_notification
@@ -497,22 +498,6 @@ def import_file(
             project_id=project_id,
             with_commit=False,
         )
-        if (
-            information_source_object.type
-            == enums.InformationSourceType.ZERO_SHOT.value
-        ):
-            information_source_object.source_code = (
-                __replace_attribute_id_for_zero_shot_config(
-                    information_source_object.source_code, attribute_ids_by_old_id
-                )
-            )
-        if (
-            information_source_object.type
-            == enums.InformationSourceType.CROWD_LABELER.value
-        ):
-            information_source_object.source_code = json.dumps(
-                {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
-            )
         information_source_ids[
             information_source_item.get(
                 "id",
@@ -915,7 +900,7 @@ def import_file(
             )
 
     general.commit()
-    daemon.run(
+    daemon.run_without_db_token(
         __post_processing_import_threaded,
         project_id,
         task_id,
@@ -1354,17 +1339,6 @@ def send_progress_update(project_id: str, task_id: str, value: float) -> None:
         notification.send_organization_update(
             project_id, f"file_upload:{task_id}:progress:{value}", is_global=True
         )
-
-
-def __replace_attribute_id_for_zero_shot_config(
-    source_code: str, attribute_ids: Dict[str, str]
-) -> str:
-    for attribute_id in attribute_ids:
-        source_code = source_code.replace(
-            f'"attribute_id":"{attribute_id}"',
-            f'"attribute_id":"{attribute_ids[attribute_id]}"',
-        )
-    return source_code
 
 
 def __get_attribute_name_from_embedding_name(embedding_name: str) -> str:

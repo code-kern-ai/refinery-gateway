@@ -9,7 +9,7 @@ from submodules.model.business_objects.record import (
     get_tokenized_record_from_db,
     get_tokenized_records_from_db,
 )
-from util import daemon
+from submodules.model import daemon
 from controller.tokenization import tokenization_service
 from controller.tokenization.tokenization_service import (
     request_tokenize_record,
@@ -84,7 +84,7 @@ def delete_docbins(project_id: str, records: List[Record]) -> None:
 
 
 def start_record_tokenization(project_id: str, record_id: str) -> None:
-    daemon.run(
+    daemon.run_without_db_token(
         request_tokenize_record,
         project_id,
         record_id,

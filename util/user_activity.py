@@ -1,7 +1,7 @@
 import time
 from typing import Dict, Union, Any, List
 from submodules.model.business_objects import user_activity, general
-from util import daemon
+from submodules.model import daemon
 import os
 from datetime import datetime
 import json
@@ -23,7 +23,7 @@ def add_user_activity_entry(
     global __thread_running
     if not __thread_running:
         __thread_running = True
-        daemon.run(__start_thread_db_write)
+        daemon.run_without_db_token(__start_thread_db_write)
 
     activity_set = [user_id, activity, datetime.now(), False]
     __write_backup_file(activity_set)

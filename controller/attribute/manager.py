@@ -16,7 +16,9 @@ from submodules.model.enums import (
     RecordTokenizationScope,
     AttributeVisibility,
 )
-from util import daemon, notification
+from util import notification
+
+from submodules.model import daemon
 
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
@@ -246,7 +248,7 @@ def calculate_user_attribute_all_records(
     notification.send_organization_update(
         project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
     )
-    daemon.run(
+    daemon.run_without_db_token(
         __calculate_user_attribute_all_records,
         project_id,
         org_id,
@@ -309,7 +311,11 @@ def __calculate_user_attribute_all_records(
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
     attribute_item = attribute.get(project_id, attribute_id)
-    if attribute_item.data_type == DataTypes.TEXT.value:
+    if (
+        attribute_item
+        and attribute_item.data_type == DataTypes.TEXT.value
+        and not attribute_item.state == AttributeState.FAILED.value
+    ):
         util.add_log_to_attribute_logs(
             project_id, attribute_id, "Triggering tokenization."
         )
@@ -346,6 +352,15 @@ def __calculate_user_attribute_all_records(
         )
         request_reupload_docbins(project_id)
 
+    attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item.state == AttributeState.FAILED.value:
+        __notify_attribute_calculation_failed(
+            project_id=project_id,
+            attribute_id=attribute_id,
+            log="Writing to the database failed.",
+        )
+        general.remove_and_refresh_session(session_token)
+        return
     util.set_progress(project_id, attribute_item, 1.0)
     attribute.update(
         project_id=project_id,

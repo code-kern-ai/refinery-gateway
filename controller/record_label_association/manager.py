@@ -19,7 +19,7 @@ from submodules.model.business_objects.record_label_association import (
     update_is_relevant_manual_label,
     update_is_valid_manual_label_for_project,
 )
-from util import daemon
+from submodules.model import daemon
 from controller.weak_supervision import weak_supervision_service as weak_supervision
 from controller.knowledge_term import manager as term_manager
 from controller.information_source import manager as information_source_manager
@@ -125,7 +125,7 @@ def create_manual_classification_label(
     )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         update_annotator_progress(project_id, source_id, user_id)
-    daemon.run(
+    daemon.run_without_db_token(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
@@ -137,14 +137,14 @@ def create_manual_classification_label(
     )
     if not as_gold_star:
         label_ids = [str(row.id) for row in label_ids.all()]
-        daemon.run(
+        daemon.run_without_db_token(
             __check_label_duplication_classification_and_react,
             project_id,
             record_id,
             user_id,
             label_ids,
         )
-    daemon.run(
+    daemon.run_with_db_token(
         __update_label_payloads_for_neural_search,
         project_id,
         record_id,
@@ -216,7 +216,7 @@ def create_manual_extraction_label(
         )
     if label_source_type == enums.LabelSource.INFORMATION_SOURCE.value:
         update_annotator_progress(project_id, source_id, user_id)
-    daemon.run(
+    daemon.run_without_db_token(
         weak_supervision.calculate_quality_after_labeling,
         project_id,
         labeling_task_id,
@@ -267,7 +267,7 @@ def create_gold_star_association(
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
     )
-    daemon.run(
+    daemon.run_with_db_token(
         __update_label_payloads_for_neural_search,
         project_id,
         record_id,
@@ -298,7 +298,7 @@ def delete_record_label_association(
     if source_ids:
         for s_id in source_ids:
             update_annotator_progress(project_id, s_id, user_id)
-    daemon.run(
+    daemon.run_with_db_token(
         __update_label_payloads_for_neural_search,
         project_id,
         record_id,
@@ -315,7 +315,7 @@ def delete_gold_star_association(
     update_is_relevant_manual_label(
         project_id, labeling_task_id, record_id, with_commit=True
     )
-    daemon.run(
+    daemon.run_with_db_token(
         __update_label_payloads_for_neural_search,
         project_id,
         record_id,

@@ -3,7 +3,6 @@
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 from submodules.model.business_objects import attribute, general, project, data_slice
-from .labelstudio import export_parser as ls_export_parser
 
 import pandas as pd
 import numpy as np
@@ -13,6 +12,8 @@ from submodules.model.models import LabelingTask
 from util.miscellaneous_functions import first_item, get_max_length_of_task_labels
 
 from util.sql_helper import parse_sql_text
+
+ILLEGAL_CHARACTER_REG_EX = r"[\000-\010]|[\013-\014]|[\016-\037]"
 
 
 def parse(
@@ -31,9 +32,6 @@ def parse(
         for col in df.columns:
             if str(col).endswith("__created_by"):
                 df.drop(col, axis="columns", inplace=True)
-    elif export_format == enums.RecordExportFormats.LABEL_STUDIO.value:
-
-        df = ls_export_parser.parse_dataframe_data(project_id, df)
     else:
         message = f"Format {export_format} not supported."
         raise Exception(message)
@@ -47,6 +45,10 @@ def parse(
     elif file_type == enums.RecordExportFileTypes.CSV.value:
         df.to_csv(file_path, index=False)
     elif file_type == enums.RecordExportFileTypes.XLSX.value:
+        for column in df.columns:
+            type_name = df[column].dtype.name
+            if type_name == "object":
+                df[column] = df[column].str.replace(ILLEGAL_CHARACTER_REG_EX, "")
         df.to_excel(file_path)
     else:
         message = f"File type {file_type} not supported."

@@ -15,12 +15,12 @@ from submodules.model.business_objects import (
 )
 from service.search import search
 from submodules.model import enums
+from submodules.model import daemon
 
 from controller.embedding import connector as embedding_connector
 from controller.record import neural_search_connector
 from controller.embedding import manager as embedding_manager
 from controller.tokenization import tokenization_service
-from util import daemon
 from util.miscellaneous_functions import chunk_list
 import time
 import traceback
@@ -109,7 +109,7 @@ def get_records_by_extended_search(
 
 def delete_record(project_id: str, record_id: str) -> None:
     record.delete(project_id, record_id, with_commit=True)
-    daemon.run(__reupload_embeddings, project_id)
+    daemon.run_without_db_token(__reupload_embeddings, project_id)
 
 
 def delete_all_records(project_id: str) -> None:
@@ -251,7 +251,7 @@ def __check_and_prep_edit_records(
                 f"can't find embedding PCA for {embedding_item.name}. Try rebuilding or removing the embeddings on settings page."
             )
             continue
-        if not embedding_item.attribute_id in useable_embeddings:
+        if embedding_item.attribute_id not in useable_embeddings:
             useable_embeddings[embedding_item.attribute_id] = []
         useable_embeddings[embedding_item.attribute_id].append(embedding_item)
 

@@ -35,3 +35,7 @@ def pause_task_queue(task_queue_pause: bool) -> requests.Response:
     return requests.post(
         f"{TASK_MASTER_URL}/task/queue/pause?task_queue_pause={task_queue_pause}"
     )
+
+
+def get_task_queue_pause() -> requests.Response:
+    return requests.get(f"{TASK_MASTER_URL}/task/queue/pause")

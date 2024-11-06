@@ -17,7 +17,7 @@ from controller.labeling_task_label import manager as label_manager
 from controller.labeling_task import manager as task_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model import events
-from util import doc_ock, notification
+from util import notification
 
 
 router = APIRouter()
@@ -66,23 +66,11 @@ def delete_labeling_task(project_id: str, body: StringBody = Body(...)):
 def create_labeling_task(
     project_id: str, request: Request, body: CreateLabelingTaskBody = Body(...)
 ):
-    user = auth_manager.get_user_by_info(request.state.info)
-    project = project_manager.get_project(project_id)
-
     item = labeling_manager.create_labeling_task(
         project_id,
         body.labeling_task_name,
         body.labeling_task_type,
         body.labeling_task_target_id,
-    )
-
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabelingTask(
-            ProjectName=f"{project.name}-{project.id}",
-            Name=body.labeling_task_name,
-            Type=body.labeling_task_type,
-        ),
     )
 
     notification.send_organization_update(
@@ -127,16 +115,6 @@ def create_label(
     user = auth_manager.get_user_by_info(request.state.info)
     label = label_manager.create_label(
         project_id, label_name, labeling_task_id, label_color
-    )
-    task = task_manager.get_labeling_task(project_id, labeling_task_id)
-    project = project_manager.get_project(project_id)
-    doc_ock.post_event(
-        str(user.id),
-        events.AddLabel(
-            ProjectName=f"{project.name}-{project.id}",
-            Name=label_name,
-            LabelingTaskName=task.name,
-        ),
     )
     notification.send_organization_update(
         project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"

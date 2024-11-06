@@ -19,6 +19,7 @@ def get_or_create_user(user_id: str) -> User:
     user_item = user.get(user_id)
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
+        kratos.__refresh_identity_cache()
     update_last_interaction(user_item.id)
     return user_item
 
@@ -152,3 +153,4 @@ def get_mapped_sorted_paginated_users(
 def delete_user(user_id: str) -> None:
     user.delete(user_id, with_commit=True)
     user_activity.delete_user_activity(user_id, with_commit=True)
+    kratos.__refresh_identity_cache()

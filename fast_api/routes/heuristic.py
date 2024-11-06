@@ -116,18 +116,6 @@ def get_labeling_function_on_10_records(
 
 
 @router.get(
-    "/{project_id}/model-callbacks-overview-data",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def get_model_callbacks_overview_data(
-    request: Request,
-    project_id: str,
-):
-    data = manager.get_overview_data(project_id, is_model_callback=True)
-    return pack_json_result({"data": {"modelCallbacksOverviewData": data}})
-
-
-@router.get(
     "/{project_id}/access-link",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
@@ -189,11 +177,7 @@ def set_payload(
     user = auth_manager.get_user_by_info(request.state.info)
     org_id = user.organization_id
     information_source_item = information_source.get(project_id, heuristic_id)
-    if information_source_item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        return pack_json_result({"data": {"createPayload": None}})
-    priority = (
-        information_source_item.type != enums.InformationSourceType.ZERO_SHOT.value
-    )
+    priority = True
 
     task_master_response = task_master_manager.queue_task(
         str(org_id),
@@ -239,21 +223,15 @@ def create_heuristic(
     body: CreateHeuristicBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    if body.type == InformationSourceType.CROWD_LABELER.value:
-        information_source = manager.create_crowd_information_source(
-            str(user.id), project_id, body.labeling_task_id, body.name, body.description
-        )
-
-    else:
-        information_source = manager.create_information_source(
-            project_id,
-            user.id,
-            body.labeling_task_id,
-            body.name,
-            body.source_code,
-            body.description,
-            body.type,
-        )
+    information_source = manager.create_information_source(
+        project_id,
+        user.id,
+        body.labeling_task_id,
+        body.name,
+        body.source_code,
+        body.description,
+        body.type,
+    )
     notification.send_organization_update(
         project_id, f"information_source_created:{str(information_source.id)}"
     )

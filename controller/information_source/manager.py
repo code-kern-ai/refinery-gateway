@@ -1,6 +1,5 @@
-import json
 import os
-from typing import List, Optional
+from typing import List
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import (
@@ -10,8 +9,7 @@ from submodules.model.business_objects import (
 )
 from controller.misc import config_service
 from controller.labeling_access_link import manager as link_manager
-from controller.record_label_association import manager as rla_manager
-from util import daemon
+from submodules.model import daemon
 
 
 def get_information_source(project_id: str, source_id: str) -> InformationSource:
@@ -26,8 +24,8 @@ def get_all_information_sources(project_id: str) -> List[InformationSource]:
     return information_source.get_all(project_id)
 
 
-def get_overview_data(project_id: str, is_model_callback: bool = False) -> str:
-    return information_source.get_overview_data(project_id, is_model_callback)
+def get_overview_data(project_id: str) -> str:
+    return information_source.get_overview_data(project_id)
 
 
 def create_information_source(
@@ -55,33 +53,6 @@ def create_information_source(
     return source
 
 
-def create_crowd_information_source(
-    creation_user_id: str,
-    project_id: str,
-    labeling_task_id: str,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-) -> InformationSource:
-    parameter = {"data_slice_id": None, "annotator_id": None, "access_link_id": None}
-    parameter = json.dumps(parameter)
-    if not description:
-        description = "Heuristic to provide annotators with a link"
-    if not name:
-        name = "Crowd Heuristic"
-
-    crowd = create_information_source(
-        project_id=project_id,
-        user_id=creation_user_id,
-        labeling_task_id=labeling_task_id,
-        name=name,
-        source_code=parameter,
-        description=description,
-        type=enums.InformationSourceType.CROWD_LABELER.value,
-    )
-
-    return crowd
-
-
 def update_information_source(
     project_id: str,
     source_id: str,
@@ -92,11 +63,7 @@ def update_information_source(
 ) -> None:
     labeling_task_item: LabelingTask = labeling_task.get(project_id, labeling_task_id)
     return_type: str = resolve_source_return_type(labeling_task_item)
-    item = information_source.get(project_id, source_id)
-    new_payload_needed = (
-        str(item.source_code) != code or str(item.labeling_task_id) != labeling_task_id
-    )
-    item = information_source.update(
+    information_source.update(
         project_id,
         source_id,
         labeling_task_id=labeling_task_id,
@@ -107,16 +74,6 @@ def update_information_source(
         with_commit=True,
     )
 
-    if item.type == enums.InformationSourceType.CROWD_LABELER.value:
-        link_id = json.loads(item.source_code)["access_link_id"]
-        if link_id:
-            if new_payload_needed and len(item.payloads) > 0:
-                delete_information_source_payload(
-                    project_id, source_id, str(item.payloads[0].id)
-                )
-            rla_manager.update_annotator_progress(
-                project_id, source_id, item.created_by
-            )
     link_manager.set_changed_for(project_id, enums.LinkTypes.HEURISTIC, source_id)
 
 
@@ -131,7 +88,9 @@ def delete_information_source(project_id: str, source_id: str) -> None:
         == enums.InformationSourceType.ACTIVE_LEARNING.value
         and config_service.get_config_value("is_managed")
     ):
-        daemon.run(__delete_active_learner_from_inference_dir, project_id, source_id)
+        daemon.run_without_db_token(
+            __delete_active_learner_from_inference_dir, project_id, source_id
+        )
 
     information_source.delete(project_id, source_id, with_commit=True)
 
@@ -147,9 +106,6 @@ def __delete_active_learner_from_inference_dir(project_id: str, source_id: str) 
 def delete_information_source_payload(
     project_id: str, information_source_id: str, payload_id: str
 ) -> None:
-    information_source_item = information_source.get(project_id, information_source_id)
-    if information_source_item.type != enums.InformationSourceType.CROWD_LABELER.value:
-        raise ValueError("Information source is not a crowd labeler")
     payload.remove(project_id, information_source_id, payload_id, with_commit=True)
 
 
@@ -160,10 +116,4 @@ def toggle_information_source(project_id: str, source_id: str) -> None:
 def set_all_information_source_selected(project_id: str, value: bool) -> None:
     information_source.update_is_selected_for_project(
         project_id, value, with_commit=True
-    )
-
-
-def set_all_model_callbacks_selected(project_id: str, value: bool) -> None:
-    information_source.update_is_selected_for_project(
-        project_id, value, with_commit=True, is_model_callback=True
     )
