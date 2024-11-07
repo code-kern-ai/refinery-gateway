@@ -1,6 +1,5 @@
 import logging
-import json
-from fastapi import FastAPI, status, responses
+from fastapi import FastAPI, responses
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import IsDemoRest, IsManagedRest
@@ -16,7 +15,13 @@ from api.transfer import (
     CognitionImport,
     CognitionPrepareProject,
 )
-from config_handler import SERVICES_TO_NOTIFY, init_config, change_config, get_config
+from config_handler import (
+    SERVICES_TO_NOTIFY,
+    base_config_json,
+    change_json,
+    full_config_json,
+    init_config,
+)
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
@@ -75,29 +80,23 @@ logger = logging.getLogger(__name__)
 fastapi_app = FastAPI()
 
 """
-Config routes (un-routed exposure)
+Config routes
 """
 
 
 @fastapi_app.post("/change_config")
 def change(request: ChangeRequest) -> responses.PlainTextResponse:
-    if change_config(json.loads(request.dict_string)):
-        notify_others_about_change_thread(SERVICES_TO_NOTIFY)
-    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+    return change_json(request)
 
 
 @fastapi_app.get("/full_config")
 def full_config() -> responses.JSONResponse:
-    return responses.JSONResponse(
-        status_code=status.HTTP_200_OK, content=get_config(False)
-    )
+    return full_config_json()
 
 
 @fastapi_app.get("/base_config")
 def base_config() -> responses.JSONResponse:
-    return responses.JSONResponse(
-        status_code=status.HTTP_200_OK, content=get_config(True)
-    )
+    return base_config_json()
 
 
 fastapi_app.include_router(

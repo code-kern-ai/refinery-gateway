@@ -1,6 +1,11 @@
 from typing import Dict, Any
 import os
 import json
+from notify_handler import notify_others_about_change_thread
+from fastapi import responses, status
+from fast_api.models import (
+    ChangeRequest,
+)
 
 __blacklist_base_config = ["is_managed", "is_demo"]
 __config = None
@@ -96,3 +101,21 @@ def get_config(basic: bool = True) -> Dict[str, Any]:
     return {
         key: __config[key] for key in __config if key not in __blacklist_base_config
     }
+
+
+def change_json(request: ChangeRequest) -> responses.PlainTextResponse:
+    if change_config(json.loads(request.dict_string)):
+        notify_others_about_change_thread(SERVICES_TO_NOTIFY)
+    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+
+
+def full_config_json() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(False)
+    )
+
+
+def base_config_json() -> responses.JSONResponse:
+    return responses.JSONResponse(
+        status_code=status.HTTP_200_OK, content=get_config(True)
+    )
