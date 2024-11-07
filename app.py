@@ -77,7 +77,9 @@ from fast_api.models import (
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+init_config()
 fastapi_app = FastAPI()
+notify_others_about_change_thread(SERVICES_TO_NOTIFY)
 
 """
 Config routes
@@ -184,9 +186,6 @@ check_in_deletion_projects()
 security.check_secret_key()
 clean_up.clean_up_database()
 clean_up.clean_up_disk()
-
-init_config()
-notify_others_about_change_thread(SERVICES_TO_NOTIFY)
 
 session.start_session_cleanup_thread()
 log_storage.start_persist_thread()

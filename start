@@ -31,6 +31,20 @@ fi
 INFERENCE_DIR=${DEV_SETUP_DIR}inference/
 LOG_DIR=${DEV_SETUP_DIR}logs/
 
+CONFIG_DIR=${PWD%/*}/dev-setup/config/
+if [ ! -d "$CONFIG_DIR" ] 
+then
+    CONFIG_DIR=${PWD%/*/*}/dev-setup/config/
+    if [ ! -d "$CONFIG_DIR" ] 
+    then
+        # to include volume for local development, use the dev-setup inference folder:  
+        # alternative use manual logic with
+        # -v /path/to/dev-setup/config:/config \
+        echo "Can't find config directory: $CONFIG_DIR -> stopping" 
+        exit 1
+    fi
+fi
+
 echo -ne 'building container...'
 docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
 echo -ne '\t\t [done]\n'
@@ -74,6 +88,7 @@ docker run -d --rm \
 -e POSTGRES_POOL_USE_LIFO=x \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
+-v "$CONFIG_DIR":/config \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
