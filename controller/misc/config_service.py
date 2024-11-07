@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional, Union
 import time
-from config_handler import change_json, full_config_json
+from config_handler import change_json, get_config
 from submodules.model import daemon
 
 __config = None
@@ -15,13 +15,9 @@ def __get_config() -> Dict[str, Any]:
 
 
 def refresh_config():
-    response = full_config_json()
-    if response.status_code != 200:
-        raise ValueError(
-            f"Config service cant be reached -- response.code{response.status_code}"
-        )
+    response = get_config(False)
     global __config
-    __config = response.json()
+    __config = response
     daemon.run_without_db_token(invalidate_after, 3600)  # one hour as fail safe
 
 
@@ -50,4 +46,4 @@ def invalidate_after(sec: int) -> None:
 
 def change_config(dict_str: str) -> None:
     data = {"dict_string": dict_str}
-    return change_json(data).text
+    return change_json(data)
