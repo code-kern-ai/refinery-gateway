@@ -45,5 +45,5 @@ def invalidate_after(sec: int) -> None:
 
 
 def change_config(dict_str: str) -> None:
-    data = {"dict_string": dict_str}
-    return change_json(data)
+    config_data = {"dict_string": dict_str}
+    return change_json(config_data)

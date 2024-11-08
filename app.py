@@ -1,8 +1,14 @@
 import logging
-from fastapi import FastAPI, responses
+from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
-from api.misc import IsDemoRest, IsManagedRest
+from api.misc import (
+    BaseConfigRest,
+    ChangeConfigRest,
+    FullConfigRest,
+    IsDemoRest,
+    IsManagedRest,
+)
 from api.project import ProjectDetails
 from api.transfer import (
     AssociationsImport,
@@ -17,9 +23,6 @@ from api.transfer import (
 )
 from config_handler import (
     SERVICES_TO_NOTIFY,
-    base_config_json,
-    change_json,
-    full_config_json,
     init_config,
 )
 from fast_api.routes.organization import router as org_router
@@ -70,36 +73,13 @@ from route_prefix import (
 from util import security, clean_up
 from middleware import log_storage
 from submodules.model import session
-from fast_api.models import (
-    ChangeRequest,
-)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 init_config()
-fastapi_config_app = FastAPI()
 fastapi_app = FastAPI()
 notify_others_about_change_thread(SERVICES_TO_NOTIFY)
-
-"""
-Config routes
-"""
-
-
-@fastapi_config_app.post("/change_config")
-def change(request: ChangeRequest) -> responses.PlainTextResponse:
-    return change_json(request)
-
-
-@fastapi_config_app.get("/full_config")
-def full_config() -> responses.JSONResponse:
-    return full_config_json()
-
-
-@fastapi_config_app.get("/base_config")
-def base_config() -> responses.JSONResponse:
-    return base_config_json()
 
 
 fastapi_app.include_router(
@@ -150,6 +130,9 @@ fastapi_app_internal.include_router(
 )
 
 routes = [
+    Route("/change_config", ChangeConfigRest),
+    Route("/base_config", BaseConfigRest),
+    Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}", ProjectDetails),

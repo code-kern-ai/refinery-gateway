@@ -3,9 +3,6 @@ import os
 import json
 from notify_handler import notify_others_about_change_thread
 from fastapi import responses, status
-from fast_api.models import (
-    ChangeRequest,
-)
 
 __blacklist_base_config = ["is_managed", "is_demo"]
 __config = None
@@ -103,10 +100,21 @@ def get_config(basic: bool = True) -> Dict[str, Any]:
     }
 
 
-def change_json(request: ChangeRequest) -> responses.PlainTextResponse:
-    if change_config(json.loads(request.dict_string)):
-        notify_others_about_change_thread(SERVICES_TO_NOTIFY)
-    return responses.PlainTextResponse(status_code=status.HTTP_200_OK)
+async def change_json(config_data) -> responses.PlainTextResponse:
+    try:
+        has_changed = change_config(config_data)
+
+        if has_changed:
+            notify_others_about_change_thread(SERVICES_TO_NOTIFY)
+
+        return responses.PlainTextResponse(
+            f"Did update: {has_changed}", status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return responses.PlainTextResponse(
+            f"Error: {str(e)}", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 def full_config_json() -> responses.JSONResponse:
