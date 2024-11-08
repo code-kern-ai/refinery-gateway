@@ -1,6 +1,7 @@
 import json
 from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
+from config_handler import base_config_json
 from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
     CancelTaskBody,
@@ -35,6 +36,11 @@ router = APIRouter()
 def get_is_admin(request: Request) -> Dict:
     data = auth.check_is_admin(request)
     return pack_json_result({"data": {"isAdmin": data}})
+
+
+@router.get("/base-config-default")
+def get_base_config() -> Dict:
+    return base_config_json()
 
 
 @router.get("/is-demo")
