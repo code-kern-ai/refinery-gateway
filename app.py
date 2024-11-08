@@ -78,6 +78,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 init_config()
+fastapi_config_app = FastAPI()
 fastapi_app = FastAPI()
 notify_others_about_change_thread(SERVICES_TO_NOTIFY)
 
@@ -86,17 +87,17 @@ Config routes
 """
 
 
-@fastapi_app.post("/change_config")
+@fastapi_config_app.post("/change_config")
 def change(request: ChangeRequest) -> responses.PlainTextResponse:
     return change_json(request)
 
 
-@fastapi_app.get("/full_config")
+@fastapi_config_app.get("/full_config")
 def full_config() -> responses.JSONResponse:
     return full_config_json()
 
 
-@fastapi_app.get("/base_config")
+@fastapi_config_app.get("/base_config")
 def base_config() -> responses.JSONResponse:
     return base_config_json()
 
