@@ -48,5 +48,4 @@ class FullConfigRest(HTTPEndpoint):
 
 class BaseConfigRest(HTTPEndpoint):
     def get(self, request: Request) -> JSONResponse:
-        print("REACHED BASE CONFIG", flush=True)
         return base_config_json()
