@@ -144,3 +144,5 @@ tmp/*
 !tmp/.gitkeep
 
 logs/*
+
+current_config.json

@@ -28,6 +28,8 @@ then
     fi
 fi
 
+MINIO_ENDPOINT="http://$HOST_IP:7053"
+
 INFERENCE_DIR=${DEV_SETUP_DIR}inference/
 LOG_DIR=${DEV_SETUP_DIR}logs/
 
@@ -86,6 +88,7 @@ docker run -d --rm \
 -e INFERENCE_DIR=$INFERENCE_DIR \
 -e SECRET_KEY=default \
 -e POSTGRES_POOL_USE_LIFO=x \
+-e KERN_S3_ENDPOINT=${MINIO_ENDPOINT} \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
 -v "$CONFIG_DIR":/config \
