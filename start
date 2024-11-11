@@ -54,7 +54,6 @@ docker run -d --rm \
 -e AC_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 \
 -e LF_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 \
 -e ML_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 \
--e RECORD_IDE_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-record-ide-env:dev$IS_ARM64 \
 -e LF_NETWORK=dev-setup_default \
 -e S3_ENDPOINT="http://$HOST_IP:7053" \
 -e S3_ENDPOINT_LOCAL=object-storage:9000 \

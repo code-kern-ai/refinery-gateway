@@ -8,7 +8,6 @@ from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
 from submodules.model import Project, enums
 from submodules.model.business_objects import (
-    labeling_task,
     organization,
     project,
     record,
@@ -40,10 +39,6 @@ ALL_PROJECTS_WHITELIST = {
 
 def get_project(project_id: str) -> Project:
     return project.get(project_id)
-
-
-def get_project_with_labeling_tasks(project_id: str) -> Project:
-    return project.get_with_labling_tasks(project_id)
 
 
 def get_project_with_labeling_tasks_info_attributes(project_id: str) -> Project:
@@ -107,10 +102,6 @@ def get_project_size(project_id: str) -> List[ProjectSize]:
 
 def get_max_running_id(project_id: str) -> int:
     return project.get_max_running_id(project_id)
-
-
-def is_rats_tokenization_still_running(project_id: str) -> bool:
-    return project.is_rats_tokenization_still_running(project_id)
 
 
 def create_project(
@@ -200,31 +191,6 @@ def get_label_distribution(
     slice_id: Optional[str] = None,
 ) -> str:
     return project.get_label_distribution(project_id, labeling_task_id, slice_id)
-
-
-def get_confidence_distribution(
-    project_id: str,
-    labeling_task_id: str,
-    slice_id: Optional[str] = None,
-    num_samples: Optional[int] = None,
-) -> str:
-    return project.get_confidence_distribution(
-        project_id, labeling_task_id, slice_id, num_samples
-    )
-
-
-def get_confusion_matrix(
-    project_id: str,
-    labeling_task_id: str,
-    slice_id: Optional[str] = None,
-) -> str:
-    for_classification = (
-        labeling_task.get(project_id, labeling_task_id).task_type
-        == enums.LabelingTaskType.CLASSIFICATION.value
-    )
-    return project.get_confusion_matrix(
-        project_id, labeling_task_id, for_classification, slice_id
-    )
 
 
 def resolve_request_huddle_data(
