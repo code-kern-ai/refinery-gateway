@@ -104,10 +104,6 @@ def get_max_running_id(project_id: str) -> int:
     return project.get_max_running_id(project_id)
 
 
-def is_rats_tokenization_still_running(project_id: str) -> bool:
-    return project.is_rats_tokenization_still_running(project_id)
-
-
 def create_project(
     organization_id: str, name: str, description: str, user_id: str
 ) -> Project:

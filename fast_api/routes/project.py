@@ -300,19 +300,6 @@ def get_model_provider_info(request: Request) -> Dict:
 
 
 @router.get(
-    "/{project_id}/rats-running",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def is_rats_running(
-    request: Request,
-    project_id: str,
-) -> Dict:
-
-    data = manager.is_rats_tokenization_still_running(project_id)
-    return pack_json_result({"data": {"isRatsTokenizationStillRunning": data}})
-
-
-@router.get(
     "/{project_id}/last-export-credentials",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
