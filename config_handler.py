@@ -94,7 +94,7 @@ def get_config(basic: bool = True) -> Dict[str, Any]:
     }
 
 
-async def change_json(config_data) -> responses.PlainTextResponse:
+def change_json(config_data) -> responses.PlainTextResponse:
     try:
         has_changed = change_config(config_data)
 

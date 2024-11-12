@@ -34,7 +34,7 @@ class ChangeConfigRest(HTTPEndpoint):
             data = await request.json()
             change_request = ChangeRequest(**data)
             config_data = json.loads(change_request.dict_string)
-            return await change_json(config_data)
+            return change_json(config_data)
         except Exception as e:
             return responses.PlainTextResponse(
                 f"Error: {str(e)}", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
