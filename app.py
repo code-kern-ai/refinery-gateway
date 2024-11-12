@@ -4,7 +4,6 @@ from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import (
     BaseConfigRest,
-    ChangeConfigRest,
     FullConfigRest,
     IsDemoRest,
     IsManagedRest,
@@ -130,7 +129,6 @@ fastapi_app_internal.include_router(
 )
 
 routes = [
-    Route("/change_config", ChangeConfigRest),
     Route("/base_config", BaseConfigRest),
     Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),

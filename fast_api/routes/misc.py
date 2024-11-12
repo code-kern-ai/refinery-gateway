@@ -1,10 +1,11 @@
 import json
-from fastapi import APIRouter, Body, Request, status
+from fastapi import APIRouter, Body, Request, status, responses
 from fastapi.responses import PlainTextResponse
-from config_handler import base_config_json
+from config_handler import base_config_json, change_json
 from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
     CancelTaskBody,
+    ChangeRequest,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
@@ -36,6 +37,17 @@ router = APIRouter()
 def get_is_admin(request: Request) -> Dict:
     data = auth.check_is_admin(request)
     return pack_json_result({"data": {"isAdmin": data}})
+
+
+@router.post("/change-config")
+def change_config_r(body: ChangeRequest = Body(...)):
+    try:
+        config_data = json.loads(body.dict_string)
+        return change_json(config_data)
+    except Exception as e:
+        return responses.PlainTextResponse(
+            f"Error: {str(e)}", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @router.get("/base-config-default")
