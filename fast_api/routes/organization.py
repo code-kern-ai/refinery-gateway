@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter, Request, Body
-from controller.misc import config_service
+from config_handler import get_config_value
 from fast_api.models import (
     AddUserToOrganizationBody,
     ArchiveAdminMessageBody,
@@ -145,7 +145,7 @@ def can_create_local_org(request: Request):
 
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
-    if config_service.get_config_value("is_managed"):
+    if get_config_value("is_managed"):
         auth_manager.check_admin_access(request.state.info)
     else:
         if not organization_manager.can_create_local():
@@ -158,7 +158,7 @@ def create_organization(request: Request, body: CreateOrganizationBody = Body(..
 def add_user_to_organization(
     request: Request, body: AddUserToOrganizationBody = Body(...)
 ):
-    if config_service.get_config_value("is_managed"):
+    if get_config_value("is_managed"):
         auth_manager.check_admin_access(request.state.info)
     else:
         if not organization_manager.can_create_local(False):
@@ -178,7 +178,7 @@ def remove_user_from_organization(
 
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
-    if config_service.get_config_value("is_managed"):
+    if get_config_value("is_managed"):
         auth_manager.check_admin_access(request.state.info)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
     return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
@@ -192,7 +192,6 @@ def update_config(request: Request, body: UpdateConfigBody = Body(...)):
         )
         return
     misc.update_config(body.dict_str)
-    misc.refresh_config()
     orgs = organization.get_all()
     if not orgs or len(orgs) != 1:
         print("local version should only have one organization")

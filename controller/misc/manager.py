@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from controller.misc import config_service
+from config_handler import change_json, get_config_value
 from controller.misc import black_white_demo
 from fast_api.types import ServiceVersionResult
 from submodules.model.global_objects import customer_button
@@ -20,19 +20,16 @@ BASE_URI_UPDATER = os.getenv("UPDATER")
 
 
 def check_is_managed() -> bool:
-    return config_service.get_config_value("is_managed")
+    return get_config_value("is_managed")
 
 
 def check_is_demo() -> bool:
-    return config_service.get_config_value("is_demo")
+    return get_config_value("is_demo")
 
 
 def update_config(dict_str: str) -> None:
-    return config_service.change_config(dict_str)
-
-
-def refresh_config() -> None:
-    config_service.refresh_config()
+    config_data = {"dict_string": dict_str}
+    return change_json(config_data)
 
 
 def get_black_white_demo() -> Dict[str, List[str]]:

@@ -1,4 +1,3 @@
-from controller.misc import config_service
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 from starlette import status
@@ -9,6 +8,7 @@ from config_handler import (
     base_config_json,
     change_json,
     full_config_json,
+    get_config_value,
 )
 
 from fast_api.models import (
@@ -18,13 +18,13 @@ from fast_api.models import (
 
 class IsManagedRest(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
-        is_managed = config_service.get_config_value("is_managed")
+        is_managed = get_config_value("is_managed")
         return JSONResponse(is_managed, status_code=status.HTTP_200_OK)
 
 
 class IsDemoRest(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
-        is_managed = config_service.get_config_value("is_demo")
+        is_managed = get_config_value("is_demo")
         return JSONResponse(is_managed, status_code=status.HTTP_200_OK)
 
 

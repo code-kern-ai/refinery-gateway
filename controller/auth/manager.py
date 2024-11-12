@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from fastapi import Request
-from controller.misc import config_service
+from config_handler import get_config_value
 from exceptions.exceptions import (
     AuthManagerError,
     NotAllowedInDemoError,
@@ -128,9 +128,7 @@ def check_is_admin(request: Any) -> bool:
 
 
 def check_demo_access(info: Any) -> None:
-    if not check_is_admin(info.context["request"]) and config_service.get_config_value(
-        "is_demo"
-    ):
+    if not check_is_admin(info.context["request"]) and get_config_value("is_demo"):
         check_black_white(info)
 
 
@@ -145,7 +143,7 @@ def check_black_white(info: Any):
 
 
 def check_is_demo_without_info() -> None:
-    if config_service.get_config_value("is_demo"):
+    if get_config_value("is_demo"):
         raise NotAllowedInDemoError
 
 

@@ -12,6 +12,7 @@ import traceback
 from dateutil import parser
 import datetime
 
+from config_handler import get_config_value
 from exceptions.exceptions import PayloadSchedulerError
 from submodules.model import enums
 from submodules.model.business_objects import (
@@ -49,7 +50,6 @@ from submodules.model.models import (
 from util import notification
 from submodules.s3 import controller as s3
 from controller.knowledge_base import util as knowledge_base
-from controller.misc import config_service
 from util.notification import create_notification
 from util.miscellaneous_functions import chunk_dict
 from controller.weak_supervision import weak_supervision_service as weak_supervision
@@ -509,7 +509,7 @@ def read_container_logs_thread(
 
 
 def get_inference_dir() -> str:
-    if config_service.get_config_value("is_managed"):
+    if get_config_value("is_managed"):
         return os.getenv("INFERENCE_DIR")
     return None
 

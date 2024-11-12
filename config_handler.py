@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Union
 import os
 import json
 from notify_handler import notify_others_about_change_thread
@@ -15,6 +15,22 @@ SERVICES_TO_NOTIFY = {
     "UPDATER": "http://refinery-updater:80",
     "TOKENIZER": "http://refinery-tokenizer:80",
 }
+
+
+def get_config_value(
+    key: str, subkey: Optional[str] = None
+) -> Union[str, Dict[str, str]]:
+    if key not in __config:
+        raise ValueError(f"Key {key} coudn't be found in config")
+    value = __config[key]
+
+    if not subkey:
+        return value
+
+    if isinstance(value, dict) and subkey in value:
+        return value[subkey]
+    else:
+        raise ValueError(f"Subkey {subkey} coudn't be found in config[{key}]")
 
 
 def __read_and_change_base_config():
