@@ -1,6 +1,5 @@
 import os
 from typing import List
-from config_handler import get_config_value
 from controller.information_source.util import resolve_source_return_type
 from submodules.model import InformationSource, LabelingTask, enums
 from submodules.model.business_objects import (
@@ -86,7 +85,6 @@ def delete_information_source(project_id: str, source_id: str) -> None:
     if (
         information_source_item.type
         == enums.InformationSourceType.ACTIVE_LEARNING.value
-        and get_config_value("is_managed")
     ):
         daemon.run_without_db_token(
             __delete_active_learner_from_inference_dir, project_id, source_id

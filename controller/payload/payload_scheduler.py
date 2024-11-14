@@ -12,7 +12,6 @@ import traceback
 from dateutil import parser
 import datetime
 
-from config_handler import get_config_value
 from exceptions.exceptions import PayloadSchedulerError
 from submodules.model import enums
 from submodules.model.business_objects import (
@@ -509,9 +508,7 @@ def read_container_logs_thread(
 
 
 def get_inference_dir() -> str:
-    if get_config_value("is_managed"):
-        return os.getenv("INFERENCE_DIR")
-    return None
+    return os.getenv("INFERENCE_DIR")
 
 
 def update_records(

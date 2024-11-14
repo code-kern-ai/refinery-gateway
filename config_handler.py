@@ -4,7 +4,6 @@ import json
 from notify_handler import notify_others_about_change_thread
 from fastapi import responses, status
 
-__blacklist_base_config = ["is_managed", "is_demo"]
 __config = None
 
 BASE_CONFIG_PATH = "base_config.json"
@@ -100,14 +99,9 @@ def __load_and_remove_outdated_config_keys():
         __save_current_config()
 
 
-def get_config(basic: bool = True) -> Dict[str, Any]:
-    global __config, __blacklist_base_config
-    if not basic:
-        return __config
-
-    return {
-        key: __config[key] for key in __config if key not in __blacklist_base_config
-    }
+def get_config() -> Dict[str, Any]:
+    global __config
+    return __config
 
 
 def change_json(config_data) -> responses.PlainTextResponse:
@@ -128,12 +122,4 @@ def change_json(config_data) -> responses.PlainTextResponse:
 
 
 def full_config_json() -> responses.JSONResponse:
-    return responses.JSONResponse(
-        status_code=status.HTTP_200_OK, content=get_config(False)
-    )
-
-
-def base_config_json() -> responses.JSONResponse:
-    return responses.JSONResponse(
-        status_code=status.HTTP_200_OK, content=get_config(True)
-    )
+    return responses.JSONResponse(status_code=status.HTTP_200_OK, content=get_config())

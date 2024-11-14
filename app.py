@@ -3,10 +3,7 @@ from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
 from api.misc import (
-    BaseConfigRest,
     FullConfigRest,
-    IsDemoRest,
-    IsManagedRest,
 )
 from api.project import ProjectDetails
 from api.transfer import (
@@ -124,7 +121,6 @@ fastapi_app_internal.include_router(
 )
 
 routes = [
-    Route("/base_config", BaseConfigRest),
     Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
@@ -145,8 +141,6 @@ routes = [
         CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
-    Route("/is_managed", IsManagedRest),
-    Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"

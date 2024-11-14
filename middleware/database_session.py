@@ -1,10 +1,5 @@
 import logging
 from fastapi import Request
-from fastapi.responses import JSONResponse
-from exceptions.exceptions import (
-    DatabaseSessionError,
-    NotAllowedInDemoError,
-)
 from fast_api.routes.fastapi_resolve_info import FastAPIResolveInfo
 from middleware.query_mapping import path_query_map
 from submodules.model.business_objects import general
@@ -26,11 +21,6 @@ async def handle_db_session(request: Request, call_next):
         request.state.info = info
         request.state.parsed = {}
 
-        if request.url.hostname != "localhost" or request.url.port != 7051:
-            access_response = _check_access(request, info)
-            if access_response is not None:
-                return access_response
-
         log_request = auth_manager.extract_state_info(request, "log_request")
         length = request.headers.get("content-length")
 
@@ -48,33 +38,6 @@ async def handle_db_session(request: Request, call_next):
         return GENERIC_FAILURE_RESPONSE
     finally:
         general.remove_and_refresh_session(session_token)
-
-
-def _check_access(request, info):
-    try:
-        auth_manager.check_demo_access(info)
-    except NotAllowedInDemoError:
-        return JSONResponse(
-            status_code=401,
-            content={"message": "Unauthorized access"},
-        )
-    except DatabaseSessionError as e:
-        return JSONResponse(
-            status_code=400,
-            content={"message": e.message},
-        )
-    except ValueError as e:
-        return JSONResponse(
-            status_code=400,
-            content={"message": str(e)},
-        )
-    except Exception:
-        return JSONResponse(
-            status_code=500,
-            content={"message": "Internal server error"},
-        )
-
-    return None
 
 
 def _prepare_info(request):

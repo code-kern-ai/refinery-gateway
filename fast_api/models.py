@@ -210,10 +210,6 @@ class ArchiveAdminMessageBody(BaseModel):
     archived_reason: StrictStr
 
 
-class UpdateConfigBody(BaseModel):
-    dict_str: StrictStr
-
-
 class ChangeUserRoleBody(BaseModel):
     user_id: StrictStr
     role: StrictStr
@@ -444,7 +440,3 @@ class UpdateCustomerButton(BaseModel):
     location: Optional[CustomerButtonLocation] = None
     visible: Optional[StrictBool] = None
     config: Optional[Dict[StrictStr, Any]] = None
-
-
-class ChangeRequest(BaseModel):
-    dict_string: str

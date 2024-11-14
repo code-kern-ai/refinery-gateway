@@ -31,8 +31,6 @@ from submodules.model.util import (
     to_frontend_obj_raw,
 )
 from util import notification
-from controller.misc import manager as misc
-from exceptions.exceptions import NotAllowedInOpenSourceError
 from submodules.model.business_objects import notification as notification_model
 
 from submodules.model.business_objects import tokenization, task_queue
@@ -292,9 +290,6 @@ def record_export_by_project_id(project_id: str) -> str:
 
 @router.get("/model-provider-info")
 def get_model_provider_info(request: Request) -> Dict:
-    if not misc.check_is_managed():
-        raise NotAllowedInOpenSourceError
-
     data = model_manager.get_model_provider_info()
     return pack_json_result({"data": {"modelProviderInfo": data}})
 

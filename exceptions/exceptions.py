@@ -18,14 +18,6 @@ class MissingArgumentsException(Exception):
     pass
 
 
-class NotAllowedInDemoError(Exception):
-    pass
-
-
-class NotAllowedInOpenSourceError(Exception):
-    pass
-
-
 class BadPasswordError(Exception):
     pass
 

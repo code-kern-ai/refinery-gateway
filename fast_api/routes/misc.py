@@ -1,11 +1,8 @@
 import json
-from fastapi import APIRouter, Body, Request, status, responses
+from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
-from config_handler import base_config_json, change_json
-from exceptions.exceptions import ProjectAccessError
 from fast_api.models import (
     CancelTaskBody,
-    ChangeRequest,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
@@ -15,7 +12,6 @@ from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RES
 from typing import Dict, Optional
 from controller.auth import manager as auth
 from controller.misc import manager
-from controller.misc import manager as misc
 from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
 from controller.task_master import manager as task_master_manager
@@ -39,32 +35,6 @@ def get_is_admin(request: Request) -> Dict:
     return pack_json_result({"data": {"isAdmin": data}})
 
 
-@router.post("/change-config")
-def change_config_r(body: ChangeRequest = Body(...)):
-    try:
-        config_data = json.loads(body.dict_string)
-        return change_json(config_data)
-    except Exception as e:
-        return responses.PlainTextResponse(
-            f"Error: {str(e)}", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@router.get("/base-config-default")
-def get_base_config() -> Dict:
-    return base_config_json()
-
-
-@router.get("/is-demo")
-def get_is_demo(request: Request) -> Dict:
-    is_demo = False
-    try:
-        auth.check_demo_access(request.state.info)
-    except Exception:
-        is_demo = True
-    return pack_json_result({"data": {"isDemo": is_demo}})
-
-
 @router.get("/version-overview")
 def get_version_overview(request: Request) -> Dict:
     data = manager.get_version_overview()
@@ -81,11 +51,8 @@ def has_updates(request: Request) -> Dict:
 def model_provider_delete_model(
     request: Request, body: ModelProviderDeleteModelBody = Body(...)
 ):
-    if misc.check_is_managed():
-        if not auth.check_is_single_organization():
-            auth.check_admin_access(request.state.info)
-    else:
-        raise ProjectAccessError("Not allowed in open source version.")
+    if not auth.check_is_single_organization():
+        auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_delete_model(body.model_name)
 
     return pack_json_result({"data": {"modelProviderDeleteModel": {"ok": True}}})
@@ -95,11 +62,8 @@ def model_provider_delete_model(
 def model_provider_download_model(
     request: Request, body: ModelProviderDownloadModelBody = Body(...)
 ):
-    if misc.check_is_managed():
-        if not auth.check_is_single_organization():
-            auth.check_admin_access(request.state.info)
-    else:
-        raise ProjectAccessError("Not allowed in open source version.")
+    if not auth.check_is_single_organization():
+        auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_download_model(body.model_name)
 
     return pack_json_result({"data": {"modelProviderDownloadModel": {"ok": True}}})
