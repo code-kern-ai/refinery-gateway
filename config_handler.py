@@ -10,8 +10,6 @@ BASE_CONFIG_PATH = "base_config.json"
 CURRENT_CONFIG_PATH = "/config/current_config.json"
 
 SERVICES_TO_NOTIFY = {
-    "EMBEDDER": "http://refinery-embedder:80",
-    "UPDATER": "http://refinery-updater:80",
     "TOKENIZER": "http://refinery-tokenizer:80",
 }
 
