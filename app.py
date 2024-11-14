@@ -18,7 +18,6 @@ from api.transfer import (
     CognitionPrepareProject,
 )
 from config_handler import (
-    SERVICES_TO_NOTIFY,
     init_config,
 )
 from fast_api.routes.organization import router as org_router
@@ -44,7 +43,6 @@ from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
 from controller.project.manager import check_in_deletion_projects
-from notify_handler import notify_others_about_change_thread
 from route_prefix import (
     PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
@@ -73,7 +71,6 @@ logger = logging.getLogger(__name__)
 
 init_config()
 fastapi_app = FastAPI()
-notify_others_about_change_thread(SERVICES_TO_NOTIFY)
 
 
 fastapi_app.include_router(
