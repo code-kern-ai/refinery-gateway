@@ -107,10 +107,6 @@ class UploadCredentialsAndIdBody(BaseModel):
     key: Optional[StrictStr] = None
 
 
-class RecordIdeBody(BaseModel):
-    code: StrictStr
-
-
 class NotificationsBody(BaseModel):
     project_filter: List[StrictStr]
     level_filter: List[StrictStr]
