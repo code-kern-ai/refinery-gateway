@@ -137,12 +137,6 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allAdminMessages": data_dict}})
 
 
-@router.get("/can-create-local-org")
-def can_create_local_org(request: Request):
-    data = manager.can_create_local()
-    return pack_json_result({"data": {"canCreateLocalOrg": data}})
-
-
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
     if get_config_value("is_managed"):
