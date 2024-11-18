@@ -11,6 +11,7 @@ from fast_api.models import (
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
+    MissingUsersBody,
     RemoveUserToOrganizationBody,
     UpdateConfigBody,
     UserLanguageDisplay,
@@ -28,7 +29,7 @@ from controller.misc import manager as misc
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
-from submodules.model.business_objects import organization
+from submodules.model.business_objects import organization, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 
@@ -346,3 +347,10 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.delete_user(body.user_id)
     return get_silent_success()
+
+
+@router.post("/missing-users-interaction")
+def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    data = user.get_missing_users(body.user_ids)
+    return pack_json_result(data, wrap_for_frontend=False)
