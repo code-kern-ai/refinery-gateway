@@ -354,3 +354,10 @@ def get_missing_users_interaction(request: Request, body: MissingUsersBody = Bod
     auth_manager.check_admin_access(request.state.info)
     data = user.get_missing_users(body.user_ids)
     return pack_json_result(data, wrap_for_frontend=False)
+
+
+@router.get("/user-to-organization")
+def get_user_to_organization(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = user.get_user_to_organization()
+    return pack_json_result(data, wrap_for_frontend=False)
