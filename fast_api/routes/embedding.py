@@ -2,7 +2,6 @@ from typing import List, Optional
 
 from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
 from fast_api.routes.client_response import pack_json_result
-from controller.misc import manager as misc
 from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
 from controller.task_master import manager as task_master_manager
@@ -30,8 +29,7 @@ def get_embedding_platforms():
 
 @router.get("/recommended-encoders")
 def data_slices(request: Request, project_id: Optional[str] = None) -> List:
-    is_managed = misc.check_is_managed()
-    data = manager.get_recommended_encoders(is_managed)
+    data = manager.get_recommended_encoders()
     for v in data:
         v["applicability"] = json.dumps(v["applicability"])
     return pack_json_result({"data": {"recommendedEncoders": data}})

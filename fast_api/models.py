@@ -210,10 +210,6 @@ class ArchiveAdminMessageBody(BaseModel):
     archived_reason: StrictStr
 
 
-class UpdateConfigBody(BaseModel):
-    dict_str: StrictStr
-
-
 class ChangeUserRoleBody(BaseModel):
     user_id: StrictStr
     role: StrictStr

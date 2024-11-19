@@ -1,5 +1,4 @@
 from typing import Any, List, Dict, Optional, Union
-from controller.misc import config_service
 
 from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
@@ -99,18 +98,6 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
     if org_id is None:
         return []
     return organization.get_organization_overview_stats(org_id)
-
-
-def can_create_local(org: bool = True) -> bool:
-    if config_service.get_config_value("is_managed"):
-        return False
-    existing_orgs = organization.get_all()
-    checkvalue = 0 if org else 1
-    if len(existing_orgs) != checkvalue:
-        return False
-    if user.get_count_assigned() != 0:
-        return False
-    return True
 
 
 def __check_notification(org_id: str, key: str, value: Any):

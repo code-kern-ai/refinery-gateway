@@ -28,7 +28,6 @@ from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
 from controller.transfer import association_transfer_manager
-from controller.auth import manager as auth
 from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
 
@@ -135,7 +134,6 @@ class KnowledgeBaseExport(HTTPEndpoint):
 
 class PrepareFileImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
-        auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
         request_body = await request.json()
 
@@ -168,7 +166,6 @@ class PrepareFileImport(HTTPEndpoint):
 
 class JSONImport(HTTPEndpoint):
     async def post(self, request) -> JSONResponse:
-        auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
         request_body = await request.json()
         user_id = request_body["user_id"]
@@ -272,7 +269,6 @@ class AssociationsImport(HTTPEndpoint):
 
 class UploadTaskInfo(HTTPEndpoint):
     def get(self, request) -> JSONResponse:
-        auth.check_is_demo_without_info()
         project_id = request.path_params["project_id"]
         task_id = request.path_params["task_id"]
         user_id = request.query_params["user_id"]

@@ -1,6 +1,5 @@
 from typing import Tuple, List, Union, Dict
 from controller.auth import manager as auth_manager
-from controller.misc.config_service import get_config_value
 
 from controller.transfer import util as transfer_util
 from controller.transfer.valid_arguments import valid_arguments
@@ -239,7 +238,7 @@ def get_update_amount(df: pd.DataFrame, project_id: str) -> int:
     if sql:
         sql_df = pd.read_sql(sql, con=general.get_bind())
         for column in keys:
-            if not column in df.columns:
+            if column not in df.columns:
                 return 0
             type_name = df[column].dtype.name
             if type_name in ["int64", "float64", "bool"]:

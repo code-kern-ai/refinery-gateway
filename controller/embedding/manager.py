@@ -42,14 +42,11 @@ def get_current_terms_text(
     return term_text
 
 
-def get_recommended_encoders(is_managed: bool) -> List[Any]:
-    # only use is_managed if it is really managed
+def get_recommended_encoders() -> List[Any]:
     # can run into circular import problems if directly resolved here by helper method
     recommendations = connector.request_listing_recommended_encoders()
-    if is_managed:
-        existing_models = model_manager.get_model_provider_info()
-    else:
-        existing_models = []
+    existing_models = model_manager.get_model_provider_info()
+
     for model in existing_models:
         not_yet_known = (
             len(
