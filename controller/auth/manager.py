@@ -1,10 +1,8 @@
 from typing import Any, Dict
 
 from fastapi import Request
-from controller.misc import config_service
 from exceptions.exceptions import (
     AuthManagerError,
-    NotAllowedInDemoError,
     ProjectAccessError,
 )
 import jwt
@@ -14,7 +12,6 @@ from controller.organization import manager as organization_manager
 from submodules.model import enums, exceptions
 from submodules.model.business_objects import organization
 from submodules.model.models import Organization, Project, User
-from controller.misc import manager as misc_manager
 import sqlalchemy
 
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
@@ -125,28 +122,6 @@ def check_is_admin(request: Any) -> bool:
         ):
             return True
     return False
-
-
-def check_demo_access(info: Any) -> None:
-    if not check_is_admin(info.context["request"]) and config_service.get_config_value(
-        "is_demo"
-    ):
-        check_black_white(info)
-
-
-def check_black_white(info: Any):
-    black_white = misc_manager.get_black_white_demo()
-    if str(info.parent_type) == "Mutation":
-        if info.field_name not in black_white["mutations"]:
-            raise NotAllowedInDemoError
-    elif str(info.parent_type) == "Query":
-        if info.field_name in black_white["queries"]:
-            raise NotAllowedInDemoError
-
-
-def check_is_demo_without_info() -> None:
-    if config_service.get_config_value("is_demo"):
-        raise NotAllowedInDemoError
 
 
 def check_is_single_organization() -> bool:

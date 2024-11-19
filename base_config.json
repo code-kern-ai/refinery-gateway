@@ -1,0 +1,8 @@
+{
+    "s3_region": null,
+    "KERN_S3_ENDPOINT": null,
+    "spacy_downloads": [
+        "en_core_web_sm",
+        "de_core_news_sm"
+    ]
+}

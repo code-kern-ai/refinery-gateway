@@ -7,7 +7,6 @@ from submodules.model.business_objects import (
     information_source,
     payload,
 )
-from controller.misc import config_service
 from controller.labeling_access_link import manager as link_manager
 from submodules.model import daemon
 
@@ -86,7 +85,6 @@ def delete_information_source(project_id: str, source_id: str) -> None:
     if (
         information_source_item.type
         == enums.InformationSourceType.ACTIVE_LEARNING.value
-        and config_service.get_config_value("is_managed")
     ):
         daemon.run_without_db_token(
             __delete_active_learner_from_inference_dir, project_id, source_id

@@ -1,6 +1,5 @@
 import json
-from fastapi import APIRouter, Depends, Request, Body
-from controller.misc import config_service
+from fastapi import APIRouter, Request, Body
 from fast_api.models import (
     AddUserToOrganizationBody,
     ArchiveAdminMessageBody,
@@ -13,7 +12,6 @@ from fast_api.models import (
     MappedSortedPaginatedUsers,
     MissingUsersBody,
     RemoveUserToOrganizationBody,
-    UpdateConfigBody,
     UserLanguageDisplay,
 )
 from controller.auth import manager as auth_manager
@@ -25,7 +23,6 @@ from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
 from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
-from controller.misc import manager as misc
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model import events
@@ -139,19 +136,9 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result({"data": {"allAdminMessages": data_dict}})
 
 
-@router.get("/can-create-local-org")
-def can_create_local_org(request: Request):
-    data = manager.can_create_local()
-    return pack_json_result({"data": {"canCreateLocalOrg": data}})
-
-
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
-    if config_service.get_config_value("is_managed"):
-        auth_manager.check_admin_access(request.state.info)
-    else:
-        if not organization_manager.can_create_local():
-            auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state.info)
     organization = organization_manager.create_organization(body.name)
     return {"data": {"createOrganization": {"organization": organization}}}
 
@@ -160,11 +147,7 @@ def create_organization(request: Request, body: CreateOrganizationBody = Body(..
 def add_user_to_organization(
     request: Request, body: AddUserToOrganizationBody = Body(...)
 ):
-    if config_service.get_config_value("is_managed"):
-        auth_manager.check_admin_access(request.state.info)
-    else:
-        if not organization_manager.can_create_local(False):
-            auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state.info)
     user_manager.update_organization_of_user(body.organization_name, body.user_mail)
     return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
 
@@ -180,30 +163,9 @@ def remove_user_from_organization(
 
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
-    if config_service.get_config_value("is_managed"):
-        auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state.info)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
     return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
-
-
-@router.post("/update-config")
-def update_config(request: Request, body: UpdateConfigBody = Body(...)):
-    if misc.check_is_managed():
-        print(
-            "config should only be changed for open source/local version to prevent limit issues"
-        )
-        return
-    misc.update_config(body.dict_str)
-    misc.refresh_config()
-    orgs = organization.get_all()
-    if not orgs or len(orgs) != 1:
-        print("local version should only have one organization")
-        return
-
-    for org in orgs:
-        # send to all so all are notified about the change
-        notification.send_organization_update(None, "config_updated", True, str(org.id))
-    return pack_json_result({"data": {"updateConfig": {"ok": True}}})
 
 
 @router.get("/user-roles")

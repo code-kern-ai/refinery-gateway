@@ -1,9 +1,10 @@
 import logging
-
 from fastapi import FastAPI
 from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
-from api.misc import IsDemoRest, IsManagedRest
+from api.misc import (
+    FullConfigRest,
+)
 from api.project import ProjectDetails
 from api.transfer import (
     AssociationsImport,
@@ -15,6 +16,9 @@ from api.transfer import (
     UploadTaskInfo,
     CognitionImport,
     CognitionPrepareProject,
+)
+from config_handler import (
+    init_config,
 )
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
@@ -65,7 +69,9 @@ from submodules.model import session
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+init_config()
 fastapi_app = FastAPI()
+
 
 fastapi_app.include_router(
     org_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
@@ -110,7 +116,9 @@ fastapi_app_internal = FastAPI()
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
 )
+
 routes = [
+    Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}", ProjectDetails),
@@ -130,8 +138,6 @@ routes = [
         CognitionPrepareProject,
     ),
     Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
-    Route("/is_managed", IsManagedRest),
-    Route("/is_demo", IsDemoRest),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"

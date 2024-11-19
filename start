@@ -1,8 +1,6 @@
 #!/bin/bash
 trap "echo -ne '\nstopping container...' && docker stop refinery-gateway > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
 
-source check_config_service
-
 HOST_IP=$(docker network inspect bridge --format='{{json .IPAM.Config}}' | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | tail -1)
 
 echo -ne 'stopping old container...'
@@ -30,8 +28,24 @@ then
     fi
 fi
 
+MINIO_ENDPOINT="http://$HOST_IP:7053"
+
 INFERENCE_DIR=${DEV_SETUP_DIR}inference/
 LOG_DIR=${DEV_SETUP_DIR}logs/
+
+CONFIG_DIR=${PWD%/*}/dev-setup/config/
+if [ ! -d "$CONFIG_DIR" ] 
+then
+    CONFIG_DIR=${PWD%/*/*}/dev-setup/config/
+    if [ ! -d "$CONFIG_DIR" ] 
+    then
+        # to include volume for local development, use the dev-setup inference folder:  
+        # alternative use manual logic with
+        # -v /path/to/dev-setup/config:/config \
+        echo "Can't find config directory: $CONFIG_DIR -> stopping" 
+        exit 1
+    fi
+fi
 
 echo -ne 'building container...'
 docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
@@ -73,8 +87,10 @@ docker run -d --rm \
 -e INFERENCE_DIR=$INFERENCE_DIR \
 -e SECRET_KEY=default \
 -e POSTGRES_POOL_USE_LIFO=x \
+-e KERN_S3_ENDPOINT=${MINIO_ENDPOINT} \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
+-v "$CONFIG_DIR":/config \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
