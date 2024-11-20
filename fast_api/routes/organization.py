@@ -283,23 +283,37 @@ def get_mapped_sorted_paginated_users(
                 user.last_interaction.isoformat() if user.last_interaction else None
             ),
             "role": user.role,
-            "organizationName": (
+            "organization": (
                 organization_manager.get_organization_by_id(str(user.organization_id))[
                     "name"
                 ]
                 if user.organization_id
                 else ""
             ),
+            "email": user.email,
+            "verified": user.verified,
+            "created_at": user.created_at.isoformat(),
+            "metadata_public": user.metadata_public,
+            "sso_provider": user.sso_provider,
         }
         for user in active_users
     ]
-    active_users = {user["id"]: user for user in active_users}
 
-    data, final_len = user_manager.get_mapped_sorted_paginated_users(
-        active_users, body.sort_key, body.sort_direction, body.offset, body.limit
+    final_users = []
+    final_users = sorted(
+        active_users,
+        key=lambda x: (x[body.sort_key] is None, x.get(body.sort_key, "")),
+        reverse=body.sort_direction == -1,
     )
+
+    # paginating users
+    final_users = final_users[body.offset : body.offset + body.limit]
+
     return pack_json_result(
-        {"mappedSortedPaginatedUsers": data, "fullCountUsers": final_len},
+        {
+            "mappedSortedPaginatedUsers": final_users,
+            "fullCountUsers": len(active_users),
+        },
         wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
     )
 

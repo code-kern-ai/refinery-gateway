@@ -105,52 +105,6 @@ def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
 
 
-def get_mapped_sorted_paginated_users(
-    active_users: Dict[str, Any],
-    sort_key: str,
-    sort_direction: int,
-    offset: int,
-    limit: int,
-) -> List[Dict[str, Any]]:
-
-    final_users = []
-    save_len_final_users = 0
-
-    # mapping users with the users in kratos
-    active_users_ids = list(active_users.keys())
-
-    for user_id in active_users_ids:
-        get_user = kratos.__get_identity(user_id, False)["identity"]
-        if get_user and get_user["traits"]["email"] is not None:
-            get_user["email"] = get_user["traits"]["email"]
-            get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
-            active_user_by_id = active_users[user_id]
-            get_user["last_interaction"] = active_user_by_id["last_interaction"]
-            get_user["role"] = active_user_by_id["role"]
-            get_user["organization"] = active_user_by_id["organizationName"]
-
-            public_meta = get_user["metadata_public"]
-            get_user["sso_provider"] = (
-                public_meta.get("registration_scope", {}).get("provider_id", None)
-                if public_meta
-                else None
-            )
-
-            final_users.append(get_user)
-            save_len_final_users += 1
-
-    final_users = sorted(
-        final_users,
-        key=lambda x: (x[sort_key] is None, x.get(sort_key, "")),
-        reverse=sort_direction == -1,
-    )
-
-    # paginating users
-    final_users = final_users[offset : offset + limit]
-
-    return final_users, save_len_final_users
-
-
 def delete_user(user_id: str) -> None:
     user.delete(user_id, with_commit=True)
     user_activity.delete_user_activity(user_id, with_commit=True)
