@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from submodules.model import User, enums
+from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
@@ -154,3 +154,46 @@ def delete_user(user_id: str) -> None:
     user.delete(user_id, with_commit=True)
     user_activity.delete_user_activity(user_id, with_commit=True)
     kratos.__refresh_identity_cache()
+
+
+def migrate_kratos_users() -> None:
+    # this is only supposed to be called during startup of the application
+    daemon.run_with_db_token(__migrate_kratos_users)
+
+
+def __migrate_kratos_users():
+    users = kratos.get_cached_values()
+    filtered_users = {k: v for k, v in users.items() if k != "collected"}
+    users_database = user.get_by_id_list(list(filtered_users.keys()))
+    for user_database in users_database:
+        user_id = str(user_database.id)
+        user_identity = filtered_users[user_id]["identity"]
+        if (
+            user_database.email != user_identity["traits"]["email"]
+            or user_database.verified
+            != user_identity["verifiable_addresses"][0]["verified"]
+            or user_database.created_at
+            != user_identity["verifiable_addresses"][0]["created_at"]
+            or user_database.metadata_public != user_identity["metadata_public"]
+            or (
+                user_identity["metadata_public"]
+                .get("registration_scope", {})
+                .get("provider_id", None)
+                != user_database.sso_provider
+            )
+        ):
+            user.update_user(
+                user=user_database,
+                email=user_identity["traits"]["email"],
+                verified=user_identity["verifiable_addresses"][0]["verified"],
+                created_at=user_identity["verifiable_addresses"][0]["created_at"],
+                metadata_public=user_identity["metadata_public"],
+                sso_provider=(
+                    user_identity["metadata_public"]
+                    .get("registration_scope", {})
+                    .get("provider_id", None)
+                    if user_identity["metadata_public"]
+                    else None
+                ),
+                with_commit=True,
+            )

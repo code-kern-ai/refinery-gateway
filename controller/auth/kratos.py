@@ -17,7 +17,7 @@ KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
 
-def __get_cached_values() -> Dict[str, Dict[str, Any]]:
+def get_cached_values() -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
     if not KRATOS_IDENTITY_CACHE or len(KRATOS_IDENTITY_CACHE) == 0:
         __refresh_identity_cache()
@@ -71,7 +71,7 @@ def __get_link_from_kratos_request(request: requests.Response) -> str:
 def __get_identity(user_id: str, only_simple: bool = True) -> Dict[str, Any]:
     if not isinstance(user_id, str):
         user_id = str(user_id)
-    cache = __get_cached_values()
+    cache = get_cached_values()
     if user_id in cache:
         if only_simple:
             return cache[user_id]["simple"]
@@ -117,7 +117,7 @@ def __parse_identity_to_simple(identity: Dict[str, Any]) -> Dict[str, str]:
 
 
 def get_userid_from_mail(user_mail: str) -> str:
-    values = __get_cached_values()
+    values = get_cached_values()
     for key in values:
         if key == "collected":
             continue
