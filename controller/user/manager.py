@@ -20,6 +20,7 @@ def get_or_create_user(user_id: str) -> User:
     if not user_item:
         user_item = user.create(user_id, with_commit=True)
         kratos.__refresh_identity_cache()
+        migrate_kratos_users()
     update_last_interaction(user_item.id)
     return user_item
 
