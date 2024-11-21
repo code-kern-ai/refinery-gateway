@@ -275,7 +275,10 @@ def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
-    active_users = user_manager.get_active_users(body.filter_minutes, None)
+    count_users = user_manager.get_active_users_filtered(body.filter_minutes)
+    active_users = user_manager.get_active_users_filtered(
+        body.filter_minutes, body.sort_key, body.sort_direction, body.offset, body.limit
+    )
     active_users = [
         {
             "id": str(user.id),
@@ -283,13 +286,7 @@ def get_mapped_sorted_paginated_users(
                 user.last_interaction.isoformat() if user.last_interaction else None
             ),
             "role": user.role,
-            "organization": (
-                organization_manager.get_organization_by_id(str(user.organization_id))[
-                    "name"
-                ]
-                if user.organization_id
-                else ""
-            ),
+            "organization": user.organization_name,
             "email": user.email,
             "verified": user.verified,
             "created_at": user.created_at.isoformat(),
@@ -299,20 +296,10 @@ def get_mapped_sorted_paginated_users(
         for user in active_users
     ]
 
-    final_users = []
-    final_users = sorted(
-        active_users,
-        key=lambda x: (x[body.sort_key] is None, x.get(body.sort_key, "")),
-        reverse=body.sort_direction == -1,
-    )
-
-    # paginating users
-    final_users = final_users[body.offset : body.offset + body.limit]
-
     return pack_json_result(
         {
-            "mappedSortedPaginatedUsers": final_users,
-            "fullCountUsers": len(active_users),
+            "mappedSortedPaginatedUsers": active_users,
+            "fullCountUsers": len(count_users),
         },
         wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
     )

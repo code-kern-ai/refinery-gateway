@@ -5,6 +5,9 @@ import logging
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
+from controller.user import manager
+
+
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -17,19 +20,19 @@ KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
 
-def get_cached_values() -> Dict[str, Dict[str, Any]]:
+def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
     if not KRATOS_IDENTITY_CACHE or len(KRATOS_IDENTITY_CACHE) == 0:
-        __refresh_identity_cache()
+        __refresh_identity_cache(update_db_users)
     elif (
         KRATOS_IDENTITY_CACHE["collected"] + KRATOS_IDENTITY_CACHE_TIMEOUT
         < datetime.now()
     ):
-        __refresh_identity_cache()
+        __refresh_identity_cache(update_db_users)
     return KRATOS_IDENTITY_CACHE
 
 
-def __refresh_identity_cache():
+def __refresh_identity_cache(update_db_users: bool = True) -> None:
     global KRATOS_IDENTITY_CACHE
     request = requests.get(f"{KRATOS_ADMIN_URL}/identities")
     if request.ok:
@@ -53,6 +56,9 @@ def __refresh_identity_cache():
         KRATOS_IDENTITY_CACHE["collected"] = collected
     else:
         KRATOS_IDENTITY_CACHE = {}
+
+    if update_db_users:
+        manager.migrate_kratos_users()
 
 
 def __get_link_from_kratos_request(request: requests.Response) -> str:

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
@@ -92,11 +92,17 @@ def remove_organization_from_user(user_mail: str) -> None:
     user.remove_organization(user_id, with_commit=True)
 
 
-def get_active_users(minutes: int, order_by_interaction: bool) -> User:
+def get_active_users_filtered(
+    minutes: Optional[int] = None,
+    sort_key: Optional[str] = None,
+    sort_direction: Optional[str] = None,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+) -> User:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
-    return user_activity.get_active_users_in_range(
-        last_interaction_range, order_by_interaction
+    return user.get_active_users_after_filter(
+        last_interaction_range, sort_key, sort_direction, offset, limit
     )
 
 
@@ -117,38 +123,41 @@ def migrate_kratos_users() -> None:
 
 
 def __migrate_kratos_users():
-    users = kratos.get_cached_values()
-    filtered_users = {k: v for k, v in users.items() if k != "collected"}
-    users_database = user.get_by_id_list(list(filtered_users.keys()))
+    users_kratos = kratos.get_cached_values(False)
+    users_database = user.get_all()
+
     for user_database in users_database:
         user_id = str(user_database.id)
-        user_identity = filtered_users[user_id]["identity"]
+        user_identity = users_kratos[user_id]["identity"]
+
+        if user_database.email != user_identity["traits"]["email"]:
+            user_database.email = user_identity["traits"]["email"]
         if (
-            user_database.email != user_identity["traits"]["email"]
-            or user_database.verified
+            user_database.verified
             != user_identity["verifiable_addresses"][0]["verified"]
-            or user_database.created_at
+        ):
+            user_database.verified = user_identity["verifiable_addresses"][0][
+                "verified"
+            ]
+        if (
+            user_database.created_at
             != user_identity["verifiable_addresses"][0]["created_at"]
-            or user_database.metadata_public != user_identity["metadata_public"]
-            or (
+        ):
+            user_database.created_at = user_identity["verifiable_addresses"][0][
+                "created_at"
+            ]
+        if user_database.metadata_public != user_identity["metadata_public"]:
+            user_database.metadata_public = user_identity["metadata_public"]
+        sso_provider = (
+            (
                 user_identity["metadata_public"]
                 .get("registration_scope", {})
                 .get("provider_id", None)
-                != user_database.sso_provider
             )
-        ):
-            user.update_user(
-                user=user_database,
-                email=user_identity["traits"]["email"],
-                verified=user_identity["verifiable_addresses"][0]["verified"],
-                created_at=user_identity["verifiable_addresses"][0]["created_at"],
-                metadata_public=user_identity["metadata_public"],
-                sso_provider=(
-                    user_identity["metadata_public"]
-                    .get("registration_scope", {})
-                    .get("provider_id", None)
-                    if user_identity["metadata_public"]
-                    else None
-                ),
-                with_commit=True,
-            )
+            if user_identity["metadata_public"]
+            else None
+        )
+        if user_database.sso_provider != sso_provider:
+            user_database.sso_provider = sso_provider
+
+    general.commit()
