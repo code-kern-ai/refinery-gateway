@@ -440,3 +440,7 @@ class UpdateCustomerButton(BaseModel):
     location: Optional[CustomerButtonLocation] = None
     visible: Optional[StrictBool] = None
     config: Optional[Dict[StrictStr, Any]] = None
+
+
+class MissingUsersBody(BaseModel):
+    user_ids: List[StrictStr]

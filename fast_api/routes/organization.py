@@ -10,6 +10,7 @@ from fast_api.models import (
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
+    MissingUsersBody,
     RemoveUserToOrganizationBody,
     UserLanguageDisplay,
 )
@@ -24,7 +25,8 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model.business_objects import organization
+from submodules.model import events
+from submodules.model.business_objects import organization, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 
@@ -273,7 +275,10 @@ def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
-    active_users = user_manager.get_active_users(body.filter_minutes, None)
+    count_users = user_manager.get_active_users_filtered(body.filter_minutes)
+    active_users = user_manager.get_active_users_filtered(
+        body.filter_minutes, body.sort_key, body.sort_direction, body.offset, body.limit
+    )
     active_users = [
         {
             "id": str(user.id),
@@ -281,23 +286,21 @@ def get_mapped_sorted_paginated_users(
                 user.last_interaction.isoformat() if user.last_interaction else None
             ),
             "role": user.role,
-            "organizationName": (
-                organization_manager.get_organization_by_id(str(user.organization_id))[
-                    "name"
-                ]
-                if user.organization_id
-                else ""
-            ),
+            "organization": user.organization_name,
+            "email": user.email,
+            "verified": user.verified,
+            "created_at": user.created_at.isoformat(),
+            "metadata_public": user.metadata_public,
+            "sso_provider": user.sso_provider,
         }
         for user in active_users
     ]
-    active_users = {user["id"]: user for user in active_users}
 
-    data, final_len = user_manager.get_mapped_sorted_paginated_users(
-        active_users, body.sort_key, body.sort_direction, body.offset, body.limit
-    )
     return pack_json_result(
-        {"mappedSortedPaginatedUsers": data, "fullCountUsers": final_len},
+        {
+            "mappedSortedPaginatedUsers": active_users,
+            "fullCountUsers": len(count_users),
+        },
         wrap_for_frontend=False,  # needed because it's used like this on the frontend (kratos values)
     )
 
@@ -307,3 +310,17 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.delete_user(body.user_id)
     return get_silent_success()
+
+
+@router.post("/missing-users-interaction")
+def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
+    auth_manager.check_admin_access(request.state.info)
+    data = user.get_missing_users(body.user_ids)
+    return pack_json_result(data, wrap_for_frontend=False)
+
+
+@router.get("/user-to-organization")
+def get_user_to_organization(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = user.get_user_to_organization()
+    return pack_json_result(data, wrap_for_frontend=False)
