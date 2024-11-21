@@ -289,7 +289,7 @@ def get_mapped_sorted_paginated_users(
             "organization": user.organization_name,
             "email": user.email,
             "verified": user.verified,
-            "created_at": user.created_at.isoformat(),
+            "created_at": user.created_at.isoformat() if user.created_at else None,
             "metadata_public": user.metadata_public,
             "sso_provider": user.sso_provider,
         }
