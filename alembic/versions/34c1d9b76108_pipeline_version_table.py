@@ -35,7 +35,7 @@ def upgrade():
     op.create_index(op.f('ix_cognition_pipeline_version_project_id'), 'pipeline_version', ['project_id'], unique=False, schema='cognition')
     op.add_column('message', sa.Column('version_id', postgresql.UUID(as_uuid=True), nullable=True), schema='cognition')
     op.create_index(op.f('ix_cognition_message_version_id'), 'message', ['version_id'], unique=False, schema='cognition')
-    op.create_foreign_key(None, 'message', 'organization', ['version_id'], ['id'], source_schema='cognition', ondelete='SET NULL')
+    op.create_foreign_key(None, 'message', 'version', ['version_id'], ['id'], source_schema='cognition', ondelete='SET NULL')
     # ### end Alembic commands ###
 
 
