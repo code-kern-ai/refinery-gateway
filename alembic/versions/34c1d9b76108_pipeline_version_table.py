@@ -1,7 +1,7 @@
 """Pipeline Version table
 
 Revision ID: 34c1d9b76108
-Revises: 05bbef1eec3f
+Revises: 7aa933ec5de9
 Create Date: 2024-11-20 13:01:51.539737
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '34c1d9b76108'
-down_revision = '05bbef1eec3f'
+down_revision = '7aa933ec5de9'
 branch_labels = None
 depends_on = None
 

@@ -1,5 +1,5 @@
-from typing import Any, Dict, List
-from submodules.model import User, enums
+from typing import Any, Dict, List, Optional
+from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, user_activity, general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
@@ -91,11 +91,17 @@ def remove_organization_from_user(user_mail: str) -> None:
     user.remove_organization(user_id, with_commit=True)
 
 
-def get_active_users(minutes: int, order_by_interaction: bool) -> User:
+def get_active_users_filtered(
+    minutes: Optional[int] = None,
+    sort_key: Optional[str] = None,
+    sort_direction: Optional[str] = None,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+) -> User:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
-    return user_activity.get_active_users_in_range(
-        last_interaction_range, order_by_interaction
+    return user.get_active_users_after_filter(
+        last_interaction_range, sort_key, sort_direction, offset, limit
     )
 
 
@@ -104,53 +110,53 @@ def update_last_interaction(user_id: str) -> None:
     user_activity.update_last_interaction(user_id)
 
 
-def get_mapped_sorted_paginated_users(
-    active_users: Dict[str, Any],
-    sort_key: str,
-    sort_direction: int,
-    offset: int,
-    limit: int,
-) -> List[Dict[str, Any]]:
-
-    final_users = []
-    save_len_final_users = 0
-
-    # mapping users with the users in kratos
-    active_users_ids = list(active_users.keys())
-
-    for user_id in active_users_ids:
-        get_user = kratos.__get_identity(user_id, False)["identity"]
-        if get_user and get_user["traits"]["email"] is not None:
-            get_user["email"] = get_user["traits"]["email"]
-            get_user["verified"] = get_user["verifiable_addresses"][0]["verified"]
-            active_user_by_id = active_users[user_id]
-            get_user["last_interaction"] = active_user_by_id["last_interaction"]
-            get_user["role"] = active_user_by_id["role"]
-            get_user["organization"] = active_user_by_id["organizationName"]
-
-            public_meta = get_user["metadata_public"]
-            get_user["sso_provider"] = (
-                public_meta.get("registration_scope", {}).get("provider_id", None)
-                if public_meta
-                else None
-            )
-
-            final_users.append(get_user)
-            save_len_final_users += 1
-
-    final_users = sorted(
-        final_users,
-        key=lambda x: (x[sort_key] is None, x.get(sort_key, "")),
-        reverse=sort_direction == -1,
-    )
-
-    # paginating users
-    final_users = final_users[offset : offset + limit]
-
-    return final_users, save_len_final_users
-
-
 def delete_user(user_id: str) -> None:
     user.delete(user_id, with_commit=True)
     user_activity.delete_user_activity(user_id, with_commit=True)
     kratos.__refresh_identity_cache()
+
+
+def migrate_kratos_users() -> None:
+    # this is only supposed to be called during startup of the application
+    daemon.run_with_db_token(__migrate_kratos_users)
+
+
+def __migrate_kratos_users():
+    users_kratos = kratos.get_cached_values(False)
+    users_database = user.get_all()
+
+    for user_database in users_database:
+        user_id = str(user_database.id)
+        user_identity = users_kratos[user_id]["identity"]
+
+        if user_database.email != user_identity["traits"]["email"]:
+            user_database.email = user_identity["traits"]["email"]
+        if (
+            user_database.verified
+            != user_identity["verifiable_addresses"][0]["verified"]
+        ):
+            user_database.verified = user_identity["verifiable_addresses"][0][
+                "verified"
+            ]
+        if (
+            user_database.created_at
+            != user_identity["verifiable_addresses"][0]["created_at"]
+        ):
+            user_database.created_at = user_identity["verifiable_addresses"][0][
+                "created_at"
+            ]
+        if user_database.metadata_public != user_identity["metadata_public"]:
+            user_database.metadata_public = user_identity["metadata_public"]
+        sso_provider = (
+            (
+                user_identity["metadata_public"]
+                .get("registration_scope", {})
+                .get("provider_id", None)
+            )
+            if user_identity["metadata_public"]
+            else None
+        )
+        if user_database.sso_provider != sso_provider:
+            user_database.sso_provider = sso_provider
+
+    general.commit()

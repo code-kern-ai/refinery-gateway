@@ -43,6 +43,7 @@ from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 
 from controller.project.manager import check_in_deletion_projects
+from controller.user.manager import migrate_kratos_users
 from route_prefix import (
     PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
@@ -70,6 +71,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 init_config()
+migrate_kratos_users()
 fastapi_app = FastAPI()
 
 
