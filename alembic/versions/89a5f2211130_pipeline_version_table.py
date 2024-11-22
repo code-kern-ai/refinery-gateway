@@ -36,6 +36,7 @@ def upgrade():
     op.add_column('message', sa.Column('version_id', postgresql.UUID(as_uuid=True), nullable=True), schema='cognition')
     op.create_index(op.f('ix_cognition_message_version_id'), 'message', ['version_id'], unique=False, schema='cognition')
     op.create_foreign_key(None, 'message', 'pipeline_version', ['version_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='SET NULL')
+    op.drop_constraint('pipeline_logs_strategy_step_id_fkey', 'pipeline_logs', schema='cognition', type_='foreignkey')
     # ### end Alembic commands ###
 
 
@@ -47,4 +48,5 @@ def downgrade():
     op.drop_index(op.f('ix_cognition_pipeline_version_project_id'), table_name='pipeline_version', schema='cognition')
     op.drop_index(op.f('ix_cognition_pipeline_version_created_by'), table_name='pipeline_version', schema='cognition')
     op.drop_table('pipeline_version', schema='cognition')
+    op.create_foreign_key('pipeline_logs_strategy_step_id_fkey', 'pipeline_logs', 'strategy_step', ['strategy_step_id'], ['id'], source_schema='cognition', referent_schema='cognition', ondelete='CASCADE')
     # ### end Alembic commands ###
