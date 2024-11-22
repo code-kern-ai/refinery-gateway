@@ -127,9 +127,9 @@ def __migrate_kratos_users():
 
     for user_database in users_database:
         user_id = str(user_database.id)
-        user_identity = users_kratos[user_id]["identity"]
-        if users_kratos[user_id] is None:
+        if user_id not in users_kratos or users_kratos[user_id] is None:
             continue
+        user_identity = users_kratos[user_id]["identity"]
         if user_database.email != user_identity["traits"]["email"]:
             user_database.email = user_identity["traits"]["email"]
         if (
