@@ -223,6 +223,8 @@ def get_all_organizations(request: Request):
                     "maxCharCount": org.max_char_count,
                     "gdprCompliant": org.gdpr_compliant,
                     "logAdminRequests": org.log_admin_requests,
+                    "conversationLifespanDays": org.conversation_lifespan_days,
+                    "fileLifespanDays": org.file_lifespan_days,
                 }
             }
         )
