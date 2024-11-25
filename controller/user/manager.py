@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 from submodules.model import User, daemon, enums
-from submodules.model.business_objects import user, user_activity, general
+from submodules.model.business_objects import user, general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
@@ -107,12 +107,11 @@ def get_active_users_filtered(
 
 @param_throttle(seconds=10)
 def update_last_interaction(user_id: str) -> None:
-    user_activity.update_last_interaction(user_id)
+    user.update_last_interaction(user_id)
 
 
 def delete_user(user_id: str) -> None:
     user.delete(user_id, with_commit=True)
-    user_activity.delete_user_activity(user_id, with_commit=True)
     kratos.__refresh_identity_cache()
 
 
