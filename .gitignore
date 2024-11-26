@@ -138,7 +138,6 @@ db.sqlite
 db.sqlite-journal
 
 #kern temp files
-user_activity_backup.tmp
 project_export*
 tmp/*
 !tmp/.gitkeep
