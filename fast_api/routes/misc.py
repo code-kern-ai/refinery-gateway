@@ -1,4 +1,3 @@
-import json
 from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
 from fast_api.models import (
@@ -17,7 +16,6 @@ from controller.model_provider import manager as model_provider_manager
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from submodules.model.global_objects import customer_button as customer_button_db_go
-import util.user_activity
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model.enums import (
     try_parse_enum_value,
@@ -162,33 +160,6 @@ def get_task_queue_pause(request: Request):
         except Exception:
             task_queue_pause = False
     return pack_json_result({"taskQueuePause": task_queue_pause})
-
-
-@router.get("/all-users-activity")
-def get_all_users_activity(request: Request):
-    auth.check_admin_access(request.state.info)
-    data = util.user_activity.resolve_all_users_activity()
-
-    activity = []
-
-    for user in data:
-        user_activity = []
-        if "user_activity" in user and user["user_activity"] is not None:
-            for activity_item in user["user_activity"]:
-                user_activity.append(json.dumps(activity_item))
-
-        activity.append(
-            {
-                "user": {
-                    "id": str(user["user_id"]),
-                },
-                "userActivity": user_activity,
-                "warning": user["warning"],
-                "warningText": user["warning_text"],
-            }
-        )
-
-    return pack_json_result({"data": {"allUsersActivity": activity}})
 
 
 # this endpoint is meant to be used by the frontend to get the customer buttons for the current user
