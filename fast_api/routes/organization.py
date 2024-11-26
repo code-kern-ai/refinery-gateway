@@ -25,7 +25,6 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model import events
 from submodules.model.business_objects import organization, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
@@ -221,7 +220,6 @@ def get_all_organizations(request: Request):
                     "maxRows": org.max_rows,
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,
-                    "gdprCompliant": org.gdpr_compliant,
                     "logAdminRequests": org.log_admin_requests,
                     "conversationLifespanDays": org.conversation_lifespan_days,
                     "fileLifespanDays": org.file_lifespan_days,

@@ -4,20 +4,12 @@ from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import Organization, User
-from util import notification
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.s3 import controller as s3
 
 USER_INFO_WHITELIST = {"id", "role"}
-ORGANIZATION_WHITELIST = {
-    "id",
-    "name",
-    "max_rows",
-    "max_cols",
-    "max_char_count",
-    "gdpr_compliant",
-}
+ORGANIZATION_WHITELIST = {"id", "name", "max_rows", "max_cols", "max_char_count"}
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
@@ -28,7 +20,6 @@ def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
     for k in changes:
 
         if hasattr(org, k):
-            __check_notification(org_id, k, changes[k])
             setattr(org, k, changes[k])
         else:
             raise ValueError(f"Organization has no attribute {k}")
@@ -98,10 +89,3 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
     if org_id is None:
         return []
     return organization.get_organization_overview_stats(org_id)
-
-
-def __check_notification(org_id: str, key: str, value: Any):
-    if key in ["gdpr_compliant"]:
-        notification.send_organization_update(
-            None, f"gdpr_compliant:{value}", True, org_id
-        )
