@@ -1,7 +1,19 @@
 #!/bin/bash
 trap "echo -ne '\nstopping container...' && docker stop refinery-gateway > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
 
-HOST_IP=$(docker network inspect bridge --format='{{json .IPAM.Config}}' | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | tail -1)
+unameOut="$(uname -s)"
+nameOut="$(whoami)"
+
+if [ "$nameOut" == "jens" ]; then
+    unameOut="jens"
+fi
+
+case "${unameOut}" in
+    #special case for jens machine
+    jens*)     HOST_IP=$(ip a | grep "inet " | grep -v 127.0.0.1 | tac | head -1 | grep -o -E "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1);;
+    Linux*)     HOST_IP=$(ip a | grep "inet " | grep -v 127.0.0.1| head -1 | grep -o -E "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1);;
+    Darwin*)    HOST_IP=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | head -1 | grep -o -E "[0-9]+.[0-9]+.[0-9]+.[0-9]+" | head -1);;
+esac
 
 echo -ne 'stopping old container...'
 docker stop refinery-gateway > /dev/null 2>&1
