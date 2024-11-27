@@ -1,7 +1,7 @@
 """add conversation and file lifespan
 
 Revision ID: eb5ecbee5090
-Revises: 7aa933ec5de9
+Revises: 2c0029684bd7
 Create Date: 2024-11-26 11:03:23.883173
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "eb5ecbee5090"
-down_revision = "7aa933ec5de9"
+down_revision = "2c0029684bd7"
 branch_labels = None
 depends_on = None
 
