@@ -16,7 +16,6 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
-    resolve_user_mail_by_id,
     resolve_user_name_and_email_by_id,
 )
 from controller.organization import manager
@@ -205,18 +204,7 @@ def get_all_organizations(request: Request):
                         else None
                     ),
                     "isPaying": org.is_paying,
-                    "users": {
-                        "edges": [
-                            {
-                                "node": {
-                                    "id": str(user.id),
-                                    "mail": resolve_user_mail_by_id(user.id),
-                                }
-                            }
-                            for user in org.users
-                            if resolve_user_mail_by_id(user.id) is not None
-                        ]
-                    },
+                    "user_count": manager.get_user_count(org.id),
                     "maxRows": org.max_rows,
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,

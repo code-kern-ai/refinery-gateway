@@ -46,6 +46,10 @@ def get_user_info(user) -> User:
     return user_expanded
 
 
+def get_user_count(organization_id: str) -> int:
+    return organization.get_user_count(organization_id)
+
+
 def get_all_users(
     organization_id: str, user_role: Optional[str] = None, as_dict: bool = True
 ) -> List[User]:
