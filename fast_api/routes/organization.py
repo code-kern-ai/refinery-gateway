@@ -204,7 +204,7 @@ def get_all_organizations(request: Request):
                         else None
                     ),
                     "isPaying": org.is_paying,
-                    "user_count": manager.get_user_count(org.id),
+                    "userCount": manager.get_user_count(org.id),
                     "maxRows": org.max_rows,
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,
