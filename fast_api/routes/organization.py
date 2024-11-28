@@ -16,7 +16,6 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
-    resolve_user_mail_by_id,
     resolve_user_name_and_email_by_id,
 )
 from controller.organization import manager
@@ -25,7 +24,6 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model import events
 from submodules.model.business_objects import organization, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
@@ -206,23 +204,13 @@ def get_all_organizations(request: Request):
                         else None
                     ),
                     "isPaying": org.is_paying,
-                    "users": {
-                        "edges": [
-                            {
-                                "node": {
-                                    "id": str(user.id),
-                                    "mail": resolve_user_mail_by_id(user.id),
-                                }
-                            }
-                            for user in org.users
-                            if resolve_user_mail_by_id(user.id) is not None
-                        ]
-                    },
+                    "userCount": manager.get_user_count(org.id),
                     "maxRows": org.max_rows,
                     "maxCols": org.max_cols,
                     "maxCharCount": org.max_char_count,
-                    "gdprCompliant": org.gdpr_compliant,
                     "logAdminRequests": org.log_admin_requests,
+                    "conversationLifespanDays": org.conversation_lifespan_days,
+                    "fileLifespanDays": org.file_lifespan_days,
                 }
             }
         )
