@@ -7,13 +7,9 @@ from api.misc import (
 )
 from api.project import ProjectDetails
 from api.transfer import (
-    AssociationsImport,
-    FileExport,
-    JSONImport,
-    KnowledgeBaseExport,
     Notify,
-    PrepareFileImport,
     UploadTaskInfo,
+    JSONImport,
     CognitionImport,
     CognitionPrepareProject,
 )
@@ -124,13 +120,6 @@ routes = [
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}", ProjectDetails),
-    Route(
-        "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",
-        KnowledgeBaseExport,
-    ),
-    Route("/project/{project_id:str}/associations", AssociationsImport),
-    Route("/project/{project_id:str}/export", FileExport),
-    Route("/project/{project_id:str}/import_file", PrepareFileImport),
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route(
         "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport

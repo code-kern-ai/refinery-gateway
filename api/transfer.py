@@ -11,11 +11,9 @@ from controller.transfer.cognition import (
     import_wizard as cognition_import_wizard,
 )
 from exceptions.exceptions import BadPasswordError
-from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
     general,
-    organization,
     tokenization,
     project,
 )
@@ -27,10 +25,8 @@ from submodules.model.cognition_objects import (
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
-from controller.transfer import association_transfer_manager
-from controller.project import manager as project_manager
 from controller.attribute import manager as attribute_manager
-
+from controller.project import manager as project_manager
 from submodules.model import enums, exceptions
 from util.notification import create_notification
 from submodules.model.enums import NotificationType
@@ -96,72 +92,6 @@ class Notify(HTTPEndpoint):
             project_id, f"project_update:{project_id}", True
         )
         return PlainTextResponse("OK")
-
-
-class FileExport(HTTPEndpoint):
-    def get(self, request) -> JSONResponse:
-        project_id = request.path_params["project_id"]
-        user_id = request.query_params["user_id"]
-        num_samples = request.query_params.get("num_samples")
-        try:
-            auth_manager.check_project_access_from_user_id(
-                user_id, project_id, from_api=True
-            )
-        except exceptions.EntityNotFoundException:
-            return JSONResponse({"error": "Could not find project"}, status_code=404)
-        except exceptions.AccessDeniedException:
-            return JSONResponse({"error": "Access denied"}, status_code=403)
-        result = transfer_manager.export_records(project_id, num_samples)
-        return JSONResponse(result)
-
-
-class KnowledgeBaseExport(HTTPEndpoint):
-    def get(self, request) -> JSONResponse:
-        project_id = request.path_params["project_id"]
-        list_id = request.path_params["knowledge_base_id"]
-        user_id = request.query_params["user_id"]
-        try:
-            auth_manager.check_project_access_from_user_id(
-                user_id, project_id, from_api=True
-            )
-        except exceptions.EntityNotFoundException:
-            return JSONResponse({"error": "Could not find project"}, status_code=404)
-        except exceptions.AccessDeniedException:
-            return JSONResponse({"error": "Access denied"}, status_code=403)
-        result = transfer_manager.export_knowledge_base(project_id, list_id)
-        return JSONResponse(result)
-
-
-class PrepareFileImport(HTTPEndpoint):
-    async def post(self, request) -> JSONResponse:
-        project_id = request.path_params["project_id"]
-        request_body = await request.json()
-
-        user_id = request_body["user_id"]
-        try:
-            auth_manager.check_project_access_from_user_id(
-                user_id, project_id, from_api=True
-            )
-        except exceptions.EntityNotFoundException:
-            return JSONResponse({"error": "Could not find project"}, status_code=404)
-        except exceptions.AccessDeniedException:
-            return JSONResponse({"error": "Access denied"}, status_code=403)
-        file_name = request_body["file_name"]
-        file_type = request_body["file_type"]
-        file_import_options = request_body.get("file_import_options")
-        task = upload_task_manager.create_upload_task(
-            user_id,
-            project_id,
-            file_name,
-            file_type,
-            file_import_options,
-            upload_type=enums.UploadTypes.DEFAULT.value,
-        )
-        org_id = organization.get_id_by_project_id(project_id)
-        credentials_and_id = s3.get_upload_credentials_and_id(
-            org_id, f"{project_id}/{task.id}"
-        )
-        return JSONResponse(credentials_and_id)
 
 
 class JSONImport(HTTPEndpoint):
@@ -237,34 +167,6 @@ class CognitionPrepareProject(HTTPEndpoint):
         )
 
         return PlainTextResponse("OK")
-
-
-class AssociationsImport(HTTPEndpoint):
-    async def post(self, request) -> JSONResponse:
-        # Will be removed as part of the python sdk removal
-        return JSONResponse({"error": "Not supported anymore"}, status_code=404)
-
-        project_id = request.path_params["project_id"]
-        request_body = await request.json()
-        user_id = request_body["user_id"]
-        try:
-            auth_manager.check_project_access_from_user_id(
-                user_id, project_id, from_api=True
-            )
-        except exceptions.EntityNotFoundException:
-            return JSONResponse({"error": "Could not find project"}, status_code=404)
-        except exceptions.AccessDeniedException:
-            return JSONResponse({"error": "Access denied"}, status_code=403)
-        new_associations_added = association_transfer_manager.import_associations(
-            project_id,
-            user_id,
-            request_body["name"],
-            request_body["label_task_name"],
-            request_body["associations"],
-            request_body["indices"],
-            request_body["source_type"],
-        )
-        return JSONResponse(new_associations_added)
 
 
 class UploadTaskInfo(HTTPEndpoint):
