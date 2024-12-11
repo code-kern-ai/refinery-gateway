@@ -53,34 +53,3 @@ class JSONImport(HTTPEndpoint):
             request_body["is_last"],
         )
         return JSONResponse({"success": True})
-
-
-def file_import_error_handling(
-    task: UploadTask,
-    project_id: str,
-    is_global_update: bool,
-    notification_type: Optional[NotificationType] = None,
-    print_traceback: bool = True,
-) -> None:
-    general.rollback()
-    task.state = enums.UploadStates.ERROR.value
-    general.commit()
-    if not notification_type:
-        notification_type = NotificationType.IMPORT_FAILED
-    create_notification(
-        notification_type,
-        task.user_id,
-        task.project_id,
-        task.file_type,
-    )
-    logger.error(
-        upload_task_manager.get_upload_task_message(
-            task,
-        )
-    )
-    if print_traceback:
-        print(traceback.format_exc(), flush=True)
-
-    notification.send_organization_update(
-        project_id, f"file_upload:{str(task.id)}:state:{task.state}", is_global_update
-    )
