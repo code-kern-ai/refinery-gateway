@@ -6,7 +6,6 @@ from api.misc import (
 )
 
 from api.transfer import (
-    UploadTaskInfo,
     JSONImport,
     CognitionImport,
     CognitionPrepareProject,
@@ -123,7 +122,6 @@ routes = [
         "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
         CognitionPrepareProject,
     ),
-    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"

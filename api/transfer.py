@@ -116,31 +116,6 @@ class CognitionPrepareProject(HTTPEndpoint):
         return PlainTextResponse("OK")
 
 
-class UploadTaskInfo(HTTPEndpoint):
-    def get(self, request) -> JSONResponse:
-        project_id = request.path_params["project_id"]
-        task_id = request.path_params["task_id"]
-        user_id = request.query_params["user_id"]
-        try:
-            auth_manager.check_project_access_from_user_id(
-                user_id, project_id, from_api=True
-            )
-        except exceptions.EntityNotFoundException:
-            return JSONResponse({"error": "Could not find project"}, status_code=404)
-        except exceptions.AccessDeniedException:
-            return JSONResponse({"error": "Access denied"}, status_code=403)
-        task = upload_task_manager.get_upload_task(project_id, task_id)
-        task_dict = {
-            "id": str(task.id),
-            "file_name": str(task.file_name),
-            "file_type": str(task.file_type),
-            "progress": task.progress,
-            "state": str(task.state),
-            "started_at": str(task.started_at),
-        }
-        return JSONResponse(task_dict)
-
-
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
     task_state = task.state
     if "records" in task.file_type:
