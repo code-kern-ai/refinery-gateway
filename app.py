@@ -1,16 +1,17 @@
 import logging
 from fastapi import FastAPI
 from starlette.middleware import Middleware
+
 from api.misc import (
     FullConfigRest,
 )
-
 from api.transfer import (
     JSONImport,
 )
 from config_handler import (
     init_config,
 )
+
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
