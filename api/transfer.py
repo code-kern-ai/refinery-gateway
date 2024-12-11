@@ -3,22 +3,17 @@ import traceback
 import time
 from typing import Optional
 from starlette.endpoints import HTTPEndpoint
-from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.responses import JSONResponse
 from controller.embedding.manager import recreate_embeddings
 
 from controller.transfer.cognition import (
     import_preparator as cognition_preparator,
-    import_wizard as cognition_import_wizard,
 )
 from submodules.model.business_objects import (
     attribute,
     general,
     tokenization,
     project,
-)
-
-from submodules.model.cognition_objects import (
-    project as cognition_project,
 )
 
 from controller.transfer import manager as transfer_manager
@@ -71,24 +66,6 @@ class JSONImport(HTTPEndpoint):
             request_body["is_last"],
         )
         return JSONResponse({"success": True})
-
-
-class CognitionPrepareProject(HTTPEndpoint):
-    def put(self, request) -> PlainTextResponse:
-        cognition_project_id = request.path_params["cognition_project_id"]
-
-        cognition_project_item = cognition_project.get(cognition_project_id)
-        if not cognition_project_item:
-            return PlainTextResponse("Bad project id", status_code=400)
-        task_id = request.path_params["task_id"]
-
-        daemon.run_without_db_token(
-            cognition_import_wizard.prepare_and_finalize_setup,
-            cognition_project_id=cognition_project_id,
-            task_id=task_id,
-        )
-
-        return PlainTextResponse("OK")
 
 
 def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) -> None:
