@@ -6,7 +6,6 @@ from api.misc import (
 )
 
 from api.transfer import (
-    Notify,
     UploadTaskInfo,
     JSONImport,
     CognitionImport,
@@ -116,7 +115,6 @@ fastapi_app_internal.include_router(
 
 routes = [
     Route("/full_config", FullConfigRest),
-    Route("/notify/{path:path}", Notify),
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route(
         "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport

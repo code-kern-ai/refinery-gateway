@@ -10,7 +10,6 @@ from controller.transfer.cognition import (
     import_preparator as cognition_preparator,
     import_wizard as cognition_import_wizard,
 )
-from exceptions.exceptions import BadPasswordError
 from submodules.model.business_objects import (
     attribute,
     general,
@@ -33,7 +32,6 @@ from submodules.model.enums import NotificationType
 from submodules.model.models import UploadTask
 from util import notification
 from submodules.model import daemon
-from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
 
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
@@ -41,57 +39,6 @@ from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-class Notify(HTTPEndpoint):
-    async def post(self, request) -> PlainTextResponse:
-        data = await request.json()
-        file_path = data["Key"]
-
-        parts = file_path.split("/")
-
-        if parts[1] == "_cognition":
-            handle_cognition_file_upload(parts)
-            return PlainTextResponse("OK")
-
-        if len(parts) != 4:
-            # We need handling for lf execution notification here.
-            # ATM we have a different path of handling in util/payload_scheduler.py update_records method
-            return PlainTextResponse("OK")
-
-        org_id, project_id, upload_task_id, file_name = parts
-        if len(project_id) != 36:
-            return PlainTextResponse("OK")
-        if upload_task_id == "download":
-            return PlainTextResponse("OK")
-        if org_id == "archive":
-            return PlainTextResponse("OK")
-
-        task = upload_task_manager.get_upload_task_secure(
-            upload_task_id=upload_task_id,
-            project_id=project_id,
-            file_name=file_name,
-        )
-        is_global_update = True if task.file_type == "project" else False
-        try:
-            init_file_import(task, project_id, is_global_update)
-        except BadPasswordError:
-            file_import_error_handling(
-                task,
-                project_id,
-                is_global_update,
-                enums.NotificationType.BAD_PASSWORD_DURING_IMPORT,
-                print_traceback=False,
-            )
-            notification.send_organization_update(
-                project_id, f"bad_password:{project_id}", True
-            )
-        except Exception:
-            file_import_error_handling(task, project_id, is_global_update)
-        notification.send_organization_update(
-            project_id, f"project_update:{project_id}", True
-        )
-        return PlainTextResponse("OK")
 
 
 class JSONImport(HTTPEndpoint):
