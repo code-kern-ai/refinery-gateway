@@ -1,22 +1,11 @@
 import logging
-import traceback
-from typing import Optional
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
 
-from submodules.model.business_objects import (
-    general,
-)
-
 from controller.transfer import manager as transfer_manager
-from controller.upload_task import manager as upload_task_manager
 from controller.auth import manager as auth_manager
 from controller.project import manager as project_manager
-from submodules.model import enums, exceptions
-from util.notification import create_notification
-from submodules.model.enums import NotificationType
-from submodules.model.models import UploadTask
-from util import notification
+from submodules.model import exceptions
 
 
 logging.basicConfig(level=logging.DEBUG)
