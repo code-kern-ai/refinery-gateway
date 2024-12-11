@@ -5,7 +5,6 @@ from starlette.middleware import Middleware
 from api.misc import (
     FullConfigRest,
 )
-from api.project import ProjectDetails
 from api.transfer import (
     Notify,
     UploadTaskInfo,
@@ -118,8 +117,6 @@ fastapi_app_internal.include_router(
 routes = [
     Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
-    Route("/healthcheck", Healthcheck),
-    Route("/project/{project_id:str}", ProjectDetails),
     Route("/project/{project_id:str}/import_json", JSONImport),
     Route(
         "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
