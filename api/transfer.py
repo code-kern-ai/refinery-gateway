@@ -73,31 +73,6 @@ class JSONImport(HTTPEndpoint):
         return JSONResponse({"success": True})
 
 
-class CognitionImport(HTTPEndpoint):
-    def put(self, request) -> PlainTextResponse:
-        project_id = request.path_params["project_id"]
-        task_id = request.path_params["task_id"]
-        task = upload_task_manager.get_upload_task(
-            task_id=task_id,
-            project_id=project_id,
-        )
-        if task.upload_type != enums.UploadTypes.COGNITION.value:
-            return PlainTextResponse("OK")
-        # since upload type is set to COGNITION for the first step of the upload (file upload / mapping prep)
-        # this / the continuation of the import should only be done once so we set it back to default to prevent this & differentiate between the steps
-        task.upload_type = enums.UploadTypes.DEFAULT.value
-        if task.state != enums.UploadStates.PREPARED.value:
-            return PlainTextResponse("Bad upload task", status_code=400)
-        try:
-            init_file_import(task, project_id, False)
-        except Exception:
-            file_import_error_handling(task, project_id, False)
-        notification.send_organization_update(
-            project_id, f"project_update:{project_id}", True
-        )
-        return PlainTextResponse("OK")
-
-
 class CognitionPrepareProject(HTTPEndpoint):
     def put(self, request) -> PlainTextResponse:
         cognition_project_id = request.path_params["cognition_project_id"]

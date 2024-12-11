@@ -7,7 +7,6 @@ from api.misc import (
 
 from api.transfer import (
     JSONImport,
-    CognitionImport,
     CognitionPrepareProject,
 )
 from config_handler import (
@@ -115,9 +114,6 @@ fastapi_app_internal.include_router(
 routes = [
     Route("/full_config", FullConfigRest),
     Route("/project/{project_id:str}/import_json", JSONImport),
-    Route(
-        "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
-    ),
     Route(
         "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
         CognitionPrepareProject,
