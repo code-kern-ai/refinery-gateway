@@ -2,11 +2,13 @@ import logging
 from fastapi import FastAPI
 from starlette.middleware import Middleware
 
+from api.healthcheck import Healthcheck
 from api.misc import (
     FullConfigRest,
 )
 from api.transfer import (
     JSONImport,
+    Notify,
 )
 from config_handler import (
     init_config,
@@ -113,6 +115,8 @@ fastapi_app_internal.include_router(
 
 routes = [
     Route("/full_config", FullConfigRest),
+    Route("/notify/{path:path}", Notify),
+    Route("/healthcheck", Healthcheck),
     Route("/project/{project_id:str}/import_json", JSONImport),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
