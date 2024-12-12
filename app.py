@@ -1,25 +1,18 @@
 import logging
 from fastapi import FastAPI
-from api.healthcheck import Healthcheck
 from starlette.middleware import Middleware
+
+from api.healthcheck import Healthcheck
 from api.misc import (
     FullConfigRest,
 )
-from api.project import ProjectDetails
 from api.transfer import (
-    AssociationsImport,
-    FileExport,
-    JSONImport,
-    KnowledgeBaseExport,
     Notify,
-    PrepareFileImport,
-    UploadTaskInfo,
-    CognitionImport,
-    CognitionPrepareProject,
 )
 from config_handler import (
     init_config,
 )
+
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
@@ -123,23 +116,6 @@ routes = [
     Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
-    Route("/project/{project_id:str}", ProjectDetails),
-    Route(
-        "/project/{project_id:str}/knowledge_base/{knowledge_base_id:str}",
-        KnowledgeBaseExport,
-    ),
-    Route("/project/{project_id:str}/associations", AssociationsImport),
-    Route("/project/{project_id:str}/export", FileExport),
-    Route("/project/{project_id:str}/import_file", PrepareFileImport),
-    Route("/project/{project_id:str}/import_json", JSONImport),
-    Route(
-        "/project/{project_id:str}/cognition/continue/{task_id:str}", CognitionImport
-    ),
-    Route(
-        "/project/{cognition_project_id:str}/cognition/continue/{task_id:str}/finalize",
-        CognitionPrepareProject,
-    ),
-    Route("/project/{project_id:str}/import/task/{task_id:str}", UploadTaskInfo),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"

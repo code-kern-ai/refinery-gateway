@@ -8,7 +8,6 @@ from controller.labeling_access_link import manager as access_link_manager
 from controller.payload import manager as payload_manager
 from submodules.model.business_objects import information_source
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
-from submodules.model.enums import InformationSourceType
 from submodules.model.util import pack_edges_node, sql_alchemy_to_dict
 from util import notification
 from controller.task_master import manager as task_master_manager

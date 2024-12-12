@@ -1,14 +1,12 @@
 import os
-from typing import Union, List, Dict, Optional
+from typing import List, Dict, Optional
 
 import requests
 import logging
 
 from controller.notification.notification_data import __notification_data
-from submodules.model import events
 from exceptions import exceptions
-from controller.user.manager import get_or_create_user
-from submodules.model.business_objects import project, general, organization
+from submodules.model.business_objects import project, organization
 from submodules.model.business_objects.notification import get_duplicated, create
 from submodules.model.business_objects.organization import get_organization_id
 from submodules.model.enums import NotificationType
