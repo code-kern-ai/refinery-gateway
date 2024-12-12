@@ -23,7 +23,6 @@ from controller.task_queue import manager as task_queue_manager
 from fast_api.routes.client_response import pack_json_result
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
-from submodules.model import events
 from util import notification
 import traceback
 import json

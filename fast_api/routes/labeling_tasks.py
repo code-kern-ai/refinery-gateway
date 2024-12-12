@@ -12,11 +12,8 @@ from fastapi import APIRouter, Depends, Request, Body
 
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as labeling_manager
-from controller.project import manager as project_manager
 from controller.labeling_task_label import manager as label_manager
-from controller.labeling_task import manager as task_manager
 from fast_api.routes.client_response import pack_json_result
-from submodules.model import events
 from util import notification
 
 

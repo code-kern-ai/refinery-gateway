@@ -15,7 +15,7 @@ from fast_api.models import (
     StringBody,
     TokenizedRecordBody,
 )
-from submodules.model import enums, events
+from submodules.model import enums
 from fast_api.routes.client_response import pack_json_result
 from controller.labeling_access_link import manager
 from controller.labeling_task_label import manager as label_manager
