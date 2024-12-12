@@ -7,7 +7,6 @@ from api.misc import (
     FullConfigRest,
 )
 from api.transfer import (
-    JSONImport,
     Notify,
 )
 from config_handler import (
@@ -117,7 +116,6 @@ routes = [
     Route("/full_config", FullConfigRest),
     Route("/notify/{path:path}", Notify),
     Route("/healthcheck", Healthcheck),
-    Route("/project/{project_id:str}/import_json", JSONImport),
     Mount("/api", app=fastapi_app, name="REST API"),
     Mount(
         "/internal/api", app=fastapi_app_internal, name="INTERNAL REST API"
