@@ -30,6 +30,13 @@ __notification_data = {
         "page": enums.Pages.SETTINGS.value,
         "docs": enums.DOCS.UPLOADING_DATA.value,
     },
+    enums.NotificationType.IMPORT_CONVERSION_ERROR.value: {
+        "message_template": "Data type count't be forced (@@arg@@).",
+        "title": "Data import",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.SETTINGS.value,
+        "docs": enums.DOCS.UPLOADING_DATA.value,
+    },
     enums.NotificationType.INVALID_FILE_TYPE.value: {
         "message_template": "File type @@arg@@ is currently not supported.",
         "title": "Data import",

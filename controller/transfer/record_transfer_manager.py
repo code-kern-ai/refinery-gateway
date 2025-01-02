@@ -71,8 +71,23 @@ def import_records_and_rlas(
             attribute_lookup = {
                 k: v for k, v in attribute_lookup.items() if v is not None
             }
-        force_data_type_for_attributes(records_data, attribute_lookup)
+        try:
+            force_data_type_for_attributes(records_data, attribute_lookup)
+        except Exception as e:
+            logger.error(f"Error while forcing data type for attributes: {e}")
+            if upload_task is not None:
 
+                upload_task_manager.update_task(
+                    project_id, upload_task.id, state=enums.UploadStates.ERROR.value
+                )
+
+            notification.create_notification(
+                enums.NotificationType.IMPORT_CONVERSION_ERROR,
+                user_id,
+                project_id,
+                str(e),
+            )
+            raise e
         import_labeling_tasks_and_labels_pipeline(
             project_id=project_id, tasks_data=tasks_data
         )
@@ -172,7 +187,6 @@ def import_file(project_id: str, upload_task: UploadTask) -> None:
         project_id,
         column_mappings,
     )
-    print(data, flush=True)
     import_records_and_rlas(
         project_id, upload_task.user_id, data, upload_task, record_category
     )
@@ -362,6 +376,6 @@ def create_attributes_and_get_text_attributes(
                 text_attributes.append(attribute_item)
     general.flush()
     if created_something:
-        notification.send_organization_update(project_id, f"attributes_updated")
+        notification.send_organization_update(project_id, "attributes_updated")
 
     return text_attributes
