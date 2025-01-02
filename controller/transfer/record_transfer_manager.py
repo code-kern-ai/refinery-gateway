@@ -72,7 +72,7 @@ def import_records_and_rlas(
                 k: v for k, v in attribute_lookup.items() if v is not None
             }
         try:
-            force_data_type_for_attributes(records_data, attribute_lookup)
+            __force_data_type_for_attributes(records_data, attribute_lookup)
         except Exception as e:
             logger.error(f"Error while forcing data type for attributes: {e}")
             if upload_task is not None:
@@ -107,7 +107,7 @@ def import_records_and_rlas(
             )
 
 
-def force_data_type_for_attributes(
+def __force_data_type_for_attributes(
     records_data: List[Dict[str, Any]],
     attribute_lookup: Dict[str, Callable],
 ) -> None:
