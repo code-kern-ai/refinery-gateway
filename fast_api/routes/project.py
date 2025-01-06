@@ -13,20 +13,14 @@ from fastapi import APIRouter, Body, Depends, Request
 from fast_api.routes.client_response import pack_json_result
 from typing import Dict
 from controller.auth import manager as auth_manager
-from controller.attribute import manager as attr_manager
 from controller.upload_task import manager as upload_task_manager
-from submodules.model.business_objects import information_source, labeling_task
+from submodules.model.business_objects import labeling_task
 from submodules.model import enums
-from submodules.model.business_objects.embedding import get_all_embeddings_by_project_id
 from submodules.model.business_objects.project import get_project_by_project_id_sql
-from submodules.model.business_objects.labeling_task import (
-    get_labeling_tasks_by_project_id_full,
-)
 from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import (
-    pack_edges_node,
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
@@ -76,8 +70,7 @@ def get_all_projects(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
-    projects_packed = pack_edges_node(projects, "allProjects")
-    return pack_json_result(projects_packed)
+    return pack_json_result(projects)
 
 
 @router.get("/all-projects-mini")
@@ -86,25 +79,19 @@ def get_all_projects_mini(request: Request) -> Dict:
         auth_manager.get_organization_id_by_info(request.state.info)
     )
 
-    edges = []
+    project_extended = []
 
     for project in projects:
-        edges.append(
+        project_extended.append(
             {
-                "node": {
-                    "id": str(project.get("id", None)),
-                    "name": str(project.get("name", None)),
-                    "description": str(project.get("description", None)),
-                    "status": str(project.get("status", None)),
-                }
+                "id": str(project.get("id", None)),
+                "name": str(project.get("name", None)),
+                "description": str(project.get("description", None)),
+                "status": str(project.get("status", None)),
             }
         )
 
-    data = {
-        "edges": edges,
-    }
-
-    return pack_json_result({"data": {"allProjects": data}})
+    return pack_json_result(project_extended)
 
 
 @router.get(
