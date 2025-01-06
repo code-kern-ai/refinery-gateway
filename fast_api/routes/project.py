@@ -185,7 +185,7 @@ def last_export_credentials(
 ) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
-    return pack_json_result({"data": {"lastProjectExportCredentials": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -207,7 +207,7 @@ def upload_credentials_and_id(
         upload_credentials.upload_type,
         upload_credentials.key,
     )
-    return pack_json_result({"data": {"uploadCredentialsAndId": json.dumps(data)}})
+    return pack_json_result(json.dumps(data))
 
 
 @router.get(
