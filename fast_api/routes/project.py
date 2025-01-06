@@ -264,7 +264,7 @@ def delete_project(request: Request, project_id: str):
     notification.send_organization_update(
         project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
     )
-    return pack_json_result({"data": {"deleteProject": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post("/create-project")
@@ -288,7 +288,7 @@ def create_project(
         }
     }
 
-    return pack_json_result({"data": {"createProject": data}})
+    return pack_json_result(data)
 
 
 @router.put(
