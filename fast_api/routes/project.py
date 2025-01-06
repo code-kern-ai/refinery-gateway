@@ -148,9 +148,7 @@ def project_tokenization(project_id: str) -> str:
             tokenization.get_record_tokenization_task(project_id),
             column_whitelist=PROJECT_TOKENIZATION_WHITELIST,
         )
-    return pack_json_result(
-        {"data": {"projectTokenization": data}},
-    )
+    return pack_json_result(data)
 
 
 @router.get(
@@ -174,7 +172,7 @@ def record_export_by_project_id(project_id: str) -> str:
 @router.get("/model-provider-info")
 def get_model_provider_info(request: Request) -> Dict:
     data = model_manager.get_model_provider_info()
-    return pack_json_result({"data": {"modelProviderInfo": data}})
+    return pack_json_result(data)
 
 
 @router.get(
