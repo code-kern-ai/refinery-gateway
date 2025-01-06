@@ -223,9 +223,7 @@ def upload_task_by_id(
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
     data_dict = to_frontend_obj_raw(sql_alchemy_to_dict(data))
-    return pack_json_result(
-        {"data": {"uploadTaskById": data_dict}}, wrap_for_frontend=False
-    )
+    return pack_json_result(data_dict, wrap_for_frontend=False)
 
 
 @router.post(
@@ -244,7 +242,7 @@ def update_project_name_description(
     )
     # one for the specific project so it's updated
     notification.send_organization_update(project_id, f"project_update:{project_id}")
-    return pack_json_result({"data": {"updateProjectNameDescription": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.delete(
