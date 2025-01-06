@@ -68,7 +68,7 @@ def get_project_by_project_id(
     project_id: str,
 ) -> Dict:
     data = get_project_by_project_id_sql(project_id)
-    return pack_json_result({"data": {"projectByProjectId": data}})
+    return pack_json_result(data)
 
 
 @router.get("/all-projects")
@@ -182,100 +182,8 @@ def project_tokenization(project_id: str) -> str:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def labeling_tasks_by_project_id(project_id: str) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "projectByProjectId": sql_alchemy_to_dict(
-                    get_labeling_tasks_by_project_id_full(project_id)
-                )
-            }
-        },
-    )
-
-
-@router.get(
-    "/{project_id}/labeling-tasks-by-project-id-with-embeddings",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def labeling_tasks_by_project_id_with_embeddings(
-    project_id: str, only_on_attribute: bool = False
-) -> str:
-    embeddings = get_all_embeddings_by_project_id(project_id)
-
-    embeddings_edges = []
-    for embedding in embeddings:
-        if (
-            only_on_attribute
-            and embedding.type != enums.EmbeddingType.ON_ATTRIBUTE.value
-        ):
-            continue
-        attribute = attr_manager.get_attribute(project_id, embedding.attribute_id)
-        embeddings_edges.append(
-            {
-                "node": {
-                    "id": str(embedding.id),
-                    "name": embedding.name,
-                    "state": embedding.state,
-                    "attribute": {"dataType": attribute.data_type},
-                }
-            }
-        )
-
-    labeling_tasks_all = labeling_task.get_all(project_id)
-
-    labeling_tasks_edges = []
-
-    for labeling_task_item in labeling_tasks_all:
-        information_sources_ids = information_source.get_all_ids_by_labeling_task_id(
-            project_id, labeling_task_item.id
-        )
-
-        information_sources = []
-        for information_source_id in information_sources_ids:
-            is_val = information_source.get(project_id, information_source_id)
-            information_sources.append(is_val)
-
-        information_sources_edges = []
-        for information_source_item in information_sources:
-            last_payload = information_source.get_last_payload(
-                project_id, information_source_item.id
-            )
-            lastPayload = {}
-            if last_payload is not None:
-                lastPayload = {"state": last_payload.state}
-            information_sources_edges.append(
-                {
-                    "node": {
-                        "id": str(information_source_item.id),
-                        "name": information_source_item.name,
-                        "description": information_source_item.description,
-                        "type": information_source_item.type,
-                        "lastPayload": lastPayload,
-                    }
-                }
-            )
-
-        labeling_tasks_edges.append(
-            {
-                "node": {
-                    "id": str(labeling_task_item.id),
-                    "name": labeling_task_item.name,
-                    "taskType": labeling_task_item.task_type,
-                    "informationSources": {"edges": information_sources_edges},
-                }
-            }
-        )
-
-    data = {
-        "data": {
-            "projectByProjectId": {
-                "embeddings": {"edges": embeddings_edges},
-                "labelingTasks": {"edges": labeling_tasks_edges},
-            }
-        }
-    }
-
-    return pack_json_result(data)
+    labeling_tasks = labeling_task.get_labeling_tasks_by_project_id_full(project_id)
+    return pack_json_result(labeling_tasks)
 
 
 @router.get(
@@ -284,8 +192,7 @@ def labeling_tasks_by_project_id_with_embeddings(
 )
 def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
-    data_packed = pack_edges_node(data, "projectByProjectId")
-    return pack_json_result(data_packed)
+    return pack_json_result(data)
 
 
 @router.get("/model-provider-info")

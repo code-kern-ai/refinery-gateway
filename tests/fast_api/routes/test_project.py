@@ -12,9 +12,7 @@ def test_get_project_by_project_id(
     )
     assert response.status_code == 200
     response_data = response.json()
-    assert response_data.get("data")
-    assert response_data["data"].get("projectByProjectId")
-    assert response_data["data"]["projectByProjectId"].get("id")
+    assert response_data.get("id")
 
 
 def test_update_project_name_description(

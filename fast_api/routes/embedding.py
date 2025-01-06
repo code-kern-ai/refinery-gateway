@@ -50,8 +50,7 @@ def get_embeddings(project_id: str) -> List:
     embeddings = get_all_embeddings_by_project_id(project_id)
     number_records = len(project.get(project_id).records)
 
-    edges = []
-
+    embeddings_extended = []
     for embedding in embeddings:
 
         count = get_tensor_count(embedding.id)
@@ -76,34 +75,30 @@ def get_embeddings(project_id: str) -> List:
                 0.99,
             )
 
-        edges.append(
+        embeddings_extended.append(
             {
-                "node": {
-                    "id": embedding.id,
-                    "name": embedding.name,
-                    "custom": embedding.custom,
-                    "type": embedding.type,
-                    "state": embedding.state,
-                    "platform": embedding.platform,
-                    "model": embedding.model,
-                    "filterAttributes": embedding.filter_attributes,
-                    "attributeId": embedding.attribute_id,
-                    "progress": progress,
-                    "dimension": dimension,
-                    "count": count,
-                    "onQdrant": on_qdrant,
-                }
+                "id": embedding.id,
+                "name": embedding.name,
+                "custom": embedding.custom,
+                "type": embedding.type,
+                "state": embedding.state,
+                "platform": embedding.platform,
+                "model": embedding.model,
+                "filterAttributes": embedding.filter_attributes,
+                "attributeId": embedding.attribute_id,
+                "progress": progress,
+                "dimension": dimension,
+                "count": count,
+                "onQdrant": on_qdrant,
             }
         )
 
     data = {
-        "projectByProjectId": {
-            "id": project_id,
-            "embeddings": {"edges": edges},
-        }
+        "id": project_id,
+        "embeddings": embeddings_extended,
     }
 
-    return pack_json_result({"data": data})
+    return pack_json_result(data)
 
 
 @router.delete(
