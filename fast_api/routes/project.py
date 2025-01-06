@@ -95,7 +95,7 @@ def get_all_projects_mini(request: Request) -> Dict:
 
 
 @router.get(
-    "/{project_id}/general-project-stats",
+    "/{project_id}/generalProjectStats",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def general_project_stats(
@@ -103,15 +103,9 @@ def general_project_stats(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
 ) -> Dict:
-
+    data = manager.get_general_project_stats(project_id, labeling_task_id, slice_id)
     return pack_json_result(
-        {
-            "data": {
-                "generalProjectStats": manager.get_general_project_stats(
-                    project_id, labeling_task_id, slice_id
-                )
-            }
-        },
+        data,
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
 
@@ -125,14 +119,9 @@ def label_distribution(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
 ) -> str:
+    data = manager.get_label_distribution(project_id, labeling_task_id, slice_id)
     return pack_json_result(
-        {
-            "data": {
-                "labelDistribution": manager.get_label_distribution(
-                    project_id, labeling_task_id, slice_id
-                )
-            }
-        },
+        data,
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
 
