@@ -34,7 +34,7 @@ def get_attributes(
 ):
     data = manager.get_all_attributes(project_id, state_filter)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=ALL_ATTRIBUTES_WHITELIST)
-    return pack_json_result({"data": {"attributesByProjectId": data_dict}})
+    return pack_json_result(data_dict)
 
 
 @router.get(
@@ -54,7 +54,7 @@ def get_check_composite_key(
             project_id,
         )
 
-    return pack_json_result({"data": {"checkCompositeKey": is_valid}})
+    return pack_json_result(is_valid)
 
 
 @router.get(
@@ -71,12 +71,8 @@ def get_sample_records(
     )
     return pack_json_result(
         {
-            "data": {
-                "calculateUserAttributeSampleRecords": {
-                    "record_ids": record_ids,
-                    "calculated_attributes": calculated_attributes,
-                }
-            }
+            "record_ids": record_ids,
+            "calculated_attributes": calculated_attributes,
         }
     )
 
@@ -91,4 +87,4 @@ def delete_user_attribute(
     body: DeleteUserAttributeBody = Body(...),
 ):
     manager.delete_attribute(project_id, body.attribute_id)
-    return pack_json_result({"data": {"deleteUserAttribute": {"ok": True}}})
+    return pack_json_result({"ok": True})

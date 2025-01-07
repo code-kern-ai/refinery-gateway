@@ -34,9 +34,7 @@ def get_data_slices(
         v["filterRaw"] = json.dumps(v["filter_raw"])
         del v["count_sql"]
 
-    return pack_json_result(
-        {"data": {"dataSlices": values}},
-    )
+    return pack_json_result(values)
 
 
 @router.get(
@@ -45,9 +43,7 @@ def get_data_slices(
 )
 def get_unique_values_by_attributes(project_id: str):
     data = record_manager.get_unique_values_by_attributes(project_id)
-    return pack_json_result(
-        {"data": {"uniqueValuesByAttributes": data}}, wrap_for_frontend=False
-    )
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.get(
@@ -60,7 +56,7 @@ def get_static_data_slices_current_count(
     slice_id: str,
 ):
     data = manager.count_items(project_id, slice_id)
-    return pack_json_result({"data": {"staticDataSlicesCurrentCount": data}})
+    return pack_json_result(data)
 
 
 @router.delete(
@@ -76,4 +72,4 @@ def delete_data_slice_by_id(
     notification.send_organization_update(
         project_id, f"data_slice_deleted:{data_slice_id}"
     )
-    return pack_json_result({"data": {"deleteDataSliceById": {"ok": True}}})
+    return pack_json_result({"ok": True})

@@ -24,7 +24,7 @@ router = APIRouter()
 @router.get("/embedding-platforms")
 def get_embedding_platforms():
     data = manager.get_terms_info()
-    return pack_json_result({"data": {"embeddingPlatforms": data}})
+    return pack_json_result(data)
 
 
 @router.get("/recommended-encoders")
@@ -32,14 +32,13 @@ def data_slices(request: Request, project_id: Optional[str] = None) -> List:
     data = manager.get_recommended_encoders()
     for v in data:
         v["applicability"] = json.dumps(v["applicability"])
-    return pack_json_result({"data": {"recommendedEncoders": data}})
+    return pack_json_result(data)
 
 
 @router.get("/language-models")
 def language_models(request: Request) -> List:
-    return pack_json_result(
-        {"data": {"languageModels": spacy_util.get_language_models()}}
-    )
+    data = spacy_util.get_language_models()
+    return pack_json_result(data)
 
 
 @router.get(
@@ -111,7 +110,7 @@ def delete_from_task_queue(
 ):
     org_id = auth_manager.get_user_by_info(request.state.info).organization_id
     task_master_manager.delete_task(org_id, task_id)
-    return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.delete(
@@ -127,7 +126,7 @@ def delete_embedding(
     notification.send_organization_update(
         project_id, f"embedding_deleted:{embedding_id}"
     )
-    return pack_json_result({"data": {"deleteEmbedding": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -187,7 +186,7 @@ def create_embedding(
     notification.send_organization_update(
         project_id=project_id, message="embedding:queued"
     )
-    return pack_json_result({"data": {"createEmbedding": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -209,4 +208,4 @@ def update_embedding_payload(
             project_id, f"embedding_updated:{updateEmbeddingBody.embedding_id}"
         )
 
-    return pack_json_result({"data": {"updateEmbeddingPayload": {"ok": went_through}}})
+    return pack_json_result({"ok": went_through})
