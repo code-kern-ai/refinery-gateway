@@ -156,8 +156,7 @@ def project_tokenization(project_id: str) -> str:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def labeling_tasks_by_project_id(project_id: str) -> str:
-    labeling_tasks = labeling_task.get_labeling_tasks_by_project_id_full(project_id)
-    return pack_json_result(labeling_tasks)
+    pack_json_result(labeling_task.get_labeling_tasks_by_project_id_full(project_id))
 
 
 @router.get(
