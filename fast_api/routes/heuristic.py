@@ -8,7 +8,7 @@ from controller.labeling_access_link import manager as access_link_manager
 from controller.payload import manager as payload_manager
 from submodules.model.business_objects import information_source
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
-from submodules.model.util import pack_edges_node, sql_alchemy_to_dict
+from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums
@@ -79,14 +79,10 @@ def get_heuristic_by_heuristic_id(
             project_id, heuristic_id
         )
     )
-    statistics = pack_edges_node(
-        sql_alchemy_to_dict(
-            information_source.get_source_statistics(project_id, heuristic_id)
-        ),
-        "sourceStatistics",
+    statistics = sql_alchemy_to_dict(
+        information_source.get_source_statistics(project_id, heuristic_id)
     )
-    if statistics is not None:
-        data["sourceStatistics"] = statistics["data"]["sourceStatistics"]
+    data["sourceStatistics"] = statistics
     return pack_json_result(data)
 
 

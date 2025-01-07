@@ -23,9 +23,7 @@ def init_weak_supervision(
         init_body.overwrite_weak_supervision,
     )
 
-    return pack_json_result(
-        {"data": {"initiateWeakSupervisionByProjectId": {"ok": True}}}
-    )
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -41,4 +39,4 @@ def run_then_weak_supervision(
     manager.run_then_weak_supervision(
         project_id, body.heuristic_id, user_id, body.labeling_task_id
     )
-    return pack_json_result({"data": {"runThenWeakSupervision": {"ok": True}}})
+    return pack_json_result({"ok": True})

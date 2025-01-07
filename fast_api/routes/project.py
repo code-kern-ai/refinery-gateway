@@ -95,7 +95,7 @@ def get_all_projects_mini(request: Request) -> Dict:
 
 
 @router.get(
-    "/{project_id}/generalProjectStats",
+    "/{project_id}/general-project-stats",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def general_project_stats(
@@ -156,9 +156,7 @@ def project_tokenization(project_id: str) -> str:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def labeling_tasks_by_project_id(project_id: str) -> str:
-    data = sql_alchemy_to_dict(
-        labeling_task.get_labeling_tasks_by_project_id_full(project_id)
-    )
+    data = labeling_task.get_labeling_tasks_by_project_id_full(project_id)
     return pack_json_result(data)
 
 

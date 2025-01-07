@@ -21,9 +21,7 @@ def sync_records(
     errors = manager.edit_records(user_id, project_id, record_sync_body.changes)
 
     if errors and len(errors) > 0:
-        return pack_json_result(
-            {"data": {"editRecords": {"ok": False, "errors": errors}}}
-        )
+        return pack_json_result({"ok": False, "errors": errors})
 
     notification.send_organization_update(project_id, "records_changed")
-    return pack_json_result({"data": {"editRecords": {"ok": True}}})
+    return pack_json_result({"ok": True})

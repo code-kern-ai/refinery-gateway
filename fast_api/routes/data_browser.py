@@ -208,9 +208,7 @@ def create_data_slice(
             project_id, f"data_slice_created:{str(data_slice_item.id)}"
         )
         data = {"id": str(data_slice_item.id), "__typename": "CreateDataSlice"}
-        return pack_json_result(
-            {"data": {"createDataSlice": data}}, wrap_for_frontend=False
-        )
+        return pack_json_result(data, wrap_for_frontend=False)
     except Exception as e:
         handle_error(e, user.id, project_id)
         return JSONResponse(
