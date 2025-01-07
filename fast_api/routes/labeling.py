@@ -6,13 +6,10 @@ from fast_api.models import (
     AddExtractionLabelBody,
     AvailableLinksBody,
     DeleteRecordLabelAssociationBody,
-    GenerateAccessLinkBody,
     HuddleDataBody,
     LinkRouteBody,
-    LockAccessLinkBody,
     RemoveGoldStarBody,
     SetGoldStarBody,
-    StringBody,
     TokenizedRecordBody,
 )
 from submodules.model import enums
@@ -56,7 +53,7 @@ def get_available_links(
     assumed_heuristic_id = body.assumedHeuristicId
 
     if assumed_heuristic_id == manager.DUMMY_LINK_ID:
-        return pack_json_result({"data": {"availableLinks": []}})
+        return pack_json_result([])
     if assumed_heuristic_id:
         is_item = information_source.get(project_id, assumed_heuristic_id)
         if not is_item:
@@ -93,7 +90,7 @@ def get_available_links(
             if key not in AVAILABLE_LINKS_WHITELIST:
                 obj.pop(key, None)
 
-    return pack_json_result({"data": {"availableLinks": available_links}})
+    return pack_json_result(available_links)
 
 
 @router.post(
@@ -124,14 +121,14 @@ def get_huddle_data(
         "checkedAt": huddle_data.checked_at.isoformat(),
     }
 
-    return pack_json_result({"data": {"requestHuddleData": data}})
+    return pack_json_result(data)
 
 
 @router.post("/tokenized-record")
 def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)):
     record_item = record.get_without_project_id(body.record_id)
     if not record_item:
-        return pack_json_result({"data": {"tokenizeRecord": None}})
+        return pack_json_result(None)
 
     # Delegated here due to record_item dep
     auth_manager.check_project_access(request.state.info, record_item.project_id)
@@ -171,7 +168,7 @@ def get_tokenized_record(request: Request, body: TokenizedRecordBody = Body(...)
         "attributes": attributes,
     }
 
-    return pack_json_result({"data": {"tokenizeRecord": data}})
+    return pack_json_result(data)
 
 
 @router.delete(
@@ -191,7 +188,7 @@ def delete_record_label_association_by_ids(
         project_id, record_id, association_ids, user.id
     )
 
-    return pack_json_result({"data": {"deleteRecordLabelAssociation": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.delete(
@@ -205,7 +202,7 @@ def delete_record_by_id(
 ):
     record_manager.delete_record(project_id, record_id)
     notification.send_organization_update(project_id, f"record_deleted:{record_id}")
-    return pack_json_result({"data": {"deleteRecord": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -218,87 +215,7 @@ def get_link_locked(
     linkRouteBody: LinkRouteBody = Body(...),
 ):
     is_locked = manager.check_link_locked(project_id, linkRouteBody.link_route)
-    return pack_json_result({"data": {"linkLocked": is_locked}})
-
-
-@router.post(
-    "/{project_id}/generate-access-link",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def generate_access_link(
-    request: Request,
-    project_id: str,
-    generateAccessLinkBody: GenerateAccessLinkBody = Body(...),
-):
-
-    user = auth_manager.get_user_by_info(request.state.info)
-
-    try:
-        link_type_parsed = enums.LinkTypes[generateAccessLinkBody.type.upper()]
-    except KeyError:
-        raise ValueError(f"Invalid LinkTypes: {generateAccessLinkBody.type}")
-
-    if link_type_parsed == enums.LinkTypes.HEURISTIC:
-        link = manager.generate_heuristic_access_link(
-            project_id, user.id, generateAccessLinkBody.id
-        )
-    elif link_type_parsed == enums.LinkTypes.DATA_SLICE:
-        print("not yet supported")
-    notification.send_organization_update(
-        project_id, f"access_link_created:{str(link.id)}"
-    )
-
-    data = {
-        "link": {
-            "id": str(link.id),
-            "link": link.link,
-            "isLocked": link.is_locked,
-        }
-    }
-
-    return pack_json_result({"data": {"generateAccessLink": data}})
-
-
-@router.delete(
-    "/{project_id}/remove-access-link",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def remove_access_link(
-    request: Request,
-    project_id: str,
-    stringBody: StringBody = Body(...),
-):
-
-    type_id = manager.remove(stringBody.value)
-    notification.send_organization_update(
-        project_id, f"access_link_removed:{stringBody.value}:{type_id}"
-    )
-
-    data = {"ok": True}
-
-    return pack_json_result({"data": {"removeAccessLink": data}})
-
-
-@router.put(
-    "/{project_id}/lock-access-link",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def lock_access_link(
-    request: Request,
-    project_id: str,
-    lockAccessLinkBody: LockAccessLinkBody = Body(...),
-):
-    type_id = manager.change_user_access_to_link_lock(
-        lockAccessLinkBody.link_id, lockAccessLinkBody.lock_state
-    )
-    notification.send_organization_update(
-        project_id,
-        f"access_link_changed:{lockAccessLinkBody.link_id}:{type_id}:{lockAccessLinkBody.lock_state}",
-    )
-
-    data = {"ok": True}
-
-    return pack_json_result({"data": {"lockAccessLink": data}})
+    return pack_json_result(is_locked)
 
 
 @router.post(
@@ -320,7 +237,7 @@ def add_classification_labels_to_record(
     )
 
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"data": {"addClassificationLabelsToRecord": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -344,7 +261,7 @@ def add_extraction_label_to_record(
         body.source_id,
     )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"data": {"addExtractionLabelToRecord": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -353,7 +270,7 @@ def add_extraction_label_to_record(
 )
 def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"data": {"setGoldStarAnnotationForTask": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -368,7 +285,7 @@ def remove_gold_star(
         project_id, user.id, body.record_id, body.labeling_task_id
     )
     notification.send_organization_update(project_id, f"rla_deleted:{body.record_id}")
-    return pack_json_result({"data": {"removeGoldStarAnnotationForTask": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.get(
@@ -381,7 +298,7 @@ def get_record_label_associations(
     record_id: str,
 ):
     if record_id is None or record_id == "null":
-        return pack_json_result({"data": {"recordByRecordId": None}})
+        return pack_json_result(None)
 
     record = record_manager.get_record(project_id, record_id)
 
@@ -390,7 +307,7 @@ def get_record_label_associations(
     first_name = names.get("first", "")
     last_name = names.get("last", "")
 
-    edges = []
+    record_label_associations = []
     rla = record.record_label_associations
     for r in rla:
 
@@ -454,33 +371,31 @@ def get_record_label_associations(
                     }
 
                 labelingTaskLabelDict["labeling_task"]["attribute"] = attributeDict
-        edges.append(
+        record_label_associations.append(
             {
-                "node": {
-                    "id": str(r.id),
-                    "recordId": str(r.record_id),
-                    "labelingTaskLabelId": str(r.labeling_task_label_id),
-                    "source_id": getattr(r, "source_id", None),
-                    "source_type": r.source_type,
-                    "return_type": r.return_type,
-                    "confidence": getattr(r, "confidence", None),
-                    "created_at": r.created_at,
-                    "created_by": str(r.created_by),
-                    "token_start_idx": token_start_idx,
-                    "token_end_idx": token_end_idx,
-                    "is_gold_star": getattr(r, "is_gold_star", None),
-                    "user": {
-                        "id": str(user_id),
-                        "firstName": first_name,
-                        "lastName": last_name,
-                        "mail": mail,
-                    },
-                    "information_source": informationSourceDict,
-                    "labeling_task_label": labelingTaskLabelDict,
-                }
+                "id": str(r.id),
+                "recordId": str(r.record_id),
+                "labelingTaskLabelId": str(r.labeling_task_label_id),
+                "source_id": getattr(r, "source_id", None),
+                "source_type": r.source_type,
+                "return_type": r.return_type,
+                "confidence": getattr(r, "confidence", None),
+                "created_at": r.created_at,
+                "created_by": str(r.created_by),
+                "token_start_idx": token_start_idx,
+                "token_end_idx": token_end_idx,
+                "is_gold_star": getattr(r, "is_gold_star", None),
+                "user": {
+                    "id": str(user_id),
+                    "firstName": first_name,
+                    "lastName": last_name,
+                    "mail": mail,
+                },
+                "information_source": informationSourceDict,
+                "labeling_task_label": labelingTaskLabelDict,
             }
         )
 
-    data = {"id": str(record.id), "recordLabelAssociations": {"edges": edges}}
+    data = {"id": str(record.id), "recordLabelAssociations": record_label_associations}
 
-    return pack_json_result({"data": {"recordByRecordId": data}})
+    return pack_json_result(data)

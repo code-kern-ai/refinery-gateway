@@ -12,6 +12,7 @@ from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
 from util import notification as prj_notification
 from controller.auth.manager import get_user_by_info
+from fast_api.routes.client_response import pack_json_result
 
 router = APIRouter()
 
@@ -43,7 +44,7 @@ def get_lookup_lists_by_project_id(project_id: str):
             }
         )
 
-    return {"data": {"knowledgeBasesByProjectId": term_data}}
+    return pack_json_result(term_data)
 
 
 @router.get(
@@ -55,8 +56,8 @@ def get_lookup_lists_by_lookup_list_id(
     lookup_list_id: str,
 ):
     data = base_manager.get_knowledge_base(project_id, lookup_list_id)
-    data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_WHITELIST)
-    return {"data": {"knowledgeBaseByKnowledgeBaseId": data_dict}}
+    data = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_WHITELIST)
+    return pack_json_result(data)
 
 
 @router.get(
@@ -68,8 +69,8 @@ def get_terms_by_lookup_list_id(
     lookup_list_id: str,
 ):
     data = terms_manager.get_terms_by_knowledge_base(project_id, lookup_list_id)
-    data_dict = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
-    return {"data": {"termsByKnowledgeBaseId": data_dict}}
+    data = sql_alchemy_to_dict(data, column_whitelist=LOOKUP_LIST_TERM_WHITELIST)
+    return pack_json_result(data)
 
 
 @router.get(
@@ -80,13 +81,8 @@ def get_export_lookup_list(
     project_id: str,
     lookup_list_id: str,
 ):
-    return {
-        "data": {
-            "exportKnowledgeBase": transfer_manager.export_knowledge_base(
-                project_id, lookup_list_id
-            )
-        }
-    }
+    data = transfer_manager.export_knowledge_base(project_id, lookup_list_id)
+    return pack_json_result(data)
 
 
 @router.post(
@@ -111,7 +107,7 @@ def create_knowledge_base(
         }
     }
 
-    return {"data": {"createKnowledgeBase": data}}
+    return pack_json_result(data)
 
 
 @router.delete(
@@ -128,7 +124,7 @@ def delete_knowledge_base(
         project_id, f"knowledge_base_deleted:{str(knowledge_base_id)}"
     )
 
-    return {"data": {"deleteKnowledgeBase": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.put(
@@ -155,7 +151,7 @@ def update_knowledge_base(
         f"knowledge_base_updated:{str(updateKnowledgeBaseBody.knowledge_base_id)}",
     )
 
-    return {"data": {"updateKnowledgeBase": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -182,7 +178,7 @@ def add_term_to_knowledge_base(
         f"knowledge_base_term_updated:{str(termBody.knowledge_base_id)}",
     )
 
-    return {"data": {"addTermToKnowledgeBase": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.delete(
@@ -197,7 +193,7 @@ def delete_term(project_id: str, term_id: str):
         project_id, f"knowledge_base_term_updated:{str(base.id)}"
     )
 
-    return {"data": {"deleteTerm": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.put(
@@ -206,7 +202,7 @@ def delete_term(project_id: str, term_id: str):
 )
 def blacklist_term(project_id: str, term_id: str):
     terms_manager.blacklist_term(term_id)
-    return {"data": {"blacklistTerm": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.post(
@@ -229,7 +225,7 @@ def paste_knowledge_terms(
         f"knowledge_base_term_updated:{str(pasteBody.knowledge_base_id)}",
     )
 
-    return {"data": {"pasteKnowledgeTerms": {"ok": True}}}
+    return pack_json_result({"ok": True})
 
 
 @router.put(
@@ -257,4 +253,4 @@ def update_term(
         str(project_id), f"knowledge_base_term_updated:{str(base.id)}"
     )
 
-    return {"data": {"updateTerm": {"ok": True}}}
+    return pack_json_result({"ok": True})
