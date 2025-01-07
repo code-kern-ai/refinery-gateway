@@ -30,19 +30,19 @@ router = APIRouter()
 @router.get("/is-admin")
 def get_is_admin(request: Request) -> Dict:
     data = auth.check_is_admin(request)
-    return pack_json_result({"data": {"isAdmin": data}})
+    return pack_json_result(data)
 
 
 @router.get("/version-overview")
 def get_version_overview(request: Request) -> Dict:
     data = manager.get_version_overview()
-    return pack_json_result({"data": {"versionOverview": data}})
+    return pack_json_result(data)
 
 
 @router.get("/has-updates")
 def has_updates(request: Request) -> Dict:
     data = manager.has_updates()
-    return pack_json_result({"data": {"hasUpdates": data}})
+    return pack_json_result(data)
 
 
 @router.delete("/model-provider-delete-model")
@@ -53,7 +53,7 @@ def model_provider_delete_model(
         auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_delete_model(body.model_name)
 
-    return pack_json_result({"data": {"modelProviderDeleteModel": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post("/model-provider-download-model")
@@ -64,7 +64,7 @@ def model_provider_download_model(
         auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_download_model(body.model_name)
 
-    return pack_json_result({"data": {"modelProviderDownloadModel": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.get("/all-tasks")
@@ -100,7 +100,7 @@ def cancel_task(
 
     task_entity = task_queue_bo.get(task_id)
     if not task_entity:
-        return pack_json_result({"data": {"cancelTask": {"ok": False}}})
+        return pack_json_result({"ok": False})
     if task_entity and (
         task_entity.is_active or task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value
     ):
@@ -126,14 +126,14 @@ def cancel_task(
             raise ValueError(f"{task_type} is no valid task type")
 
     task_queue_bo.delete_by_task_id(task_id, True)
-    return pack_json_result({"data": {"cancelTask": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post("/cancel-all-running-tasks")
 def cancel_all_running_tasks(request: Request):
     auth.check_admin_access(request.state.info)
     controller_manager.cancel_all_running_tasks()
-    return pack_json_result({"data": {"cancelAllRunningTasks": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.post("/pause-task-queue")
@@ -146,7 +146,7 @@ def pause_task_queue(request: Request, task_queue_pause: bool):
             task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
         except Exception:
             task_queue_pause = False
-    return pack_json_result({"taskQueuePause": task_queue_pause})
+    return pack_json_result(task_queue_pause)
 
 
 @router.get("/pause-task-queue")
@@ -159,7 +159,7 @@ def get_task_queue_pause(request: Request):
             task_queue_pause = task_queue_pause_response.json()["task_queue_pause"]
         except Exception:
             task_queue_pause = False
-    return pack_json_result({"taskQueuePause": task_queue_pause})
+    return pack_json_result(task_queue_pause)
 
 
 # this endpoint is meant to be used by the frontend to get the customer buttons for the current user
