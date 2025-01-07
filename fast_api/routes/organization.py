@@ -16,7 +16,7 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
-    resolve_user_name_and_email_by_id,
+    resolve_user_name_by_id,
 )
 from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
@@ -40,50 +40,55 @@ ACTIVE_ADMIN_MESSAGES_WHITELIST = {
     "scheduled_date",
 }
 
+USER_INFO_WHITELIST = {
+    "id",
+    "organization_id",
+    "role",
+    "language_display",
+    "email",
+}
+USER_INFO_RENAME_MAP = {"email": "mail"}
 
+
+# in use refinery-ui (07.01.25)
 @router.get("")
 def get_organization(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = manager.get_organization_by_id(user.organization_id)
 
-    return pack_json_result({"data": {"userOrganization": organization}})
+    return pack_json_result(manager.get_organization_by_id(user.organization_id))
 
 
+# in use refinery-ui (07.01.25)
 @router.get("/overview-stats")
 def get_overview_stats(request: Request):
     org_id = str(auth_manager.get_user_by_info(request.state.info).organization_id)
-    data = manager.get_overview_stats(org_id)
 
-    return {"data": {"overviewStats": data}}
+    return pack_json_result(manager.get_overview_stats(org_id), wrap_for_frontend=False)
 
 
+# in use refinery-ui (07.01.25)
 @router.get("/user-info")
 def get_user_info(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    data = manager.get_user_info(user)
-    return {"data": {"userInfo": data}}
+    return pack_json_result(manager.get_user_info(user), wrap_for_frontend=False)
 
 
+# in use cognition-ui & admin dashboard (07.01.25)
 @router.get("/get-user-info-extended")
 def get_user_info_extended(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    name, mail = resolve_user_name_and_email_by_id(user.id)
-
-    data = {
-        "userInfo": {
-            "id": str(user.id),
-            "organizationId": (
-                str(user.organization_id) if user.organization_id else None
-            ),
-            "firstName": name.get("first"),
-            "lastName": name.get("last"),
-            "mail": mail,
-            "role": user.role,
-            "languageDisplay": user.language_display,
-        }
+    name = resolve_user_name_by_id(user.id)
+    user_dict = {
+        **sql_alchemy_to_dict(
+            user,
+            column_whitelist=USER_INFO_WHITELIST,
+            column_rename_map=USER_INFO_RENAME_MAP,
+        ),
+        "first_name": name.get("first"),
+        "last_name": name.get("last"),
     }
 
-    return pack_json_result({"data": data})
+    return pack_json_result(user_dict)
 
 
 @router.get("/get-user-info-mini")

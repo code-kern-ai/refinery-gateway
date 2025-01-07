@@ -152,7 +152,7 @@ def resolve_user_mail_by_id(user_id: str) -> str:
     return None
 
 
-def resolve_user_name_by_id(user_id: str) -> str:
+def resolve_user_name_by_id(user_id: str) -> Dict[str, str]:
     i = __get_identity(user_id, False)
     if i:
         i = i["identity"]
