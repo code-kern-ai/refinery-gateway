@@ -56,9 +56,7 @@ def get_all_comments(request: Request):
             "add_info": add_info,
         }
 
-    return pack_json_result(
-        {"data": {"getAllComments": to_return}}, wrap_for_frontend=False
-    )
+    return pack_json_result(to_return, wrap_for_frontend=False)
 
 
 @router.post("/create-comment")
@@ -84,7 +82,7 @@ def create_comment(request: Request, body: CreateCommentBody = Body(...)):
             True,
         )
 
-    return pack_json_result({"data": {"createComment": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.delete("/delete-comment")
@@ -109,7 +107,7 @@ def delete_comment(
             True,
         )
 
-    return pack_json_result({"data": {"deleteComment": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.put("/update-comment")
@@ -134,7 +132,7 @@ def update_comment(
             True,
         )
 
-    return pack_json_result({"data": {"updateComment": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.get("/get-unique-comments-keys-for")

@@ -42,9 +42,7 @@ def get_record_comments(
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = comment_manager.get_record_comments(project_id, user_id, record_ids)
-    return pack_json_result(
-        {"data": {"getRecordComments": data}}, wrap_for_frontend=False
-    )
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.post(
@@ -81,7 +79,7 @@ def search_records_extended(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"searchRecordsExtended": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -113,7 +111,7 @@ def search_records_extended_cog(
         "recordList": record_list_pop,
     }
 
-    return pack_json_result({"data": {"searchRecordsExtended": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -183,7 +181,7 @@ def get_records_by_static_slice(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"recordsByStaticSlice": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -256,7 +254,7 @@ def get_search_records_by_similarity(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"searchRecordsBySimilarity": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -291,7 +289,7 @@ def update_data_slice(
     except Exception as e:
         handle_error(e, user.id, project_id)
 
-    return pack_json_result({"data": {"updateDataSlice": {"ok": ok}}})
+    return pack_json_result({"ok": ok})
 
 
 def handle_error(exception: Exception, user_id: str, project_id: str):
