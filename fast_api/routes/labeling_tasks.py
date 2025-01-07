@@ -38,7 +38,7 @@ def update_labeling_task(project_id: str, body: UpdateLabelingTaskBody = Body(..
         f"labeling_task_updated:{body.labeling_task_id}:{body.labeling_task_type}",
     )
 
-    return pack_json_result({"data": {"updateLabelingTask": {"ok": True}}})
+    return pack_json_result({"ok": True})
 
 
 @router.delete(
@@ -109,7 +109,6 @@ def create_label(
     if project_id:
         auth_manager.check_project_access(request.state.info, project_id)
 
-    user = auth_manager.get_user_by_info(request.state.info)
     label = label_manager.create_label(
         project_id, label_name, labeling_task_id, label_color
     )

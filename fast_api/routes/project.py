@@ -156,7 +156,10 @@ def project_tokenization(project_id: str) -> str:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def labeling_tasks_by_project_id(project_id: str) -> str:
-    pack_json_result(labeling_task.get_labeling_tasks_by_project_id_full(project_id))
+    data = sql_alchemy_to_dict(
+        labeling_task.get_labeling_tasks_by_project_id_full(project_id)
+    )
+    return pack_json_result(data)
 
 
 @router.get(
