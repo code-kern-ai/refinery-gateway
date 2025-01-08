@@ -170,11 +170,12 @@ def remove_user_from_organization(
     return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
-    return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
 # in use admin-dashboard (08.01.25)
@@ -185,11 +186,12 @@ def get_user_roles(request: Request):
     return pack_json_result(data)
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/change-user-role")
 def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.update_user_role(body.user_id, body.role)
-    return {"data": {"changeUserRole": {"ok": True}}}
+    return get_silent_success()
 
 
 # in use admin-dashboard (08.01.25)
@@ -207,13 +209,15 @@ def get_all_organizations(request: Request):
     return pack_json_result(org_dicts)
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/delete-organization")
 def delete_organization(request: Request, body: DeleteOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     organization_manager.delete_organization(body.name)
-    return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/create-admin-message")
 def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -222,9 +226,10 @@ def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(.
         body.text, body.level, body.archive_date, body.scheduled_date, user_id
     )
     notification.send_global_update_for_all_organizations("admin_message")
-    return pack_json_result({"data": {"createAdminMessage": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/archive-admin-message")
 def archive_admin_message(
     request: Request,
@@ -236,15 +241,17 @@ def archive_admin_message(
         body.message_id, user_id, body.archived_reason
     )
     notification.send_global_update_for_all_organizations("admin_message")
-    return pack_json_result({"data": {"archiveAdminMessage": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use cognition-ui (08.01.25)
 @router.post("/set-language-display")
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
     user_manager.update_user_language_display(body.user_id, body.language_display)
-    return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/mapped-sorted-paginated-users")
 def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
@@ -280,6 +287,7 @@ def get_mapped_sorted_paginated_users(
     )
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/delete-user")
 def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -287,6 +295,7 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/missing-users-interaction")
 def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -294,6 +303,7 @@ def get_missing_users_interaction(request: Request, body: MissingUsersBody = Bod
     return pack_json_result(data, wrap_for_frontend=False)
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/user-to-organization")
 def get_user_to_organization(request: Request):
     auth_manager.check_admin_access(request.state.info)
