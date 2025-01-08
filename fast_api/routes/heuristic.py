@@ -218,7 +218,7 @@ def create_heuristic(
     body: CreateHeuristicBody = Body(...),
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    data = manager.create_information_source(
+    info_source = manager.create_information_source(
         project_id,
         user.id,
         body.labeling_task_id,
@@ -228,9 +228,9 @@ def create_heuristic(
         body.type,
     )
     notification.send_organization_update(
-        project_id, f"information_source_created:{str(information_source.id)}"
+        project_id, f"information_source_created:{str(info_source.id)}"
     )
-    return pack_json_result(data)
+    return pack_json_result(info_source)
 
 
 @router.post(
