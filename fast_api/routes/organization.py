@@ -91,21 +91,7 @@ def get_user_info_extended(request: Request):
     return pack_json_result(user_dict)
 
 
-@router.get("/get-user-info-mini")
-def get_user_info_mini(request: Request):
-    user = auth_manager.get_user_by_info(request.state.info)
-
-    data = {
-        "userInfo": {
-            "id": str(user.id),
-            "organization": {"id": str(user.organization_id)},
-            "role": user.role,
-        }
-    }
-
-    return pack_json_result({"data": data})
-
-
+# in use admin dashboard (08.01.25)
 @router.get("/org-id-name-map")
 def get_org_id_name_map(request: Request):
     auth_manager.check_admin_access(request.state.info)
@@ -114,11 +100,13 @@ def get_org_id_name_map(request: Request):
     )
 
 
+# in use cognition-ui & refinery-ui (08.01.25)
 @router.get("/all-users")
 def get_all_user(request: Request):
     organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
-    data = manager.get_all_users(organization_id)
-    return {"data": {"allUsers": data}}
+    return pack_json_result(
+        manager.get_all_users(organization_id), wrap_for_frontend=False
+    )
 
 
 @router.get("/all-active-admin-messages")
