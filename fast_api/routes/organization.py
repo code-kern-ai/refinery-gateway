@@ -48,6 +48,19 @@ USER_INFO_WHITELIST = {
     "email",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
+ALL_ORGANIZATIONS_WHITELIST = {
+    "id",
+    "name",
+    "created_at",
+    "started_at",
+    "is_paying",
+    "max_rows",
+    "max_cols",
+    "max_char_count",
+    "log_admin_requests",
+    "conversation_lifespan_days",
+    "file_lifespan_days",
+}
 
 
 # in use refinery-ui (07.01.25)
@@ -165,7 +178,7 @@ def change_organization(request: Request, body: ChangeOrganizationBody = Body(..
 def get_user_roles(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user_manager.get_user_roles()
-    return {"data": {"userRoles": data}}
+    return pack_json_result(data)
 
 
 @router.post("/change-user-role")
@@ -179,40 +192,14 @@ def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
 def get_all_organizations(request: Request):
     auth_manager.check_admin_access(request.state.info)
     organizations = manager.get_all_organizations()
-
-    edges = []
-
-    for org in organizations:
-        edges.append(
-            {
-                "node": {
-                    "id": str(org.id),
-                    "name": org.name,
-                    "createdAt": (
-                        org.created_at.isoformat()
-                        if org.created_at is not None
-                        else None
-                    ),
-                    "startedAt": (
-                        org.started_at.isoformat()
-                        if org.started_at is not None
-                        else None
-                    ),
-                    "isPaying": org.is_paying,
-                    "userCount": manager.get_user_count(org.id),
-                    "maxRows": org.max_rows,
-                    "maxCols": org.max_cols,
-                    "maxCharCount": org.max_char_count,
-                    "logAdminRequests": org.log_admin_requests,
-                    "conversationLifespanDays": org.conversation_lifespan_days,
-                    "fileLifespanDays": org.file_lifespan_days,
-                }
-            }
-        )
-
-    data = {"edges": edges}
-
-    return pack_json_result({"data": {"allOrganizations": data}})
+    org_dicts = [
+        {
+            **sql_alchemy_to_dict(org, column_whitelist=ALL_ORGANIZATIONS_WHITELIST),
+            "userCount": manager.get_user_count(org.id),
+        }
+        for org in organizations
+    ]
+    return pack_json_result(org_dicts)
 
 
 @router.delete("/delete-organization")
