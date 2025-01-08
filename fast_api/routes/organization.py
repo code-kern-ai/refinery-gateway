@@ -109,6 +109,7 @@ def get_all_user(request: Request):
     )
 
 
+# in use cognition-ui & refinery-ui & admin-dashboard (08.01.25)
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
@@ -116,15 +117,16 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
     )
-    return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
+    return pack_json_result(data_dict)
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/all-admin-messages")
 def all_admin_messages(request: Request, limit: int = 100) -> str:
     auth_manager.check_admin_access(request.state.info)
     data = admin_message_manager.get_messages(limit, active_only=False)
     data_dict = sql_alchemy_to_dict(data)
-    return pack_json_result({"data": {"allAdminMessages": data_dict}})
+    return pack_json_result(data_dict)
 
 
 @router.post("/create-organization")
