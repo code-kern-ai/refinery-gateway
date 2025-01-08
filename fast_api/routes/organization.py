@@ -142,11 +142,12 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
     return pack_json_result(data_dict)
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
-    organization = organization_manager.create_organization(body.name)
-    return {"data": {"createOrganization": {"organization": organization}}}
+    organization_manager.create_organization(body.name)
+    return get_silent_success()
 
 
 @router.post("/add-user-to-organization")
@@ -174,6 +175,7 @@ def change_organization(request: Request, body: ChangeOrganizationBody = Body(..
     return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/user-roles")
 def get_user_roles(request: Request):
     auth_manager.check_admin_access(request.state.info)
@@ -188,6 +190,7 @@ def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
     return {"data": {"changeUserRole": {"ok": True}}}
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/all-organizations")
 def get_all_organizations(request: Request):
     auth_manager.check_admin_access(request.state.info)
