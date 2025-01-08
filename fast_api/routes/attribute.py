@@ -2,7 +2,7 @@ from controller.attribute import manager
 from controller.auth import manager as auth_manager
 from typing import List, Union
 from fast_api.models import DeleteUserAttributeBody
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 from fastapi import APIRouter, Body, Depends, Query, Request
 from submodules.model.enums import NotificationType
 from submodules.model.util import sql_alchemy_to_dict
@@ -87,4 +87,4 @@ def delete_user_attribute(
     body: DeleteUserAttributeBody = Body(...),
 ):
     manager.delete_attribute(project_id, body.attribute_id)
-    return pack_json_result({"ok": True})
+    return SILENT_SUCCESS_RESPONSE
