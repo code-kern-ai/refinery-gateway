@@ -150,22 +150,24 @@ def create_organization(request: Request, body: CreateOrganizationBody = Body(..
     return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/add-user-to-organization")
 def add_user_to_organization(
     request: Request, body: AddUserToOrganizationBody = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
     user_manager.update_organization_of_user(body.organization_name, body.user_mail)
-    return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/remove-user-from-organization")
 def remove_user_from_organization(
     request: Request, body: RemoveUserToOrganizationBody = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
     user_manager.remove_organization_from_user(body.user_mail)
-    return pack_json_result({"data": {"removeUserFromOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post("/change-organization")
