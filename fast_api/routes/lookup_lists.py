@@ -12,7 +12,7 @@ from submodules.model.util import sql_alchemy_to_dict
 from controller.auth import manager as auth_manager
 from util import notification as prj_notification
 from controller.auth.manager import get_user_by_info
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 
 router = APIRouter()
 
@@ -124,7 +124,7 @@ def delete_knowledge_base(
         project_id, f"knowledge_base_deleted:{str(knowledge_base_id)}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -151,7 +151,7 @@ def update_knowledge_base(
         f"knowledge_base_updated:{str(updateKnowledgeBaseBody.knowledge_base_id)}",
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -178,7 +178,7 @@ def add_term_to_knowledge_base(
         f"knowledge_base_term_updated:{str(termBody.knowledge_base_id)}",
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -193,7 +193,7 @@ def delete_term(project_id: str, term_id: str):
         project_id, f"knowledge_base_term_updated:{str(base.id)}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -202,7 +202,7 @@ def delete_term(project_id: str, term_id: str):
 )
 def blacklist_term(project_id: str, term_id: str):
     terms_manager.blacklist_term(term_id)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -225,7 +225,7 @@ def paste_knowledge_terms(
         f"knowledge_base_term_updated:{str(pasteBody.knowledge_base_id)}",
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -253,4 +253,4 @@ def update_term(
         str(project_id), f"knowledge_base_term_updated:{str(base.id)}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
