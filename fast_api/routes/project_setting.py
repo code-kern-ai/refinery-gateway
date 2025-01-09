@@ -159,7 +159,7 @@ def get_project_size(project_id: str):
     data = project_manager.get_project_size(project_id)
     final_data = [
         {
-            "byteSize": key.byte_size,
+            "byteSize": str(key.byte_size),
             "byteReadable": key.byte_readable,
             "table": key.table,
             "order": key.order,
