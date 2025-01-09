@@ -7,18 +7,29 @@ from controller.embedding import manager
 from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
-from submodules.model.business_objects import project
-from submodules.model.business_objects.embedding import (
-    get_all_embeddings_by_project_id,
-    get_tensor_count,
-    get_tensor,
-)
 from submodules.model.enums import TaskType
+from submodules.model.business_objects import embedding
+from submodules.model.util import sql_alchemy_to_dict
 from util import notification, spacy_util
 import json
 
 
 router = APIRouter()
+
+ALL_EMBEDDINGS_WHITELIST = [
+    "id",
+    "name",
+    "custom",
+    "type",
+    "state",
+    "progress",
+    "dimension",
+    "count",
+    "platform",
+    "model",
+    "filter_attributes",
+    "attribute_id",
+]
 
 
 @router.get("/embedding-platforms")
@@ -46,57 +57,21 @@ def language_models(request: Request) -> List:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def get_embeddings(project_id: str) -> List:
-    embeddings = get_all_embeddings_by_project_id(project_id)
-    number_records = len(project.get(project_id).records)
-
-    embeddings_extended = []
-    for embedding in embeddings:
-
-        count = get_tensor_count(embedding.id)
-        on_qdrant = collection_on_qdrant(project_id, embedding.id)
-
-        embedding_item = get_tensor(embedding.id)
-        dimension = 0
-        if embedding_item is not None:
-            # distinguish between token and attribute embeddings
-            if type(embedding_item.data[0]) is list:
-                dimension = len(embedding_item.data[0])
-            else:
-                dimension = len(embedding_item.data)
-
-        if embedding.state == "FINISHED":
-            progress = 1
-        elif embedding.state == "INITIALIZING" or embedding.state == "WAITING":
-            progress = 0.0
-        else:
-            progress = min(
-                0.1 + (count / number_records * 0.9),
-                0.99,
-            )
-
-        embeddings_extended.append(
-            {
-                "id": embedding.id,
-                "name": embedding.name,
-                "custom": embedding.custom,
-                "type": embedding.type,
-                "state": embedding.state,
-                "platform": embedding.platform,
-                "model": embedding.model,
-                "filterAttributes": embedding.filter_attributes,
-                "attributeId": embedding.attribute_id,
-                "progress": progress,
-                "dimension": dimension,
-                "count": count,
-                "onQdrant": on_qdrant,
-            }
-        )
-
+    embeddings_extended = embedding.get_all_embeddings_by_project_id_extended(
+        project_id
+    )
     data = {
         "id": project_id,
-        "embeddings": embeddings_extended,
+        "embeddings": [
+            {
+                **sql_alchemy_to_dict(
+                    embedding, column_whitelist=ALL_EMBEDDINGS_WHITELIST
+                ),
+                "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
+            }
+            for embedding in embeddings_extended
+        ],
     }
-
     return pack_json_result(data)
 
 
