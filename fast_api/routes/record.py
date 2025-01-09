@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.record import manager
 from controller.auth import manager as auth_manager
 from fast_api.routes.client_response import (
-    get_custom_response,
+    get_custom_text_response,
     get_silent_success,
 )
 from fast_api.models import RecordSyncBody
@@ -26,7 +26,7 @@ def sync_records(
     errors = manager.edit_records(user_id, project_id, record_sync_body.changes)
 
     if errors and len(errors) > 0:
-        return get_custom_response(
+        return get_custom_text_response(
             status_code=status.HTTP_200_OK,
             content=json.dumps(errors),
         )
