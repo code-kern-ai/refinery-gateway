@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as labeling_manager
 from controller.labeling_task_label import manager as label_manager
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from util import notification
 
 
@@ -38,7 +38,7 @@ def update_labeling_task(project_id: str, body: UpdateLabelingTaskBody = Body(..
         f"labeling_task_updated:{body.labeling_task_id}:{body.labeling_task_type}",
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -53,7 +53,7 @@ def delete_labeling_task(project_id: str, body: StringBody = Body(...)):
         project_id, f"labeling_task_deleted:{labeling_task_id}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -74,7 +74,7 @@ def create_labeling_task(
         project_id, f"labeling_task_created:{str(item.id)}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -90,7 +90,7 @@ def delete_label(project_id: str, body: StringBody = Body(...)):
         project_id, f"label_deleted:{label_id}:labeling_task:{labeling_task_id}"
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -115,7 +115,7 @@ def create_label(
     notification.send_organization_update(
         project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -126,7 +126,7 @@ def update_label_color(project_id: str, body: UpdateLabelColorBody = Body(...)):
     label_manager.update_label_color(
         project_id, body.labeling_task_label_id, body.label_color
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -137,7 +137,7 @@ def update_label_hotkey(project_id: str, body: UpdateLabelHotkeyBody = Body(...)
     label_manager.update_label_hotkey(
         project_id, body.labeling_task_label_id, body.label_hotkey
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -149,7 +149,7 @@ def handle_label_rename_warnings(
     body: WarningDataBody = Body(...),
 ):
     label_manager.handle_label_rename_warning(project_id, body.warning_data)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -161,4 +161,4 @@ def update_label_name(
     body: UpdateLabelNameBody = Body(...),
 ):
     label_manager.update_label_name(project_id, body.label_id, body.new_name)
-    return pack_json_result({"ok": True})
+    return get_silent_success()

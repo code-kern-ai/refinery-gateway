@@ -13,7 +13,7 @@ from fast_api.models import (
     TokenizedRecordBody,
 )
 from submodules.model import enums
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from controller.labeling_access_link import manager
 from controller.labeling_task_label import manager as label_manager
 from controller.labeling_task import manager as task_manager
@@ -188,7 +188,7 @@ def delete_record_label_association_by_ids(
         project_id, record_id, association_ids, user.id
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -202,7 +202,7 @@ def delete_record_by_id(
 ):
     record_manager.delete_record(project_id, record_id)
     notification.send_organization_update(project_id, f"record_deleted:{record_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -237,7 +237,7 @@ def add_classification_labels_to_record(
     )
 
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -261,7 +261,7 @@ def add_extraction_label_to_record(
         body.source_id,
     )
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -270,7 +270,7 @@ def add_extraction_label_to_record(
 )
 def set_gold_star(request: Request, project_id: str, body: SetGoldStarBody = Body(...)):
     notification.send_organization_update(project_id, f"rla_created:{body.record_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -285,7 +285,7 @@ def remove_gold_star(
         project_id, user.id, body.record_id, body.labeling_task_id
     )
     notification.send_organization_update(project_id, f"rla_deleted:{body.record_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.get(
