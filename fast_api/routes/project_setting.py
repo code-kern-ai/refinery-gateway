@@ -7,7 +7,6 @@ from fast_api.models import (
 )
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
-from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
@@ -107,24 +106,26 @@ def get_last_record_export_credentials(
 def prepare_record_export(
     request: Request, project_id: str, body: PrepareRecordExportBody
 ):
+    prepared = True
+    message = "Export prepared successfully"
+
     try:
         export_options = json.loads(body.export_options)
         key = body.key
     except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+        prepared = False
+        message = "Invalid JSON"
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
     try:
         transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
-    except Exception:
+    except Exception as e:
         print(traceback.format_exc(), flush=True)
-        return GENERIC_FAILURE_RESPONSE
+        prepared = False
+        message = e
 
-    return get_silent_success()
+    return pack_json_result({"prepared": prepared, "message": message})
 
 
 @router.get(
