@@ -10,7 +10,7 @@ from fast_api.models import (
     UploadCredentialsAndIdBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import get_silent_success, pack_json_result
 from typing import Dict
 from controller.auth import manager as auth_manager
 from controller.upload_task import manager as upload_task_manager
@@ -242,7 +242,7 @@ def update_project_name_description(
     )
     # one for the specific project so it's updated
     notification.send_organization_update(project_id, f"project_update:{project_id}")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -262,7 +262,7 @@ def delete_project(request: Request, project_id: str):
     notification.send_organization_update(
         project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/create-project")
@@ -298,7 +298,7 @@ def update_project_tokenizer(
     body: UpdateProjectTokenizerBody = Body(...),
 ):
     manager.update_project(project_id, tokenizer=body.tokenizer)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -310,7 +310,7 @@ def update_project_status(
     body: UpdateProjectStatusBody = Body(...),
 ):
     manager.update_project(project_id, status=body.new_status)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/create-sample-project")

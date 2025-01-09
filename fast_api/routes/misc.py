@@ -7,7 +7,7 @@ from fast_api.models import (
     CreateCustomerButton,
     UpdateCustomerButton,
 )
-from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from typing import Dict, Optional
 from controller.auth import manager as auth
 from controller.misc import manager
@@ -53,7 +53,7 @@ def model_provider_delete_model(
         auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_delete_model(body.model_name)
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/model-provider-download-model")
@@ -64,7 +64,7 @@ def model_provider_download_model(
         auth.check_admin_access(request.state.info)
     model_provider_manager.model_provider_download_model(body.model_name)
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.get("/all-tasks")
@@ -84,7 +84,7 @@ def delete_from_task_queue_db(
 ):
     auth.check_admin_access(request.state.info)
     task_master_manager.delete_task(org_id, task_id)
-    return SILENT_SUCCESS_RESPONSE
+    return get_silent_success()
 
 
 @router.post("/cancel-task")
@@ -126,14 +126,14 @@ def cancel_task(
             raise ValueError(f"{task_type} is no valid task type")
 
     task_queue_bo.delete_by_task_id(task_id, True)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/cancel-all-running-tasks")
 def cancel_all_running_tasks(request: Request):
     auth.check_admin_access(request.state.info)
     controller_manager.cancel_all_running_tasks()
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/pause-task-queue")
@@ -227,7 +227,7 @@ def delete_customer_buttons(button_id: str, request: Request):
     # all (only for admins on admin page!)
     auth.check_admin_access(request.state.info)
     customer_button_db_go.delete(button_id)
-    return SILENT_SUCCESS_RESPONSE
+    return get_silent_success()
 
 
 @router.post("/update-customer-button/{button_id}")

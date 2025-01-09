@@ -6,11 +6,10 @@ from fast_api.models import (
     DeleteCommentBody,
     UpdateCommentBody,
 )
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
 from submodules.model.enums import CommentCategory
 from util import notification
 from middleware.log_storage import extend_state_get_like
-
 
 router = APIRouter()
 
@@ -82,7 +81,7 @@ def create_comment(request: Request, body: CreateCommentBody = Body(...)):
             True,
         )
 
-    return pack_json_result({"ok": True})
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.delete("/delete-comment")
@@ -107,7 +106,7 @@ def delete_comment(
             True,
         )
 
-    return pack_json_result({"ok": True})
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.put("/update-comment")
@@ -132,7 +131,7 @@ def update_comment(
             True,
         )
 
-    return pack_json_result({"ok": True})
+    return SILENT_SUCCESS_RESPONSE
 
 
 @router.get("/get-unique-comments-keys-for")

@@ -1,10 +1,9 @@
 from fast_api.models import CreateHeuristicBody, UpdateHeuristicBody
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from fastapi import APIRouter, Body, Depends, Request
 from controller.information_source import manager
 from submodules.model.business_objects import weak_supervision
 from controller.auth import manager as auth_manager
-from controller.labeling_access_link import manager as access_link_manager
 from controller.payload import manager as payload_manager
 from submodules.model.business_objects import information_source
 from submodules.model.business_objects.payload import get_payload_with_heuristic_type
@@ -107,27 +106,8 @@ def get_labeling_function_on_10_records(
     heuristic_id: str,
 ):
     data = payload_manager.get_labeling_function_on_10_records(project_id, heuristic_id)
-    return pack_json_result(data)
-
-
-@router.get(
-    "/{project_id}/access-link",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def get_access_link(
-    request: Request,
-    project_id: str,
-    link_id: str,
-):
-    accessLink = access_link_manager.get(link_id)
-
-    data = {
-        "id": str(accessLink.id),
-        "link": accessLink.link,
-        "isLocked": accessLink.is_locked,
-    }
-
-    return pack_json_result(data)
+    print(data, flush=True)
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.post(
@@ -143,7 +123,7 @@ def toggle_heuristic(
     notification.send_organization_update(
         project_id, f"information_source_updated:{information_source_id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -157,7 +137,7 @@ def set_information_sources(
 ):
     manager.set_all_information_source_selected(project_id, value)
     notification.send_organization_update(project_id, "information_source_updated:all")
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -205,7 +185,7 @@ def delete_heuristic(
     notification.send_organization_update(
         project_id, f"information_source_deleted:{heuristic_id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -230,7 +210,7 @@ def create_heuristic(
     notification.send_organization_update(
         project_id, f"information_source_created:{str(info_source.id)}"
     )
-    return pack_json_result(info_source)
+    return get_silent_success()
 
 
 @router.post(
@@ -255,4 +235,4 @@ def update_heuristic(
     notification.send_organization_update(
         project_id, f"information_source_updated:{heuristic_id}:{user.id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()

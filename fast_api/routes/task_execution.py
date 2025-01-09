@@ -10,7 +10,10 @@ from fast_api.models import (
 )
 from fastapi import APIRouter
 from submodules.model import daemon
-from fast_api.routes.client_response import pack_json_result, SILENT_SUCCESS_RESPONSE
+from fast_api.routes.client_response import (
+    get_silent_success,
+    pack_json_result,
+)
 
 router = APIRouter()
 
@@ -29,7 +32,7 @@ def calculate_attributes(
         attribute_calculation_task_execution.attribute_id,
     )
 
-    return SILENT_SUCCESS_RESPONSE
+    return get_silent_success()
 
 
 @router.post(
@@ -64,7 +67,7 @@ def data_slice(
         data_slice_action_execution.embedding_id,
     )
 
-    return SILENT_SUCCESS_RESPONSE
+    return get_silent_success()
 
 
 @router.post(
@@ -80,4 +83,4 @@ def weak_supervision(
         weak_supervision_action_execution.user_id,
     )
 
-    return SILENT_SUCCESS_RESPONSE
+    return get_silent_success()

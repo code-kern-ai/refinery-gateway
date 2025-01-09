@@ -7,7 +7,6 @@ from fast_api.models import (
 )
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
-from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
@@ -16,7 +15,9 @@ from controller.project import manager as project_manager
 from controller.record import manager as record_manager
 from controller.task_master import manager as task_master_manager
 from controller.task_queue import manager as task_queue_manager
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    pack_json_result,
+)
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 import traceback
@@ -103,26 +104,26 @@ def get_last_record_export_credentials(
 def prepare_record_export(
     request: Request, project_id: str, body: PrepareRecordExportBody
 ):
-    ok = True
+    prepared = True
+    message = "Export prepared successfully"
+
     try:
         export_options = json.loads(body.export_options)
         key = body.key
     except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+        prepared = False
+        message = "Invalid JSON"
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
     try:
         transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
     except Exception as e:
-        ok = False
         print(traceback.format_exc(), flush=True)
-        return str(e)
+        prepared = False
+        message = e
 
-    return pack_json_result({"ok": ok})
+    return pack_json_result({"prepared": prepared, "message": message})
 
 
 @router.get(
