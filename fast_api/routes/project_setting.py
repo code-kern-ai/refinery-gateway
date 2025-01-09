@@ -16,6 +16,7 @@ from controller.record import manager as record_manager
 from controller.task_master import manager as task_master_manager
 from controller.task_queue import manager as task_queue_manager
 from fast_api.routes.client_response import (
+    get_custom_response,
     get_silent_success,
     pack_json_result,
 )
@@ -241,7 +242,6 @@ def prepare_project_export(
     project_id: str,
     body: PrepareProjectExportBody = Body(...),
 ):
-    ok = True
     user_id = auth_manager.get_user_by_info(request.state.info).id
 
     try:
@@ -249,8 +249,8 @@ def prepare_project_export(
         transfer_manager.prepare_project_export(
             project_id, user_id, export_options, body.key
         )
-    except Exception:
+    except Exception as e:
         print(traceback.format_exc(), flush=True)
-        ok = False
+        return get_custom_response(400, str(e), "text")
 
-    return pack_json_result({"ok": ok})
+    return get_silent_success()
