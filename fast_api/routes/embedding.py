@@ -1,7 +1,11 @@
 from typing import List, Optional
 
 from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+    GENERIC_FAILURE_RESPONSE,
+)
 from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
 from controller.task_master import manager as task_master_manager
@@ -110,7 +114,7 @@ def delete_from_task_queue(
 ):
     org_id = auth_manager.get_user_by_info(request.state.info).organization_id
     task_master_manager.delete_task(org_id, task_id)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.delete(
@@ -126,7 +130,7 @@ def delete_embedding(
     notification.send_organization_update(
         project_id, f"embedding_deleted:{embedding_id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -186,7 +190,7 @@ def create_embedding(
     notification.send_organization_update(
         project_id=project_id, message="embedding:queued"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -207,5 +211,6 @@ def update_embedding_payload(
         notification.send_organization_update(
             project_id, f"embedding_updated:{updateEmbeddingBody.embedding_id}"
         )
-
-    return pack_json_result({"ok": went_through})
+        return get_silent_success()
+    else:
+        return GENERIC_FAILURE_RESPONSE
