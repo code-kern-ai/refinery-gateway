@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.auth import manager as auth_manager
 from controller.labeling_task import manager as labeling_manager
 from controller.labeling_task_label import manager as label_manager
-from fast_api.routes.client_response import pack_json_result, get_silent_success
+from fast_api.routes.client_response import get_silent_success
 from util import notification
 
 
