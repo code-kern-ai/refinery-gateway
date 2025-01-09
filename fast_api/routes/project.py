@@ -298,7 +298,7 @@ def update_project_tokenizer(
     body: UpdateProjectTokenizerBody = Body(...),
 ):
     manager.update_project(project_id, tokenizer=body.tokenizer)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.put(
@@ -310,7 +310,7 @@ def update_project_status(
     body: UpdateProjectStatusBody = Body(...),
 ):
     manager.update_project(project_id, status=body.new_status)
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post("/create-sample-project")
