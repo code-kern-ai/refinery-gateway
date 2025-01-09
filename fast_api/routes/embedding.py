@@ -20,21 +20,6 @@ import json
 
 router = APIRouter()
 
-ALL_EMBEDDINGS_WHITELIST = [
-    "id",
-    "name",
-    "custom",
-    "type",
-    "state",
-    "progress",
-    "dimension",
-    "count",
-    "platform",
-    "model",
-    "filter_attributes",
-    "attribute_id",
-]
-
 
 @router.get("/embedding-platforms")
 def get_embedding_platforms():
@@ -68,9 +53,7 @@ def get_embeddings(project_id: str) -> List:
         "id": project_id,
         "embeddings": [
             {
-                **sql_alchemy_to_dict(
-                    embedding, column_whitelist=ALL_EMBEDDINGS_WHITELIST
-                ),
+                **sql_alchemy_to_dict(embedding),
                 "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
             }
             for embedding in embeddings_extended
