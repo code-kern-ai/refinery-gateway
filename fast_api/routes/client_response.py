@@ -60,5 +60,12 @@ def get_silent_success() -> JSONResponse:
     return SILENT_SUCCESS_RESPONSE
 
 
+def get_custom_response(status_code, content) -> PlainTextResponse:
+    return PlainTextResponse(
+        status_code=status_code,
+        content=content,
+    )
+
+
 def to_json(obj: BaseModel):
     return json.loads(obj.json())
