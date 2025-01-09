@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.weak_supervision import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import InitWeakSuperVisionBody, RunThenWeakSupervisionBody
-from fast_api.routes.client_response import get_silent_success, pack_json_result
+from fast_api.routes.client_response import get_silent_success
 
 router = APIRouter()
 
