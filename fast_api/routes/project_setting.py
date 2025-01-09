@@ -16,6 +16,7 @@ from controller.record import manager as record_manager
 from controller.task_master import manager as task_master_manager
 from controller.task_queue import manager as task_queue_manager
 from fast_api.routes.client_response import (
+    get_silent_success,
     pack_json_result,
 )
 from submodules.model.enums import TaskType
@@ -202,7 +203,7 @@ def update_attribute(
         body.source_code,
         body.visibility,
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -228,7 +229,7 @@ def calculate_user_attribute_all_records(
         True,
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
