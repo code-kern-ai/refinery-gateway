@@ -16,7 +16,11 @@ from controller.project import manager as project_manager
 from controller.record import manager as record_manager
 from controller.task_master import manager as task_master_manager
 from controller.task_queue import manager as task_queue_manager
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+    GENERIC_FAILURE_RESPONSE,
+)
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
 import traceback
@@ -103,7 +107,6 @@ def get_last_record_export_credentials(
 def prepare_record_export(
     request: Request, project_id: str, body: PrepareRecordExportBody
 ):
-    ok = True
     try:
         export_options = json.loads(body.export_options)
         key = body.key
@@ -117,12 +120,11 @@ def prepare_record_export(
 
     try:
         transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
-    except Exception as e:
-        ok = False
+    except Exception:
         print(traceback.format_exc(), flush=True)
-        return str(e)
+        return GENERIC_FAILURE_RESPONSE
 
-    return pack_json_result({"ok": ok})
+    return get_silent_success()
 
 
 @router.get(
@@ -201,7 +203,7 @@ def update_attribute(
         body.source_code,
         body.visibility,
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -227,7 +229,7 @@ def calculate_user_attribute_all_records(
         True,
     )
 
-    return pack_json_result({"ok": True})
+    return get_silent_success()
 
 
 @router.post(
@@ -239,7 +241,6 @@ def prepare_project_export(
     project_id: str,
     body: PrepareProjectExportBody = Body(...),
 ):
-    ok = True
     user_id = auth_manager.get_user_by_info(request.state.info).id
 
     try:
@@ -249,6 +250,6 @@ def prepare_project_export(
         )
     except Exception:
         print(traceback.format_exc(), flush=True)
-        ok = False
+        return GENERIC_FAILURE_RESPONSE
 
-    return pack_json_result({"ok": ok})
+    return get_silent_success()
