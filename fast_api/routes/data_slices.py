@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from submodules.model.util import sql_alchemy_to_dict
 from typing import List
 from controller.data_slice import manager
@@ -72,4 +72,4 @@ def delete_data_slice_by_id(
     notification.send_organization_update(
         project_id, f"data_slice_deleted:{data_slice_id}"
     )
-    return pack_json_result({"ok": True})
+    return get_silent_success()
