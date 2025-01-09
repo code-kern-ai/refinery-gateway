@@ -7,7 +7,11 @@ from fast_api.models import (
     CreateCustomerButton,
     UpdateCustomerButton,
 )
-from fast_api.routes.client_response import pack_json_result, get_silent_success
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+    GENERIC_FAILURE_RESPONSE,
+)
 from typing import Dict, Optional
 from controller.auth import manager as auth
 from controller.misc import manager
@@ -100,7 +104,7 @@ def cancel_task(
 
     task_entity = task_queue_bo.get(task_id)
     if not task_entity:
-        return pack_json_result({"ok": False})
+        return GENERIC_FAILURE_RESPONSE
     if task_entity and (
         task_entity.is_active or task_type == enums.TaskType.PARSE_MARKDOWN_FILE.value
     ):
