@@ -106,15 +106,11 @@ def get_last_record_export_credentials(
 def prepare_record_export(
     request: Request, project_id: str, body: PrepareRecordExportBody
 ):
-    prepared = True
-    message = "Export prepared successfully"
-
     try:
         export_options = json.loads(body.export_options)
         key = body.key
     except json.JSONDecodeError:
-        prepared = False
-        message = "Invalid JSON"
+        return pack_json_result({"prepared": False, "message": "Invalid JSON"})
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
@@ -122,10 +118,11 @@ def prepare_record_export(
         transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
     except Exception as e:
         print(traceback.format_exc(), flush=True)
-        prepared = False
-        message = e
+        return pack_json_result({"prepared": False, "message": e})
 
-    return pack_json_result({"prepared": prepared, "message": message})
+    return pack_json_result(
+        {"prepared": True, "message": "Export prepared successfully"}
+    )
 
 
 @router.get(
