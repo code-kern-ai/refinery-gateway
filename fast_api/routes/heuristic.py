@@ -106,7 +106,6 @@ def get_labeling_function_on_10_records(
     heuristic_id: str,
 ):
     data = payload_manager.get_labeling_function_on_10_records(project_id, heuristic_id)
-    print(data, flush=True)
     return pack_json_result(data, wrap_for_frontend=False)
 
 

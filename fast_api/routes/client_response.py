@@ -60,7 +60,7 @@ def get_silent_success() -> JSONResponse:
     return SILENT_SUCCESS_RESPONSE
 
 
-def get_custom_response(status_code, content, type="text") -> PlainTextResponse:
+def get_custom_response(status_code, content, type="text"):
     if type == "json":
         return JSONResponse(
             status_code=status_code,
