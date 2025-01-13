@@ -1,6 +1,5 @@
 import json
 from fastapi import APIRouter, Body, Depends, Request
-from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.record import manager as manager
 from controller.data_slice import manager as data_slice_manager
@@ -14,7 +13,11 @@ from fast_api.models import (
     SearchRecordsExtendedBody,
     UpdateDataSliceBody,
 )
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+    GENERIC_FAILURE_RESPONSE,
+)
 from service.search.search import resolve_extended_search
 from submodules.model.business_objects import general
 from util import notification
@@ -42,9 +45,7 @@ def get_record_comments(
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = comment_manager.get_record_comments(project_id, user_id, record_ids)
-    return pack_json_result(
-        {"data": {"getRecordComments": data}}, wrap_for_frontend=False
-    )
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.post(
@@ -81,7 +82,7 @@ def search_records_extended(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"searchRecordsExtended": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -113,7 +114,7 @@ def search_records_extended_cog(
         "recordList": record_list_pop,
     }
 
-    return pack_json_result({"data": {"searchRecordsExtended": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -142,10 +143,7 @@ def create_outlier_slice(
             project_id, f"data_slice_created:{str(data_slice_item.id)}"
         )
 
-    return JSONResponse(
-        status_code=201,
-        content={"message": "Outlier slice created"},
-    )
+    return get_silent_success()
 
 
 @router.post(
@@ -183,7 +181,7 @@ def get_records_by_static_slice(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"recordsByStaticSlice": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -209,16 +207,11 @@ def create_data_slice(
         notification.send_organization_update(
             project_id, f"data_slice_created:{str(data_slice_item.id)}"
         )
-        data = {"id": str(data_slice_item.id), "__typename": "CreateDataSlice"}
-        return pack_json_result(
-            {"data": {"createDataSlice": data}}, wrap_for_frontend=False
-        )
+        data = {"id": str(data_slice_item.id)}
+        return pack_json_result(data, wrap_for_frontend=False)
     except Exception as e:
         handle_error(e, user.id, project_id)
-        return JSONResponse(
-            status_code=400,
-            content={"message": str(e)},
-        )
+        return GENERIC_FAILURE_RESPONSE
 
 
 @router.post(
@@ -256,7 +249,7 @@ def get_search_records_by_similarity(
         "sessionId": results.session_id,
     }
 
-    return pack_json_result({"data": {"searchRecordsBySimilarity": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -270,7 +263,6 @@ def update_data_slice(
 ):
 
     user = auth_manager.get_user_by_info(request.state.info)
-    ok = False
 
     try:
         raw = json.loads(dataSliceBody.filter_raw)
@@ -287,11 +279,11 @@ def update_data_slice(
         notification.send_organization_update(
             project_id, f"data_slice_updated:{dataSliceBody.data_slice_id}"
         )
-        ok = True
     except Exception as e:
         handle_error(e, user.id, project_id)
+        return GENERIC_FAILURE_RESPONSE
 
-    return pack_json_result({"data": {"updateDataSlice": {"ok": ok}}})
+    return get_silent_success()
 
 
 def handle_error(exception: Exception, user_id: str, project_id: str):

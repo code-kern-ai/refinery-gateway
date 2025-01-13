@@ -6,11 +6,10 @@ from fast_api.models import (
     DeleteCommentBody,
     UpdateCommentBody,
 )
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import pack_json_result, get_silent_success
 from submodules.model.enums import CommentCategory
 from util import notification
 from middleware.log_storage import extend_state_get_like
-
 
 router = APIRouter()
 
@@ -56,9 +55,7 @@ def get_all_comments(request: Request):
             "add_info": add_info,
         }
 
-    return pack_json_result(
-        {"data": {"getAllComments": to_return}}, wrap_for_frontend=False
-    )
+    return pack_json_result(to_return, wrap_for_frontend=False)
 
 
 @router.post("/create-comment")
@@ -84,7 +81,7 @@ def create_comment(request: Request, body: CreateCommentBody = Body(...)):
             True,
         )
 
-    return pack_json_result({"data": {"createComment": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.delete("/delete-comment")
@@ -109,7 +106,7 @@ def delete_comment(
             True,
         )
 
-    return pack_json_result({"data": {"deleteComment": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.put("/update-comment")
@@ -134,7 +131,7 @@ def update_comment(
             True,
         )
 
-    return pack_json_result({"data": {"updateComment": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.get("/get-unique-comments-keys-for")

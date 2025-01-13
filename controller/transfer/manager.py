@@ -1,8 +1,7 @@
 import os
 import logging
 import json
-import traceback
-from typing import Any, List, Optional, Dict
+from typing import Any, Optional, Dict
 
 from controller.transfer import export_parser
 from controller.transfer.knowledge_base_transfer_manager import (
@@ -23,7 +22,6 @@ from submodules.model.business_objects import (
     record_label_association,
     data_slice,
     knowledge_base,
-    upload_task,
 )
 from submodules.model.business_objects import general
 from controller.upload_task import manager as upload_task_manager
@@ -35,11 +33,6 @@ from sqlalchemy.sql import text as sql_text
 from controller.labeling_task import manager as labeling_task_manager
 from controller.labeling_task_label import manager as labeling_task_label_manager
 from submodules.model.business_objects import record_label_association as rla
-from controller.task_master import manager as task_master_manager
-from submodules.model.enums import TaskType, RecordTokenizationScope
-
-
-from util.notification import create_notification
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -65,7 +58,9 @@ def get_upload_credentials_and_id(
         key,
     )
     org_id = organization.get_id_by_project_id(project_id)
-    return s3.get_upload_credentials_and_id(org_id, project_id + "/" + str(task.id))
+    return s3.get_upload_credentials_and_id(
+        org_id, project_id + "/" + str(task.id), True, True
+    )
 
 
 def import_records_from_file(project_id: str, task: UploadTask) -> None:

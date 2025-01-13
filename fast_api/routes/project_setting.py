@@ -1,29 +1,27 @@
 from fast_api.models import (
     CalculateUserAttributeAllRecordsBody,
-    CreateLabelsBody,
     CreateNewAttributeBody,
-    CreateTaskAndLabelsBody,
     PrepareProjectExportBody,
     PrepareRecordExportBody,
     UpdateAttributeBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
 from typing import Dict
-
-from fastapi.responses import JSONResponse
 from controller.auth import manager as auth_manager
 from controller.transfer import manager as transfer_manager
 from controller.attribute import manager as attribute_manager
 from controller.labeling_task_label import manager as label_manager
-from controller.labeling_task import manager as task_manager
 from controller.project import manager as project_manager
 from controller.record import manager as record_manager
 from controller.task_master import manager as task_master_manager
 from controller.task_queue import manager as task_queue_manager
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    get_custom_response,
+    get_silent_success,
+    pack_json_result,
+)
 from submodules.model.enums import TaskType
 from submodules.model.util import sql_alchemy_to_dict
-from util import notification
 import traceback
 import json
 
@@ -57,7 +55,7 @@ def get_queued_tasks(
 ) -> Dict:
     data = task_queue_manager.get_all_waiting_by_type(project_id, task_type)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=QUEUED_TASKS_WHITELIST)
-    return pack_json_result({"data": {"queuedTasks": data_dict}})
+    return pack_json_result(data_dict)
 
 
 @router.get(
@@ -72,7 +70,7 @@ def get_attribute_by_attribute_id(
         attribute_manager.get_attribute(project_id, attribute_id),
         column_whitelist=ATTRIBUTE_WHITELIST,
     )
-    return pack_json_result({"data": {"attributeByAttributeId": data}})
+    return pack_json_result(data)
 
 
 @router.get(
@@ -85,7 +83,7 @@ def check_rename_label(
     new_name: str,
 ):
     data = label_manager.check_rename_label(project_id, label_id, new_name)
-    return pack_json_result({"data": {"checkRenameLabel": data}})
+    return pack_json_result(data)
 
 
 @router.get(
@@ -98,7 +96,7 @@ def get_last_record_export_credentials(
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     data = transfer_manager.last_record_export_credentials(project_id, user_id)
-    return pack_json_result({"data": {"lastRecordExportCredentials": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -112,10 +110,7 @@ def prepare_record_export(
         export_options = json.loads(body.export_options)
         key = body.key
     except json.JSONDecodeError:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Invalid JSON"},
-        )
+        return pack_json_result({"prepared": False, "message": "Invalid JSON"})
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
 
@@ -123,9 +118,11 @@ def prepare_record_export(
         transfer_manager.prepare_record_export(project_id, user_id, export_options, key)
     except Exception as e:
         print(traceback.format_exc(), flush=True)
-        return str(e)
+        return pack_json_result({"prepared": False, "message": e})
 
-    return pack_json_result({"data": {"prepareRecordExport": ""}})
+    return pack_json_result(
+        {"prepared": True, "message": "Export prepared successfully"}
+    )
 
 
 @router.get(
@@ -137,7 +134,7 @@ def get_record_by_record_id(
     record_id: str,
 ):
     if record_id is None or record_id == "null":
-        return pack_json_result({"data": {"recordByRecordId": None}})
+        return pack_json_result(None)
 
     record = record_manager.get_record(project_id, record_id)
 
@@ -148,7 +145,7 @@ def get_record_by_record_id(
         "category": record.category,
     }
 
-    return pack_json_result({"data": {"recordByRecordId": data}})
+    return pack_json_result(data)
 
 
 @router.get(
@@ -159,7 +156,7 @@ def get_project_size(project_id: str):
     data = project_manager.get_project_size(project_id)
     final_data = [
         {
-            "byteSize": key.byte_size,
+            "byteSize": str(key.byte_size),
             "byteReadable": key.byte_readable,
             "table": key.table,
             "order": key.order,
@@ -168,30 +165,7 @@ def get_project_size(project_id: str):
         }
         for key in data
     ]
-    return {"data": {"projectSize": final_data}}
-
-
-@router.post(
-    "/{project_id}/create-labels",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def create_labels(
-    request: Request,
-    project_id: str,
-    body: CreateLabelsBody = Body(...),
-):
-    labeling_task_id = body.labelingTaskId
-    labels = body.labels
-
-    if project_id:
-        auth_manager.check_project_access(request.state.info, project_id)
-
-    created_labels = label_manager.create_labels(project_id, labeling_task_id, labels)
-    for label in created_labels:
-        notification.send_organization_update(
-            project_id, f"label_created:{label.id}:labeling_task:{labeling_task_id}"
-        )
-    return pack_json_result({"data": {"createLabels": ""}})
+    return pack_json_result(final_data)
 
 
 @router.post(
@@ -206,9 +180,7 @@ def create_new_attribute(
     attribute = attribute_manager.create_user_attribute(
         project_id, body.name, body.data_type
     )
-    return pack_json_result(
-        {"data": {"createUserAttribute": {"attributeId": attribute.id}}}
-    )
+    return pack_json_result({"attributeId": attribute.id})
 
 
 @router.post(
@@ -229,7 +201,7 @@ def update_attribute(
         body.source_code,
         body.visibility,
     )
-    return pack_json_result({"data": {"updateAttribute": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post(
@@ -255,37 +227,7 @@ def calculate_user_attribute_all_records(
         True,
     )
 
-    return pack_json_result(
-        {"data": {"calculateUserAttributeAllRecords": {"ok": True}}}
-    )
-
-
-@router.post(
-    "/{project_id}/create-task-and-labels",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def create_task_and_labels(
-    request: Request,
-    project_id: str,
-    body: CreateTaskAndLabelsBody = Body(...),
-):
-    item = task_manager.create_labeling_task(
-        project_id,
-        body.labeling_task_name,
-        body.labeling_task_type,
-        body.labeling_task_target_id,
-    )
-
-    if body.labels is not None:
-        label_manager.create_labels(project_id, str(item.id), body.labels)
-
-    notification.send_organization_update(
-        project_id, f"labeling_task_created:{str(item.id)}"
-    )
-
-    return pack_json_result(
-        {"data": {"createTaskAndLabels": {"ok": True, "taskId": item.id}}}
-    )
+    return get_silent_success()
 
 
 @router.post(
@@ -297,7 +239,6 @@ def prepare_project_export(
     project_id: str,
     body: PrepareProjectExportBody = Body(...),
 ):
-    ok = True
     user_id = auth_manager.get_user_by_info(request.state.info).id
 
     try:
@@ -305,8 +246,8 @@ def prepare_project_export(
         transfer_manager.prepare_project_export(
             project_id, user_id, export_options, body.key
         )
-    except Exception:
+    except Exception as e:
         print(traceback.format_exc(), flush=True)
-        ok = False
+        return get_custom_response(400, str(e), "text")
 
-    return pack_json_result({"data": {"prepareProjectExport": {"ok": ok}}})
+    return get_silent_success()

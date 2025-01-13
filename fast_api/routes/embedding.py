@@ -1,19 +1,19 @@
 from typing import List, Optional
 
 from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+    GENERIC_FAILURE_RESPONSE,
+)
 from fastapi import APIRouter, Body, Depends, Request
 from controller.embedding import manager
 from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
-from submodules.model.business_objects import project
-from submodules.model.business_objects.embedding import (
-    get_all_embeddings_by_project_id,
-    get_tensor_count,
-    get_tensor,
-)
 from submodules.model.enums import TaskType
+from submodules.model.business_objects import embedding
+from submodules.model.util import sql_alchemy_to_dict
 from util import notification, spacy_util
 import json
 
@@ -24,7 +24,7 @@ router = APIRouter()
 @router.get("/embedding-platforms")
 def get_embedding_platforms():
     data = manager.get_terms_info()
-    return pack_json_result({"data": {"embeddingPlatforms": data}})
+    return pack_json_result(data)
 
 
 @router.get("/recommended-encoders")
@@ -32,14 +32,13 @@ def data_slices(request: Request, project_id: Optional[str] = None) -> List:
     data = manager.get_recommended_encoders()
     for v in data:
         v["applicability"] = json.dumps(v["applicability"])
-    return pack_json_result({"data": {"recommendedEncoders": data}})
+    return pack_json_result(data)
 
 
 @router.get("/language-models")
 def language_models(request: Request) -> List:
-    return pack_json_result(
-        {"data": {"languageModels": spacy_util.get_language_models()}}
-    )
+    data = spacy_util.get_language_models()
+    return pack_json_result(data)
 
 
 @router.get(
@@ -47,63 +46,17 @@ def language_models(request: Request) -> List:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def get_embeddings(project_id: str) -> List:
-    embeddings = get_all_embeddings_by_project_id(project_id)
-    number_records = len(project.get(project_id).records)
-
-    edges = []
-
-    for embedding in embeddings:
-
-        count = get_tensor_count(embedding.id)
-        on_qdrant = collection_on_qdrant(project_id, embedding.id)
-
-        embedding_item = get_tensor(embedding.id)
-        dimension = 0
-        if embedding_item is not None:
-            # distinguish between token and attribute embeddings
-            if type(embedding_item.data[0]) is list:
-                dimension = len(embedding_item.data[0])
-            else:
-                dimension = len(embedding_item.data)
-
-        if embedding.state == "FINISHED":
-            progress = 1
-        elif embedding.state == "INITIALIZING" or embedding.state == "WAITING":
-            progress = 0.0
-        else:
-            progress = min(
-                0.1 + (count / number_records * 0.9),
-                0.99,
-            )
-
-        edges.append(
-            {
-                "node": {
-                    "id": embedding.id,
-                    "name": embedding.name,
-                    "custom": embedding.custom,
-                    "type": embedding.type,
-                    "state": embedding.state,
-                    "platform": embedding.platform,
-                    "model": embedding.model,
-                    "filterAttributes": embedding.filter_attributes,
-                    "attributeId": embedding.attribute_id,
-                    "progress": progress,
-                    "dimension": dimension,
-                    "count": count,
-                    "onQdrant": on_qdrant,
-                }
-            }
-        )
-
-    data = {
-        "projectByProjectId": {
-            "id": project_id,
-            "embeddings": {"edges": edges},
+    embeddings_extended = embedding.get_all_embeddings_by_project_id_extended(
+        project_id
+    )
+    data = [
+        {
+            **sql_alchemy_to_dict(embedding),
+            "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
         }
-    }
-
-    return pack_json_result({"data": data})
+        for embedding in embeddings_extended
+    ]
+    return pack_json_result(data)
 
 
 @router.delete(
@@ -116,7 +69,7 @@ def delete_from_task_queue(
 ):
     org_id = auth_manager.get_user_by_info(request.state.info).organization_id
     task_master_manager.delete_task(org_id, task_id)
-    return pack_json_result({"data": {"deleteFromTaskQueue": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.delete(
@@ -132,7 +85,7 @@ def delete_embedding(
     notification.send_organization_update(
         project_id, f"embedding_deleted:{embedding_id}"
     )
-    return pack_json_result({"data": {"deleteEmbedding": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post(
@@ -192,7 +145,7 @@ def create_embedding(
     notification.send_organization_update(
         project_id=project_id, message="embedding:queued"
     )
-    return pack_json_result({"data": {"createEmbedding": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post(
@@ -213,5 +166,6 @@ def update_embedding_payload(
         notification.send_organization_update(
             project_id, f"embedding_updated:{updateEmbeddingBody.embedding_id}"
         )
-
-    return pack_json_result({"data": {"updateEmbeddingPayload": {"ok": went_through}}})
+        return get_silent_success()
+    else:
+        return GENERIC_FAILURE_RESPONSE

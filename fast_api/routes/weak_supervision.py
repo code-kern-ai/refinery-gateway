@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Body
 from controller.weak_supervision import manager
 from controller.auth import manager as auth_manager
 from fast_api.models import InitWeakSuperVisionBody, RunThenWeakSupervisionBody
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import get_silent_success
 
 router = APIRouter()
 
@@ -23,9 +23,7 @@ def init_weak_supervision(
         init_body.overwrite_weak_supervision,
     )
 
-    return pack_json_result(
-        {"data": {"initiateWeakSupervisionByProjectId": {"ok": True}}}
-    )
+    return get_silent_success()
 
 
 @router.post(
@@ -41,4 +39,5 @@ def run_then_weak_supervision(
     manager.run_then_weak_supervision(
         project_id, body.heuristic_id, user_id, body.labeling_task_id
     )
-    return pack_json_result({"data": {"runThenWeakSupervision": {"ok": True}}})
+
+    return get_silent_success()

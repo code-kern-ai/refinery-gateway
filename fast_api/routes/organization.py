@@ -16,7 +16,7 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
-    resolve_user_name_and_email_by_id,
+    resolve_user_name_by_id,
 )
 from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
@@ -40,67 +40,71 @@ ACTIVE_ADMIN_MESSAGES_WHITELIST = {
     "scheduled_date",
 }
 
+USER_INFO_WHITELIST = {
+    "id",
+    "organization_id",
+    "role",
+    "language_display",
+    "email",
+}
+USER_INFO_RENAME_MAP = {"email": "mail"}
+ALL_ORGANIZATIONS_WHITELIST = {
+    "id",
+    "name",
+    "created_at",
+    "started_at",
+    "is_paying",
+    "max_rows",
+    "max_cols",
+    "max_char_count",
+    "log_admin_requests",
+    "conversation_lifespan_days",
+    "file_lifespan_days",
+}
 
+
+# in use refinery-ui (07.01.25)
 @router.get("")
 def get_organization(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    organization = manager.get_organization_by_id(user.organization_id)
 
-    return pack_json_result({"data": {"userOrganization": organization}})
+    return pack_json_result(manager.get_organization_by_id(user.organization_id))
 
 
+# in use refinery-ui (07.01.25)
 @router.get("/overview-stats")
 def get_overview_stats(request: Request):
     org_id = str(auth_manager.get_user_by_info(request.state.info).organization_id)
-    data = manager.get_overview_stats(org_id)
 
-    return {"data": {"overviewStats": data}}
+    return pack_json_result(manager.get_overview_stats(org_id), wrap_for_frontend=False)
 
 
+# in use refinery-ui (07.01.25)
 @router.get("/user-info")
 def get_user_info(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    data = manager.get_user_info(user)
-    return {"data": {"userInfo": data}}
+    return pack_json_result(manager.get_user_info(user), wrap_for_frontend=False)
 
 
+# in use cognition-ui & admin dashboard (07.01.25)
 @router.get("/get-user-info-extended")
 def get_user_info_extended(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
-    name, mail = resolve_user_name_and_email_by_id(user.id)
-
-    data = {
-        "userInfo": {
-            "id": str(user.id),
-            "organizationId": (
-                str(user.organization_id) if user.organization_id else None
-            ),
-            "firstName": name.get("first"),
-            "lastName": name.get("last"),
-            "mail": mail,
-            "role": user.role,
-            "languageDisplay": user.language_display,
-        }
+    name = resolve_user_name_by_id(user.id)
+    user_dict = {
+        **sql_alchemy_to_dict(
+            user,
+            column_whitelist=USER_INFO_WHITELIST,
+            column_rename_map=USER_INFO_RENAME_MAP,
+        ),
+        "first_name": name.get("first"),
+        "last_name": name.get("last"),
     }
 
-    return pack_json_result({"data": data})
+    return pack_json_result(user_dict)
 
 
-@router.get("/get-user-info-mini")
-def get_user_info_mini(request: Request):
-    user = auth_manager.get_user_by_info(request.state.info)
-
-    data = {
-        "userInfo": {
-            "id": str(user.id),
-            "organization": {"id": str(user.organization_id)},
-            "role": user.role,
-        }
-    }
-
-    return pack_json_result({"data": data})
-
-
+# in use admin dashboard (08.01.25)
 @router.get("/org-id-name-map")
 def get_org_id_name_map(request: Request):
     auth_manager.check_admin_access(request.state.info)
@@ -109,13 +113,16 @@ def get_org_id_name_map(request: Request):
     )
 
 
+# in use cognition-ui & refinery-ui (08.01.25)
 @router.get("/all-users")
 def get_all_user(request: Request):
     organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
-    data = manager.get_all_users(organization_id)
-    return {"data": {"allUsers": data}}
+    return pack_json_result(
+        manager.get_all_users(organization_id), wrap_for_frontend=False
+    )
 
 
+# in use cognition-ui & refinery-ui & admin-dashboard (08.01.25)
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 
@@ -123,110 +130,94 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
     )
-    return pack_json_result({"data": {"allActiveAdminMessages": data_dict}})
+    return pack_json_result(data_dict)
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/all-admin-messages")
 def all_admin_messages(request: Request, limit: int = 100) -> str:
     auth_manager.check_admin_access(request.state.info)
     data = admin_message_manager.get_messages(limit, active_only=False)
     data_dict = sql_alchemy_to_dict(data)
-    return pack_json_result({"data": {"allAdminMessages": data_dict}})
+    return pack_json_result(data_dict)
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
-    organization = organization_manager.create_organization(body.name)
-    return {"data": {"createOrganization": {"organization": organization}}}
+    organization_manager.create_organization(body.name)
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/add-user-to-organization")
 def add_user_to_organization(
     request: Request, body: AddUserToOrganizationBody = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
     user_manager.update_organization_of_user(body.organization_name, body.user_mail)
-    return pack_json_result({"data": {"addUserToOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/remove-user-from-organization")
 def remove_user_from_organization(
     request: Request, body: RemoveUserToOrganizationBody = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
     user_manager.remove_organization_from_user(body.user_mail)
-    return pack_json_result({"data": {"removeUserFromOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
-    return pack_json_result({"data": {"changeOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/user-roles")
 def get_user_roles(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user_manager.get_user_roles()
-    return {"data": {"userRoles": data}}
+    return pack_json_result(data)
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/change-user-role")
 def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     user_manager.update_user_role(body.user_id, body.role)
-    return {"data": {"changeUserRole": {"ok": True}}}
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/all-organizations")
 def get_all_organizations(request: Request):
     auth_manager.check_admin_access(request.state.info)
     organizations = manager.get_all_organizations()
-
-    edges = []
-
-    for org in organizations:
-        edges.append(
-            {
-                "node": {
-                    "id": str(org.id),
-                    "name": org.name,
-                    "createdAt": (
-                        org.created_at.isoformat()
-                        if org.created_at is not None
-                        else None
-                    ),
-                    "startedAt": (
-                        org.started_at.isoformat()
-                        if org.started_at is not None
-                        else None
-                    ),
-                    "isPaying": org.is_paying,
-                    "userCount": manager.get_user_count(org.id),
-                    "maxRows": org.max_rows,
-                    "maxCols": org.max_cols,
-                    "maxCharCount": org.max_char_count,
-                    "logAdminRequests": org.log_admin_requests,
-                    "conversationLifespanDays": org.conversation_lifespan_days,
-                    "fileLifespanDays": org.file_lifespan_days,
-                }
-            }
-        )
-
-    data = {"edges": edges}
-
-    return pack_json_result({"data": {"allOrganizations": data}})
+    org_dicts = [
+        {
+            **sql_alchemy_to_dict(org, column_whitelist=ALL_ORGANIZATIONS_WHITELIST),
+            "userCount": manager.get_user_count(org.id),
+        }
+        for org in organizations
+    ]
+    return pack_json_result(org_dicts)
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/delete-organization")
 def delete_organization(request: Request, body: DeleteOrganizationBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     organization_manager.delete_organization(body.name)
-    return pack_json_result({"data": {"deleteOrganization": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/create-admin-message")
 def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -235,9 +226,10 @@ def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(.
         body.text, body.level, body.archive_date, body.scheduled_date, user_id
     )
     notification.send_global_update_for_all_organizations("admin_message")
-    return pack_json_result({"data": {"createAdminMessage": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/archive-admin-message")
 def archive_admin_message(
     request: Request,
@@ -249,15 +241,17 @@ def archive_admin_message(
         body.message_id, user_id, body.archived_reason
     )
     notification.send_global_update_for_all_organizations("admin_message")
-    return pack_json_result({"data": {"archiveAdminMessage": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use cognition-ui (08.01.25)
 @router.post("/set-language-display")
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
     user_manager.update_user_language_display(body.user_id, body.language_display)
-    return pack_json_result({"data": {"changeUserLanguageDisplay": {"ok": True}}})
+    return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/mapped-sorted-paginated-users")
 def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
@@ -293,6 +287,7 @@ def get_mapped_sorted_paginated_users(
     )
 
 
+# in use admin-dashboard (08.01.25)
 @router.delete("/delete-user")
 def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -300,6 +295,7 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
     return get_silent_success()
 
 
+# in use admin-dashboard (08.01.25)
 @router.post("/missing-users-interaction")
 def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
@@ -307,6 +303,7 @@ def get_missing_users_interaction(request: Request, body: MissingUsersBody = Bod
     return pack_json_result(data, wrap_for_frontend=False)
 
 
+# in use admin-dashboard (08.01.25)
 @router.get("/user-to-organization")
 def get_user_to_organization(request: Request):
     auth_manager.check_admin_access(request.state.info)

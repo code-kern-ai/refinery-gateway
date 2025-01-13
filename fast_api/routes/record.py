@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, Request, Body
 from controller.record import manager
 from controller.auth import manager as auth_manager
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import (
+    get_custom_response,
+    get_silent_success,
+)
 from fast_api.models import RecordSyncBody
 from util import notification
+from fastapi import status
+import json
 
 router = APIRouter()
 
@@ -21,9 +26,10 @@ def sync_records(
     errors = manager.edit_records(user_id, project_id, record_sync_body.changes)
 
     if errors and len(errors) > 0:
-        return pack_json_result(
-            {"data": {"editRecords": {"ok": False, "errors": errors}}}
+        return get_custom_response(
+            status_code=status.HTTP_200_OK,
+            content=json.dumps(errors),
         )
 
     notification.send_organization_update(project_id, "records_changed")
-    return pack_json_result({"data": {"editRecords": {"ok": True}}})
+    return get_silent_success()

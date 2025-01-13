@@ -1,6 +1,4 @@
-import json
 from typing import Optional
-
 from fast_api.models import (
     CreateProjectBody,
     CreateSampleProjectBody,
@@ -10,29 +8,22 @@ from fast_api.models import (
     UploadCredentialsAndIdBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
-from fast_api.routes.client_response import pack_json_result
+from fast_api.routes.client_response import get_silent_success, pack_json_result
 from typing import Dict
 from controller.auth import manager as auth_manager
-from controller.attribute import manager as attr_manager
 from controller.upload_task import manager as upload_task_manager
-from submodules.model.business_objects import information_source, labeling_task
+from submodules.model.business_objects import labeling_task
 from submodules.model import enums
-from submodules.model.business_objects.embedding import get_all_embeddings_by_project_id
 from submodules.model.business_objects.project import get_project_by_project_id_sql
-from submodules.model.business_objects.labeling_task import (
-    get_labeling_tasks_by_project_id_full,
-)
 from controller.project import manager
 from controller.model_provider import manager as model_manager
 from controller.transfer import manager as transfer_manager
 from submodules.model.util import (
-    pack_edges_node,
     sql_alchemy_to_dict,
     to_frontend_obj_raw,
 )
 from util import notification
 from submodules.model.business_objects import notification as notification_model
-
 from submodules.model.business_objects import tokenization, task_queue
 
 router = APIRouter()
@@ -68,7 +59,7 @@ def get_project_by_project_id(
     project_id: str,
 ) -> Dict:
     data = get_project_by_project_id_sql(project_id)
-    return pack_json_result({"data": {"projectByProjectId": data}})
+    return pack_json_result(data)
 
 
 @router.get("/all-projects")
@@ -76,8 +67,7 @@ def get_all_projects(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
-    projects_packed = pack_edges_node(projects, "allProjects")
-    return pack_json_result(projects_packed)
+    return pack_json_result(projects)
 
 
 @router.get("/all-projects-mini")
@@ -86,25 +76,17 @@ def get_all_projects_mini(request: Request) -> Dict:
         auth_manager.get_organization_id_by_info(request.state.info)
     )
 
-    edges = []
+    project_extended = [
+        {
+            "id": str(project.get("id")),
+            "name": str(project.get("name")),
+            "description": str(project.get("description")),
+            "status": str(project.get("status")),
+        }
+        for project in projects
+    ]
 
-    for project in projects:
-        edges.append(
-            {
-                "node": {
-                    "id": str(project.get("id", None)),
-                    "name": str(project.get("name", None)),
-                    "description": str(project.get("description", None)),
-                    "status": str(project.get("status", None)),
-                }
-            }
-        )
-
-    data = {
-        "edges": edges,
-    }
-
-    return pack_json_result({"data": {"allProjects": data}})
+    return pack_json_result(project_extended)
 
 
 @router.get(
@@ -116,15 +98,9 @@ def general_project_stats(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
 ) -> Dict:
-
+    data = manager.get_general_project_stats(project_id, labeling_task_id, slice_id)
     return pack_json_result(
-        {
-            "data": {
-                "generalProjectStats": manager.get_general_project_stats(
-                    project_id, labeling_task_id, slice_id
-                )
-            }
-        },
+        data,
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
 
@@ -138,14 +114,9 @@ def label_distribution(
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
 ) -> str:
+    data = manager.get_label_distribution(project_id, labeling_task_id, slice_id)
     return pack_json_result(
-        {
-            "data": {
-                "labelDistribution": manager.get_label_distribution(
-                    project_id, labeling_task_id, slice_id
-                )
-            }
-        },
+        data,
         wrap_for_frontend=False,  # not wrapped as the prepared results in snake_case are still the expected form the frontend
     )
 
@@ -172,9 +143,7 @@ def project_tokenization(project_id: str) -> str:
             tokenization.get_record_tokenization_task(project_id),
             column_whitelist=PROJECT_TOKENIZATION_WHITELIST,
         )
-    return pack_json_result(
-        {"data": {"projectTokenization": data}},
-    )
+    return pack_json_result(data)
 
 
 @router.get(
@@ -182,99 +151,7 @@ def project_tokenization(project_id: str) -> str:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def labeling_tasks_by_project_id(project_id: str) -> str:
-    return pack_json_result(
-        {
-            "data": {
-                "projectByProjectId": sql_alchemy_to_dict(
-                    get_labeling_tasks_by_project_id_full(project_id)
-                )
-            }
-        },
-    )
-
-
-@router.get(
-    "/{project_id}/labeling-tasks-by-project-id-with-embeddings",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
-def labeling_tasks_by_project_id_with_embeddings(
-    project_id: str, only_on_attribute: bool = False
-) -> str:
-    embeddings = get_all_embeddings_by_project_id(project_id)
-
-    embeddings_edges = []
-    for embedding in embeddings:
-        if (
-            only_on_attribute
-            and embedding.type != enums.EmbeddingType.ON_ATTRIBUTE.value
-        ):
-            continue
-        attribute = attr_manager.get_attribute(project_id, embedding.attribute_id)
-        embeddings_edges.append(
-            {
-                "node": {
-                    "id": str(embedding.id),
-                    "name": embedding.name,
-                    "state": embedding.state,
-                    "attribute": {"dataType": attribute.data_type},
-                }
-            }
-        )
-
-    labeling_tasks_all = labeling_task.get_all(project_id)
-
-    labeling_tasks_edges = []
-
-    for labeling_task_item in labeling_tasks_all:
-        information_sources_ids = information_source.get_all_ids_by_labeling_task_id(
-            project_id, labeling_task_item.id
-        )
-
-        information_sources = []
-        for information_source_id in information_sources_ids:
-            is_val = information_source.get(project_id, information_source_id)
-            information_sources.append(is_val)
-
-        information_sources_edges = []
-        for information_source_item in information_sources:
-            last_payload = information_source.get_last_payload(
-                project_id, information_source_item.id
-            )
-            lastPayload = {}
-            if last_payload is not None:
-                lastPayload = {"state": last_payload.state}
-            information_sources_edges.append(
-                {
-                    "node": {
-                        "id": str(information_source_item.id),
-                        "name": information_source_item.name,
-                        "description": information_source_item.description,
-                        "type": information_source_item.type,
-                        "lastPayload": lastPayload,
-                    }
-                }
-            )
-
-        labeling_tasks_edges.append(
-            {
-                "node": {
-                    "id": str(labeling_task_item.id),
-                    "name": labeling_task_item.name,
-                    "taskType": labeling_task_item.task_type,
-                    "informationSources": {"edges": information_sources_edges},
-                }
-            }
-        )
-
-    data = {
-        "data": {
-            "projectByProjectId": {
-                "embeddings": {"edges": embeddings_edges},
-                "labelingTasks": {"edges": labeling_tasks_edges},
-            }
-        }
-    }
-
+    data = labeling_task.get_labeling_tasks_by_project_id_full(project_id)
     return pack_json_result(data)
 
 
@@ -284,14 +161,13 @@ def labeling_tasks_by_project_id_with_embeddings(
 )
 def record_export_by_project_id(project_id: str) -> str:
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
-    data_packed = pack_edges_node(data, "projectByProjectId")
-    return pack_json_result(data_packed)
+    return pack_json_result(data)
 
 
 @router.get("/model-provider-info")
 def get_model_provider_info(request: Request) -> Dict:
     data = model_manager.get_model_provider_info()
-    return pack_json_result({"data": {"modelProviderInfo": data}})
+    return pack_json_result(data)
 
 
 @router.get(
@@ -304,7 +180,7 @@ def last_export_credentials(
 ) -> Dict:
 
     data = transfer_manager.last_project_export_credentials(project_id)
-    return pack_json_result({"data": {"lastProjectExportCredentials": data}})
+    return pack_json_result(data)
 
 
 @router.post(
@@ -326,7 +202,7 @@ def upload_credentials_and_id(
         upload_credentials.upload_type,
         upload_credentials.key,
     )
-    return pack_json_result({"data": {"uploadCredentialsAndId": json.dumps(data)}})
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.get(
@@ -342,9 +218,7 @@ def upload_task_by_id(
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)
     data_dict = to_frontend_obj_raw(sql_alchemy_to_dict(data))
-    return pack_json_result(
-        {"data": {"uploadTaskById": data_dict}}, wrap_for_frontend=False
-    )
+    return pack_json_result(data_dict, wrap_for_frontend=False)
 
 
 @router.post(
@@ -363,7 +237,7 @@ def update_project_name_description(
     )
     # one for the specific project so it's updated
     notification.send_organization_update(project_id, f"project_update:{project_id}")
-    return pack_json_result({"data": {"updateProjectNameDescription": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.delete(
@@ -383,7 +257,7 @@ def delete_project(request: Request, project_id: str):
     notification.send_organization_update(
         project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
     )
-    return pack_json_result({"data": {"deleteProject": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post("/create-project")
@@ -407,7 +281,7 @@ def create_project(
         }
     }
 
-    return pack_json_result({"data": {"createProject": data}})
+    return pack_json_result(data)
 
 
 @router.put(
@@ -419,7 +293,7 @@ def update_project_tokenizer(
     body: UpdateProjectTokenizerBody = Body(...),
 ):
     manager.update_project(project_id, tokenizer=body.tokenizer)
-    return pack_json_result({"data": {"updateProjectTokenizer": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.put(
@@ -431,7 +305,7 @@ def update_project_status(
     body: UpdateProjectStatusBody = Body(...),
 ):
     manager.update_project(project_id, status=body.new_status)
-    return pack_json_result({"data": {"updateProjectStatus": {"ok": True}}})
+    return get_silent_success()
 
 
 @router.post("/create-sample-project")
@@ -446,12 +320,9 @@ def create_sample_project(
     )
 
     data = {
-        "ok": True,
-        "project": {
-            "id": str(project.id),
-            "name": project.name,
-            "description": project.description,
-        },
+        "id": str(project.id),
+        "name": project.name,
+        "description": project.description,
     }
 
-    return pack_json_result({"data": {"createSampleProject": data}})
+    return pack_json_result(data)
