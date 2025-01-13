@@ -99,12 +99,10 @@ def create_knowledge_base(
     )
 
     data = {
-        "knowledgeBase": {
-            "id": str(knowledge_base.id),
-            "name": knowledge_base.name,
-            "description": knowledge_base.description,
-            "termCount": len(knowledge_base.terms),
-        }
+        "id": str(knowledge_base.id),
+        "name": knowledge_base.name,
+        "description": knowledge_base.description,
+        "termCount": len(knowledge_base.terms),
     }
 
     return pack_json_result(data)

@@ -1,6 +1,4 @@
-import json
 from typing import Optional
-
 from fast_api.models import (
     CreateProjectBody,
     CreateSampleProjectBody,
@@ -26,7 +24,6 @@ from submodules.model.util import (
 )
 from util import notification
 from submodules.model.business_objects import notification as notification_model
-
 from submodules.model.business_objects import tokenization, task_queue
 
 router = APIRouter()
@@ -205,7 +202,7 @@ def upload_credentials_and_id(
         upload_credentials.upload_type,
         upload_credentials.key,
     )
-    return pack_json_result(json.dumps(data))
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 @router.get(
@@ -323,12 +320,9 @@ def create_sample_project(
     )
 
     data = {
-        "ok": True,
-        "project": {
-            "id": str(project.id),
-            "name": project.name,
-            "description": project.description,
-        },
+        "id": str(project.id),
+        "name": project.name,
+        "description": project.description,
     }
 
     return pack_json_result(data)
