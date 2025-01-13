@@ -207,7 +207,7 @@ def create_data_slice(
         notification.send_organization_update(
             project_id, f"data_slice_created:{str(data_slice_item.id)}"
         )
-        data = {"id": str(data_slice_item.id), "__typename": "CreateDataSlice"}
+        data = {"id": str(data_slice_item.id)}
         return pack_json_result(data, wrap_for_frontend=False)
     except Exception as e:
         handle_error(e, user.id, project_id)
