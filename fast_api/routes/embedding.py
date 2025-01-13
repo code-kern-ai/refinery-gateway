@@ -49,16 +49,13 @@ def get_embeddings(project_id: str) -> List:
     embeddings_extended = embedding.get_all_embeddings_by_project_id_extended(
         project_id
     )
-    data = {
-        "id": project_id,
-        "embeddings": [
-            {
-                **sql_alchemy_to_dict(embedding),
-                "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
-            }
-            for embedding in embeddings_extended
-        ],
-    }
+    data = [
+        {
+            **sql_alchemy_to_dict(embedding),
+            "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
+        }
+        for embedding in embeddings_extended
+    ]
     return pack_json_result(data)
 
 
