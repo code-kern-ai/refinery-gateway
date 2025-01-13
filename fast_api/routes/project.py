@@ -79,17 +79,15 @@ def get_all_projects_mini(request: Request) -> Dict:
         auth_manager.get_organization_id_by_info(request.state.info)
     )
 
-    project_extended = []
-
-    for project in projects:
-        project_extended.append(
-            {
-                "id": str(project.get("id", None)),
-                "name": str(project.get("name", None)),
-                "description": str(project.get("description", None)),
-                "status": str(project.get("status", None)),
-            }
-        )
+    project_extended = [
+        {
+            "id": str(project.get("id")),
+            "name": str(project.get("name")),
+            "description": str(project.get("description")),
+            "status": str(project.get("status")),
+        }
+        for project in projects
+    ]
 
     return pack_json_result(project_extended)
 
