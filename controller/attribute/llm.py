@@ -5,10 +5,7 @@ import json
 
 # import os
 
-from submodules.model.business_objects import (
-    attribute,
-    project,
-)
+from submodules.model.business_objects import attribute, project, record
 from submodules.s3 import controller as s3
 from controller.attribute.util import (
     add_log_to_attribute_logs,
@@ -22,12 +19,16 @@ from controller.attribute.util import (
 __containers_running = {}
 
 
-def run_llm_attribute_calculation(
-    attribute_id: str, project_id: str, user_prompt: str
+def run_llm_attribute_calculation_exec_env(
+    attribute_id: str, project_id: str, attribute_name: str
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     project_item = project.get(project_id)
+    record_items = record.get_attribute_data(project_id, attribute_name)
     org_id = str(project_item.organization_id)
+
+    if not record_items:
+        return
 
     if attribute_item.logs:
         add_log_to_attribute_logs(
@@ -103,3 +104,25 @@ def run_llm_attribute_calculation(
     set_progress(project_id, attribute_item, 0.9)
 
     return calculated_attributes
+
+
+def run_llm_attribute_calculation_sample_records(
+    attribute_id: str, project_id: str, attribute_name: str, limit: int = 10
+) -> None:
+    attribute_item = attribute.get(project_id, attribute_id)
+    project_item = project.get(project_id)
+    record_items = record.get_sample_data_of(
+        project_item.project_id, attribute_name, limit
+    )
+    # org_id = str(project_item.organization_id)
+
+    if not record_items:
+        return
+
+    if attribute_item.logs:
+        add_log_to_attribute_logs(
+            project_id,
+            attribute_id,
+            "re-run sample LLM attribute calculation",
+            append_to_logs=False,
+        )

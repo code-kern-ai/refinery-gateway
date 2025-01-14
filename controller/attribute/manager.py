@@ -260,17 +260,22 @@ def calculate_user_attribute_all_records(
 
 
 def __calculate_user_attribute_all_records(
-    project_id: str, org_id: str, user_id: str, attribute_id: str, include_rats: bool
+    project_id: str,
+    org_id: str,
+    user_id: str,
+    attribute_id: str,
+    include_rats: bool,
+    llm_attribute_name: str = None,
 ) -> None:
     session_token = general.get_ctx_token()
     attribute_item = attribute.get(project_id, attribute_id)
 
     if attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
-        ac_function = llm.run_llm_attribute_calculation
+        ac_function = llm.run_llm_attribute_calculation_exec_env
         kwargs = dict(
             attribute_id=attribute_id,
             project_id=project_id,
-            user_prompt=getattr(attribute_item, "user_prompt", ""),
+            attribute_name=llm_attribute_name,
         )
     else:
         ac_function = util.run_attribute_calculation_exec_env
@@ -403,16 +408,16 @@ def __notify_attribute_calculation_failed(
 
 
 def calculate_user_attribute_sample_records(
-    project_id: str, attribute_id: str
+    project_id: str, attribute_id: str, llm_attribute_name: str = None
 ) -> Tuple[List[str], List[str]]:
     attribute_item = attribute.get(project_id, attribute_id)
 
     if attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
-        ac_function = llm.run_llm_attribute_calculation
+        ac_function = llm.run_llm_attribute_calculation_sample_records
         kwargs = dict(
             attribute_id=attribute_id,
             project_id=project_id,
-            user_prompt=getattr(attribute_item, "user_prompt", ""),
+            attribute_name=llm_attribute_name,
         )
     else:
         ac_function = util.run_attribute_calculation_exec_env
