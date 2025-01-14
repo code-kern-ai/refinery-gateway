@@ -153,6 +153,28 @@ def run_attribute_calculation_exec_env(
     return calculated_attributes
 
 
+def run_llm_attribute_calculation_sample_records(
+    attribute_id: str, project_id: str, attribute_name: str, limit: int = 10
+) -> None:
+    attribute_item = attribute.get(project_id, attribute_id)
+    project_item = project.get(project_id)
+    record_items = record.get_sample_data_of(
+        project_item.project_id, attribute_name, limit
+    )
+    # org_id = str(project_item.organization_id)
+
+    if not record_items:
+        return
+
+    if attribute_item.logs:
+        add_log_to_attribute_logs(
+            project_id,
+            attribute_id,
+            "re-run sample LLM attribute calculation",
+            append_to_logs=False,
+        )
+
+
 def extend_logs(
     project_id: str,
     attribute: Attribute,

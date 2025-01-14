@@ -23,7 +23,6 @@ from submodules.model import daemon
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
 from . import util
-from . import llm
 from sqlalchemy import sql
 
 DEFAULT_LLM_RESPONSE_CONFIG = {
@@ -287,26 +286,13 @@ def __calculate_user_attribute_all_records(
     user_id: str,
     attribute_id: str,
     include_rats: bool,
-    llm_attribute_name: str = None,
 ) -> None:
     session_token = general.get_ctx_token()
-    attribute_item = attribute.get(project_id, attribute_id)
-
-    if attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
-        ac_function = llm.run_llm_attribute_calculation_exec_env
-        kwargs = dict(
-            attribute_id=attribute_id,
-            project_id=project_id,
-            attribute_name=llm_attribute_name,
-        )
-    else:
-        ac_function = util.run_attribute_calculation_exec_env
-        kwargs = dict(
-            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
-        )
 
     try:
-        calculated_attributes = ac_function(**kwargs)
+        calculated_attributes = util.run_attribute_calculation_exec_env(
+            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
+        )
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
                 project_id=project_id,
@@ -349,6 +335,7 @@ def __calculate_user_attribute_all_records(
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
+    attribute_item = attribute.get(project_id, attribute_id)
     if (
         attribute_item
         and attribute_item.data_type == DataTypes.TEXT.value
@@ -430,30 +417,27 @@ def __notify_attribute_calculation_failed(
 
 
 def calculate_user_attribute_sample_records(
-    project_id: str, attribute_id: str, llm_attribute_name: str = None
+    project_id: str, attribute_id: str
 ) -> Tuple[List[str], List[str]]:
     attribute_item = attribute.get(project_id, attribute_id)
-
+    doc_bin_samples = util.prepare_sample_records_doc_bin(
+        attribute_id=attribute_id, project_id=project_id
+    )
     if attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
-        ac_function = llm.run_llm_attribute_calculation_sample_records
-        kwargs = dict(
-            attribute_id=attribute_id,
-            project_id=project_id,
-            attribute_name=llm_attribute_name,
-        )
+        ac_function = util.run_llm_attribute_calculation_sample_records
     else:
         ac_function = util.run_attribute_calculation_exec_env
-        kwargs = dict(
-            attribute_id=attribute_id,
-            project_id=project_id,
-            doc_bin=util.prepare_sample_records_doc_bin(
-                attribute_id=attribute_id, project_id=project_id
-            ),
-        )
 
-    calculated_attributes = ac_function(**kwargs)
+    calculated_attributes = ac_function(
+        attribute_id=attribute_id,
+        project_id=project_id,
+        doc_bin=doc_bin_samples,
+    )
     values = None
-    if attribute_item.data_type == DataTypes.EMBEDDING_LIST.value:
+    if (
+        attribute.get(project_id, attribute_id).data_type
+        == DataTypes.EMBEDDING_LIST.value
+    ):
         # values are json serialized so they can be easily transferred to the frontend.
         # Since the return type is a list of strings, without json.dumps a str(xxxx) will be called
         # which can't be easily deserialized if special characters are in the string
