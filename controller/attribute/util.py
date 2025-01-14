@@ -71,6 +71,35 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     return prefixed_doc_bin
 
 
+def wrap_llm_code(attribute_item: Attribute) -> str:
+    with open("llm_template_function.py", "r") as f:
+        lines = f.readlines()
+    llm_code = "\n".join(lines)
+
+    api_key = attribute_item.additional_config["llmConfig"]["apiKey"]
+    endpoint = attribute_item.additional_config["llmConfig"]["endpoint"]
+    api_version = attribute_item.additional_config["llmConfig"]["apiVerison"]
+    client_type = attribute_item.additional_config["llmConfig"][
+        "clientType"
+    ]  # OpenAIClientType, "OPEN_AI" or "AZURE"
+    model = attribute_item.additional_config["llmConfig"]["model"]
+
+    system_prompt = attribute_item.additional_config["templatePrompt"]
+    user_prompt = attribute_item.additional_config["questionPrompt"]
+
+    llm_code = llm_code.replace("@@API_KEY@@", api_key)
+    llm_code = llm_code.replace("@@ENDPOINT@@", endpoint)
+    llm_code = llm_code.replace("@@API_VERSION@@", api_version)
+    llm_code = llm_code.replace("@@CLIENT_TYPE@@", client_type)
+    llm_code = llm_code.replace("@@MODEL@@", model)
+    llm_code = llm_code.replace("@@SYSTEM_PROMPT@@", system_prompt)
+    llm_code = llm_code.replace("@@USER_PROMPT@@", user_prompt)
+
+    final_code = llm_code + "\n\n" + attribute_item.source_code
+
+    return final_code  # this still has mustache templates in it (e.g. in user_prompt)
+
+
 def run_attribute_calculation_exec_env(
     attribute_id: str, project_id: str, doc_bin: str
 ) -> None:
@@ -93,7 +122,11 @@ def run_attribute_calculation_exec_env(
     s3.put_object(
         org_id,
         project_id + "/" + prefixed_function_name,
-        attribute_item.source_code,
+        (
+            wrap_llm_code(attribute_item)
+            if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value
+            else attribute_item.source_code
+        ),
     )
     s3.put_object(
         org_id,
