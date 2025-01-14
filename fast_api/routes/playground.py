@@ -88,3 +88,14 @@ def get_most_similar_records(
         return response.json()
     else:
         return None
+
+
+@router.post(
+    "/{project_id}/store-eval-set"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def store_eval_set(
+    request: Request,
+    project_id: str,
+    search_question: SearchQuestionBody = Body(...),
+):
+    pass
