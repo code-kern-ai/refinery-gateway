@@ -252,6 +252,7 @@ class UpdateAttributeBody(BaseModel):
     is_primary_key: Optional[StrictBool] = None
     source_code: Optional[StrictStr] = None
     visibility: Optional[StrictStr] = None
+    additional_config: Optional[Dict] = None
 
 
 class CalculateUserAttributeAllRecordsBody(BaseModel):

@@ -227,6 +227,7 @@ def import_file(
             started_at=attribute_item.get("started_at"),
             finished_at=attribute_item.get("finished_at"),
             project_id=project_id,
+            additional_config=attribute_item.get("additional_config"),
         )
         attribute_ids_by_old_id[
             attribute_item.get(
@@ -1086,9 +1087,15 @@ def get_project_export_dump(
             "visibility": attribute_item.visibility,
             "started_at": attribute_item.started_at,
             "finished_at": attribute_item.finished_at,
+            "additional_config": attribute_item.additional_config,
         }
         for attribute_item in attributes
     ]
+    for attr in attributes_data:
+        if attr.get("additional_config"):
+            for k, v in attr["additional_config"].items():
+                if k == "llmConfig":
+                    del v["apiKey"]
 
     labeling_tasks_data = [
         {

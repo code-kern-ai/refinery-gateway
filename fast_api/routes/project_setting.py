@@ -200,6 +200,7 @@ def update_attribute(
         body.name,
         body.source_code,
         body.visibility,
+        body.additional_config,
     )
     return get_silent_success()
 

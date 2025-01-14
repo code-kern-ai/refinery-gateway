@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from controller.tokenization.tokenization_service import (
     request_reupload_docbins,
 )
@@ -25,6 +25,22 @@ from submodules.model.enums import TaskType
 from . import util
 from . import llm
 from sqlalchemy import sql
+
+DEFAULT_LLM_RESPONSE_CONFIG = {
+    "llmIdentifier": "Open AI",
+    "templatePrompt": "You are a chat bot trying to assist a user with a question.",
+    "questionPrompt": "{{ rd.record.question }}",
+    "llmConfig": {
+        "model": "gpt-4o-mini",
+        "temperature": 0,
+        "maxLength": 1024,
+        "stopSequences": [],
+        "topP": 1,
+        "frequencyPenalty": 0,
+        "presencePenalty": 0,
+        "apiKey": None,
+    },
+}
 
 
 def get_attribute(project_id: str, attribute_id: str) -> Attribute:
@@ -80,6 +96,9 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
     visibility = None  # default
     if data_type == DataTypes.EMBEDDING_LIST.value:
         visibility = AttributeVisibility.HIDE.value
+    additional_config = None
+    if data_type == DataTypes.LLM_RESPONSE.value:
+        additional_config = DEFAULT_LLM_RESPONSE_CONFIG
 
     attribute_item: Attribute = attribute.create(
         project_id,
@@ -91,6 +110,7 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
         state=AttributeState.INITIAL.value,
         visibility=visibility,
         with_commit=True,
+        additional_config=additional_config,
     )
     notification.send_organization_update(
         project_id=project_id,
@@ -108,6 +128,7 @@ def update_attribute(
     name: str,
     source_code: str,
     visibility: str,
+    additional_config: Dict[str, Any] = None,
 ) -> None:
     attribute_item: Attribute = attribute.update(
         project_id,
@@ -118,6 +139,7 @@ def update_attribute(
         source_code,
         with_commit=True,
         visibility=visibility,
+        additional_config=additional_config,
     )
 
     notification.send_organization_update(

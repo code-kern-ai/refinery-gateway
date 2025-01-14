@@ -21,6 +21,7 @@ ALL_ATTRIBUTES_WHITELIST = {
     "state",
     "logs",
     "visibility",
+    "additional_config",
 }
 
 
@@ -34,6 +35,12 @@ def get_attributes(
 ):
     data = manager.get_all_attributes(project_id, state_filter)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=ALL_ATTRIBUTES_WHITELIST)
+    # removes api key from llmConfig to prevent it from showing in the frontend
+    for attr in data_dict:
+        if attr.get("additional_config"):
+            for k, v in attr["additional_config"].items():
+                if k == "llmConfig":
+                    del v["apiKey"]
     return pack_json_result(data_dict)
 
 
