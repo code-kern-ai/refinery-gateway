@@ -444,3 +444,8 @@ class UpdateCustomerButton(BaseModel):
 
 class MissingUsersBody(BaseModel):
     user_ids: List[StrictStr]
+
+
+class SearchQuestionBody(BaseModel):
+    question: StrictStr
+    embeddingId: StrictStr
