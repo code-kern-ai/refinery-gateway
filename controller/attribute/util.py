@@ -55,7 +55,9 @@ def add_log_to_attribute_logs(
         general.commit()
 
 
-def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
+def prepare_sample_records_doc_bin(
+    attribute_id: str, project_id: str
+) -> str:  # TODO: add parameter `n` to limit LLM response executions
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(

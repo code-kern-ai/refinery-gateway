@@ -26,7 +26,14 @@ CLIENT_TYPE = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL = "@@MODEL@@"
 
 SYSTEM_PROMPT = "@@SYSTEM_PROMPT@@"
-USER_PROMPT = "@@USER_PROMPT@@"
+# SYSTEM_PROMPT = (
+#     "You are a news critic identifying clickbaits."
+#     "The input is a news article title. Determine if the input is clickbait or not."
+#     "Make your answer a single word, e.g. 'yes' or 'no'."
+# )
+USER_PROMPT = (
+    "@@USER_PROMPT@@"  # is updated in runtime by refinery-ac-exec-env/run_ac.py
+)
 
 # azure_endpoint = api_base (before 1.0) - basically the link to the api
 
