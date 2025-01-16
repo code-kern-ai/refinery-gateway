@@ -1,4 +1,9 @@
 from fast_api.routes.client_response import pack_json_result, GENERIC_FAILURE_RESPONSE
+from submodules.model.business_objects import (
+    evaluation_set,
+    evaluation_group,
+    evaluation_run,
+)
 from typing import List, Any, Optional, Tuple, Dict
 import os
 import requests
@@ -27,11 +32,11 @@ def create_evaluation_set(project_id: str, question: str, record_ids: List[str])
 
 
 def get_evaluation_set_by_id(project_id: str, set_id: str):
-    pass
+    return evaluation_set.get(project_id, set_id)
 
 
 def get_evaluation_sets(project_id: str):
-    pass
+    return evaluation_set.get_all(project_id)
 
 
 def create_evaluation_group(project_id: str, name: str, evaluation_set_ids: List[str]):
@@ -39,15 +44,15 @@ def create_evaluation_group(project_id: str, name: str, evaluation_set_ids: List
 
 
 def get_evaluation_group_by_id(project_id: str, group_id: str):
-    pass
+    return evaluation_group.get(project_id, group_id)
 
 
 def get_evaluation_groups(project_id: str):
-    pass
+    return evaluation_group.get_all(project_id)
 
 
 def get_evaluation_runs(project_id: str):
-    pass
+    return evaluation_run.get_all(project_id)
 
 
 def init_evaluation_run(project_id: str, evaluation_group_id: str):
