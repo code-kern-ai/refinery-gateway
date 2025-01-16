@@ -3,7 +3,6 @@ from controller.auth import manager as auth_manager
 from fast_api.routes.client_response import pack_json_result, get_silent_success
 from fast_api.models import (
     SearchQuestionBody,
-    MatchingSetCreationBody,
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
 )
@@ -50,7 +49,6 @@ def create_evaluation_set(
 def get_evaluation_sets(
     request: Request,
     project_id: str,
-    search_question: SearchQuestionBody = Body(...),
 ):
     matching_sets = playground_manager.get_evaluation_sets(project_id)
     return pack_json_result(matching_sets)
@@ -72,10 +70,10 @@ def get_single_evaluation_set(
 def create_evaluation_group(
     request: Request,
     project_id: str,
-    evaluation_set: EvaluationGroupCreationBody = Body(...),
+    evaluation_group: EvaluationGroupCreationBody = Body(...),
 ):
     playground_manager.create_evaluation_set(
-        project_id, evaluation_set.name, evaluation_set.matchingSetIds
+        project_id, evaluation_group.name, evaluation_group.matchingSetIds
     )
     return get_silent_success()
 
@@ -88,11 +86,13 @@ def get_evaluation_groups(request: Request, project_id: str):
     return pack_json_result(evaluation_groups)
 
 
-@router.get("/{project_id}/evaluation--groups/{group_id}")
+@router.get("/{project_id}/evaluation-groups/{group_id}")
 def get_single_evaluation_group(
     request: Request,
     project_id: str,
-    set_id: str,
+    group_id: str,
 ):
-    evaluation_set = playground_manager.get_evaluation_group_by_id(project_id, set_id)
-    return pack_json_result(evaluation_set)
+    evaluation_group = playground_manager.get_evaluation_group_by_id(
+        project_id, group_id
+    )
+    return pack_json_result(evaluation_group)
