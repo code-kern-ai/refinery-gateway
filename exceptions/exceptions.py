@@ -52,3 +52,26 @@ class EmbeddingConnectorError(Exception):
 
 class AuthManagerError(Exception):
     pass
+
+
+class LlmConfigError(Exception):
+    pass
+
+
+__all__ = [
+    NotificationTypeException,
+    NotificationLevelException,
+    TooManyRecordsForStaticSliceException,
+    NoSuchDataSliceFoundException,
+    MissingArgumentsException,
+    BadPasswordError,
+    ApiTokenImportError,
+    ProjectAccessError,
+    ServiceRequestsError,
+    DatabaseSessionError,
+    ProjectManagerError,
+    PayloadSchedulerError,
+    EmbeddingConnectorError,
+    AuthManagerError,
+    LlmConfigError,
+]

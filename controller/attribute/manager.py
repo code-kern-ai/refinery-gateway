@@ -38,6 +38,8 @@ DEFAULT_LLM_RESPONSE_CONFIG = {
         "frequencyPenalty": 0,
         "presencePenalty": 0,
         "apiKey": None,
+        "endpoint": None,
+        "apiVersion": None,
     },
 }
 
@@ -419,16 +421,10 @@ def __notify_attribute_calculation_failed(
 def calculate_user_attribute_sample_records(
     project_id: str, attribute_id: str
 ) -> Tuple[List[str], List[str]]:
-    attribute_item = attribute.get(project_id, attribute_id)
     doc_bin_samples = util.prepare_sample_records_doc_bin(
         attribute_id=attribute_id, project_id=project_id
     )
-    if attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
-        ac_function = util.run_llm_attribute_calculation_sample_records
-    else:
-        ac_function = util.run_attribute_calculation_exec_env
-
-    calculated_attributes = ac_function(
+    calculated_attributes = util.run_attribute_calculation_exec_env(
         attribute_id=attribute_id,
         project_id=project_id,
         doc_bin=doc_bin_samples,

@@ -9,6 +9,7 @@ import pytz
 import datetime
 from dateutil import parser
 
+from exceptions.exceptions import LlmConfigError
 from submodules.model.business_objects import (
     attribute,
     general,
@@ -29,6 +30,8 @@ exec_env_network = os.getenv("LF_NETWORK")
 __tz = pytz.timezone("Europe/Berlin")
 
 __containers_running = {}
+
+LLM_RESPONSE_TMPL_PATH = "/app/controller/attribute/llm_response_tmpl.py"
 
 
 def add_log_to_attribute_logs(
@@ -71,29 +74,36 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     return prefixed_doc_bin
 
 
-def wrap_llm_code(attribute_item: Attribute) -> str:
-    with open("llm_template_function.py", "r") as f:
-        lines = f.readlines()
+def prepare_llm_response_code(attribute_item: Attribute) -> str:
+    global LLM_RESPONSE_TMPL_PATH
+    with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
+        lines = [line.rstrip() for line in file if line[0] != "#"]
+
     llm_code = "\n".join(lines)
+    llm_config = attribute_item.additional_config.get("llmConfig", {})
+    print(attribute_item.additional_config)
+    try:
+        llm_config_mapping = {
+            "@@API_KEY@@": llm_config["apiKey"],
+            "@@ENDPOINT@@": llm_config["endpoint"],
+            "@@API_VERSION@@": llm_config["apiVersion"],
+            "@@CLIENT_TYPE@@": llm_config["clientType"],
+            "@@MODEL@@": llm_config["model"],
+            "@@SYSTEM_PROMPT@@": attribute_item.additional_config["templatePrompt"],
+            "@@USER_PROMPT@@": attribute_item.additional_config["questionPrompt"],
+        }
+    except KeyError:
+        error_message = "LLM configuration is missing a required field"
+        add_log_to_attribute_logs(
+            attribute_item.project_id,
+            attribute_item.id,
+            error_message,
+            append_to_logs=False,
+        )
+        raise LlmConfigError(error_message)
 
-    api_key = attribute_item.additional_config["llmConfig"]["apiKey"]
-    endpoint = attribute_item.additional_config["llmConfig"]["endpoint"]
-    api_version = attribute_item.additional_config["llmConfig"]["apiVerison"]
-    client_type = attribute_item.additional_config["llmConfig"][
-        "clientType"
-    ]  # OpenAIClientType, "OPEN_AI" or "AZURE"
-    model = attribute_item.additional_config["llmConfig"]["model"]
-
-    system_prompt = attribute_item.additional_config["templatePrompt"]
-    user_prompt = attribute_item.additional_config["questionPrompt"]
-
-    llm_code = llm_code.replace("@@API_KEY@@", api_key)
-    llm_code = llm_code.replace("@@ENDPOINT@@", endpoint)
-    llm_code = llm_code.replace("@@API_VERSION@@", api_version)
-    llm_code = llm_code.replace("@@CLIENT_TYPE@@", client_type)
-    llm_code = llm_code.replace("@@MODEL@@", model)
-    llm_code = llm_code.replace("@@SYSTEM_PROMPT@@", system_prompt)
-    llm_code = llm_code.replace("@@USER_PROMPT@@", user_prompt)
+    for key, value in llm_config_mapping.items():
+        llm_code = llm_code.replace(key, value)
 
     final_code = llm_code + "\n\n" + attribute_item.source_code
 
@@ -123,7 +133,7 @@ def run_attribute_calculation_exec_env(
         org_id,
         project_id + "/" + prefixed_function_name,
         (
-            wrap_llm_code(attribute_item)
+            prepare_llm_response_code(attribute_item)
             if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value
             else attribute_item.source_code
         ),

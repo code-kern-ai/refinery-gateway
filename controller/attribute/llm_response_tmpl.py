@@ -1,5 +1,5 @@
 import time
-from typing import Any, Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict
 from enum import Enum
 
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
@@ -19,21 +19,26 @@ class OpenAIClientType(Enum):
 MAX_CACHED_CLIENTS = 0  # 60
 CLIENT_LOOKUP = {}  # list of client -> last used tuples
 
+API_KEY = "@@API_KEY@@"
+ENDPOINT = "@@ENDPOINT@@"
+API_VERSION = "@@API_VERSION@@"
+CLIENT_TYPE = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
+MODEL = "@@MODEL@@"
+
+SYSTEM_PROMPT = "@@SYSTEM_PROMPT@@"
+USER_PROMPT = "@@USER_PROMPT@@"
 
 # azure_endpoint = api_base (before 1.0) - basically the link to the api
 
 
 def test_client_model(
-    client_type: OpenAIClientType,
     model: str,
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
     api_version: Optional[str] = None,
 ):
-    client = __create_client(
-        client_type, use_async, api_key, azure_endpoint, api_version
-    )
+    client = __create_client(use_async, api_key, azure_endpoint, api_version)
 
     if __is_client_valid_ex(client) is not None:
         print(
@@ -63,7 +68,6 @@ def test_client_model(
 
 
 def get_client(
-    client_type: OpenAIClientType,
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
@@ -71,13 +75,15 @@ def get_client(
     check_valid: bool = True,
     prevent_cached_client: bool = True,
 ) -> Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI]:
-    if client_type == OpenAIClientType.AZURE and (
+    global CLIENT_TYPE
+
+    if CLIENT_TYPE == OpenAIClientType.AZURE.value and (
         azure_endpoint is None or api_version is None
     ):
         raise ValueError("azure_endpoint and api_version must be set for Azure OpenAI")
 
     # tuples can be used as dict keys, primitive datatype comparison works flawless, caution with objects though!
-    config = (client_type.value, use_async, api_key, azure_endpoint, api_version)
+    config = (CLIENT_TYPE, use_async, api_key, azure_endpoint, api_version)
     use_cache = MAX_CACHED_CLIENTS != 0 and not prevent_cached_client
     global CLIENT_LOOKUP
     if use_cache and config in CLIENT_LOOKUP:
@@ -97,9 +103,7 @@ def get_client(
             client.close()
             CLIENT_LOOKUP = dict(tmp)
 
-        client = __create_client(
-            client_type, use_async, api_key, azure_endpoint, api_version
-        )
+        client = __create_client(use_async, api_key, azure_endpoint, api_version)
 
         # test client with api key
         if check_valid:
@@ -113,14 +117,15 @@ def get_client(
 
 
 def __create_client(
-    client_type: OpenAIClientType,
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
     api_version: Optional[str] = None,
 ):
+    global CLIENT_TYPE
+
     client = None
-    if client_type == OpenAIClientType.AZURE:
+    if CLIENT_TYPE == OpenAIClientType.AZURE.value:
         if use_async:
             client = AsyncAzureOpenAI(
                 azure_endpoint=azure_endpoint,
@@ -215,7 +220,6 @@ def get_openai_finish_reason_from(
 def get_chat_completion(
     model: str,
     messages: List[Dict[str, str]],
-    client_type: OpenAIClientType,
     api_key: str,
     azure_endpoint: Optional[str] = None,
     api_version: Optional[str] = None,
@@ -223,7 +227,6 @@ def get_chat_completion(
     **kwargs,
 ) -> ChatCompletion:
     client = get_client(
-        client_type=client_type,
         use_async=False,
         api_key=api_key,
         azure_endpoint=azure_endpoint,
@@ -240,29 +243,21 @@ def get_chat_completion(
 
 
 def get_llm_response():
-
-    api_key = "@@API_KEY@@"
-    endpoint = "@@ENDPOINT@@"
-    api_version = "@@API_VERSION@@"
-    client_type = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
-    model = "@@MODEL@@"
-
-    system_prompt = "@@SYSTEM_PROMPT@@"
-    user_prompt = "@@USER_PROMPT@@"
+    global SYSTEM_PROMPT, USER_PROMPT, MODEL, API_KEY, ENDPOINT, API_VERSION
 
     messages = [
         {
             "role": "system",
-            "content": system_prompt,
+            "content": SYSTEM_PROMPT,
         },
         {
             "role": "user",
-            "content": user_prompt,
+            "content": USER_PROMPT,
         },
     ]
 
     chat_completion = get_chat_completion(
-        model, messages, client_type, api_key, endpoint, api_version, close_after=True
+        MODEL, messages, API_KEY, ENDPOINT, API_VERSION, close_after=True
     )
 
     return get_openai_value_from(chat_completion)
