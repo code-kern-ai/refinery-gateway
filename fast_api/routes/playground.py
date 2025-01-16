@@ -5,6 +5,7 @@ from fast_api.models import (
     SearchQuestionBody,
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
+    EvaluationRunCreationBody,
 )
 from controller.playground import manager as playground_manager
 
@@ -96,3 +97,23 @@ def get_single_evaluation_group(
         project_id, group_id
     )
     return pack_json_result(evaluation_group)
+
+
+@router.get(
+    "/{project_id}/evaluation-runs"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def get_evaluation_runs(request: Request, project_id: str):
+    evaluation_runs = playground_manager.get_evaluation_runs(project_id)
+    return pack_json_result(evaluation_runs)
+
+
+@router.post(
+    "/{project_id}/evaluation-runs"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def create_evaluation_run(
+    request: Request,
+    project_id: str,
+    evaluation_run: EvaluationRunCreationBody = Body(...),
+):
+    playground_manager.init_evaluation_run(project_id, evaluation_run.evaluationGroupId)
+    return get_silent_success()
