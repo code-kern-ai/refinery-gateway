@@ -459,3 +459,8 @@ class EvaluationSetCreationBody(BaseModel):
 class EvaluationGroupCreationBody(BaseModel):
     matchingSetIds: List[StrictStr]
     name: StrictStr
+
+
+class EvaluationRunCreationBody(BaseModel):
+    embeddingId: StrictStr
+    evaluationGroupId: StrictStr

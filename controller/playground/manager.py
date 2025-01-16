@@ -22,22 +22,6 @@ def get_search_result_for_text(project_id: str, embedding_id: str, question: str
         return []
 
 
-def get_search_result_for_eval_set(
-    project_id: str, embedding_id: str, eval_set_id: str
-):
-    question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
-
-    if question_tensor is None:
-        return GENERIC_FAILURE_RESPONSE
-    elif len(question_tensor) == 0:
-        return pack_json_result([])
-
-    search_results = __get_most_similar_records(
-        project_id, embedding_id, question_tensor[0], LIMIT
-    )
-    return search_results
-
-
 def create_evaluation_set(project_id: str, question: str, record_ids: List[str]):
     pass
 
@@ -59,6 +43,14 @@ def get_evaluation_group_by_id(project_id: str, group_id: str):
 
 
 def get_evaluation_groups(project_id: str):
+    pass
+
+
+def get_evaluation_runs(project_id: str):
+    pass
+
+
+def init_evaluation_run(project_id: str, evaluation_group_id: str):
     pass
 
 
