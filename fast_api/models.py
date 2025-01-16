@@ -451,6 +451,11 @@ class SearchQuestionBody(BaseModel):
     embeddingId: StrictStr
 
 
-class SearchEvalSetBody(BaseModel):
-    evalSetId: StrictStr
-    embeddingId: StrictStr
+class EvaluationSetCreationBody(BaseModel):
+    question: StrictStr
+    recordIds: List[StrictStr]
+
+
+class EvaluationGroupCreationBody(BaseModel):
+    matchingSetIds: List[StrictStr]
+    name: StrictStr

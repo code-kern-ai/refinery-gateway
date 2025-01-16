@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, Request, Body
 from controller.auth import manager as auth_manager
-from fast_api.routes.client_response import pack_json_result
-from fast_api.models import SearchQuestionBody, SearchEvalSetBody
+from fast_api.routes.client_response import pack_json_result, get_silent_success
+from fast_api.models import (
+    SearchQuestionBody,
+    MatchingSetCreationBody,
+    EvaluationSetCreationBody,
+    EvaluationGroupCreationBody,
+)
 from controller.playground import manager as playground_manager
 
 router = APIRouter()
@@ -26,29 +31,68 @@ def get_search_results_question(
 
 
 @router.post(
-    "/{project_id}/eval-set-search"
+    "/{project_id}/evaluation-sets"
 )  # dependencies=[Depends(auth_manager.check_project_access_dep)]
-def get_search_results_eval_set(
+def create_evaluation_set(
     request: Request,
     project_id: str,
-    search_eval_set: SearchEvalSetBody = Body(...),
+    evaluation_set: EvaluationSetCreationBody = Body(...),
 ):
-    embedding_id = search_eval_set.embeddingId
-    evaluation_set_id = search_eval_set.evalSetId
-
-    search_results = playground_manager.get_search_result_for_evalset(
-        project_id, embedding_id, question
+    playground_manager.create_evaluation_set(
+        project_id, evaluation_set.question, evaluation_set.recordIds
     )
+    return get_silent_success()
 
-    return pack_json_result(search_results)
 
-
-@router.post(
-    "/{project_id}/store-eval-set"
+@router.get(
+    "/{project_id}/evaluation-sets"
 )  # dependencies=[Depends(auth_manager.check_project_access_dep)]
-def store_eval_set(
+def get_evaluation_sets(
     request: Request,
     project_id: str,
     search_question: SearchQuestionBody = Body(...),
 ):
-    pass
+    matching_sets = playground_manager.get_evaluation_sets(project_id)
+    return pack_json_result(matching_sets)
+
+
+@router.get("/{project_id}/evaluation-sets/{set_id}")
+def get_single_evaluation_set(
+    request: Request,
+    project_id: str,
+    set_id: str,
+):
+    matching_set = playground_manager.get_evaluation_set_by_id(project_id, set_id)
+    return pack_json_result(matching_set)
+
+
+@router.post(
+    "/{project_id}/evaluation-groups"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def create_evaluation_group(
+    request: Request,
+    project_id: str,
+    evaluation_set: EvaluationGroupCreationBody = Body(...),
+):
+    playground_manager.create_evaluation_set(
+        project_id, evaluation_set.name, evaluation_set.matchingSetIds
+    )
+    return get_silent_success()
+
+
+@router.get(
+    "/{project_id}/evaluation-groups"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def get_evaluation_groups(request: Request, project_id: str):
+    evaluation_groups = playground_manager.get_evaluation_groups(project_id)
+    return pack_json_result(evaluation_groups)
+
+
+@router.get("/{project_id}/evaluation--groups/{group_id}")
+def get_single_evaluation_group(
+    request: Request,
+    project_id: str,
+    set_id: str,
+):
+    evaluation_set = playground_manager.get_evaluation_group_by_id(project_id, set_id)
+    return pack_json_result(evaluation_set)
