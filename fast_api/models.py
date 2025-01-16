@@ -449,3 +449,8 @@ class MissingUsersBody(BaseModel):
 class SearchQuestionBody(BaseModel):
     question: StrictStr
     embeddingId: StrictStr
+
+
+class SearchEvalSetBody(BaseModel):
+    evalSetId: StrictStr
+    embeddingId: StrictStr
