@@ -3,7 +3,6 @@ from controller.auth import manager as auth_manager
 from fast_api.routes.client_response import pack_json_result, get_silent_success
 from fast_api.models import (
     SearchQuestionBody,
-    MatchingSetCreationBody,
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
 )
