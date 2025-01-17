@@ -1,12 +1,11 @@
-from fast_api.routes.client_response import pack_json_result, GENERIC_FAILURE_RESPONSE
-from submodules.model.business_objects import (
-    evaluation_set,
-    evaluation_group,
-    evaluation_run,
-)
 from typing import List, Any, Optional, Tuple, Dict
 import os
 import requests
+from submodules.model.business_objects import (
+    evaluation_group as evaluation_group_db_bo,
+    evaluation_set as evaluation_set_db_bo,
+    evaluation_run as evaluation_run_db_bo,
+)
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
@@ -32,11 +31,11 @@ def create_evaluation_set(project_id: str, question: str, record_ids: List[str])
 
 
 def get_evaluation_set_by_id(project_id: str, set_id: str):
-    return evaluation_set.get(project_id, set_id)
+    return evaluation_set_db_bo.get(project_id, set_id)
 
 
 def get_evaluation_sets(project_id: str):
-    return evaluation_set.get_all(project_id)
+    return evaluation_set_db_bo.get_all(project_id)
 
 
 def create_evaluation_group(project_id: str, name: str, evaluation_set_ids: List[str]):
@@ -44,19 +43,37 @@ def create_evaluation_group(project_id: str, name: str, evaluation_set_ids: List
 
 
 def get_evaluation_group_by_id(project_id: str, group_id: str):
-    return evaluation_group.get(project_id, group_id)
+    return evaluation_group_db_bo.get(project_id, group_id)
 
 
 def get_evaluation_groups(project_id: str):
-    return evaluation_group.get_all(project_id)
+    return evaluation_group_db_bo.get_all(project_id)
 
 
 def get_evaluation_runs(project_id: str):
-    return evaluation_run.get_all(project_id)
+    return evaluation_run_db_bo.get_all(project_id)
 
 
-def init_evaluation_run(project_id: str, evaluation_group_id: str):
-    pass
+def init_evaluation_run(project_id: str, embedding_id: str, evaluation_group_id: str):
+
+    evaluation_sets = evaluation_set_db_bo.get_by_evaluation_group_id(
+        project_id, evaluation_group_id
+    )
+    questions_tensors = __get_tensors_for_texts(
+        project_id,
+        embedding_id,
+        [evaluation_set.question for evaluation_set in evaluation_sets],
+    )
+    search_results = __get_most_similar_records(
+        project_id, embedding_id, questions_tensors, LIMIT
+    )
+
+    evaluation_results = {}
+    for evaluation_set, search_result in zip(evaluation_sets, search_results):
+        evaluation_results[evaluation_set.id] = search_result
+        ## ... add more
+
+    return evaluation_results
 
 
 def __get_tensors_for_texts(
