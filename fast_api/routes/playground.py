@@ -6,6 +6,7 @@ from fast_api.models import (
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
     EvaluationRunCreationBody,
+    RecordSearchContains,
 )
 from controller.playground import manager as playground_manager
 
@@ -128,3 +129,21 @@ def create_evaluation_run(
         request.state.user_id,
     )
     return evaluation_run
+
+
+@router.post(
+    "/{project_id}/record-search-contains"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def get_record_by_content(
+    request: Request,
+    project_id: str,
+    record_search: RecordSearchContains = Body(...),
+):
+    query = record_search.query
+    limit = record_search.limit
+    offset = record_search.offset
+    user = "52a09a36-5e3a-446a-a9b7-0104edecf62d"  # request.state.user
+    records = playground_manager.get_records_by_content(
+        project_id, user, query, limit, offset
+    )
+    return pack_json_result(records)

@@ -464,3 +464,9 @@ class EvaluationGroupCreationBody(BaseModel):
 class EvaluationRunCreationBody(BaseModel):
     embeddingId: StrictStr
     evaluationGroupId: StrictStr
+
+
+class RecordSearchContains(BaseModel):
+    query: StrictStr
+    offset: StrictInt
+    limit: StrictInt

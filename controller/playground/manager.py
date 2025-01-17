@@ -5,7 +5,10 @@ from submodules.model.business_objects import (
     evaluation_group as evaluation_group_db_bo,
     evaluation_set as evaluation_set_db_bo,
     evaluation_run as evaluation_run_db_bo,
+    attribute as attribute_db_bo,
 )
+from service.search.search import resolve_extended_search
+from submodules.model.util import sql_alchemy_to_dict
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
@@ -168,3 +171,49 @@ def __get_most_similar_records(
         return response.json()
     else:
         return None
+
+
+def get_records_by_content(
+    project_id: str, user_id: str, content: str, limit: int, offset: int
+):
+
+    filter_data = __build_contains_filter(project_id, content)
+    record_list = resolve_extended_search(
+        project_id, user_id, filter_data, limit, offset
+    ).record_list
+    record_list = sql_alchemy_to_dict(record_list, column_blacklist=["rla_data"])
+
+    return record_list
+
+
+def __build_contains_filter(project_id: str, content: str):
+    attributes = attribute_db_bo.get_all(project_id)
+
+    filter_each_attribute = [
+        {
+            "RELATION": "OR",
+            "NEGATION": False,
+            "TARGET_TABLE": "RECORD",
+            "TARGET_COLUMN": "DATA",
+            "OPERATOR": "CONTAINS",
+            "VALUES": [f"{attribute.name}", f"{content}"],
+        }
+        for attribute in attributes
+    ]
+
+    if len(filter_each_attribute) > 0:
+        filter_each_attribute[0]["RELATION"] = "NONE"
+
+    final_filter = [
+        {
+            "RELATION": "NONE",
+            "NEGATION": False,
+            "TARGET_TABLE": "RECORD",
+            "TARGET_COLUMN": "CATEGORY",
+            "OPERATOR": "EQUAL",
+            "VALUES": ["SCALE"],
+        },
+        {"RELATION": "AND", "NEGATION": False, "FILTER": filter_each_attribute},
+    ]
+
+    return final_filter
