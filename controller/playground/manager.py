@@ -15,6 +15,13 @@ FILTER = None
 THRESHOLD = None
 
 
+class EVALUATION_RUN_STATE:
+    INITIATED = "INITIATED"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
 def get_search_result_for_text(project_id: str, embedding_id: str, question: str):
     question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
 
@@ -60,41 +67,56 @@ def get_evaluation_runs(project_id: str):
     return evaluation_run_db_bo.get_all(project_id)
 
 
-def init_evaluation_run(project_id: str, embedding_id: str, evaluation_group_id: str):
+def init_evaluation_run(
+    project_id: str, embedding_id: str, evaluation_group_id: str, created_by: str
+):
 
-    evaluation_sets = evaluation_set_db_bo.get_by_evaluation_group_id(
-        project_id, evaluation_group_id
-    )
-    questions_tensors = __get_tensors_for_texts(
+    evaluation_run = evaluation_run_db_bo.create(
         project_id,
+        evaluation_group_id,
+        created_by,
         embedding_id,
-        [evaluation_set.question for evaluation_set in evaluation_sets],
+        EVALUATION_RUN_STATE.INITIATED,
     )
-    search_results = __get_most_similar_records(
-        project_id, embedding_id, questions_tensors, LIMIT
-    )
-
+    state = EVALUATION_RUN_STATE.RUNNING
     evaluation_results = {}
-    for evaluation_set, search_result in zip(evaluation_sets, search_results):
+    try:
+        evaluation_sets = evaluation_set_db_bo.get_by_evaluation_group_id(
+            project_id, evaluation_group_id
+        )
+        questions_tensors = __get_tensors_for_texts(
+            project_id,
+            [evaluation_set.question for evaluation_set in evaluation_sets],
+        )
+        search_results = __get_most_similar_records(
+            project_id, embedding_id, questions_tensors, LIMIT
+        )
 
-        expected_record_ids = evaluation_set.record_ids
-        received_record_ids = [record["id"] for record in search_result]
+        for evaluation_set, search_result in zip(evaluation_sets, search_results):
 
-        evaluation_by_record_id = {}
-        for record_id in expected_record_ids:
-            if record_id in received_record_ids:
-                evaluation_by_record_id[record_id] = {"evaluation_state": "true_p"}
-            else:
-                evaluation_by_record_id[record_id] = {"evaluation_state": "false_p"}
-        for record_id in received_record_ids:
-            if record_id not in expected_record_ids:
-                evaluation_by_record_id[record_id] = {"evaluation_state": "false_n"}
-        evaluation_results[evaluation_set.id] = {
-            "search_results": search_result,
-            "evaluation_by_record_id": evaluation_by_record_id,
-        }
+            expected_record_ids = evaluation_set.record_ids
+            received_record_ids = [record["id"] for record in search_result]
 
-    return evaluation_results
+            evaluation_by_record_id = {}
+            for record_id in expected_record_ids:
+                if record_id in received_record_ids:
+                    evaluation_by_record_id[record_id] = {"evaluation_state": "true_p"}
+                else:
+                    evaluation_by_record_id[record_id] = {"evaluation_state": "false_p"}
+            for record_id in received_record_ids:
+                if record_id not in expected_record_ids:
+                    evaluation_by_record_id[record_id] = {"evaluation_state": "false_n"}
+            evaluation_results[evaluation_set.id] = {
+                "search_results": search_result,
+                "evaluation_by_record_id": evaluation_by_record_id,
+            }
+        state = EVALUATION_RUN_STATE.SUCCESS
+    except Exception:
+        state = EVALUATION_RUN_STATE.FAILED
+    evaluation_run_db_bo.update(
+        evaluation_run.id, state, evaluation_results, None, True
+    )
+    return evaluation_run
 
 
 def __get_tensors_for_texts(

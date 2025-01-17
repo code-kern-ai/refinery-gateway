@@ -121,5 +121,10 @@ def create_evaluation_run(
     project_id: str,
     evaluation_run: EvaluationRunCreationBody = Body(...),
 ):
-    playground_manager.init_evaluation_run(project_id, evaluation_run.evaluationGroupId)
-    return get_silent_success()
+    evaluation_run = playground_manager.init_evaluation_run(
+        project_id,
+        evaluation_run.embeddingId,
+        evaluation_run.evaluationGroupId,
+        request.state.user_id,
+    )
+    return evaluation_run
