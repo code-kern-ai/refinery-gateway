@@ -9,6 +9,7 @@ from fast_api.models import (
     RecordSearchContains,
 )
 from controller.playground import manager as playground_manager
+from controller.auth import manager as auth_manager
 
 router = APIRouter()
 
@@ -39,11 +40,12 @@ def create_evaluation_set(
     project_id: str,
     evaluation_set: EvaluationSetCreationBody = Body(...),
 ):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
     playground_manager.create_evaluation_set(
         project_id,
         evaluation_set.question,
         evaluation_set.recordIds,
-        request.state.user_id,
+        user_id,
     )
     return get_silent_success()
 
@@ -77,11 +79,12 @@ def create_evaluation_group(
     project_id: str,
     evaluation_group: EvaluationGroupCreationBody = Body(...),
 ):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
     playground_manager.create_evaluation_group(
         project_id,
         evaluation_group.name,
         evaluation_group.evaluationSetIds,
-        request.state.user_id,
+        user_id,
     )
     return get_silent_success()
 
@@ -122,11 +125,12 @@ def create_evaluation_run(
     project_id: str,
     evaluation_run: EvaluationRunCreationBody = Body(...),
 ):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
     evaluation_run = playground_manager.init_evaluation_run(
         project_id,
         evaluation_run.embeddingId,
         evaluation_run.evaluationGroupId,
-        request.state.user_id,
+        user_id,
     )
     return evaluation_run
 
