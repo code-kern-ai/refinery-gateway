@@ -457,7 +457,7 @@ class EvaluationSetCreationBody(BaseModel):
 
 
 class EvaluationGroupCreationBody(BaseModel):
-    matchingSetIds: List[StrictStr]
+    evaluationSetIds: List[StrictStr]
     name: StrictStr
 
 

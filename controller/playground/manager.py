@@ -26,8 +26,10 @@ def get_search_result_for_text(project_id: str, embedding_id: str, question: str
         return []
 
 
-def create_evaluation_set(project_id: str, question: str, record_ids: List[str]):
-    pass
+def create_evaluation_set(
+    project_id: str, question: str, record_ids: List[str], created_by: str
+):
+    evaluation_set_db_bo.create(project_id, question, created_by, record_ids, True)
 
 
 def get_evaluation_set_by_id(project_id: str, set_id: str):
@@ -38,8 +40,12 @@ def get_evaluation_sets(project_id: str):
     return evaluation_set_db_bo.get_all(project_id)
 
 
-def create_evaluation_group(project_id: str, name: str, evaluation_set_ids: List[str]):
-    pass
+def create_evaluation_group(
+    project_id: str, name: str, evaluation_set_ids: List[str], created_by: str
+):
+    evaluation_group_db_bo.create(
+        project_id, name, created_by, evaluation_set_ids, True
+    )
 
 
 def get_evaluation_group_by_id(project_id: str, group_id: str):

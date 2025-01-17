@@ -39,7 +39,10 @@ def create_evaluation_set(
     evaluation_set: EvaluationSetCreationBody = Body(...),
 ):
     playground_manager.create_evaluation_set(
-        project_id, evaluation_set.question, evaluation_set.recordIds
+        project_id,
+        evaluation_set.question,
+        evaluation_set.recordIds,
+        request.state.user_id,
     )
     return get_silent_success()
 
@@ -73,8 +76,11 @@ def create_evaluation_group(
     project_id: str,
     evaluation_group: EvaluationGroupCreationBody = Body(...),
 ):
-    playground_manager.create_evaluation_set(
-        project_id, evaluation_group.name, evaluation_group.matchingSetIds
+    playground_manager.create_evaluation_group(
+        project_id,
+        evaluation_group.name,
+        evaluation_group.evaluationSetIds,
+        request.state.user_id,
     )
     return get_silent_success()
 
