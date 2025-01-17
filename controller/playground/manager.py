@@ -6,6 +6,7 @@ from submodules.model.business_objects import (
     evaluation_set as evaluation_set_db_bo,
     evaluation_run as evaluation_run_db_bo,
     attribute as attribute_db_bo,
+    record as record_db_bo,
 )
 from service.search.search import resolve_extended_search
 from submodules.model.util import sql_alchemy_to_dict
@@ -27,11 +28,23 @@ class EVALUATION_RUN_STATE:
 
 def get_search_result_for_text(project_id: str, embedding_id: str, question: str):
     question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
-
     if question_tensor and question_tensor[0]:
-        return __get_most_similar_records(
+        records = __get_most_similar_records(
             project_id, embedding_id, question_tensor[0], LIMIT
         )
+        # make more efficient, own function
+        unfolded_records = []
+        for record in records:
+            record_obj = record_db_bo.get(project_id, record["id"])
+            record_dict = sql_alchemy_to_dict(record_obj)
+            unfolded_records.append(
+                {
+                    "data": record_dict["data"],
+                    "id": record["id"],
+                    "score": record["score"],
+                }
+            )
+        return unfolded_records
     else:
         return []
 

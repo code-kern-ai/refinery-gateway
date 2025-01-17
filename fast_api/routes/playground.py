@@ -29,7 +29,7 @@ def get_search_results_question(
         project_id, embedding_id, question
     )
 
-    return pack_json_result(search_results)
+    return pack_json_result(search_results, wrap_for_frontend=False)
 
 
 @router.post(
