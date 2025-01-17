@@ -55,9 +55,7 @@ def add_log_to_attribute_logs(
         general.commit()
 
 
-def prepare_sample_records_doc_bin(
-    attribute_id: str, project_id: str
-) -> str:  # TODO: add parameter `n` to limit LLM response executions
+def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
@@ -82,15 +80,18 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
         lines = [line.rstrip() for line in file if line[0] != "#"]
 
     llm_code = "\n".join(lines)
-    llm_config = attribute_item.additional_config.get("llmConfig", {})
-    print(attribute_item.additional_config)
+    if not attribute_item.additional_config:
+        llm_config = {}
+    else:
+        llm_config = attribute_item.additional_config.get("llmConfig", {})
+
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
             "@@ENDPOINT@@": llm_config["endpoint"],
             "@@API_VERSION@@": llm_config["apiVersion"],
-            "@@CLIENT_TYPE@@": llm_config["clientType"],
             "@@MODEL@@": llm_config["model"],
+            "@@CLIENT_TYPE@@": attribute_item.additional_config["llmIdentifier"],
             "@@SYSTEM_PROMPT@@": attribute_item.additional_config["templatePrompt"],
             "@@USER_PROMPT@@": attribute_item.additional_config["questionPrompt"],
         }
@@ -131,14 +132,14 @@ def run_attribute_calculation_exec_env(
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
 
+    source_code = attribute_item.source_code
+    if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
+        source_code = prepare_llm_response_code(attribute_item)
+
     s3.put_object(
         org_id,
         project_id + "/" + prefixed_function_name,
-        (
-            prepare_llm_response_code(attribute_item)
-            if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value
-            else attribute_item.source_code
-        ),
+        source_code,
     )
     s3.put_object(
         org_id,
