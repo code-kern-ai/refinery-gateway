@@ -70,8 +70,23 @@ def init_evaluation_run(project_id: str, embedding_id: str, evaluation_group_id:
 
     evaluation_results = {}
     for evaluation_set, search_result in zip(evaluation_sets, search_results):
-        evaluation_results[evaluation_set.id] = search_result
-        ## ... add more
+
+        expected_record_ids = evaluation_set.record_ids
+        received_record_ids = [record["id"] for record in search_result]
+
+        evaluation_by_record_id = {}
+        for record_id in expected_record_ids:
+            if record_id in received_record_ids:
+                evaluation_by_record_id[record_id] = {"evaluation_state": "true_p"}
+            else:
+                evaluation_by_record_id[record_id] = {"evaluation_state": "false_p"}
+        for record_id in received_record_ids:
+            if record_id not in expected_record_ids:
+                evaluation_by_record_id[record_id] = {"evaluation_state": "false_n"}
+        evaluation_results[evaluation_set.id] = {
+            "search_results": search_result,
+            "evaluation_by_record_id": evaluation_by_record_id,
+        }
 
     return evaluation_results
 
