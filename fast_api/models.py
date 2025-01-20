@@ -449,6 +449,7 @@ class MissingUsersBody(BaseModel):
 class SearchQuestionBody(BaseModel):
     question: StrictStr
     embeddingId: StrictStr
+    limit: Optional[StrictInt] = None
 
 
 class EvaluationSetCreationBody(BaseModel):

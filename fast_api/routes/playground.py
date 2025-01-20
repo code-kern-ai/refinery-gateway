@@ -24,9 +24,9 @@ def get_search_results_question(
 ):
     embedding_id = search_question.embeddingId
     question = search_question.question
-
+    limit = search_question.limit
     search_results = playground_manager.get_search_result_for_text(
-        project_id, embedding_id, question
+        project_id, embedding_id, question, limit
     )
 
     return pack_json_result(search_results, wrap_for_frontend=False)
@@ -150,4 +150,4 @@ def get_record_by_content(
     records = playground_manager.get_records_by_content(
         project_id, user, query, limit, offset
     )
-    return pack_json_result(records)
+    return pack_json_result(records, wrap_for_frontend=False)
