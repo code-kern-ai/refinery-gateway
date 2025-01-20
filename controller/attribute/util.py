@@ -6,6 +6,7 @@ import json
 import os
 import pytz
 import traceback
+import requests
 
 import datetime
 from dateutil import parser
@@ -75,6 +76,63 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     return prefixed_doc_bin
 
 
+def test_openai_llm_connection(api_key: str, model: str):
+    # more here: https://platform.openai.com/docs/api-reference/making-requests
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 20,
+    }
+
+    response = requests.post(
+        "https://api.openai.com/v1/chat/completions", headers=headers, json=payload
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def test_azure_llm_connection(
+    api_key: str, base_endpoint: str, api_version: str, model: str
+):
+    # more here: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference-preview
+    base_endpoint = base_endpoint.rstrip("/")
+    api_version_parts = (
+        api_version.split("-")
+        if not "preview" in api_version
+        else api_version.replace("-preview", "").split("-")
+    )
+    assert (
+        len(api_version_parts) == 3
+        and len(api_version_parts[0]) == 4
+        and len(api_version_parts[1]) == 2
+        and len(api_version_parts[2]) == 2
+    ), f"API version format must be YYYY-MM-DD, got: {api_version}"
+
+    final_endpoint = f"{base_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}"
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": api_key,
+    }
+
+    payload = {
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 20,
+    }
+
+    response = requests.post(final_endpoint, headers=headers, json=payload)
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
 def prepare_llm_response_code(attribute_item: Attribute) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
@@ -97,7 +155,50 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
             "@@USER_PROMPT@@": attribute_item.additional_config["questionPrompt"],
         }
     except KeyError as e:
-        error_message = "LLM configuration is missing a required field: " + traceback.format_exception(e)[-1]
+        error_message = (
+            "LLM configuration is missing a required field: "
+            + traceback.format_exception(e)[-1]
+        )
+        add_log_to_attribute_logs(
+            attribute_item.project_id,
+            attribute_item.id,
+            error_message,
+            append_to_logs=False,
+        )
+        raise LlmConfigError(error_message)
+
+    # test LLM connection before sending work package to execution environment
+    try:
+        llm_identifier = attribute_item.additional_config["llmIdentifier"]
+        if "open" in llm_identifier.lower():
+            test_openai_llm_connection(
+                api_key=attribute_item.additional_config.get("apiKey"),
+                model=attribute_item.additional_config.get("model"),
+            )
+        elif "azure" in llm_identifier.lower():
+            test_azure_llm_connection(
+                api_key=attribute_item.additional_config.get("apiKey"),
+                model=attribute_item.additional_config.get("model"),
+                base_endpoint=attribute_item.additional_config.get("endpoint"),
+                api_version=attribute_item.additional_config.get("apiVersion"),
+            )
+        else:
+            error_message = (
+                "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
+            )
+            add_log_to_attribute_logs(
+                attribute_item.project_id,
+                attribute_item.id,
+                error_message,
+                append_to_logs=False,
+            )
+            raise LlmConfigError(error_message)
+    except Exception as e:
+        error_message = (
+            "Encountered Exception when trying LLM connection: "
+            + traceback.format_exception(e)[-1]
+            + "\n\nIf you're using Azure double-check the API Version and your deployment as some require a '-preview' at the end."
+        )
         add_log_to_attribute_logs(
             attribute_item.project_id,
             attribute_item.id,
