@@ -9,7 +9,6 @@ from fast_api.models import (
     RecordSearchContains,
 )
 from controller.playground import manager as playground_manager
-from controller.auth import manager as auth_manager
 
 router = APIRouter()
 
