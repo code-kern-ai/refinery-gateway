@@ -9,12 +9,11 @@ from submodules.model.business_objects import (
     record as record_db_bo,
 )
 from service.search.search import resolve_extended_search
-from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
 
-LIMIT = 10
 FILTER = None
 THRESHOLD = None
 
@@ -26,11 +25,13 @@ class EVALUATION_RUN_STATE:
     FAILED = "FAILED"
 
 
-def get_search_result_for_text(project_id: str, embedding_id: str, question: str):
+def get_search_result_for_text(
+    project_id: str, embedding_id: str, question: str, limit: int
+):
     question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
     if question_tensor and question_tensor[0]:
         records = __get_most_similar_records(
-            project_id, embedding_id, question_tensor[0], LIMIT
+            project_id, embedding_id, question_tensor[0], limit
         )
         # make more efficient, own function
         unfolded_records = []
@@ -194,8 +195,9 @@ def get_records_by_content(
     record_list = resolve_extended_search(
         project_id, user_id, filter_data, limit, offset
     ).record_list
-    record_list = sql_alchemy_to_dict(record_list, column_blacklist=["rla_data"])
-
+    record_list = to_frontend_obj_raw(
+        sql_alchemy_to_dict(record_list, column_blacklist=["rla_data"])
+    )
     return record_list
 
 
