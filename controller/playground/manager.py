@@ -103,16 +103,18 @@ def init_evaluation_run(
         )
         questions_tensors = __get_tensors_for_texts(
             project_id,
+            embedding_id,
             [evaluation_set.question for evaluation_set in evaluation_sets],
         )
-        search_results = __get_most_similar_records(
-            project_id, embedding_id, questions_tensors, LIMIT
-        )
+        search_results = [
+            __get_most_similar_records(project_id, embedding_id, questions_tensor, 10)
+            for questions_tensor in questions_tensors
+        ]
 
         for evaluation_set, search_result in zip(evaluation_sets, search_results):
 
-            expected_record_ids = evaluation_set.record_ids
-            received_record_ids = [record["id"] for record in search_result]
+            expected_record_ids = [str(rid) for rid in evaluation_set.record_ids]
+            received_record_ids = [str(record["id"]) for record in search_result]
 
             evaluation_by_record_id = {}
             for record_id in expected_record_ids:
@@ -123,7 +125,7 @@ def init_evaluation_run(
             for record_id in received_record_ids:
                 if record_id not in expected_record_ids:
                     evaluation_by_record_id[record_id] = {"evaluation_state": "false_n"}
-            evaluation_results[evaluation_set.id] = {
+            evaluation_results[str(evaluation_set.id)] = {
                 "search_results": search_result,
                 "evaluation_by_record_id": evaluation_by_record_id,
             }
@@ -131,7 +133,7 @@ def init_evaluation_run(
     except Exception:
         state = EVALUATION_RUN_STATE.FAILED
     evaluation_run_db_bo.update(
-        evaluation_run.id, state, evaluation_results, None, True
+        project_id, evaluation_run.id, state, evaluation_results, None, True
     )
     return evaluation_run
 
@@ -181,6 +183,7 @@ def __get_most_similar_records(
             "threshold": threshold,
         },
     )
+    print("response.ok", response.ok, flush=True)
     if response.ok:
         return response.json()
     else:

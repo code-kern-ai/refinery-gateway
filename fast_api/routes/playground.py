@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, Request, Body
 from controller.auth import manager as auth_manager
-from fast_api.routes.client_response import pack_json_result, get_silent_success
+from fast_api.routes.client_response import (
+    pack_json_result,
+    get_silent_success,
+)
 from fast_api.models import (
     SearchQuestionBody,
     EvaluationSetCreationBody,
@@ -127,13 +130,13 @@ def create_evaluation_run(
     evaluation_run: EvaluationRunCreationBody = Body(...),
 ):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
-    evaluation_run = playground_manager.init_evaluation_run(
+    playground_manager.init_evaluation_run(
         project_id,
         evaluation_run.embeddingId,
         evaluation_run.evaluationGroupId,
         user_id,
     )
-    return evaluation_run
+    return get_silent_success()
 
 
 @router.post(
