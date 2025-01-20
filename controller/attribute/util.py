@@ -7,6 +7,7 @@ import os
 import pytz
 import traceback
 import requests
+import re
 
 import datetime
 from dateutil import parser
@@ -133,6 +134,19 @@ def test_azure_llm_connection(
     return response.json()["choices"][0]["message"]["content"]
 
 
+def test_prompt_validity(user_prompt: str):
+    valid_mustache_attribute_syntax = "{{\s*[A-Za-z0-9_]+\s*}}"
+    # 5 as min len criterion for double curly brackets + single char attribute
+    if (
+        len(user_prompt) < 5
+        or len(re.findall(valid_mustache_attribute_syntax, user_prompt)) == 0
+    ):
+        raise LlmConfigError(
+            """User prompt does not carry a single valid Mustache syntax for attribute access. 
+            You can access attributes by using '{{ attribute_name }}' in your prompt."""
+        )
+
+
 def prepare_llm_response_code(attribute_item: Attribute) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
@@ -167,20 +181,23 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
         )
         raise LlmConfigError(error_message)
 
+    # already raises expressive LlmConfigError
+    test_prompt_validity(user_prompt=llm_config["questionPrompt"])
+
     # test LLM connection before sending work package to execution environment
     try:
         llm_identifier = attribute_item.additional_config["llmIdentifier"]
-        if "open" in llm_identifier.lower():
+        if llm_identifier == enums.LLMProvider.OPENAI.value:
             test_openai_llm_connection(
-                api_key=attribute_item.additional_config.get("apiKey"),
-                model=attribute_item.additional_config.get("model"),
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
             )
-        elif "azure" in llm_identifier.lower():
+        elif llm_identifier == enums.LLMProvider.AZURE.value:
             test_azure_llm_connection(
-                api_key=attribute_item.additional_config.get("apiKey"),
-                model=attribute_item.additional_config.get("model"),
-                base_endpoint=attribute_item.additional_config.get("endpoint"),
-                api_version=attribute_item.additional_config.get("apiVersion"),
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
+                base_endpoint=llm_config["endpoint"],
+                api_version=llm_config["apiVersion"],
             )
         else:
             error_message = (
