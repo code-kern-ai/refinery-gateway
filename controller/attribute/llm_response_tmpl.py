@@ -1,5 +1,6 @@
+import json
 import time
-from typing import Optional, Union, List, Dict
+from typing import Any, Optional, Union, List, Dict
 from enum import Enum
 
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
@@ -25,7 +26,8 @@ API_VERSION_A2VYBG = "@@API_VERSION@@"
 CLIENT_TYPE_A2VYBG = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL_A2VYBG = "@@MODEL@@"
 
-SYSTEM_PROMPT_A2VYBG = "@@SYSTEM_PROMPT@@"
+SYSTEM_PROMPT_A2VYBG = """@@SYSTEM_PROMPT@@ You must only output valid JSON. If there is not yet a schema defined for the JSON output, 
+please put everything into a single value under the key 'result' - otherwise stick to the schema that has been provided already."""
 # SYSTEM_PROMPT_A2VYBG = (
 #     "You are a news critic identifying clickbaits."
 #     "The input is a news article title. Determine if the input is clickbait or not."
@@ -190,21 +192,22 @@ def __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
 
 
 def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
-    open_ai_obj: Union[ChatCompletion, ChatCompletionChunk], raise_me: bool = True
-) -> str:
+    open_ai_obj: ChatCompletion, raise_me: bool = True
+) -> Dict[str, Any]:
     if not open_ai_obj:
         return ""
-    if isinstance(open_ai_obj, ChatCompletion) or isinstance(
-        open_ai_obj, ChatCompletionChunk
-    ):
+    if isinstance(open_ai_obj, ChatCompletion):
         if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
             t = open_ai_obj.choices[0]
             if isinstance(open_ai_obj, ChatCompletion):
                 if hasattr(t, "message") and hasattr(t.message, "content"):
-                    return t.message.content or ""
-            elif isinstance(open_ai_obj, ChatCompletionChunk):
-                if hasattr(t, "delta") and hasattr(t.delta, "content"):
-                    return t.delta.content or ""
+                    try:
+                        return json.loads(t.message.content)
+                    except:
+                        raise ValueError(
+                            "Could not parse LLM response into valid JSON: ",
+                            t.message.content,
+                        )
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
     ## if we reach this point, we couldn't access the value
@@ -233,7 +236,11 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
         prevent_cached_client=close_after,
     )
     completion = client.chat.completions.create(
-        model=model, messages=messages, stream=False, **kwargs
+        model=model,
+        messages=messages,
+        stream=False,
+        response_format={"type": "json_object"},
+        **kwargs,
     )
     if close_after:
         client.close()
