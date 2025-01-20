@@ -5,6 +5,7 @@ import docker
 import json
 import os
 import pytz
+import traceback
 
 import datetime
 from dateutil import parser
@@ -95,8 +96,8 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
             "@@SYSTEM_PROMPT@@": attribute_item.additional_config["templatePrompt"],
             "@@USER_PROMPT@@": attribute_item.additional_config["questionPrompt"],
         }
-    except KeyError:
-        error_message = "LLM configuration is missing a required field"
+    except KeyError as e:
+        error_message = "LLM configuration is missing a required field: " + traceback.format_exception(e)[-1]
         add_log_to_attribute_logs(
             attribute_item.project_id,
             attribute_item.id,
