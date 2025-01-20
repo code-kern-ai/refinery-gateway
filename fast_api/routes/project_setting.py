@@ -3,6 +3,7 @@ from fast_api.models import (
     CreateNewAttributeBody,
     PrepareProjectExportBody,
     PrepareRecordExportBody,
+    RecordsBatchBody,
     UpdateAttributeBody,
 )
 from fastapi import APIRouter, Body, Depends, Request
@@ -146,6 +147,33 @@ def get_record_by_record_id(
     }
 
     return pack_json_result(data)
+
+
+@router.post(
+    "/{project_id}/records-batch",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_records_batch(
+    project_id: str,
+    recordsBatchBody: RecordsBatchBody = Body(...),
+):
+    results = []
+    for record_id in recordsBatchBody.record_ids:
+        if record_id is None or record_id == "null":
+            continue
+
+        record = record_manager.get_record(project_id, record_id)
+
+        results.append(
+            {
+                "id": str(record.id),
+                "data": json.dumps(record.data),
+                "projectId": str(record.project_id),
+                "category": record.category,
+            }
+        )
+
+    return pack_json_result(results)
 
 
 @router.get(

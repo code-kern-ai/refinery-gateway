@@ -60,7 +60,9 @@ def get_evaluation_sets(
     return pack_json_result(matching_sets)
 
 
-@router.get("/{project_id}/evaluation-sets/{set_id}")
+@router.get(
+    "/{project_id}/evaluation-sets/{set_id}"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
 def get_single_evaluation_set(
     request: Request,
     project_id: str,

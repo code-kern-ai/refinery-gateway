@@ -471,3 +471,7 @@ class RecordSearchContains(BaseModel):
     query: StrictStr
     offset: StrictInt
     limit: StrictInt
+
+
+class RecordsBatchBody(BaseModel):
+    record_ids: List[StrictStr]
