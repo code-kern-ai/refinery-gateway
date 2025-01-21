@@ -41,6 +41,7 @@ ATTRIBUTE_WHITELIST = [
     "logs",
     "visibility",
     "progress",
+    "additional_config",
 ]
 
 
