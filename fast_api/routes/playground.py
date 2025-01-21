@@ -17,8 +17,9 @@ router = APIRouter()
 
 
 @router.post(
-    "/{project_id}/search"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/search",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_search_results_question(
     request: Request,
     project_id: str,
@@ -35,8 +36,9 @@ def get_search_results_question(
 
 
 @router.post(
-    "/{project_id}/evaluation-sets"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-sets",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_evaluation_set(
     request: Request,
     project_id: str,
@@ -53,8 +55,9 @@ def create_evaluation_set(
 
 
 @router.get(
-    "/{project_id}/evaluation-sets"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-sets",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_evaluation_sets(
     request: Request,
     project_id: str,
@@ -64,8 +67,9 @@ def get_evaluation_sets(
 
 
 @router.get(
-    "/{project_id}/evaluation-sets/{set_id}"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-sets/{set_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_single_evaluation_set(
     request: Request,
     project_id: str,
@@ -92,8 +96,9 @@ def get_evaluation_sets_batch(
 
 
 @router.post(
-    "/{project_id}/evaluation-groups"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-groups",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_evaluation_group(
     request: Request,
     project_id: str,
@@ -110,8 +115,9 @@ def create_evaluation_group(
 
 
 @router.get(
-    "/{project_id}/evaluation-groups"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-groups",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_evaluation_groups(request: Request, project_id: str):
     evaluation_groups = playground_manager.get_evaluation_groups(project_id)
     return pack_json_result(evaluation_groups)
@@ -130,16 +136,18 @@ def get_single_evaluation_group(
 
 
 @router.get(
-    "/{project_id}/evaluation-runs"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-runs",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_evaluation_runs(request: Request, project_id: str):
     evaluation_runs = playground_manager.get_evaluation_runs(project_id)
     return pack_json_result(evaluation_runs)
 
 
 @router.post(
-    "/{project_id}/evaluation-runs"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-runs",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_evaluation_run(
     request: Request,
     project_id: str,
@@ -156,8 +164,9 @@ def create_evaluation_run(
 
 
 @router.post(
-    "/{project_id}/record-search-contains"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/record-search-contains",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_record_by_content(
     request: Request,
     project_id: str,
