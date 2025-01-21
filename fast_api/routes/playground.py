@@ -171,7 +171,7 @@ def get_single_evaluation_group(
 )
 def get_evaluation_runs(request: Request, project_id: str):
     evaluation_runs = playground_manager.get_evaluation_runs(project_id)
-    return pack_json_result(evaluation_runs)
+    return pack_json_result(evaluation_runs, wrap_for_frontend=False)
 
 
 @router.get("/{project_id}/evaluation-runs/{run_id}")

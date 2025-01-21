@@ -95,7 +95,14 @@ def get_evaluation_groups(project_id: str):
 
 
 def get_evaluation_runs(project_id: str):
-    return evaluation_run_db_bo.get_all(project_id)
+    evaluation_runs_objects = evaluation_run_db_bo.get_all(project_id)
+    evaluation_runs = []
+    for evaluation_run in evaluation_runs_objects:
+        results = to_frontend_obj_raw(evaluation_run.results)
+        evaluation_runs.append(
+            {**sql_alchemy_to_dict(evaluation_run, True), "results": results}
+        )
+    return evaluation_runs
 
 
 def get_evaluation_run_by_id(project_id: str, run_id: str):
