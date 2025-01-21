@@ -75,6 +75,22 @@ def get_single_evaluation_set(
     return pack_json_result(matching_set)
 
 
+@router.get(
+    "/{project_id}/evaluation-sets-by-group/{evaluation_group_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_evaluation_sets_batch(
+    request: Request,
+    project_id: str,
+    evaluation_group_id: str,
+):
+    evaluation_sets = playground_manager.get_evaluation_sets_by_group_id(
+        project_id, evaluation_group_id
+    )
+
+    return pack_json_result(evaluation_sets)
+
+
 @router.post(
     "/{project_id}/evaluation-groups"
 )  # dependencies=[Depends(auth_manager.check_project_access_dep)]
