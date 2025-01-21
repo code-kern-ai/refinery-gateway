@@ -106,7 +106,7 @@ def test_azure_llm_connection(
     base_endpoint = base_endpoint.rstrip("/")
     api_version_parts = (
         api_version.split("-")
-        if not "preview" in api_version
+        if "preview" not in api_version
         else api_version.replace("-preview", "").split("-")
     )
     assert (
@@ -135,14 +135,14 @@ def test_azure_llm_connection(
 
 
 def test_prompt_validity(user_prompt: str):
-    valid_mustache_attribute_syntax = "{{\s*[A-Za-z0-9_]+\s*}}"
+    valid_mustache_attribute_syntax = r"{{\s*[A-Za-z0-9_]+\s*}}"
     # 5 as min len criterion for double curly brackets + single char attribute
     if (
         len(user_prompt) < 5
         or len(re.findall(valid_mustache_attribute_syntax, user_prompt)) == 0
     ):
         raise LlmConfigError(
-            """User prompt does not carry a single valid Mustache syntax for attribute access. 
+            """User prompt does not carry a single valid Mustache syntax for attribute access.
             You can access attributes by using '{{ attribute_name }}' in your prompt."""
         )
 

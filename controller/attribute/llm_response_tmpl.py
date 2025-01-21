@@ -5,7 +5,7 @@ from enum import Enum
 
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
 from openai import AuthenticationError
-from openai.types.chat import ChatCompletion, ChatCompletionChunk
+from openai.types.chat import ChatCompletion
 
 
 class OpenAIClientType_A2VYBG(Enum):
@@ -26,7 +26,7 @@ API_VERSION_A2VYBG = "@@API_VERSION@@"
 CLIENT_TYPE_A2VYBG = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL_A2VYBG = "@@MODEL@@"
 
-SYSTEM_PROMPT_A2VYBG = """@@SYSTEM_PROMPT@@ You must only output valid JSON. If there is not yet a schema defined for the JSON output, 
+SYSTEM_PROMPT_A2VYBG = """@@SYSTEM_PROMPT@@ You must only output valid JSON. If there is not yet a schema defined for the JSON output,
 please put everything into a single value under the key 'result' - otherwise stick to the schema that has been provided already."""
 # SYSTEM_PROMPT_A2VYBG = (
 #     "You are a news critic identifying clickbaits."
@@ -203,7 +203,7 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
                 if hasattr(t, "message") and hasattr(t.message, "content"):
                     try:
                         return json.loads(t.message.content)
-                    except:
+                    except Exception:
                         raise ValueError(
                             "Could not parse LLM response into valid JSON: ",
                             t.message.content,
@@ -246,6 +246,19 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
         client.close()
 
     return completion
+
+
+def get_llm_config():
+    global API_KEY_A2VYBG, ENDPOINT_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG
+    return {
+        "client_type": CLIENT_TYPE_A2VYBG,
+        "api_key": API_KEY_A2VYBG,
+        "endpoint": ENDPOINT_A2VYBG,
+        "api_version": API_VERSION_A2VYBG,
+        "model": MODEL_A2VYBG,
+        "system_prompt": SYSTEM_PROMPT_A2VYBG,
+        "user_prompt": USER_PROMPT_A2VYBG,
+    }
 
 
 def get_llm_response():
