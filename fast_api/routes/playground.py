@@ -10,6 +10,8 @@ from fast_api.models import (
     EvaluationGroupCreationBody,
     EvaluationRunCreationBody,
     RecordSearchContains,
+    EvaluationSetDeletionBody,
+    EvaluationGroupDeletionBody,
 )
 from controller.playground import manager as playground_manager
 
@@ -52,6 +54,20 @@ def create_evaluation_set(
     return get_silent_success()
 
 
+@router.delete(
+    "/{project_id}/evaluation-sets"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def delete_evaluation_set(
+    request: Request,
+    project_id: str,
+    evaluation_set: EvaluationSetDeletionBody = Body(...),
+):
+    playground_manager.delete_evaluation_sets(
+        project_id, evaluation_set.evaluationSetIds
+    )
+    return get_silent_success()
+
+
 @router.get(
     "/{project_id}/evaluation-sets"
 )  # dependencies=[Depends(auth_manager.check_project_access_dep)]
@@ -89,6 +105,20 @@ def create_evaluation_group(
         evaluation_group.name,
         evaluation_group.evaluationSetIds,
         user_id,
+    )
+    return get_silent_success()
+
+
+@router.delete(
+    "/{project_id}/evaluation-groups"
+)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+def delete_evaluation_group(
+    request: Request,
+    project_id: str,
+    evaluation_group: EvaluationGroupDeletionBody = Body(...),
+):
+    playground_manager.delete_evaluation_groups(
+        project_id, evaluation_group.evaluationGroupIds
     )
     return get_silent_success()
 

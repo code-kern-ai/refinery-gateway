@@ -56,6 +56,10 @@ def create_evaluation_set(
     evaluation_set_db_bo.create(project_id, question, created_by, record_ids, True)
 
 
+def delete_evaluation_sets(project_id: str, set_ids: str):
+    evaluation_set_db_bo.delete_all(project_id, set_ids, True)
+
+
 def get_evaluation_set_by_id(project_id: str, set_id: str):
     return evaluation_set_db_bo.get(project_id, set_id)
 
@@ -70,6 +74,10 @@ def create_evaluation_group(
     evaluation_group_db_bo.create(
         project_id, name, created_by, evaluation_set_ids, True
     )
+
+
+def delete_evaluation_groups(project_id: str, group_ids: str):
+    evaluation_group_db_bo.delete_all(project_id, group_ids, True)
 
 
 def get_evaluation_group_by_id(project_id: str, group_id: str):
