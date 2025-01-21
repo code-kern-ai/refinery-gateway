@@ -1,5 +1,6 @@
+import sys
 import time
-from typing import Any, List
+from typing import Union, Any, List, Dict
 import uuid
 import docker
 import json
@@ -12,7 +13,7 @@ import re
 import datetime
 from dateutil import parser
 
-from exceptions.exceptions import LlmConfigError
+from exceptions.exceptions import LlmResponseError
 from submodules.model.business_objects import (
     attribute,
     general,
@@ -58,13 +59,15 @@ def add_log_to_attribute_logs(
         general.commit()
 
 
-def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
+def prepare_sample_records_doc_bin(
+    attribute_id: str, project_id: str, record_ids: Union[List[str], None] = None
+) -> str:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
         project_id=project_id,
         missing_columns=record.get_missing_columns_str(project_id),
-        record_ids=[r[0] for r in sample_records],
+        record_ids=record_ids or [r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
@@ -134,29 +137,57 @@ def test_azure_llm_connection(
     return response.json()["choices"][0]["message"]["content"]
 
 
-def test_prompt_validity(user_prompt: str):
-    valid_mustache_attribute_syntax = r"{{\s*[A-Za-z0-9_]+\s*}}"
+def validate_user_prompt(project_id: str, user_prompt: str):
+    def parse_mustache_attribute_names(mustache_str: str) -> List[str]:
+        for brace in "{}":
+            mustache_str = mustache_str.replace(brace, "")
+        return mustache_str.strip()
+
+    mustache_attributes = list(
+        map(
+            parse_mustache_attribute_names,
+            re.findall(r"{{\s*[A-Za-z0-9_]+\s*}}", user_prompt),
+        )
+    )
+
     # 5 as min len criterion for double curly brackets + single char attribute
-    if (
-        len(user_prompt) < 5
-        or len(re.findall(valid_mustache_attribute_syntax, user_prompt)) == 0
-    ):
-        raise LlmConfigError(
+    if len(user_prompt) < 5 or len(mustache_attributes) == 0:
+        raise LlmResponseError(
             """User prompt does not carry a single valid Mustache syntax for attribute access.
-            You can access attributes by using '{{ record.attribute_name }}' in your prompt."""
+            You can access attributes by using '{{ attribute_name }}' in your prompt."""
         )
 
+    for attr in mustache_attributes:
+        if not attribute.get_by_name(project_id, attr):
+            raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
 
-def prepare_llm_response_code(attribute_item: Attribute) -> str:
+
+def prepare_llm_response_code(
+    attribute_item: Attribute, llm_definition: Union[Dict[str, Any], None] = None
+) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
         lines = [line.rstrip() for line in file if line[0] != "#"]
 
     llm_code = "\n".join(lines)
-    if not attribute_item.additional_config:
+
+    # llm_definition is only set if `run-llm-playground`` invoked this function
+    if not attribute_item.additional_config and llm_definition is None:
         llm_config = {}
+    elif llm_definition is None:
+        llm_config = dict(
+            attribute_item.additional_config.get("llmConfig", {}),
+            llmIdentifier=attribute_item.additional_config["llmIdentifier"],
+            templatePrompt=attribute_item.additional_config["templatePrompt"],
+            questionPrompt=attribute_item.additional_config["questionPrompt"],
+        )
     else:
-        llm_config = attribute_item.additional_config.get("llmConfig", {})
+        llm_config = dict(
+            llm_definition.get("llmConfig", {}),
+            llmIdentifier=llm_definition["llmIdentifier"],
+            templatePrompt=llm_definition["templatePrompt"],
+            questionPrompt=llm_definition["questionPrompt"],
+        )
 
     try:
         llm_config_mapping = {
@@ -164,14 +195,21 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
             "@@ENDPOINT@@": llm_config["endpoint"],
             "@@API_VERSION@@": llm_config["apiVersion"],
             "@@MODEL@@": llm_config["model"],
-            "@@CLIENT_TYPE@@": attribute_item.additional_config["llmIdentifier"],
-            "@@SYSTEM_PROMPT@@": attribute_item.additional_config["templatePrompt"],
-            "@@USER_PROMPT@@": attribute_item.additional_config["questionPrompt"],
+            "@@STOP_SEQUENCE@@": llm_config.get("stopSequences", []),
+            "@@TEMPERATURE@@": llm_config.get("temperature", 0),
+            "@@MAX_TOKENS@@": llm_config.get("maxLength", 1024),
+            "@@TOP_P@@": llm_config.get("topP", 1),
+            "@@FREQUENCY_PENALTY@@": llm_config.get("frequencyPenalty", 0),
+            "@@PRESENCE_PENALTY@@": llm_config.get("presencePenalty", 0),
+            "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
+            "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"],
+            "@@USER_PROMPT@@": llm_config["questionPrompt"],
         }
-    except KeyError as e:
+    except KeyError:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
         error_message = (
             "LLM configuration is missing a required field: "
-            + traceback.format_exception(e)[-1]
+            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
         )
         add_log_to_attribute_logs(
             attribute_item.project_id,
@@ -179,10 +217,13 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
             error_message,
             append_to_logs=False,
         )
-        raise LlmConfigError(error_message)
+        raise LlmResponseError(error_message)
 
-    # already raises expressive LlmConfigError
-    test_prompt_validity(user_prompt=llm_config["questionPrompt"])
+    # already raises expressive LlmResponseError
+    validate_user_prompt(
+        project_id=attribute_item.project_id,
+        user_prompt=attribute_item.additional_config["questionPrompt"],
+    )
 
     # test LLM connection before sending work package to execution environment
     try:
@@ -209,11 +250,12 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
                 error_message,
                 append_to_logs=False,
             )
-            raise LlmConfigError(error_message)
-    except Exception as e:
+            raise LlmResponseError(error_message)
+    except Exception:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
         error_message = (
             "Encountered Exception when trying LLM connection: "
-            + traceback.format_exception(e)[-1]
+            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
             + "\n\nIf you're using Azure double-check the API Version and your deployment as some require a '-preview' at the end."
         )
         add_log_to_attribute_logs(
@@ -222,7 +264,7 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
             error_message,
             append_to_logs=False,
         )
-        raise LlmConfigError(error_message)
+        raise LlmResponseError(error_message)
 
     for key, value in llm_config_mapping.items():
         llm_code = llm_code.replace(key, value)
@@ -233,7 +275,10 @@ def prepare_llm_response_code(attribute_item: Attribute) -> str:
 
 
 def run_attribute_calculation_exec_env(
-    attribute_id: str, project_id: str, doc_bin: str
+    attribute_id: str,
+    project_id: str,
+    doc_bin: str,
+    llm_definition: Union[Dict[str, Any], None] = None,
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
 
@@ -253,7 +298,9 @@ def run_attribute_calculation_exec_env(
 
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
-        source_code = prepare_llm_response_code(attribute_item)
+        source_code = prepare_llm_response_code(
+            attribute_item, llm_definition=llm_definition
+        )
 
     s3.put_object(
         org_id,

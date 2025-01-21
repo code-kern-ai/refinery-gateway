@@ -54,5 +54,5 @@ class AuthManagerError(Exception):
     pass
 
 
-class LlmConfigError(Exception):
+class LlmResponseError(Exception):
     pass

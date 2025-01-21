@@ -8,9 +8,10 @@ from openai import AuthenticationError
 from openai.types.chat import ChatCompletion
 
 
-class OpenAIClientType_A2VYBG(Enum):
-    OPEN_AI = "OPEN_AI"
-    AZURE = "AZURE"
+class LLMProvider_A2VYBG(Enum):
+    OPEN_AI = "Open AI"
+    OPEN_SOURCE = "Open-Source"
+    AZURE = "Azure"
 
 
 # OpenAI migration guides
@@ -25,14 +26,23 @@ ENDPOINT_A2VYBG = "@@ENDPOINT@@"
 API_VERSION_A2VYBG = "@@API_VERSION@@"
 CLIENT_TYPE_A2VYBG = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL_A2VYBG = "@@MODEL@@"
+LLM_KWARGS_A2VYBG = {
+    "response_format": {"type": "json_object"},
+    "stream": False,
+    "stop": "@@STOP_SEQUENCE@@",
+    "temperature": "@@TEMPERATURE@@",
+    "max_tokens": "@@MAX_TOKENS@@",
+    "top_p": "@@TOP_P@@",
+    "frequency_penalty": "@@FREQUENCY_PENALTY@@",
+    "presence_penalty": "@@PRESENCE_PENALTY@@",
+}
 
-SYSTEM_PROMPT_A2VYBG = """@@SYSTEM_PROMPT@@ You must only output valid JSON. If there is not yet a schema defined for the JSON output,
-please put everything into a single value under the key 'result' - otherwise stick to the schema that has been provided already."""
-# SYSTEM_PROMPT_A2VYBG = (
-#     "You are a news critic identifying clickbaits."
-#     "The input is a news article title. Determine if the input is clickbait or not."
-#     "Make your answer a single word, e.g. 'yes' or 'no'."
-# )
+SYSTEM_PROMPT_A2VYBG = (
+    "@@SYSTEM_PROMPT@@ You must only output valid JSON. "
+    "If there is not yet a schema defined for the JSON output, "
+    "please put everything into a single value under the key 'result' "
+    "- otherwise stick to the schema that has been provided already."
+)
 USER_PROMPT_A2VYBG = (
     "@@USER_PROMPT@@"  # is updated in runtime by refinery-ac-exec-env/run_ac.py
 )
@@ -41,16 +51,8 @@ USER_PROMPT_A2VYBG = (
 
 
 def test_client_model_2c6ecfb1_9bce_4e89_80c8_cbc4e3fca9e5(
-    model: str,
-    use_async: bool,
-    api_key: str,
-    azure_endpoint: Optional[str] = None,
-    api_version: Optional[str] = None,
+    client: Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI], model: str
 ):
-    client = __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
-        use_async, api_key, azure_endpoint, api_version
-    )
-
     if __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(client) is not None:
         print(
             "Error: Invalid OpenAI client config (api_key, api_version or endpoint)",
@@ -88,7 +90,7 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
 ) -> Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI]:
     global CLIENT_TYPE_A2VYBG
 
-    if CLIENT_TYPE_A2VYBG == OpenAIClientType_A2VYBG.AZURE.value and (
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value and (
         azure_endpoint is None or api_version is None
     ):
         raise ValueError("azure_endpoint and api_version must be set for Azure OpenAI")
@@ -144,7 +146,7 @@ def __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
     global CLIENT_TYPE_A2VYBG
 
     client = None
-    if CLIENT_TYPE_A2VYBG == OpenAIClientType_A2VYBG.AZURE.value:
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value:
         if use_async:
             client = AsyncAzureOpenAI(
                 azure_endpoint=azure_endpoint,
@@ -199,15 +201,19 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
     if isinstance(open_ai_obj, ChatCompletion):
         if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
             t = open_ai_obj.choices[0]
-            if isinstance(open_ai_obj, ChatCompletion):
-                if hasattr(t, "message") and hasattr(t.message, "content"):
-                    try:
-                        return json.loads(t.message.content)
-                    except Exception:
-                        raise ValueError(
-                            "Could not parse LLM response into valid JSON: ",
-                            t.message.content,
-                        )
+            if isinstance(open_ai_obj, ChatCompletion) and (
+                hasattr(t, "message") and hasattr(t.message, "content")
+            ):
+                try:
+                    content = json.loads(t.message.content)
+                except Exception:
+                    raise ValueError(
+                        "Could not parse LLM response into valid JSON: ",
+                        t.message.content,
+                    )
+                if isinstance(content, dict):
+                    content = {k: repr(v) for k, v in content.items()}
+                return content
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
     ## if we reach this point, we couldn't access the value
@@ -238,8 +244,6 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     completion = client.chat.completions.create(
         model=model,
         messages=messages,
-        stream=False,
-        response_format={"type": "json_object"},
         **kwargs,
     )
     if close_after:
@@ -249,7 +253,7 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
 
 
 def get_llm_config():
-    global API_KEY_A2VYBG, ENDPOINT_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG
+    global API_KEY_A2VYBG, ENDPOINT_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
     return {
         "client_type": CLIENT_TYPE_A2VYBG,
         "api_key": API_KEY_A2VYBG,
@@ -258,6 +262,7 @@ def get_llm_config():
         "model": MODEL_A2VYBG,
         "system_prompt": SYSTEM_PROMPT_A2VYBG,
         "user_prompt": USER_PROMPT_A2VYBG,
+        "llm_kwargs": LLM_KWARGS_A2VYBG,
     }
 
 
@@ -282,6 +287,7 @@ def get_llm_response():
         ENDPOINT_A2VYBG,
         API_VERSION_A2VYBG,
         close_after=True,
+        **LLM_KWARGS_A2VYBG,
     )
 
     return get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(chat_completion)
