@@ -259,6 +259,11 @@ class CalculateUserAttributeAllRecordsBody(BaseModel):
     attribute_id: StrictStr
 
 
+class RunLlmPlaygroundBody(BaseModel):
+    llm_config: Dict[StrictStr, Any]
+    record_ids: Optional[List[StrictStr]] = None
+
+
 class ModelProviderDeleteModelBody(BaseModel):
     # model_config is not an actual field, but configuration for Pydantic
     # https://docs.pydantic.dev/latest/api/config/

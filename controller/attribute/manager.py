@@ -441,3 +441,22 @@ def calculate_user_attribute_sample_records(
     else:
         values = list(calculated_attributes.values())
     return list(calculated_attributes.keys()), values
+
+
+def run_llm_playground(
+    project_id: str,
+    attribute_id: str,
+    llm_definition: Dict[str, Any],
+    record_ids: List[str],
+):
+    doc_bin_samples = util.prepare_sample_records_doc_bin(
+        attribute_id=attribute_id, project_id=project_id, record_ids=record_ids
+    )
+    calculated_attributes = util.run_attribute_calculation_exec_env(
+        attribute_id=attribute_id,
+        project_id=project_id,
+        doc_bin=doc_bin_samples,
+        llm_definition=llm_definition,
+    )
+
+    return list(calculated_attributes.keys()), list(calculated_attributes.values())

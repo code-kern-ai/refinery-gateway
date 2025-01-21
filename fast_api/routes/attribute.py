@@ -1,7 +1,7 @@
 from controller.attribute import manager
 from controller.auth import manager as auth_manager
 from typing import List, Union
-from fast_api.models import DeleteUserAttributeBody
+from fast_api.models import DeleteUserAttributeBody, RunLlmPlaygroundBody
 from fast_api.routes.client_response import pack_json_result, get_silent_success
 from fastapi import APIRouter, Body, Depends, Query, Request
 from submodules.model.enums import NotificationType
@@ -95,3 +95,27 @@ def delete_user_attribute(
 ):
     manager.delete_attribute(project_id, body.attribute_id)
     return get_silent_success()
+
+
+@router.post(
+    "/{project_id}/{attribute_id}/run-llm-playground",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def run_llm_playground(
+    request: Request,
+    project_id,
+    attribute_id,
+    body: RunLlmPlaygroundBody = Body(...),
+):
+    record_ids, calculated_attributes = manager.run_llm_playground(
+        project_id,
+        attribute_id,
+        llm_definition=body.llm_config,
+        record_ids=body.record_ids,
+    )
+    return pack_json_result(
+        {
+            "record_ids": record_ids,
+            "calculated_attributes": calculated_attributes,
+        }
+    )
