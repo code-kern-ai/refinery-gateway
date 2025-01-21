@@ -68,6 +68,12 @@ def get_evaluation_sets(project_id: str):
     return evaluation_set_db_bo.get_all(project_id)
 
 
+def get_evaluation_sets_by_group_id(project_id: str, evaluation_group_id: str):
+    return evaluation_set_db_bo.get_by_evaluation_group_id(
+        project_id, evaluation_group_id
+    )
+
+
 def create_evaluation_group(
     project_id: str, name: str, evaluation_set_ids: List[str], created_by: str
 ):
