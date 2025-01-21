@@ -110,7 +110,7 @@ def init_evaluation_run(
         EVALUATION_RUN_STATE.INITIATED,
     )
     state = EVALUATION_RUN_STATE.RUNNING
-    evaluation_results = {}
+    evaluation_results = []
     try:
         evaluation_sets = evaluation_set_db_bo.get_by_evaluation_group_id(
             project_id, evaluation_group_id
@@ -130,19 +130,38 @@ def init_evaluation_run(
             expected_record_ids = [str(rid) for rid in evaluation_set.record_ids]
             received_record_ids = [str(record["id"]) for record in search_result]
 
-            evaluation_by_record_id = {}
+            true_positives = []
+            false_positives = []
+            false_negatives = []
             for record_id in expected_record_ids:
                 if record_id in received_record_ids:
-                    evaluation_by_record_id[record_id] = {"evaluation_state": "true_p"}
+                    true_positives.append(record_id)
                 else:
-                    evaluation_by_record_id[record_id] = {"evaluation_state": "false_p"}
+                    false_positives.append(record_id)
+
             for record_id in received_record_ids:
                 if record_id not in expected_record_ids:
-                    evaluation_by_record_id[record_id] = {"evaluation_state": "false_n"}
-            evaluation_results[str(evaluation_set.id)] = {
-                "search_results": search_result,
-                "evaluation_by_record_id": evaluation_by_record_id,
+                    false_negatives.append(record_id)
+
+            result = {
+                "evaluation_set_id": str(evaluation_set.id),
+                "true_positives": to_frontend_obj_raw(
+                    sql_alchemy_to_dict(
+                        record_db_bo.get_by_record_ids(project_id, true_positives)
+                    )
+                ),
+                "false_positives": to_frontend_obj_raw(
+                    sql_alchemy_to_dict(
+                        record_db_bo.get_by_record_ids(project_id, false_positives)
+                    )
+                ),
+                "false_negatives": to_frontend_obj_raw(
+                    sql_alchemy_to_dict(
+                        record_db_bo.get_by_record_ids(project_id, false_negatives)
+                    )
+                ),
             }
+            evaluation_results.append(result)
         state = EVALUATION_RUN_STATE.SUCCESS
     except Exception:
         state = EVALUATION_RUN_STATE.FAILED
