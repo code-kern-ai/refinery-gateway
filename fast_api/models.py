@@ -457,9 +457,17 @@ class EvaluationSetCreationBody(BaseModel):
     recordIds: List[StrictStr]
 
 
+class EvaluationSetDeletionBody(BaseModel):
+    evaluationSetIds: List[StrictStr]
+
+
 class EvaluationGroupCreationBody(BaseModel):
     evaluationSetIds: List[StrictStr]
     name: StrictStr
+
+
+class EvaluationGroupDeletionBody(BaseModel):
+    evaluationGroupIds: List[StrictStr]
 
 
 class EvaluationRunCreationBody(BaseModel):
