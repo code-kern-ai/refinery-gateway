@@ -90,6 +90,10 @@ def get_evaluation_runs(project_id: str):
     return evaluation_run_db_bo.get_all(project_id)
 
 
+def get_evaluation_run_by_id(project_id: str, run_id: str):
+    return evaluation_run_db_bo.get(project_id, run_id)
+
+
 def init_evaluation_run(
     project_id: str, embedding_id: str, evaluation_group_id: str, created_by: str
 ):

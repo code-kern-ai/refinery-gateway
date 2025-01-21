@@ -144,6 +144,16 @@ def get_evaluation_runs(request: Request, project_id: str):
     return pack_json_result(evaluation_runs)
 
 
+@router.get("/{project_id}/evaluation-runs/{run_id}")
+def get_single_evaluation_run(
+    request: Request,
+    project_id: str,
+    run_id: str,
+):
+    evaluation_run = playground_manager.get_evaluation_run_by_id(project_id, run_id)
+    return pack_json_result(evaluation_run)
+
+
 @router.post(
     "/{project_id}/evaluation-runs",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
