@@ -143,7 +143,7 @@ def test_prompt_validity(user_prompt: str):
     ):
         raise LlmConfigError(
             """User prompt does not carry a single valid Mustache syntax for attribute access.
-            You can access attributes by using '{{ attribute_name }}' in your prompt."""
+            You can access attributes by using '{{ record.attribute_name }}' in your prompt."""
         )
 
 
