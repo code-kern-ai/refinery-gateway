@@ -195,15 +195,15 @@ def prepare_llm_response_code(
             "@@ENDPOINT@@": llm_config["endpoint"],
             "@@API_VERSION@@": llm_config["apiVersion"],
             "@@MODEL@@": llm_config["model"],
-            "@@STOP_SEQUENCE@@": llm_config.get("stopSequences", []),
-            "@@TEMPERATURE@@": llm_config.get("temperature", 0),
-            "@@MAX_TOKENS@@": llm_config.get("maxLength", 1024),
-            "@@TOP_P@@": llm_config.get("topP", 1),
-            "@@FREQUENCY_PENALTY@@": llm_config.get("frequencyPenalty", 0),
-            "@@PRESENCE_PENALTY@@": llm_config.get("presencePenalty", 0),
+            "@@STOP_SEQUENCE@@": ",".join(llm_config.get("stopSequences", [])),
+            "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
+            "@@MAX_TOKENS@@": str(llm_config.get("maxLength", 1024)),
+            "@@TOP_P@@": str(llm_config.get("topP", 1)),
+            "@@FREQUENCY_PENALTY@@": str(llm_config.get("frequencyPenalty", 0)),
+            "@@PRESENCE_PENALTY@@": str(llm_config.get("presencePenalty", 0)),
             "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
-            "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"],
-            "@@USER_PROMPT@@": llm_config["questionPrompt"],
+            "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
+            "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
         }
     except KeyError:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -222,7 +222,7 @@ def prepare_llm_response_code(
     # already raises expressive LlmResponseError
     validate_user_prompt(
         project_id=attribute_item.project_id,
-        user_prompt=attribute_item.additional_config["questionPrompt"],
+        user_prompt=llm_config["questionPrompt"],
     )
 
     # test LLM connection before sending work package to execution environment

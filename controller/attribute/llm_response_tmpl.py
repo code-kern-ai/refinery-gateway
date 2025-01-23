@@ -29,12 +29,12 @@ MODEL_A2VYBG = "@@MODEL@@"
 LLM_KWARGS_A2VYBG = {
     "response_format": {"type": "json_object"},
     "stream": False,
-    "stop": "@@STOP_SEQUENCE@@",
-    "temperature": "@@TEMPERATURE@@",
-    "max_tokens": "@@MAX_TOKENS@@",
-    "top_p": "@@TOP_P@@",
-    "frequency_penalty": "@@FREQUENCY_PENALTY@@",
-    "presence_penalty": "@@PRESENCE_PENALTY@@",
+    "stop": "@@STOP_SEQUENCE@@".split(","),
+    "temperature": float("@@TEMPERATURE@@"),
+    "max_tokens": int("@@MAX_TOKENS@@"),
+    "top_p": float("@@TOP_P@@"),
+    "frequency_penalty": float("@@FREQUENCY_PENALTY@@"),
+    "presence_penalty": float("@@PRESENCE_PENALTY@@"),
 }
 
 SYSTEM_PROMPT_A2VYBG = (
@@ -204,6 +204,8 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
             if isinstance(open_ai_obj, ChatCompletion) and (
                 hasattr(t, "message") and hasattr(t.message, "content")
             ):
+                if not t.message.content:
+                    return {"result": "N/A"}
                 try:
                     content = json.loads(t.message.content)
                 except Exception:
