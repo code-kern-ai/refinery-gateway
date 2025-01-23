@@ -298,16 +298,17 @@ def run_attribute_calculation_exec_env(
                 attribute_item, llm_playground_config=llm_playground_config
             )
         except LlmResponseError as e:
+            error_message = e.args[0]
             if llm_playground_config is None:
                 add_log_to_attribute_logs(
                     attribute_item.project_id,
                     attribute_item.id,
-                    e.message,
+                    error_message,
                     append_to_logs=False,
                 )
                 raise e
             else:
-                return {"logs": [e.message]}
+                return {"logs": [error_message]}
 
     s3.put_object(
         org_id,
