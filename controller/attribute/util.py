@@ -373,6 +373,7 @@ def run_attribute_calculation_exec_env(
     if llm_playground_config is None:
         attribute_item.logs = final_logs
         set_progress(project_id, attribute_item, 0.9)
+        return calculated_attributes
     return {**calculated_attributes, "logs": final_logs}
 
 
