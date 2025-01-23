@@ -210,7 +210,9 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
                     content,
                 )
             if isinstance(content, dict):
-                content = {k: repr(v) for k, v in content.items()}
+                content = {
+                    k: v if isinstance(v, str) else repr(v) for k, v in content.items()
+                }
             return content
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
