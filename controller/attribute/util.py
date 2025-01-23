@@ -302,7 +302,7 @@ def run_attribute_calculation_exec_env(
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
 
-    if attribute_item.logs:
+    if attribute_item.logs and llm_playground_config is None:
         add_log_to_attribute_logs(
             project_id,
             attribute_id,
@@ -349,15 +349,17 @@ def run_attribute_calculation_exec_env(
         detach=True,
         network=exec_env_network,
     )
-    set_progress(project_id, attribute_item, 0.05)
+    if llm_playground_config is None:
+        set_progress(project_id, attribute_item, 0.05)
     __containers_running[container_name] = True
-    daemon.run_without_db_token(
-        read_container_logs_thread,
-        project_id,
-        container_name,
-        str(attribute_item.id),
-        container,
-    )
+    if llm_playground_config is None:
+        daemon.run_without_db_token(
+            read_container_logs_thread,
+            project_id,
+            container_name,
+            str(attribute_item.id),
+            container,
+        )
     container.start()
     attribute_item.logs = [
         line.decode("utf-8").strip("\n")
@@ -380,7 +382,8 @@ def run_attribute_calculation_exec_env(
         s3.delete_object(org_id, project_id + "/" + doc_bin)
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
-    set_progress(project_id, attribute_item, 0.9)
+    if llm_playground_config is None:
+        set_progress(project_id, attribute_item, 0.9)
 
     return {**calculated_attributes, "logs": attribute_item.logs}
 
