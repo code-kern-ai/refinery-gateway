@@ -153,8 +153,8 @@ def validate_user_prompt(project_id: str, user_prompt: str):
     # 5 as min len criterion for double curly brackets + single char attribute
     if len(user_prompt) < 5 or len(mustache_attributes) == 0:
         raise LlmResponseError(
-            """User prompt does not carry a single valid Mustache syntax for attribute access.
-            You can access attributes by using '{{ attribute_name }}' in your prompt."""
+            "User prompt does not carry a single valid Mustache syntax for attribute access. "
+            "You can access attributes by using '{{ attribute_name }}' in your prompt."
         )
 
     for attr in mustache_attributes:
@@ -179,22 +179,18 @@ def validate_llm_config(llm_config: Dict[str, Any]):
                 api_version=llm_config["apiVersion"],
             )
         else:
-            error_message = (
+            raise LlmResponseError(
                 "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
             )
-            raise LlmResponseError(error_message)
     except AssertionError:
-        error_message = (
-            f"API version format must be YYYY-MM-DD, got: {llm_config['apiVersion']}"
+        raise LlmResponseError(
+            "API version format must be YYYY-MM-DD, got: " + llm_config["apiVersion"]
         )
-        raise LlmResponseError(error_message)
     except requests.exceptions.RequestException:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        error_message = (
+        raise LlmResponseError(
             "Encountered Exception when trying LLM connection: "
-            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
+            + traceback.format_exception(*sys.exc_info())[-1]
         )
-        raise LlmResponseError(error_message)
 
 
 def prepare_llm_response_code(
@@ -254,12 +250,10 @@ def ac(record):
             "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
         }
     except KeyError:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        error_message = (
+        raise LlmResponseError(
             "LLM configuration is missing a required field: "
-            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
+            + traceback.format_exception(*sys.exc_info())[-1]
         )
-        raise LlmResponseError(error_message)
 
     for key, value in llm_config_mapping.items():
         llm_code = llm_code.replace(key, value)
