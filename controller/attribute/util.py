@@ -165,13 +165,12 @@ def validate_user_prompt(project_id: str, user_prompt: str):
 def validate_llm_config(llm_config: Dict[str, Any]):
     # test LLM connection before sending work package to execution environment
     try:
-        llm_identifier = llm_config["llmIdentifier"]
-        if llm_identifier == enums.LLMProvider.OPENAI.value:
+        if llm_config["llmIdentifier"] == enums.LLMProvider.OPENAI.value:
             test_openai_llm_connection(
                 api_key=llm_config["apiKey"],
                 model=llm_config["model"],
             )
-        elif llm_identifier == enums.LLMProvider.AZURE.value:
+        elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE.value:
             test_azure_llm_connection(
                 api_key=llm_config["apiKey"],
                 model=llm_config["model"],
@@ -180,7 +179,8 @@ def validate_llm_config(llm_config: Dict[str, Any]):
             )
         else:
             raise LlmResponseError(
-                "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
+                "LLM Identifier must be either Open AI or Azure, got: "
+                + llm_config["llmIdentifier"]
             )
     except AssertionError:
         raise LlmResponseError(
@@ -236,8 +236,8 @@ def ac(record):
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
-            "@@API_BASE@@": llm_config.get("apiBase", "") or "",
-            "@@API_VERSION@@": llm_config.get("apiVersion", "") or "",
+            "@@API_BASE@@": llm_config["apiBase"] or "",
+            "@@API_VERSION@@": llm_config["apiVersion"] or "",
             "@@MODEL@@": llm_config["model"],
             "@@STOP_SEQUENCE@@": json.dumps(llm_config.get("stopSequences", [])),
             "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
