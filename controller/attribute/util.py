@@ -192,8 +192,8 @@ def prepare_llm_response_code(
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
-            "@@ENDPOINT@@": llm_config["endpoint"],
-            "@@API_VERSION@@": llm_config["apiVersion"],
+            "@@ENDPOINT@@": llm_config.get("endpoint", ""),
+            "@@API_VERSION@@": llm_config.get("apiVersion", ""),
             "@@MODEL@@": llm_config["model"],
             "@@STOP_SEQUENCE@@": ",".join(llm_config.get("stopSequences", [])),
             "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
