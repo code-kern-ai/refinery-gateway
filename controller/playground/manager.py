@@ -148,11 +148,11 @@ def init_evaluation_run(
                 if record_id in received_record_ids:
                     true_positives.append(record_id)
                 else:
-                    false_positives.append(record_id)
+                    false_negatives.append(record_id)
 
             for record_id in received_record_ids:
                 if record_id not in expected_record_ids:
-                    false_negatives.append(record_id)
+                    false_positives.append(record_id)
 
             result = {
                 "evaluation_set_id": str(evaluation_set.id),
