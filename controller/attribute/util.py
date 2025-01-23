@@ -191,7 +191,7 @@ def validate_llm_config(attribute_item: Attribute, llm_config: Dict[str, Any]):
             raise LlmResponseError(error_message)
     except AssertionError:
         error_message = (
-            f"API version format must be YYYY-MM-DD, got: {llm_config["apiVersion"]}"
+            f"API version format must be YYYY-MM-DD, got: {llm_config['apiVersion']}"
         )
         add_log_to_attribute_logs(
             attribute_item.project_id,
