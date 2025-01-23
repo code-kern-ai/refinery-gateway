@@ -236,8 +236,8 @@ def ac(record):
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
-            "@@API_BASE@@": llm_config["apiBase"] or "",
-            "@@API_VERSION@@": llm_config["apiVersion"] or "",
+            "@@API_BASE@@": llm_config.get("apiBase") or "",
+            "@@API_VERSION@@": llm_config.get("apiVersion") or "",
             "@@MODEL@@": llm_config["model"],
             "@@STOP_SEQUENCE@@": json.dumps(llm_config.get("stopSequences", [])),
             "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
@@ -300,7 +300,7 @@ def run_attribute_calculation_exec_env(
                     error_message,
                     append_to_logs=False,
                 )
-                raise e
+                return {}
             else:
                 return {"logs": [error_message]}
 
