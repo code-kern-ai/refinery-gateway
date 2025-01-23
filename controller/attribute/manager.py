@@ -458,5 +458,4 @@ def run_llm_playground(
         doc_bin=doc_bin_samples,
         llm_definition=llm_definition,
     )
-
-    return list(calculated_attributes.keys()), list(calculated_attributes.values())
+    return calculated_attributes

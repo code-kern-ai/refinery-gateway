@@ -192,8 +192,8 @@ def prepare_llm_response_code(
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
-            "@@ENDPOINT@@": llm_config.get("endpoint", ""),
-            "@@API_VERSION@@": llm_config.get("apiVersion", ""),
+            "@@ENDPOINT@@": llm_config.get("endpoint", "") or "",
+            "@@API_VERSION@@": llm_config.get("apiVersion", "") or "",
             "@@MODEL@@": llm_config["model"],
             "@@STOP_SEQUENCE@@": ",".join(llm_config.get("stopSequences", [])),
             "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
@@ -362,7 +362,7 @@ def run_attribute_calculation_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
     set_progress(project_id, attribute_item, 0.9)
 
-    return calculated_attributes
+    return {**calculated_attributes, "logs": attribute_item.logs}
 
 
 def extend_logs(

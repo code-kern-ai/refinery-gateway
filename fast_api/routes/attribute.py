@@ -107,15 +107,12 @@ def run_llm_playground(
     attribute_id,
     body: RunLlmPlaygroundBody = Body(...),
 ):
-    record_ids, calculated_attributes = manager.run_llm_playground(
-        project_id,
-        attribute_id,
-        llm_definition=body.llm_config,
-        record_ids=body.record_ids,
-    )
     return pack_json_result(
-        {
-            "record_ids": record_ids,
-            "calculated_attributes": calculated_attributes,
-        }
+        manager.run_llm_playground(
+            project_id,
+            attribute_id,
+            llm_definition=body.llm_config,
+            record_ids=body.record_ids,
+        ),
+        wrap_for_frontend=False,
     )
