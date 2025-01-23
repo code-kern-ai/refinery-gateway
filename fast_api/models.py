@@ -450,6 +450,7 @@ class SearchQuestionBody(BaseModel):
     question: StrictStr
     embeddingId: StrictStr
     limit: Optional[StrictInt] = None
+    filter: Optional[List[Dict]] = None
 
 
 class EvaluationSetCreationBody(BaseModel):
