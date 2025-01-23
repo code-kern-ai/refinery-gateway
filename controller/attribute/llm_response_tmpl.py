@@ -29,7 +29,9 @@ MODEL_A2VYBG = "@@MODEL@@"
 LLM_KWARGS_A2VYBG = {
     "response_format": {"type": "json_object"},
     "stream": False,
-    "stop": json.loads("@@STOP_SEQUENCE@@"),
+    # fmt:off
+    "stop": json.loads('@@STOP_SEQUENCE@@'),
+    # fmt:on
     "temperature": float("@@TEMPERATURE@@"),
     "max_tokens": int("@@MAX_TOKENS@@"),
     "top_p": float("@@TOP_P@@"),
