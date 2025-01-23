@@ -22,14 +22,14 @@ MAX_CACHED_CLIENTS_A2VYBG = 0  # 60
 CLIENT_LOOKUP_A2VYBG = {}  # list of client -> last used tuples
 
 API_KEY_A2VYBG = "@@API_KEY@@"
-ENDPOINT_A2VYBG = "@@ENDPOINT@@"
+API_BASE_A2VYBG = "@@API_BASE@@"
 API_VERSION_A2VYBG = "@@API_VERSION@@"
 CLIENT_TYPE_A2VYBG = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL_A2VYBG = "@@MODEL@@"
 LLM_KWARGS_A2VYBG = {
     "response_format": {"type": "json_object"},
     "stream": False,
-    "stop": list(filter(None, "@@STOP_SEQUENCE@@".split(","))),
+    "stop": json.loads("@@STOP_SEQUENCE@@"),
     "temperature": float("@@TEMPERATURE@@"),
     "max_tokens": int("@@MAX_TOKENS@@"),
     "top_p": float("@@TOP_P@@"),
@@ -198,24 +198,20 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
 ) -> Dict[str, Any]:
     if not open_ai_obj:
         return ""
-    if isinstance(open_ai_obj, ChatCompletion):
-        if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
-            t = open_ai_obj.choices[0]
-            if isinstance(open_ai_obj, ChatCompletion) and (
-                hasattr(t, "message") and hasattr(t.message, "content")
-            ):
-                if not t.message.content:
-                    return {"result": "N/A"}
-                try:
-                    content = json.loads(t.message.content)
-                except Exception:
-                    raise ValueError(
-                        "Could not parse LLM response into valid JSON: ",
-                        t.message.content,
-                    )
-                if isinstance(content, dict):
-                    content = {k: repr(v) for k, v in content.items()}
-                return content
+    if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
+        t = open_ai_obj.choices[0]
+        if hasattr(t, "message") and hasattr(t.message, "content"):
+            content = t.message.content or "{'result': 'N/A'}"
+            try:
+                content = json.loads(content)
+            except Exception:
+                raise ValueError(
+                    "Could not parse LLM response into valid JSON: ",
+                    content,
+                )
+            if isinstance(content, dict):
+                content = {k: repr(v) for k, v in content.items()}
+            return content
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
     ## if we reach this point, we couldn't access the value
@@ -255,11 +251,11 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
 
 
 def get_llm_config():
-    global API_KEY_A2VYBG, ENDPOINT_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
+    global API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
     return {
         "client_type": CLIENT_TYPE_A2VYBG,
         "api_key": API_KEY_A2VYBG,
-        "endpoint": ENDPOINT_A2VYBG,
+        "api_base": API_BASE_A2VYBG,
         "api_version": API_VERSION_A2VYBG,
         "model": MODEL_A2VYBG,
         "system_prompt": SYSTEM_PROMPT_A2VYBG,
@@ -269,7 +265,7 @@ def get_llm_config():
 
 
 def get_llm_response():
-    global SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, MODEL_A2VYBG, API_KEY_A2VYBG, ENDPOINT_A2VYBG, API_VERSION_A2VYBG
+    global SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, MODEL_A2VYBG, API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG
 
     messages = [
         {
@@ -286,7 +282,7 @@ def get_llm_response():
         MODEL_A2VYBG,
         messages,
         API_KEY_A2VYBG,
-        ENDPOINT_A2VYBG,
+        API_BASE_A2VYBG,
         API_VERSION_A2VYBG,
         close_after=True,
         **LLM_KWARGS_A2VYBG,

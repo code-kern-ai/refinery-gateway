@@ -446,7 +446,7 @@ def calculate_user_attribute_sample_records(
 def run_llm_playground(
     project_id: str,
     attribute_id: str,
-    llm_definition: Dict[str, Any],
+    llm_playground_config: Dict[str, Any],
     record_ids: List[str],
 ):
     doc_bin_samples = util.prepare_sample_records_doc_bin(
@@ -456,6 +456,6 @@ def run_llm_playground(
         attribute_id=attribute_id,
         project_id=project_id,
         doc_bin=doc_bin_samples,
-        llm_definition=llm_definition,
+        llm_playground_config=llm_playground_config,
     )
     return calculated_attributes

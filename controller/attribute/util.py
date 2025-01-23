@@ -117,7 +117,7 @@ def test_azure_llm_connection(
         and len(api_version_parts[0]) == 4
         and len(api_version_parts[1]) == 2
         and len(api_version_parts[2]) == 2
-    ), f"API version format must be YYYY-MM-DD, got: {api_version}"
+    )
 
     final_endpoint = f"{base_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}"
     headers = {
@@ -162,19 +162,73 @@ def validate_user_prompt(project_id: str, user_prompt: str):
             raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
 
 
+def validate_llm_config(attribute_item: Attribute, llm_config: Dict[str, Any]):
+    # test LLM connection before sending work package to execution environment
+    try:
+        llm_identifier = llm_config["llmIdentifier"]
+        if llm_identifier == enums.LLMProvider.OPENAI.value:
+            test_openai_llm_connection(
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
+            )
+        elif llm_identifier == enums.LLMProvider.AZURE.value:
+            test_azure_llm_connection(
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
+                base_endpoint=llm_config["apiBase"],
+                api_version=llm_config["apiVersion"],
+            )
+        else:
+            error_message = (
+                "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
+            )
+            add_log_to_attribute_logs(
+                attribute_item.project_id,
+                attribute_item.id,
+                error_message,
+                append_to_logs=False,
+            )
+            raise LlmResponseError(error_message)
+    except AssertionError:
+        error_message = (
+            f"API version format must be YYYY-MM-DD, got: {llm_config["apiVersion"]}"
+        )
+        add_log_to_attribute_logs(
+            attribute_item.project_id,
+            attribute_item.id,
+            error_message,
+            append_to_logs=False,
+        )
+        raise LlmResponseError(error_message)
+    except requests.exceptions.RequestException:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        error_message = (
+            "Encountered Exception when trying LLM connection: "
+            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
+        )
+        add_log_to_attribute_logs(
+            attribute_item.project_id,
+            attribute_item.id,
+            error_message,
+            append_to_logs=False,
+        )
+        raise LlmResponseError(error_message)
+
+
 def prepare_llm_response_code(
-    attribute_item: Attribute, llm_definition: Union[Dict[str, Any], None] = None
+    attribute_item: Attribute, llm_playground_config: Union[Dict[str, Any], None] = None
 ) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
         lines = [line.rstrip() for line in file if line[0] != "#"]
 
     llm_code = "\n".join(lines)
+    source_code = attribute_item.source_code
 
-    # llm_definition is only set if `run-llm-playground`` invoked this function
-    if not attribute_item.additional_config and llm_definition is None:
+    # llm_playground_config is only set if `run-llm-playground`` invoked this function
+    if not attribute_item.additional_config and llm_playground_config is None:
         llm_config = {}
-    elif llm_definition is None:
+    elif llm_playground_config is None:
         llm_config = dict(
             attribute_item.additional_config.get("llmConfig", {}),
             llmIdentifier=attribute_item.additional_config["llmIdentifier"],
@@ -182,20 +236,33 @@ def prepare_llm_response_code(
             questionPrompt=attribute_item.additional_config["questionPrompt"],
         )
     else:
+        source_code = """import json
+
+def ac(record):
+    llm_response = get_llm_response()
+    return json.dumps(llm_response, indent=2)"""
+
         llm_config = dict(
-            llm_definition.get("llmConfig", {}),
-            llmIdentifier=llm_definition["llmIdentifier"],
-            templatePrompt=llm_definition["templatePrompt"],
-            questionPrompt=llm_definition["questionPrompt"],
+            llm_playground_config.get("llmConfig", {}),
+            llmIdentifier=llm_playground_config["llmIdentifier"],
+            templatePrompt=llm_playground_config["templatePrompt"],
+            questionPrompt=llm_playground_config["questionPrompt"],
         )
+
+    # already raises expressive LlmResponseError
+    validate_user_prompt(
+        project_id=attribute_item.project_id,
+        user_prompt=llm_config["questionPrompt"],
+    )
+    validate_llm_config(attribute_item=attribute_item, llm_config=llm_config)
 
     try:
         llm_config_mapping = {
             "@@API_KEY@@": llm_config["apiKey"],
-            "@@ENDPOINT@@": llm_config.get("endpoint", "") or "",
+            "@@API_BASE@@": llm_config.get("apiBase", "") or "",
             "@@API_VERSION@@": llm_config.get("apiVersion", "") or "",
             "@@MODEL@@": llm_config["model"],
-            "@@STOP_SEQUENCE@@": ",".join(llm_config.get("stopSequences", [])),
+            "@@STOP_SEQUENCE@@": json.dumps(llm_config.get("stopSequences", [])),
             "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
             "@@MAX_TOKENS@@": str(llm_config.get("maxLength", 1024)),
             "@@TOP_P@@": str(llm_config.get("topP", 1)),
@@ -219,57 +286,10 @@ def prepare_llm_response_code(
         )
         raise LlmResponseError(error_message)
 
-    # already raises expressive LlmResponseError
-    validate_user_prompt(
-        project_id=attribute_item.project_id,
-        user_prompt=llm_config["questionPrompt"],
-    )
-
-    # test LLM connection before sending work package to execution environment
-    try:
-        llm_identifier = attribute_item.additional_config["llmIdentifier"]
-        if llm_identifier == enums.LLMProvider.OPENAI.value:
-            test_openai_llm_connection(
-                api_key=llm_config["apiKey"],
-                model=llm_config["model"],
-            )
-        elif llm_identifier == enums.LLMProvider.AZURE.value:
-            test_azure_llm_connection(
-                api_key=llm_config["apiKey"],
-                model=llm_config["model"],
-                base_endpoint=llm_config["endpoint"],
-                api_version=llm_config["apiVersion"],
-            )
-        else:
-            error_message = (
-                "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
-            )
-            add_log_to_attribute_logs(
-                attribute_item.project_id,
-                attribute_item.id,
-                error_message,
-                append_to_logs=False,
-            )
-            raise LlmResponseError(error_message)
-    except Exception:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        error_message = (
-            "Encountered Exception when trying LLM connection: "
-            + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
-            + "\n\nIf you're using Azure double-check the API Version and your deployment as some require a '-preview' at the end."
-        )
-        add_log_to_attribute_logs(
-            attribute_item.project_id,
-            attribute_item.id,
-            error_message,
-            append_to_logs=False,
-        )
-        raise LlmResponseError(error_message)
-
     for key, value in llm_config_mapping.items():
         llm_code = llm_code.replace(key, value)
 
-    final_code = llm_code + "\n\n" + attribute_item.source_code
+    final_code = llm_code + "\n\n" + source_code
 
     return final_code  # this still has mustache templates in it (e.g. in user_prompt)
 
@@ -278,7 +298,7 @@ def run_attribute_calculation_exec_env(
     attribute_id: str,
     project_id: str,
     doc_bin: str,
-    llm_definition: Union[Dict[str, Any], None] = None,
+    llm_playground_config: Union[Dict[str, Any], None] = None,
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
 
@@ -299,7 +319,7 @@ def run_attribute_calculation_exec_env(
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
         source_code = prepare_llm_response_code(
-            attribute_item, llm_definition=llm_definition
+            attribute_item, llm_playground_config=llm_playground_config
         )
 
     s3.put_object(
