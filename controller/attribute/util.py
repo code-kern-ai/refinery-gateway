@@ -162,7 +162,7 @@ def validate_user_prompt(project_id: str, user_prompt: str):
             raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
 
 
-def validate_llm_config(attribute_item: Attribute, llm_config: Dict[str, Any]):
+def validate_llm_config(llm_config: Dict[str, Any]):
     # test LLM connection before sending work package to execution environment
     try:
         llm_identifier = llm_config["llmIdentifier"]
@@ -182,22 +182,10 @@ def validate_llm_config(attribute_item: Attribute, llm_config: Dict[str, Any]):
             error_message = (
                 "LLM Identifier must be either Open AI or Azure, got: " + llm_identifier
             )
-            add_log_to_attribute_logs(
-                attribute_item.project_id,
-                attribute_item.id,
-                error_message,
-                append_to_logs=False,
-            )
             raise LlmResponseError(error_message)
     except AssertionError:
         error_message = (
             f"API version format must be YYYY-MM-DD, got: {llm_config['apiVersion']}"
-        )
-        add_log_to_attribute_logs(
-            attribute_item.project_id,
-            attribute_item.id,
-            error_message,
-            append_to_logs=False,
         )
         raise LlmResponseError(error_message)
     except requests.exceptions.RequestException:
@@ -205,12 +193,6 @@ def validate_llm_config(attribute_item: Attribute, llm_config: Dict[str, Any]):
         error_message = (
             "Encountered Exception when trying LLM connection: "
             + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
-        )
-        add_log_to_attribute_logs(
-            attribute_item.project_id,
-            attribute_item.id,
-            error_message,
-            append_to_logs=False,
         )
         raise LlmResponseError(error_message)
 
@@ -248,13 +230,12 @@ def ac(record):
             templatePrompt=llm_playground_config["templatePrompt"],
             questionPrompt=llm_playground_config["questionPrompt"],
         )
-
     # already raises expressive LlmResponseError
     validate_user_prompt(
         project_id=attribute_item.project_id,
         user_prompt=llm_config["questionPrompt"],
     )
-    validate_llm_config(attribute_item=attribute_item, llm_config=llm_config)
+    validate_llm_config(llm_config=llm_config)
 
     try:
         llm_config_mapping = {
@@ -277,12 +258,6 @@ def ac(record):
         error_message = (
             "LLM configuration is missing a required field: "
             + traceback.format_exception(exc_type, exc_value, exc_traceback)[-1]
-        )
-        add_log_to_attribute_logs(
-            attribute_item.project_id,
-            attribute_item.id,
-            error_message,
-            append_to_logs=False,
         )
         raise LlmResponseError(error_message)
 
@@ -318,9 +293,21 @@ def run_attribute_calculation_exec_env(
 
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
-        source_code = prepare_llm_response_code(
-            attribute_item, llm_playground_config=llm_playground_config
-        )
+        try:
+            source_code = prepare_llm_response_code(
+                attribute_item, llm_playground_config=llm_playground_config
+            )
+        except LlmResponseError as e:
+            if llm_playground_config is None:
+                add_log_to_attribute_logs(
+                    attribute_item.project_id,
+                    attribute_item.id,
+                    e.message,
+                    append_to_logs=False,
+                )
+                raise e
+            else:
+                return {"logs": [e.message]}
 
     s3.put_object(
         org_id,
@@ -361,7 +348,7 @@ def run_attribute_calculation_exec_env(
             container,
         )
     container.start()
-    attribute_item.logs = [
+    final_logs = [
         line.decode("utf-8").strip("\n")
         for line in container.logs(
             stream=True, stdout=True, stderr=True, timestamps=True
@@ -383,9 +370,9 @@ def run_attribute_calculation_exec_env(
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
     if llm_playground_config is None:
+        attribute_item.logs = final_logs
         set_progress(project_id, attribute_item, 0.9)
-
-    return {**calculated_attributes, "logs": attribute_item.logs}
+    return {**calculated_attributes, "logs": final_logs}
 
 
 def extend_logs(
