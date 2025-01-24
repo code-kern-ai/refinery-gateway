@@ -5,6 +5,7 @@ from fast_api.routes.client_response import (
     get_silent_success,
 )
 from fast_api.models import (
+    EvaluationRunDeletionBody,
     SearchQuestionBody,
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
@@ -221,3 +222,18 @@ def get_record_by_content(
         project_id, user, query, limit, offset
     )
     return pack_json_result(records, wrap_for_frontend=False)
+
+
+@router.delete(
+    "/{project_id}/evaluation-runs",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_evaluation_run(
+    request: Request,
+    project_id: str,
+    evaluation_set: EvaluationRunDeletionBody = Body(...),
+):
+    playground_manager.delete_evaluation_runs(
+        project_id, evaluation_set.evaluationRunIds
+    )
+    return get_silent_success()

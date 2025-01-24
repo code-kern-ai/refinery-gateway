@@ -99,6 +99,10 @@ def get_evaluation_groups(project_id: str):
     return evaluation_group_db_bo.get_all(project_id)
 
 
+def delete_evaluation_runs(project_id: str, run_ids: str):
+    return evaluation_run_db_bo.delete_all(project_id, run_ids, True)
+
+
 def get_evaluation_runs(project_id: str):
     evaluation_runs_objects = evaluation_run_db_bo.get_all(project_id)
     evaluation_runs = []

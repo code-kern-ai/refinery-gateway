@@ -484,3 +484,7 @@ class RecordSearchContains(BaseModel):
 
 class RecordsBatchBody(BaseModel):
     record_ids: List[StrictStr]
+
+
+class EvaluationRunDeletionBody(BaseModel):
+    evaluationRunIds: List[StrictStr]
