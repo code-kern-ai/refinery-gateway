@@ -26,9 +26,9 @@ from . import util
 from sqlalchemy import sql
 
 DEFAULT_LLM_RESPONSE_CONFIG = {
-    "llmIdentifier": "AZURE",
+    "llmIdentifier": "Open AI",
     "templatePrompt": "Make your answer a single word, e.g. 'yes' or 'no'",
-    "questionPrompt": "Is this clickbait? => '{{ record.headline }}'",
+    "questionPrompt": "Is this clickbait? => '{{ headline }}'",
     "llmConfig": {
         "model": "gpt-4o-mini",
         "temperature": 0,
