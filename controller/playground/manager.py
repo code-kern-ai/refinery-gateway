@@ -113,6 +113,7 @@ def get_evaluation_runs(project_id: str):
 def get_evaluation_run_by_id(project_id: str, run_id: str):
     evaluation_run = evaluation_run_db_bo.get(project_id, run_id)
     evaluation_run_object = sql_alchemy_to_dict(evaluation_run, False)
+    return evaluation_run_object
 
 
 def init_evaluation_run(
