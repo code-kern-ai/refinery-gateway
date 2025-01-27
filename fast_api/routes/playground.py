@@ -183,7 +183,7 @@ def get_single_evaluation_run(
     run_id: str,
 ):
     evaluation_run = playground_manager.get_evaluation_run_by_id(project_id, run_id)
-    return pack_json_result(evaluation_run)
+    return pack_json_result(evaluation_run, wrap_for_frontend=False)
 
 
 @router.post(
