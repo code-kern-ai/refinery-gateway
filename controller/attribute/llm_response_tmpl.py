@@ -40,13 +40,13 @@ LLM_KWARGS_A2VYBG = {
 }
 
 SYSTEM_PROMPT_A2VYBG = (
-    "@@SYSTEM_PROMPT@@ You must only output valid JSON. "
+    """@@SYSTEM_PROMPT@@ You must only output valid JSON. """
     "If there is not yet a schema defined for the JSON output, "
     "please put everything into a single value under the key 'result' "
     "- otherwise stick to the schema that has been provided already."
 )
 USER_PROMPT_A2VYBG = (
-    "@@USER_PROMPT@@"  # is updated in runtime by refinery-ac-exec-env/run_ac.py
+    """@@USER_PROMPT@@"""  # is updated in runtime by refinery-ac-exec-env/run_ac.py
 )
 
 # azure_endpoint = api_base (before 1.0) - basically the link to the api
