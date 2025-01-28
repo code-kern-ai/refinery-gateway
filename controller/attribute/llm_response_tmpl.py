@@ -2,9 +2,16 @@ import json
 import time
 from typing import Any, Optional, Union, List, Dict
 from enum import Enum
+import asyncio
 
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
-from openai import AuthenticationError
+from openai import (
+    AuthenticationError,
+    APITimeoutError,
+    RateLimitError,
+    InternalServerError,
+    UnprocessableEntityError,
+)
 from openai.types.chat import ChatCompletion
 
 
@@ -20,8 +27,11 @@ class LLMProvider_A2VYBG(Enum):
 
 MAX_CACHED_CLIENTS_A2VYBG = 0  # 60
 CLIENT_LOOKUP_A2VYBG = {}  # list of client -> last used tuples
-NUM_WORKERS = "@@NUM_WORKERS@@"  # number of concurrent API calls for LLM
-
+NUM_WORKERS_A2VYBG = "@@NUM_WORKERS@@"  # number of concurrent API calls for LLM
+MAX_RETRIES_A2VYBG = "@@MAX_RETRIES_A2VYBG@@"  # number of retries for LLM API calls
+RETRY_SLEEP_SEC_A2VYBG = (
+    "@@RETRY_SLEEP_SEC_A2VYBG@@"  # seconds to sleep between retries
+)
 
 API_KEY_A2VYBG = "@@API_KEY@@"
 API_BASE_A2VYBG = "@@API_BASE@@"
@@ -313,17 +323,28 @@ async def get_llm_response():
         },
     ]
 
-    chat_completion = (
-        await get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-            MODEL_A2VYBG,
-            messages,
-            API_KEY_A2VYBG,
-            API_BASE_A2VYBG,
-            API_VERSION_A2VYBG,
-            close_after=True,
-            **LLM_KWARGS_A2VYBG,
-        )
-    )
-
-    value = get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(chat_completion)
-    return value
+    for _ in range(int(MAX_RETRIES_A2VYBG)):
+        try:
+            chat_completion = (
+                await get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                    MODEL_A2VYBG,
+                    messages,
+                    API_KEY_A2VYBG,
+                    API_BASE_A2VYBG,
+                    API_VERSION_A2VYBG,
+                    close_after=True,
+                    **LLM_KWARGS_A2VYBG,
+                )
+            )
+            value = get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
+                chat_completion
+            )
+            return value
+        except (
+            APITimeoutError,
+            RateLimitError,
+            InternalServerError,
+            UnprocessableEntityError,
+        ):
+            await asyncio.sleep(int(RETRY_SLEEP_SEC_A2VYBG))
+            continue

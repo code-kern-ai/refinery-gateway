@@ -197,6 +197,8 @@ def prepare_llm_response_code(
     attribute_item: Attribute,
     llm_playground_config: Union[Dict[str, Any], None] = None,
     num_workers: int = 10,
+    max_api_call_retries: int = 5,
+    retry_sleep_seconds: int = 5,
 ) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
@@ -250,7 +252,10 @@ def ac(record):
             "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
             "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
             "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
+            # below are less LLM config and more execution environment config
             "@@NUM_WORKERS@@": str(num_workers),
+            "@@MAX_RETRIES_A2VYBG@@": str(max_api_call_retries),
+            "@@RETRY_SLEEP_SEC_A2VYBG@@": str(retry_sleep_seconds),
         }
     except KeyError:
         raise LlmResponseError(
