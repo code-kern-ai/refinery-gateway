@@ -196,7 +196,7 @@ def validate_llm_config(llm_config: Dict[str, Any]):
 def prepare_llm_response_code(
     attribute_item: Attribute,
     llm_playground_config: Union[Dict[str, Any], None] = None,
-    num_workers: int = 10,
+    num_workers: int = 100,
     max_api_call_retries: int = 5,
     retry_sleep_seconds: int = 5,
 ) -> str:

@@ -331,7 +331,7 @@ async def get_llm_response():
             "content": USER_PROMPT_A2VYBG,
         },
     ]
-
+    exception = None
     for _ in range(int(MAX_RETRIES_A2VYBG)):
         try:
             chat_completion = (
@@ -354,6 +354,8 @@ async def get_llm_response():
             RateLimitError,
             InternalServerError,
             UnprocessableEntityError,
-        ):
+        ) as e:
+            exception = e
             await asyncio.sleep(int(RETRY_SLEEP_SEC_A2VYBG))
             continue
+    raise ValueError(f"Failed to get LLM response ({str(exception)})")
