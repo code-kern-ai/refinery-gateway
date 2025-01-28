@@ -220,8 +220,8 @@ def prepare_llm_response_code(
     else:
         source_code = """import json
 
-def ac(record):
-    llm_response = get_llm_response()
+async def ac(record):
+    llm_response = await get_llm_response()
     return json.dumps(llm_response, indent=2)"""
 
         llm_config = dict(

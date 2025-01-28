@@ -226,9 +226,7 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
                     content,
                 )
             if isinstance(content, dict):
-                content = {
-                    k: v if isinstance(v, str) else repr(v) for k, v in content.items()
-                }
+                content = convert_to_string(content)
             return content
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
@@ -236,6 +234,17 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
     if raise_me:
         raise ValueError("Couldn't access value from", open_ai_obj)
     return ""
+
+
+def convert_to_string(data):
+    if isinstance(data, dict):
+        return {key: convert_to_string(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_to_string(item) for item in data]
+    else:
+        if isinstance(data, str):
+            return data
+        return str(data)
 
 
 # all work similar but use different classes etc.
