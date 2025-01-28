@@ -216,14 +216,18 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
         t = open_ai_obj.choices[0]
         if hasattr(t, "message") and hasattr(t.message, "content"):
             # fmt:off
-            content = t.message.content or '{\"result\": \"N/A\"}'
+            content = t.message.content or '{\"result\": \"Error: N/A\"}'
             # fmt:on
             try:
                 content = json.loads(content)
             except Exception:
-                raise ValueError(
-                    "Could not parse LLM response into valid JSON: ",
-                    content,
+                content = {
+                    "result": "Error: Could not parse LLM response into valid JSON: "
+                    + content
+                }
+                print(
+                    'Error: Could not parse LLM response into valid JSON -> check databrowser for "Error: "',
+                    flush=True,
                 )
             if isinstance(content, dict):
                 content = convert_to_string(content)
@@ -358,4 +362,6 @@ async def get_llm_response():
             exception = e
             await asyncio.sleep(int(RETRY_SLEEP_SEC_A2VYBG))
             continue
-    raise ValueError(f"Failed to get LLM response ({str(exception)})")
+    m = f"Error: Failed to get LLM response ({str(exception)})"
+    print(m, flush=True)
+    return {"result": m}
