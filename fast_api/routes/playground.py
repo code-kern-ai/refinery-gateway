@@ -219,9 +219,9 @@ def get_record_by_content(
     query = record_search.query
     limit = record_search.limit
     offset = record_search.offset
-    user = "52a09a36-5e3a-446a-a9b7-0104edecf62d"  # request.state.user
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
     records = playground_manager.get_records_by_content(
-        project_id, user, query, limit, offset
+        project_id, user_id, query, limit, offset
     )
     return pack_json_result(records, wrap_for_frontend=False)
 
