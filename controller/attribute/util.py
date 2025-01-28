@@ -194,7 +194,9 @@ def validate_llm_config(llm_config: Dict[str, Any]):
 
 
 def prepare_llm_response_code(
-    attribute_item: Attribute, llm_playground_config: Union[Dict[str, Any], None] = None
+    attribute_item: Attribute,
+    llm_playground_config: Union[Dict[str, Any], None] = None,
+    num_workers: int = 10,
 ) -> str:
     global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
@@ -248,6 +250,7 @@ def ac(record):
             "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
             "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
             "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
+            "@@NUM_WORKERS@@": str(num_workers),
         }
     except KeyError:
         raise LlmResponseError(

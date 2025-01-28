@@ -20,6 +20,8 @@ class LLMProvider_A2VYBG(Enum):
 
 MAX_CACHED_CLIENTS_A2VYBG = 0  # 60
 CLIENT_LOOKUP_A2VYBG = {}  # list of client -> last used tuples
+NUM_WORKERS = "@@NUM_WORKERS@@"  # number of concurrent API calls for LLM
+
 
 API_KEY_A2VYBG = "@@API_KEY@@"
 API_BASE_A2VYBG = "@@API_BASE@@"
@@ -203,7 +205,9 @@ def get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
     if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
         t = open_ai_obj.choices[0]
         if hasattr(t, "message") and hasattr(t.message, "content"):
-            content = t.message.content or "{'result': 'N/A'}"
+            # fmt:off
+            content = t.message.content or '{\"result\": \"N/A\"}'
+            # fmt:on
             try:
                 content = json.loads(content)
             except Exception:
@@ -254,6 +258,33 @@ def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     return completion
 
 
+async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+    model: str,
+    messages: List[Dict[str, str]],
+    api_key: str,
+    azure_endpoint: Optional[str] = None,
+    api_version: Optional[str] = None,
+    close_after: bool = False,
+    **kwargs,
+) -> ChatCompletion:
+    client = get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
+        use_async=True,
+        api_key=api_key,
+        azure_endpoint=azure_endpoint,
+        api_version=api_version,
+        prevent_cached_client=close_after,
+    )
+    completion = await client.chat.completions.create(
+        model=model,
+        messages=messages,
+        **kwargs,
+    )
+    if close_after:
+        await client.close()
+
+    return completion
+
+
 def get_llm_config():
     global API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
     return {
@@ -268,7 +299,7 @@ def get_llm_config():
     }
 
 
-def get_llm_response():
+async def get_llm_response():
     global SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, MODEL_A2VYBG, API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG
 
     messages = [
@@ -282,14 +313,17 @@ def get_llm_response():
         },
     ]
 
-    chat_completion = get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-        MODEL_A2VYBG,
-        messages,
-        API_KEY_A2VYBG,
-        API_BASE_A2VYBG,
-        API_VERSION_A2VYBG,
-        close_after=True,
-        **LLM_KWARGS_A2VYBG,
+    chat_completion = (
+        await get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+            MODEL_A2VYBG,
+            messages,
+            API_KEY_A2VYBG,
+            API_BASE_A2VYBG,
+            API_VERSION_A2VYBG,
+            close_after=True,
+            **LLM_KWARGS_A2VYBG,
+        )
     )
 
-    return get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(chat_completion)
+    value = get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(chat_completion)
+    return value
