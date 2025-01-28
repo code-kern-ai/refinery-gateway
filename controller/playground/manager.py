@@ -10,6 +10,7 @@ from submodules.model.business_objects import (
 )
 from service.search.search import resolve_extended_search
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
+from concurrent.futures import ThreadPoolExecutor
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
@@ -146,10 +147,20 @@ def init_evaluation_run(
             embedding_id,
             [evaluation_set.question for evaluation_set in evaluation_sets],
         )
-        search_results = [
-            __get_most_similar_records(project_id, embedding_id, questions_tensor, 10)
-            for questions_tensor in questions_tensors
-        ]
+
+        with ThreadPoolExecutor(max_workers=min(10, len(evaluation_sets))) as executor:
+            futures = [
+                executor.submit(
+                    __get_most_similar_records,
+                    project_id,
+                    embedding_id,
+                    questions_tensors[index],
+                    len(evaluation_set.record_ids),
+                )
+                for index, evaluation_set in enumerate(evaluation_sets)
+            ]
+
+            search_results = [future.result() for future in futures]
 
         for evaluation_set, search_result in zip(evaluation_sets, search_results):
 
