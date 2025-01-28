@@ -202,6 +202,7 @@ def create_evaluation_run(
         evaluation_run.embeddingId,
         evaluation_run.evaluationGroupId,
         user_id,
+        evaluation_run.threshold,
     )
     return get_silent_success()
 

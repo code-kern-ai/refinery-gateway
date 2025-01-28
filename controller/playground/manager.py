@@ -15,8 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
 
-FILTER = None
-THRESHOLD = None
+EVALUATION_RUN_LIMIT_DEFAULT = 100
 
 
 class EVALUATION_RUN_STATE:
@@ -126,7 +125,11 @@ def get_evaluation_run_by_id(project_id: str, run_id: str):
 
 
 def init_evaluation_run(
-    project_id: str, embedding_id: str, evaluation_group_id: str, created_by: str
+    project_id: str,
+    embedding_id: str,
+    evaluation_group_id: str,
+    created_by: str,
+    threshold: float,
 ):
 
     evaluation_run = evaluation_run_db_bo.create(
@@ -155,7 +158,9 @@ def init_evaluation_run(
                     project_id,
                     embedding_id,
                     questions_tensors[index],
-                    len(evaluation_set.record_ids),
+                    EVALUATION_RUN_LIMIT_DEFAULT,
+                    None,
+                    threshold,
                 )
                 for index, evaluation_set in enumerate(evaluation_sets)
             ]

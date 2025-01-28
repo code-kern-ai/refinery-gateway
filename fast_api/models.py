@@ -475,6 +475,7 @@ class EvaluationGroupDeletionBody(BaseModel):
 class EvaluationRunCreationBody(BaseModel):
     embeddingId: StrictStr
     evaluationGroupId: StrictStr
+    threshold: StrictFloat
 
 
 class RecordSearchContains(BaseModel):
