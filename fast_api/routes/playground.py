@@ -32,8 +32,9 @@ def get_search_results_question(
     question = search_question.question
     limit = search_question.limit
     filter = search_question.filter
+    threshold = search_question.threshold
     search_results = playground_manager.get_search_result_for_text(
-        project_id, embedding_id, question, limit, filter
+        project_id, embedding_id, question, limit, filter, threshold
     )
 
     return pack_json_result(search_results, wrap_for_frontend=False)

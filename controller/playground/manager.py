@@ -253,7 +253,6 @@ def __get_most_similar_records(
             "threshold": threshold,
         },
     )
-    print("response.ok", response.ok, flush=True)
     if response.ok:
         return response.json()
     else:
