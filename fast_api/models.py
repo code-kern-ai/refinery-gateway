@@ -490,3 +490,7 @@ class RecordsBatchBody(BaseModel):
 
 class EvaluationRunDeletionBody(BaseModel):
     evaluationRunIds: List[StrictStr]
+
+
+class SearchQuestionReformulationBody(BaseModel):
+    question: StrictStr

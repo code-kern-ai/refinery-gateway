@@ -7,6 +7,7 @@ from fast_api.routes.client_response import (
 from fast_api.models import (
     EvaluationRunDeletionBody,
     SearchQuestionBody,
+    SearchQuestionReformulationBody,
     EvaluationSetCreationBody,
     EvaluationGroupCreationBody,
     EvaluationRunCreationBody,
@@ -239,3 +240,18 @@ def delete_evaluation_run(
         project_id, evaluation_set.evaluationRunIds
     )
     return get_silent_success()
+
+
+@router.post(
+    "/{project_id}/reformulation",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_question_reformulation(
+    request: Request,
+    project_id: str,
+    question_reformulation: SearchQuestionReformulationBody = Body(...),
+):
+    reformulation = playground_manager.get_question_reformulation(
+        question_reformulation.question
+    )
+    return pack_json_result(reformulation)
