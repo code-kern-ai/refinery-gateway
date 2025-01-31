@@ -1,3 +1,4 @@
+import traceback
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from typing import Union
@@ -38,21 +39,26 @@ A poorly reformulated question may lead to irrelevant or misleading results. It 
 
 
 def reformulate_question(question: str, api_key: str) -> str:
-    openai_client = OpenAI(api_key=api_key)
-    messages = [
-        {
-            "role": "system",
-            "content": REFORMULATION_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": f"Question: {question}",
-        },
-    ]
-    completion = openai_client.chat.completions.create(
-        model="gpt-4o-mini", messages=messages, stream=False
-    )
-    return __get_openai_value_from(completion)
+    try:
+        openai_client = OpenAI(api_key=api_key)
+        messages = [
+            {
+                "role": "system",
+                "content": REFORMULATION_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": f"Question: {question}",
+            },
+        ]
+        completion = openai_client.chat.completions.create(
+            model="gpt-4o-mini", messages=messages, stream=False
+        )
+        return __get_openai_value_from(completion)
+    except Exception:
+        traceback.print_exc()
+
+    return None
 
 
 def __get_openai_value_from(

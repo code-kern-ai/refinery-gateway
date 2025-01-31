@@ -11,7 +11,7 @@ from submodules.model.business_objects import (
 from service.search.search import resolve_extended_search
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from concurrent.futures import ThreadPoolExecutor
-from .reformulation import REFORMULATION_PROMPT, reformulate_question
+from .reformulation import reformulate_question
 import json
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
@@ -314,5 +314,8 @@ def __build_contains_filter(project_id: str, content: str):
 
 
 def get_question_reformulation(question: str, api_key: str) -> Dict:
-    reformulation_dict = json.loads(reformulate_question(question, api_key))
+    q_reformulated = reformulate_question(question, api_key)
+    if q_reformulated is None:
+        return None
+    reformulation_dict = json.loads()
     return reformulation_dict
