@@ -11,7 +11,7 @@ from submodules.model.business_objects import (
 from service.search.search import resolve_extended_search
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from concurrent.futures import ThreadPoolExecutor
-from .reformulation import REFORMULATION_PROMPT
+from .reformulation import REFORMULATION_PROMPT, reformulate_question
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
@@ -313,6 +313,6 @@ def __build_contains_filter(project_id: str, content: str):
 
 
 def get_question_reformulation(question: str):
-
-    reformulation_dict = {"reformulation": "Test 123"}
+    reformulation = reformulate_question(question)
+    reformulation_dict = {"reformulation": reformulation}
     return reformulation_dict

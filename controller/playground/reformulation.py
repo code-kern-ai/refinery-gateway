@@ -1,3 +1,7 @@
+from openai import OpenAI
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
+from typing import Union
+
 REFORMULATION_PROMPT = """Generate a refined and optimized reformulation of a given question, ensuring it aligns better with the user's search intent and maximizes result relevance for RAG. The reformulated question should maintain the original meaning while improving clarity, specificity, and contextual precision.
 
 # Important Guidelines
@@ -31,3 +35,46 @@ Only the pure valid json with key "reformulation" and value as the improved vers
 # Notes
 
 A poorly reformulated question may lead to irrelevant or misleading results. It is essential to preserve intent while enhancing clarity and relevance."""
+API_KEY = ""
+
+
+def reformulate_question(question: str) -> str:
+    openai_client = OpenAI(api_key=API_KEY)
+    messages = [
+        {
+            "role": "system",
+            "content": REFORMULATION_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": f"Question: {question}",
+        },
+    ]
+    completion = openai_client.chat.completions.create(
+        model="gpt-4o-mini", messages=messages, stream=False
+    )
+    return __get_openai_value_from(completion)
+
+
+def __get_openai_value_from(
+    open_ai_obj: Union[ChatCompletion, ChatCompletionChunk], raise_me: bool = True
+) -> str:
+    if not open_ai_obj:
+        return ""
+    if isinstance(open_ai_obj, ChatCompletion) or isinstance(
+        open_ai_obj, ChatCompletionChunk
+    ):
+        if hasattr(open_ai_obj, "choices") and len(open_ai_obj.choices) > 0:
+            t = open_ai_obj.choices[0]
+            if isinstance(open_ai_obj, ChatCompletion):
+                if hasattr(t, "message") and hasattr(t.message, "content"):
+                    return t.message.content or ""
+            elif isinstance(open_ai_obj, ChatCompletionChunk):
+                if hasattr(t, "delta") and hasattr(t.delta, "content"):
+                    return t.delta.content or ""
+    else:
+        raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
+    ## if we reach this point, we couldn't access the value
+    if raise_me:
+        raise ValueError("Couldn't access value from", open_ai_obj)
+    return ""

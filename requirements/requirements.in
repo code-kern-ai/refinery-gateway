@@ -10,3 +10,5 @@ spacy[ja]==3.7.5
 pyminizip==0.2.6
 rncryptor==3.3.0
 pydantic==2.7.4
+httpx==0.27.2
+openai==1.31.0
