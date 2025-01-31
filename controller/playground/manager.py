@@ -313,6 +313,6 @@ def __build_contains_filter(project_id: str, content: str):
     return final_filter
 
 
-def get_question_reformulation(question: str):
-    reformulation_dict = json.loads(reformulate_question(question))
+def get_question_reformulation(question: str, api_key: str) -> Dict:
+    reformulation_dict = json.loads(reformulate_question(question, api_key))
     return reformulation_dict

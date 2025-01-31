@@ -35,11 +35,10 @@ Only the pure valid json with key "reformulation" and value as the improved vers
 # Notes
 
 A poorly reformulated question may lead to irrelevant or misleading results. It is essential to preserve intent while enhancing clarity and relevance."""
-API_KEY = ""
 
 
-def reformulate_question(question: str) -> str:
-    openai_client = OpenAI(api_key=API_KEY)
+def reformulate_question(question: str, api_key: str) -> str:
+    openai_client = OpenAI(api_key=api_key)
     messages = [
         {
             "role": "system",

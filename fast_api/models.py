@@ -494,3 +494,4 @@ class EvaluationRunDeletionBody(BaseModel):
 
 class SearchQuestionReformulationBody(BaseModel):
     question: StrictStr
+    apiKey: StrictStr

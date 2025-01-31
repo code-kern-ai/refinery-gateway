@@ -252,6 +252,6 @@ def get_question_reformulation(
     question_reformulation: SearchQuestionReformulationBody = Body(...),
 ):
     reformulation = playground_manager.get_question_reformulation(
-        question_reformulation.question
+        question_reformulation.question, question_reformulation.apiKey
     )
     return pack_json_result(reformulation)
