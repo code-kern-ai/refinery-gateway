@@ -27,7 +27,7 @@ REFORMULATION_PROMPT = """Generate a refined and optimized reformulation of a gi
 
 # Output Format
 Only the pure valid json with key "reformulation" and value as the improved version of the original question.
-```json
+
 {
   "reformulation": "<The improved version of the original question>",
 }
