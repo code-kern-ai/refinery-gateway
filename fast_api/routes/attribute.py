@@ -116,3 +116,14 @@ def run_llm_playground(
         ),
         wrap_for_frontend=False,
     )
+
+
+@router.get(
+    "/{project_id}/{attribute_id}/llm-ac-cache",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def llm_ac_cache(request: Request, project_id, attribute_id):
+    return pack_json_result(
+        manager.llm_ac_cache(project_id, attribute_id),
+        wrap_for_frontend=False,
+    )

@@ -459,3 +459,24 @@ def run_llm_playground(
         llm_playground_config=llm_playground_config,
     )
     return calculated_attributes
+
+
+def llm_ac_cache(project_id: str, attribute_id: str):
+    attribute_item = attribute.get(project_id, attribute_id)
+    org_id = str(attribute_item.organization_id)
+    if attribute_item.data_type != DataTypes.LLM_RESPONSE.value:
+        raise ValueError("Attribute is not an LLM response attribute")
+    # llm_config = {
+    #     "client_type": CLIENT_TYPE_A2VYBG,
+    #     "api_key": API_KEY_A2VYBG,
+    #     "api_base": API_BASE_A2VYBG,
+    #     "api_version": API_VERSION_A2VYBG,
+    #     "model": MODEL_A2VYBG,
+    #     "system_prompt": SYSTEM_PROMPT_A2VYBG,
+    #     "user_prompt": USER_PROMPT_A2VYBG,
+    #     "llm_kwargs": LLM_KWARGS_A2VYBG,
+    # }
+
+    # hash the llm_config to use it as a key in the cache
+    # if cache.exists => true; else false;
+    return attribute_item.additional_config
