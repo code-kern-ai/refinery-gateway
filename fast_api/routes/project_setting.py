@@ -158,18 +158,12 @@ def get_records_batch(
     recordsBatchBody: RecordsBatchBody = Body(...),
 ):
     results = []
-    for record_id in recordsBatchBody.record_ids:
-        if record_id is None or record_id == "null":
-            continue
-
-        record = record_manager.get_record(project_id, record_id)
-
+    records = record_manager.get_record_by_ids(project_id, recordsBatchBody.record_ids)
+    for record in records:
         results.append(
             {
                 "id": str(record.id),
                 "data": json.dumps(record.data),
-                "projectId": str(record.project_id),
-                "category": record.category,
             }
         )
 
