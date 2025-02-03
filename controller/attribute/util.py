@@ -275,7 +275,14 @@ async def ac(record):
     for key, value in llm_config_mapping.items():
         llm_code = llm_code.replace(key, value)
 
-    final_code = llm_code + "\n\n" + source_code
+    # modifying the ac signature here to pass cached_records reference for async-safe access
+    final_code = (
+        llm_code
+        + "\n\n"
+        + source_code.replace(
+            "get_llm_response()", "get_llm_response(record, cached_records)"
+        ).replace("ac(record)", "ac(record, cached_records)")
+    )
 
     return final_code  # this still has mustache templates in it (e.g. in user_prompt)
 
@@ -400,7 +407,11 @@ def run_attribute_calculation_exec_env(
     if not doc_bin == "docbin_full":
         # sample records docbin should be deleted after calculation
         s3.delete_object(org_id, project_id + "/" + doc_bin)
-    elif doc_bin == "docbin_full" and llm_playground_config is None:
+    elif (
+        doc_bin == "docbin_full"
+        and llm_playground_config is None
+        and len(calculated_attributes) > 0
+    ):
         s3.delete_object(org_id, project_id + "/" + llm_ac_cache)
 
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)

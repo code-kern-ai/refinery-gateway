@@ -325,8 +325,13 @@ def get_llm_config():
     }
 
 
-async def get_llm_response():
+async def get_llm_response(record: dict, cached_records: dict):
     global SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, MODEL_A2VYBG, API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG
+
+    curr_running_id = str(record["running_id"])
+
+    if curr_running_id in cached_records:
+        return cached_records[curr_running_id]
 
     messages = [
         {
@@ -355,6 +360,7 @@ async def get_llm_response():
             value = get_openai_value_from_336aa73b_a8a0_4148_8c6e_445c29a9e377(
                 chat_completion
             )
+            cached_records[curr_running_id] = value
             return value
         except (
             APITimeoutError,
@@ -370,4 +376,5 @@ async def get_llm_response():
             break
     m = f"Error: Failed to get LLM response ({str(exception)})"
     print(m, flush=True)
+    cached_records[curr_running_id] = {"result": m}
     return {"result": m}
