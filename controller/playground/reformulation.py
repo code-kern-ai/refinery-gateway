@@ -1,7 +1,7 @@
 import traceback
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
-from typing import Union
+from typing import Union, Optional
 
 REFORMULATION_PROMPT = """Generate a refined and optimized reformulation of a given question, ensuring it aligns better with the user's search intent and maximizes result relevance for RAG. The reformulated question should maintain the original meaning while improving clarity, specificity, and contextual precision.
 
@@ -38,18 +38,12 @@ Only the pure valid json with key "reformulation" and value as the improved vers
 A poorly reformulated question may lead to irrelevant or misleading results. It is essential to preserve intent while enhancing clarity and relevance."""
 
 
-def reformulate_question(question: str, api_key: str) -> str:
+def reformulate_question(question: str, api_key: str) -> Optional[str]:
     try:
         openai_client = OpenAI(api_key=api_key)
         messages = [
-            {
-                "role": "system",
-                "content": REFORMULATION_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": f"Question: {question}",
-            },
+            {"role": "system", "content": REFORMULATION_PROMPT},
+            {"role": "user", "content": f"Question: {question}"},
         ]
         completion = openai_client.chat.completions.create(
             model="gpt-4o-mini", messages=messages, stream=False
@@ -57,8 +51,7 @@ def reformulate_question(question: str, api_key: str) -> str:
         return __get_openai_value_from(completion)
     except Exception:
         traceback.print_exc()
-
-    return None
+        return None
 
 
 def __get_openai_value_from(

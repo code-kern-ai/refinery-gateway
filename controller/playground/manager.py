@@ -307,9 +307,13 @@ def __build_contains_filter(project_id: str, content: str):
     return final_filter
 
 
-def get_question_reformulation(question: str, api_key: str) -> Dict:
+def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
     q_reformulated = reformulate_question(question, api_key)
     if q_reformulated is None:
         return None
-    reformulation_dict = json.loads()
-    return reformulation_dict
+
+    try:
+        reformulation_dict = json.loads(q_reformulated)
+        return reformulation_dict
+    except Exception:
+        return None
