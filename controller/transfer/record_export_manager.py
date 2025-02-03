@@ -516,7 +516,7 @@ def __get_with_query_extraction_tasks(
             ON a.project_id = r.project_id
         INNER JOIN record_attribute_token_statistics rats
             ON a.project_id = rats.project_id AND a.id = rats.attribute_id AND r.id = rats.record_id
-        WHERE a.data_type = '{enums.DataTypes.TEXT.value}'
+        WHERE a.data_type IN ('{enums.DataTypes.TEXT.value}','{enums.DataTypes.LLM_RESPONSE.value}')
         AND a.project_id = '{project_id}'
     ) i
 ),
