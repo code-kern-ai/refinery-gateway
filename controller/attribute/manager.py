@@ -152,7 +152,10 @@ def update_attribute(
 def delete_attribute(project_id: str, attribute_id: str) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     if attribute_item.user_created:
-        is_text_attribute = attribute_item.data_type == DataTypes.TEXT.value
+        is_text_attribute = (
+            attribute_item.data_type == DataTypes.TEXT.value
+            or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+        )
         is_usable = attribute_item.state == AttributeState.USABLE.value
         if is_usable:
             record.delete_user_created_attribute(
@@ -340,7 +343,10 @@ def __calculate_user_attribute_all_records(
     attribute_item = attribute.get(project_id, attribute_id)
     if (
         attribute_item
-        and attribute_item.data_type == DataTypes.TEXT.value
+        and (
+            attribute_item.data_type == DataTypes.TEXT.value
+            or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+        )
         and not attribute_item.state == AttributeState.FAILED.value
     ):
         util.add_log_to_attribute_logs(

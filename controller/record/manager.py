@@ -273,7 +273,11 @@ def __check_and_prep_edit_records(
         (c["recordId"], str(attributes[c["attributeName"]].id))
         for c in changes.values()
         if "subKey" not in c
-        and attributes[c["attributeName"]].data_type == enums.DataTypes.TEXT.value
+        and (
+            attributes[c["attributeName"]].data_type == enums.DataTypes.TEXT.value
+            or attributes[c["attributeName"]].data_type
+            == enums.DataTypes.LLM_RESPONSE.value
+        )
     ]
 
     if len(useable_embeddings) > 0:
