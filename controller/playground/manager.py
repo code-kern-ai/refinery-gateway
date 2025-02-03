@@ -11,7 +11,7 @@ from submodules.model.business_objects import (
 from service.search.search import resolve_extended_search
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from concurrent.futures import ThreadPoolExecutor
-from .reformulation import REFORMULATION_PROMPT, reformulate_question
+from .reformulation import reformulate_question
 import json
 
 NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
@@ -36,25 +36,26 @@ def get_search_result_for_text(
     threshold=None,
 ):
     question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
-    if question_tensor and question_tensor[0]:
-        records = __get_most_similar_records(
-            project_id, embedding_id, question_tensor[0], limit, filter, threshold
-        )
-        # make more efficient, own function
-        unfolded_records = []
-        for record in records:
-            record_obj = record_db_bo.get(project_id, record["id"])
-            record_dict = sql_alchemy_to_dict(record_obj)
-            unfolded_records.append(
-                {
-                    "data": record_dict["data"],
-                    "id": record["id"],
-                    "score": record["score"],
-                }
-            )
-        return unfolded_records
-    else:
+    if not question_tensor or not question_tensor[0]:
         return []
+
+    records = __get_most_similar_records(
+        project_id, embedding_id, question_tensor[0], limit, filter, threshold
+    )
+
+    record_ids = [record["id"] for record in records]
+    record_obj_map = record_db_bo.get_full_record_data_for_id_group(
+        project_id, record_ids
+    )
+
+    return [
+        {
+            "data": record_obj_map.get(record["id"]),
+            "id": record["id"],
+            "score": record["score"],
+        }
+        for record in records
+    ]
 
 
 def create_evaluation_set(
