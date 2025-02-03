@@ -29,13 +29,13 @@ def get_search_results_question(
     project_id: str,
     search_question: SearchQuestionBody = Body(...),
 ):
-    embedding_id = search_question.embeddingId
-    question = search_question.question
-    limit = search_question.limit
-    filter = search_question.filter
-    threshold = search_question.threshold
     search_results = playground_manager.get_search_result_for_text(
-        project_id, embedding_id, question, limit, filter, threshold
+        project_id,
+        search_question.embeddingId,
+        search_question.question,
+        search_question.limit,
+        search_question.filter,
+        search_question.threshold,
     )
 
     return pack_json_result(search_results, wrap_for_frontend=False)
@@ -217,12 +217,13 @@ def get_record_by_content(
     project_id: str,
     record_search: RecordSearchContains = Body(...),
 ):
-    query = record_search.query
-    limit = record_search.limit
-    offset = record_search.offset
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     records = playground_manager.get_records_by_content(
-        project_id, user_id, query, limit, offset
+        project_id,
+        user_id,
+        record_search.query,
+        record_search.limit,
+        record_search.offset,
     )
     return pack_json_result(records, wrap_for_frontend=False)
 
