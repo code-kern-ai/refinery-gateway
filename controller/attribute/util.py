@@ -196,6 +196,8 @@ def validate_llm_config(llm_config: Dict[str, Any]):
 def prepare_llm_response_code(
     attribute_item: Attribute,
     llm_playground_config: Union[Dict[str, Any], None] = None,
+    llm_ac_cache_access_link: Union[str, None] = None,
+    llm_ac_cache_file_upload_link: Union[str, None] = None,
     num_workers: int = 100,
     max_api_call_retries: int = 5,
     retry_sleep_seconds: int = 5,
@@ -216,6 +218,8 @@ def prepare_llm_response_code(
             llmIdentifier=attribute_item.additional_config["llmIdentifier"],
             templatePrompt=attribute_item.additional_config["templatePrompt"],
             questionPrompt=attribute_item.additional_config["questionPrompt"],
+            llmAcCacheAccessLink=llm_ac_cache_access_link,
+            llmAcCacheFileUploadLink=llm_ac_cache_file_upload_link,
         )
     else:
         source_code = """import json
@@ -230,6 +234,7 @@ async def ac(record):
             templatePrompt=llm_playground_config["templatePrompt"],
             questionPrompt=llm_playground_config["questionPrompt"],
         )
+
     # already raises expressive LlmResponseError
     validate_user_prompt(
         project_id=attribute_item.project_id,
@@ -252,6 +257,10 @@ async def ac(record):
             "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
             "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
             "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
+            "@@CACHE_ACCESS_LINK@@": llm_config.get("llmAcCacheAccessLink", ""),
+            "@@CACHE_FILE_UPLOAD_LINK@@": llm_config.get(
+                "llmAcCacheFileUploadLink", ""
+            ),
             # below are less LLM config and more execution environment config
             "@@NUM_WORKERS@@": str(num_workers),
             "@@MAX_RETRIES_A2VYBG@@": str(max_api_call_retries),
@@ -290,14 +299,35 @@ def run_attribute_calculation_exec_env(
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
     prefixed_knowledge_base = f"{attribute_id}_knowledge"
+    llm_ac_cache = f"{attribute_id}_llm_ac_cache"
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
 
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
+        if not s3.object_exists(org_id, project_id + "/" + llm_ac_cache):
+            s3.put_object(
+                org_id,
+                project_id + "/" + llm_ac_cache,
+                "{}",
+            )
+
+        kwargs = {}
+        if llm_playground_config is None:
+            kwargs.update(
+                {
+                    "llm_ac_cache_access_link": s3.create_access_link(
+                        org_id, project_id + "/" + llm_ac_cache
+                    ),
+                    "llm_ac_cache_file_upload_link": s3.create_file_upload_link(
+                        org_id, project_id + "/" + llm_ac_cache
+                    ),
+                }
+            )
+
         try:
             source_code = prepare_llm_response_code(
-                attribute_item, llm_playground_config=llm_playground_config
+                attribute_item, llm_playground_config=llm_playground_config, **kwargs
             )
         except LlmResponseError as e:
             error_message = e.args[0]
@@ -370,8 +400,12 @@ def run_attribute_calculation_exec_env(
     if not doc_bin == "docbin_full":
         # sample records docbin should be deleted after calculation
         s3.delete_object(org_id, project_id + "/" + doc_bin)
+    elif doc_bin == "docbin_full" and llm_playground_config is None:
+        s3.delete_object(org_id, project_id + "/" + llm_ac_cache)
+
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
+
     if llm_playground_config is None:
         attribute_item.logs = final_logs
         set_progress(project_id, attribute_item, 0.9)

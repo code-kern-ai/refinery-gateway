@@ -11,6 +11,7 @@ from openai import (
     RateLimitError,
     InternalServerError,
     UnprocessableEntityError,
+    BadRequestError,
 )
 from openai.types.chat import ChatCompletion
 
@@ -38,6 +39,8 @@ API_BASE_A2VYBG = "@@API_BASE@@"
 API_VERSION_A2VYBG = "@@API_VERSION@@"
 CLIENT_TYPE_A2VYBG = "@@CLIENT_TYPE@@"  # OpenAIClientType, "OPEN_AI" or "AZURE"
 MODEL_A2VYBG = "@@MODEL@@"
+CACHE_ACCESS_LINK_A2VYBG = "@@CACHE_ACCESS_LINK@@"
+CACHE_FILE_UPLOAD_LINK_A2VYBG = "@@CACHE_FILE_UPLOAD_LINK@@"
 LLM_KWARGS_A2VYBG = {
     "response_format": {"type": "json_object"},
     "stream": False,
@@ -362,6 +365,9 @@ async def get_llm_response():
             exception = e
             await asyncio.sleep(int(RETRY_SLEEP_SEC_A2VYBG))
             continue
+        except BadRequestError as e:
+            exception = e
+            break
     m = f"Error: Failed to get LLM response ({str(exception)})"
     print(m, flush=True)
     return {"result": m}
