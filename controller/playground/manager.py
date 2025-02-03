@@ -134,15 +134,13 @@ def init_evaluation_run(
     created_by: str,
     threshold: float,
 ):
-
     evaluation_run = evaluation_run_db_bo.create(
         project_id,
         evaluation_group_id,
         created_by,
         embedding_id,
-        EVALUATION_RUN_STATE.INITIATED,
+        EVALUATION_RUN_STATE.RUNNING,
     )
-    state = EVALUATION_RUN_STATE.RUNNING
     evaluation_results = []
     try:
         evaluation_sets = evaluation_set_db_bo.get_by_evaluation_group_id(
@@ -170,40 +168,35 @@ def init_evaluation_run(
 
             search_results = [future.result() for future in futures]
 
+        all_record_ids = set()
         for evaluation_set, search_result in zip(evaluation_sets, search_results):
+            expected_record_ids = {str(rid) for rid in evaluation_set.record_ids}
+            received_record_ids = {str(record["id"]) for record in search_result}
+            all_record_ids.update(expected_record_ids | received_record_ids)
 
-            expected_record_ids = [str(rid) for rid in evaluation_set.record_ids]
-            received_record_ids = [str(record["id"]) for record in search_result]
+        all_records = record_db_bo.get_by_record_ids(project_id, list(all_record_ids))
+        record_map = {
+            str(record.id): sql_alchemy_to_dict(record) for record in all_records
+        }
 
-            true_positives = []
-            false_positives = []
-            false_negatives = []
-            for record_id in expected_record_ids:
-                if record_id in received_record_ids:
-                    true_positives.append(record_id)
-                else:
-                    false_negatives.append(record_id)
+        for evaluation_set, search_result in zip(evaluation_sets, search_results):
+            expected_record_ids = {str(rid) for rid in evaluation_set.record_ids}
+            received_record_ids = {str(record["id"]) for record in search_result}
 
-            for record_id in received_record_ids:
-                if record_id not in expected_record_ids:
-                    false_positives.append(record_id)
+            true_positives = expected_record_ids & received_record_ids
+            false_negatives = expected_record_ids - received_record_ids
+            false_positives = received_record_ids - expected_record_ids
 
             result = {
                 "evaluation_set_id": str(evaluation_set.id),
                 "true_positives": to_frontend_obj_raw(
-                    sql_alchemy_to_dict(
-                        record_db_bo.get_by_record_ids(project_id, true_positives)
-                    )
+                    [record_map[record_id] for record_id in true_positives]
                 ),
                 "false_positives": to_frontend_obj_raw(
-                    sql_alchemy_to_dict(
-                        record_db_bo.get_by_record_ids(project_id, false_positives)
-                    )
+                    [record_map[record_id] for record_id in false_positives]
                 ),
                 "false_negatives": to_frontend_obj_raw(
-                    sql_alchemy_to_dict(
-                        record_db_bo.get_by_record_ids(project_id, false_negatives)
-                    )
+                    [record_map[record_id] for record_id in false_negatives]
                 ),
             }
             evaluation_results.append(result)
