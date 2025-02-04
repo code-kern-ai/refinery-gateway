@@ -311,7 +311,7 @@ async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     return completion
 
 
-def get_llm_config():
+def get_llm_config_a2vybg():
     global API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
     return {
         "client_type": CLIENT_TYPE_A2VYBG,
