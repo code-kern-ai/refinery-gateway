@@ -148,8 +148,9 @@ def create_evaluation_group(
 
 
 @router.delete(
-    "/{project_id}/evaluation-groups"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-groups",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_evaluation_group(
     request: Request,
     project_id: str,
