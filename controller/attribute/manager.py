@@ -164,6 +164,12 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
             record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
+        elif not is_usable and attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
+            project_item = project.get(project_id)
+            org_id = str(project_item.organization_id)
+            s3.delete_object(org_id, project_id + "/" + f"{attribute_id}_knowledge")
+            s3.delete_object(org_id, project_id + "/" + f"{attribute_id}_llm_ac_cache")
+
         attribute.delete(project_id, attribute_id, with_commit=True)
         if is_usable and not is_text_attribute:
             request_reupload_docbins(project_id)
