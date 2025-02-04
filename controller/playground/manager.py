@@ -327,3 +327,7 @@ def create_playground_question(
     playground_question_db_bo.create(
         project_id, question, created_by, embedding_id, record_ids, with_commit=True
     )
+
+
+def get_playground_questions(project_id: str):
+    return playground_question_db_bo.get_all(project_id)
