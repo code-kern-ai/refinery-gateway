@@ -161,7 +161,7 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
         )
         is_usable = attribute_item.state == AttributeState.USABLE.value
         if is_usable:
-            record.delete_user_creaitted_attribute(
+            record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
@@ -471,25 +471,26 @@ def run_llm_playground(
 
 
 def llm_ac_cache(project_id: str, attribute_id: str):
-    project_item = project.get(project_id)
     attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item.data_type != DataTypes.LLM_RESPONSE.value:
+        raise ValueError("Attribute is not an LLM response attribute")
+
+    project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
+
     llm_ac_cache_name = f"{attribute_id}_llm_ac_cache"
-    total_num_records = record.get_count_all_records(project_id)
+    num_total_records = record.get_count_all_records(project_id)
 
     if not s3.object_exists(org_id, project_id + "/" + llm_ac_cache_name):
         return {
             "num_cached_records": 0,
-            "num_total_records": total_num_records,
+            "num_total_records": num_total_records,
             "has_cached_records": False,
         }
 
     llm_ac_cache = json.loads(
         s3.get_object(org_id, project_id + "/" + llm_ac_cache_name)
     )
-
-    if attribute_item.data_type != DataTypes.LLM_RESPONSE.value:
-        raise ValueError("Attribute is not an LLM response attribute")
 
     llm_config = {
         "client_type": attribute_item.additional_config["llmIdentifier"],
@@ -522,6 +523,6 @@ def llm_ac_cache(project_id: str, attribute_id: str):
     cached_records = llm_ac_cache.get(llm_config_hash, {})
     return {
         "num_cached_records": len(cached_records),
-        "num_total_records": total_num_records,
+        "num_total_records": num_total_records,
         "has_cached_records": bool(cached_records),
     }

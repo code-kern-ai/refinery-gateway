@@ -257,14 +257,14 @@ async def ac(record):
             "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
             "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
             "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
-            "@@CACHE_ACCESS_LINK@@": llm_config.get("llmAcCacheAccessLink", ""),
-            "@@CACHE_FILE_UPLOAD_LINK@@": llm_config.get(
-                "llmAcCacheFileUploadLink", ""
-            ),
             # below are less LLM config and more execution environment config
             "@@NUM_WORKERS@@": str(num_workers),
             "@@MAX_RETRIES_A2VYBG@@": str(max_api_call_retries),
             "@@RETRY_SLEEP_SEC_A2VYBG@@": str(retry_sleep_seconds),
+            "@@CACHE_ACCESS_LINK@@": llm_config.get("llmAcCacheAccessLink", ""),
+            "@@CACHE_FILE_UPLOAD_LINK@@": llm_config.get(
+                "llmAcCacheFileUploadLink", ""
+            ),
         }
     except KeyError:
         raise LlmResponseError(
@@ -306,16 +306,16 @@ def run_attribute_calculation_exec_env(
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
     prefixed_knowledge_base = f"{attribute_id}_knowledge"
-    llm_ac_cache = f"{attribute_id}_llm_ac_cache"
+    prefixed_llm_ac_cache = f"{attribute_id}_llm_ac_cache"
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
 
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
-        if not s3.object_exists(org_id, project_id + "/" + llm_ac_cache):
+        if not s3.object_exists(org_id, project_id + "/" + prefixed_llm_ac_cache):
             s3.put_object(
                 org_id,
-                project_id + "/" + llm_ac_cache,
+                project_id + "/" + prefixed_llm_ac_cache,
                 "{}",
             )
 
@@ -324,10 +324,10 @@ def run_attribute_calculation_exec_env(
             kwargs.update(
                 {
                     "llm_ac_cache_access_link": s3.create_access_link(
-                        org_id, project_id + "/" + llm_ac_cache
+                        org_id, project_id + "/" + prefixed_llm_ac_cache
                     ),
                     "llm_ac_cache_file_upload_link": s3.create_file_upload_link(
-                        org_id, project_id + "/" + llm_ac_cache
+                        org_id, project_id + "/" + prefixed_llm_ac_cache
                     ),
                 }
             )
@@ -412,7 +412,7 @@ def run_attribute_calculation_exec_env(
         and llm_playground_config is None
         and len(calculated_attributes) > 0
     ):
-        s3.delete_object(org_id, project_id + "/" + llm_ac_cache)
+        s3.delete_object(org_id, project_id + "/" + prefixed_llm_ac_cache)
 
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
