@@ -520,16 +520,8 @@ def llm_ac_cache(project_id: str, attribute_id: str):
 
     llm_config_hash = md5(json.dumps(llm_config).encode()).hexdigest()
     cached_records = llm_ac_cache.get(llm_config_hash, {})
-
-    if cached_records:
-        return {
-            "num_cached_records": len(cached_records),
-            "num_total_records": total_num_records,
-            "has_cached_records": True,
-        }
-    else:
-        return {
-            "num_cached_records": 0,
-            "num_total_records": total_num_records,
-            "has_cached_records": False,
-        }
+    return {
+        "num_cached_records": len(cached_records),
+        "num_total_records": total_num_records,
+        "has_cached_records": bool(cached_records),
+    }
