@@ -29,16 +29,13 @@ def get_search_results_question(
     project_id: str,
     search_question: SearchQuestionBody = Body(...),
 ):
-    user_id = auth_manager.get_user_id_by_info(request.state.info)
     search_results = playground_manager.get_search_result_for_text(
         project_id,
-        str(user_id),
         search_question.embeddingId,
         search_question.question,
         search_question.limit,
         search_question.filter,
         search_question.threshold,
-        search_question.saveQuestion,
     )
 
     return pack_json_result(search_results, wrap_for_frontend=False)

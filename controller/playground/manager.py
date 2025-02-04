@@ -30,13 +30,11 @@ class EVALUATION_RUN_STATE:
 
 def get_search_result_for_text(
     project_id: str,
-    user_id: str,
     embedding_id: str,
     question: str,
     limit: int,
     filter=None,
     threshold=None,
-    save_question=None,
 ):
     question_tensor = __get_tensors_for_texts(project_id, embedding_id, [question])
     if not question_tensor or not question_tensor[0]:
@@ -49,9 +47,7 @@ def get_search_result_for_text(
         limit,
         filter,
         threshold,
-        save_question,
         question,
-        user_id,
     )
 
     record_ids = [record["id"] for record in records]
@@ -247,9 +243,7 @@ def __get_most_similar_records(
     limit: int,
     similarity_filter_option: Optional[List[Dict[str, Any]]] = None,
     threshold: Optional[float] = None,
-    save_question: Optional[bool] = None,
     question: Optional[str] = None,
-    user_id: Optional[str] = None,
 ):
     url = f"{NEURAL_SEARCH}/most_similar_by_embedding?include_scores=true"
 
@@ -266,9 +260,7 @@ def __get_most_similar_records(
             "limit": limit,
             "att_filter": similarity_filter_option,
             "threshold": threshold,
-            "save_question": save_question,
             "question": question,
-            "user_id": user_id,
         },
     )
     if response.ok:
@@ -331,18 +323,6 @@ def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
         return reformulation_dict
     except Exception:
         return None
-
-
-def create_playground_question(
-    project_id: str,
-    question: str,
-    record_ids: List[str],
-    created_by: str,
-    embedding_id: str,
-):
-    playground_question_db_bo.create(
-        project_id, question, created_by, embedding_id, record_ids, with_commit=True
-    )
 
 
 def get_playground_questions(project_id: str):

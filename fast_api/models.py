@@ -452,7 +452,6 @@ class SearchQuestionBody(BaseModel):
     limit: Optional[StrictInt] = None
     filter: Optional[List[Dict]] = None
     threshold: Optional[StrictFloat] = None
-    saveQuestion: Optional[StrictBool] = None
 
 
 class EvaluationSetCreationBody(BaseModel):
