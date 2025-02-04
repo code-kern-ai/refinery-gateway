@@ -6,6 +6,7 @@ import json
 from submodules.model.business_objects import (
     attribute,
     record,
+    project,
     tokenization,
     general,
 )
@@ -19,11 +20,13 @@ from submodules.model.enums import (
 from util import notification
 
 from submodules.model import daemon
+from submodules.s3 import controller as s3
 
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
 from . import util
 from sqlalchemy import sql
+from hashlib import md5
 
 DEFAULT_LLM_RESPONSE_CONFIG = {
     "llmIdentifier": "Open AI",
@@ -38,7 +41,7 @@ DEFAULT_LLM_RESPONSE_CONFIG = {
         "frequencyPenalty": 0,
         "presencePenalty": 0,
         "apiKey": None,
-        "endpoint": None,
+        "apiBase": None,
         "apiVersion": None,
     },
 }
@@ -158,7 +161,7 @@ def delete_attribute(project_id: str, attribute_id: str) -> None:
         )
         is_usable = attribute_item.state == AttributeState.USABLE.value
         if is_usable:
-            record.delete_user_created_attribute(
+            record.delete_user_creaitted_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
         attribute.delete(project_id, attribute_id, with_commit=True)
@@ -468,21 +471,65 @@ def run_llm_playground(
 
 
 def llm_ac_cache(project_id: str, attribute_id: str):
+    project_item = project.get(project_id)
     attribute_item = attribute.get(project_id, attribute_id)
-    org_id = str(attribute_item.organization_id)
+    org_id = str(project_item.organization_id)
+    llm_ac_cache_name = f"{attribute_id}_llm_ac_cache"
+    total_num_records = record.get_count_all_records(project_id)
+
+    if not s3.object_exists(org_id, project_id + "/" + llm_ac_cache_name):
+        return {
+            "num_cached_records": 0,
+            "num_total_records": total_num_records,
+            "has_cached_records": False,
+        }
+
+    llm_ac_cache = json.loads(
+        s3.get_object(org_id, project_id + "/" + llm_ac_cache_name)
+    )
+
     if attribute_item.data_type != DataTypes.LLM_RESPONSE.value:
         raise ValueError("Attribute is not an LLM response attribute")
-    # llm_config = {
-    #     "client_type": CLIENT_TYPE_A2VYBG,
-    #     "api_key": API_KEY_A2VYBG,
-    #     "api_base": API_BASE_A2VYBG,
-    #     "api_version": API_VERSION_A2VYBG,
-    #     "model": MODEL_A2VYBG,
-    #     "system_prompt": SYSTEM_PROMPT_A2VYBG,
-    #     "user_prompt": USER_PROMPT_A2VYBG,
-    #     "llm_kwargs": LLM_KWARGS_A2VYBG,
-    # }
 
-    # hash the llm_config to use it as a key in the cache
-    # if cache.exists => true; else false;
-    return attribute_item.additional_config
+    llm_config = {
+        "client_type": attribute_item.additional_config["llmIdentifier"],
+        "api_key": attribute_item.additional_config["llmConfig"]["apiKey"],
+        "api_base": attribute_item.additional_config["llmConfig"]["apiBase"],
+        "api_version": attribute_item.additional_config["llmConfig"]["apiVersion"],
+        "model": attribute_item.additional_config["llmConfig"]["model"],
+        "system_prompt": attribute_item.additional_config["templatePrompt"]
+        + " You must only output valid JSON. If there is not yet a schema defined for the JSON output, please put everything into a single value under the key 'result' - otherwise stick to the schema that has been provided already.",
+        "user_prompt": attribute_item.additional_config["questionPrompt"],
+        "llm_kwargs": {
+            "response_format": {"type": "json_object"},
+            "stream": False,
+            "stop": attribute_item.additional_config["llmConfig"]["stopSequences"],
+            "temperature": float(
+                attribute_item.additional_config["llmConfig"]["temperature"]
+            ),
+            "max_tokens": attribute_item.additional_config["llmConfig"]["maxLength"],
+            "top_p": float(attribute_item.additional_config["llmConfig"]["topP"]),
+            "frequency_penalty": float(
+                attribute_item.additional_config["llmConfig"]["frequencyPenalty"]
+            ),
+            "presence_penalty": float(
+                attribute_item.additional_config["llmConfig"]["presencePenalty"]
+            ),
+        },
+    }
+
+    llm_config_hash = md5(json.dumps(llm_config).encode()).hexdigest()
+    cached_records = llm_ac_cache.get(llm_config_hash, {})
+
+    if cached_records:
+        return {
+            "num_cached_records": len(cached_records),
+            "num_total_records": total_num_records,
+            "has_cached_records": True,
+        }
+    else:
+        return {
+            "num_cached_records": 0,
+            "num_total_records": total_num_records,
+            "has_cached_records": False,
+        }
