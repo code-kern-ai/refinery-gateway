@@ -38,6 +38,16 @@ def get_search_results_question(
         search_question.threshold,
     )
 
+    if search_question.saveQuestion:
+        user_id = auth_manager.get_user_id_by_info(request.state.info)
+        playground_manager.create_playground_question(
+            project_id,
+            search_question.question,
+            search_results,
+            user_id,
+            search_question.embeddingId,
+        )
+
     return pack_json_result(search_results, wrap_for_frontend=False)
 
 

@@ -5,6 +5,7 @@ from submodules.model.business_objects import (
     evaluation_group as evaluation_group_db_bo,
     evaluation_set as evaluation_set_db_bo,
     evaluation_run as evaluation_run_db_bo,
+    playground_question as playground_question_db_bo,
     attribute as attribute_db_bo,
     record as record_db_bo,
 )
@@ -314,3 +315,15 @@ def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
         return reformulation_dict
     except Exception:
         return None
+
+
+def create_playground_question(
+    project_id: str,
+    question: str,
+    record_ids: List[str],
+    created_by: str,
+    embedding_id: str,
+):
+    playground_question_db_bo.create(
+        project_id, question, created_by, embedding_id, record_ids, with_commit=True
+    )
