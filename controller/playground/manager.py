@@ -108,23 +108,12 @@ def delete_evaluation_runs(project_id: str, run_ids: str):
 
 def get_evaluation_runs(project_id: str):
     evaluation_runs_objects = evaluation_run_db_bo.get_all(project_id)
-    evaluation_runs = []
-    for evaluation_run in evaluation_runs_objects:
-        results = to_frontend_obj_raw(evaluation_run.results)
-        evaluation_runs.append(
-            {**sql_alchemy_to_dict(evaluation_run, True), "results": results}
-        )
-    return evaluation_runs
+    return [__pack_evaluation_run(run) for run in evaluation_runs_objects]
 
 
 def get_evaluation_run_by_id(project_id: str, run_id: str):
-    evaluation_run = evaluation_run_db_bo.get(project_id, run_id)
-    results = to_frontend_obj_raw(evaluation_run.results)
-    evaluation_run_object = {
-        **sql_alchemy_to_dict(evaluation_run, True),
-        "results": results,
-    }
-    return evaluation_run_object
+    evaluation_run_object = evaluation_run_db_bo.get(project_id, run_id)
+    return __pack_evaluation_run(evaluation_run_object)
 
 
 def init_evaluation_run(
@@ -305,6 +294,13 @@ def __build_contains_filter(project_id: str, content: str):
     ]
 
     return final_filter
+
+
+def __pack_evaluation_run(evaluation_run):
+    return {
+        **sql_alchemy_to_dict(evaluation_run, True),
+        "results": to_frontend_obj_raw(evaluation_run.results),
+    }
 
 
 def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
