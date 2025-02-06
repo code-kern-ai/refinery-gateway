@@ -41,6 +41,18 @@ def get_search_results_question(
     return pack_json_result(search_results, wrap_for_frontend=False)
 
 
+@router.get(
+    "/{project_id}/playground-questions",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_playground_questions(
+    request: Request,
+    project_id: str,
+):
+    questions = playground_manager.get_playground_questions(project_id)
+    return pack_json_result(questions)
+
+
 @router.post(
     "/{project_id}/evaluation-sets",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
@@ -61,8 +73,9 @@ def create_evaluation_set(
 
 
 @router.delete(
-    "/{project_id}/evaluation-sets"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-sets",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_evaluation_set(
     request: Request,
     project_id: str,
@@ -135,8 +148,9 @@ def create_evaluation_group(
 
 
 @router.delete(
-    "/{project_id}/evaluation-groups"
-)  # dependencies=[Depends(auth_manager.check_project_access_dep)]
+    "/{project_id}/evaluation-groups",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_evaluation_group(
     request: Request,
     project_id: str,

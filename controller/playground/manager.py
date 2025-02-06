@@ -5,10 +5,12 @@ from submodules.model.business_objects import (
     evaluation_group as evaluation_group_db_bo,
     evaluation_set as evaluation_set_db_bo,
     evaluation_run as evaluation_run_db_bo,
+    playground_question as playground_question_db_bo,
     attribute as attribute_db_bo,
     record as record_db_bo,
 )
 from service.search.search import resolve_extended_search
+from submodules.model.enums import EvaluationRunState
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from concurrent.futures import ThreadPoolExecutor
 from .reformulation import reformulate_question
@@ -18,13 +20,6 @@ NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
 
 EVALUATION_RUN_LIMIT_DEFAULT = 100
-
-
-class EVALUATION_RUN_STATE:
-    INITIATED = "INITIATED"
-    RUNNING = "RUNNING"
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
 
 
 def get_search_result_for_text(
@@ -40,7 +35,13 @@ def get_search_result_for_text(
         return []
 
     records = __get_most_similar_records(
-        project_id, embedding_id, question_tensor[0], limit, filter, threshold
+        project_id,
+        embedding_id,
+        question_tensor[0],
+        limit,
+        filter,
+        threshold,
+        question,
     )
 
     record_ids = [record["id"] for record in records]
@@ -128,7 +129,7 @@ def init_evaluation_run(
         evaluation_group_id,
         created_by,
         embedding_id,
-        EVALUATION_RUN_STATE.RUNNING,
+        EvaluationRunState.RUNNING,
     )
     evaluation_results = []
     try:
@@ -189,9 +190,9 @@ def init_evaluation_run(
                 ),
             }
             evaluation_results.append(result)
-        state = EVALUATION_RUN_STATE.SUCCESS
+        state = EvaluationRunState.SUCCESS
     except Exception:
-        state = EVALUATION_RUN_STATE.FAILED
+        state = EvaluationRunState.FAILED
     evaluation_run_db_bo.update(
         project_id, evaluation_run.id, state, evaluation_results, None, True
     )
@@ -225,6 +226,7 @@ def __get_most_similar_records(
     limit: int,
     similarity_filter_option: Optional[List[Dict[str, Any]]] = None,
     threshold: Optional[float] = None,
+    question: Optional[str] = None,
 ):
     url = f"{NEURAL_SEARCH}/most_similar_by_embedding?include_scores=true"
 
@@ -241,6 +243,7 @@ def __get_most_similar_records(
             "limit": limit,
             "att_filter": similarity_filter_option,
             "threshold": threshold,
+            "question": question,
         },
     )
     if response.ok:
@@ -305,11 +308,12 @@ def __pack_evaluation_run(evaluation_run):
 
 def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
     q_reformulated = reformulate_question(question, api_key)
-    if q_reformulated is None:
-        return None
-
     try:
         reformulation_dict = json.loads(q_reformulated)
         return reformulation_dict
     except Exception:
         return None
+
+
+def get_playground_questions(project_id: str):
+    return playground_question_db_bo.get_all(project_id)

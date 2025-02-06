@@ -157,15 +157,14 @@ def get_records_batch(
     project_id: str,
     recordsBatchBody: RecordsBatchBody = Body(...),
 ):
-    results = []
     records = record_manager.get_record_by_ids(project_id, recordsBatchBody.record_ids)
-    for record in records:
-        results.append(
-            {
-                "id": str(record.id),
-                "data": json.dumps(record.data),
-            }
-        )
+    results = [
+        {
+            "id": str(record.id),
+            "data": json.dumps(record.data),
+        }
+        for record in records
+    ]
 
     return pack_json_result(results)
 
