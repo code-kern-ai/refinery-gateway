@@ -132,7 +132,7 @@ def init_evaluation_run(
         evaluation_group_id,
         created_by,
         embedding_id,
-        EvaluationRunState.RUNNING,
+        EvaluationRunState.RUNNING.value,
     )
     evaluation_results = []
     try:
@@ -193,9 +193,9 @@ def init_evaluation_run(
                 ),
             }
             evaluation_results.append(result)
-        state = EvaluationRunState.SUCCESS
+        state = EvaluationRunState.SUCCESS.value
     except Exception:
-        state = EvaluationRunState.FAILED
+        state = EvaluationRunState.FAILED.value
     evaluation_run_db_bo.update(
         project_id, evaluation_run.id, state, evaluation_results, None, True
     )
