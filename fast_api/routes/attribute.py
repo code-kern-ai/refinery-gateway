@@ -37,6 +37,8 @@ def get_attributes(
     data_dict = sql_alchemy_to_dict(data, column_whitelist=ALL_ATTRIBUTES_WHITELIST)
     # removes api key from llmConfig to prevent it from showing in the frontend
     for attr in data_dict:
+        if attr.get("additional_config", {}) is None:
+            continue
         attr.get("additional_config", {}).get("llmConfig", {}).pop("apiKey", None)
     return pack_json_result(data_dict)
 

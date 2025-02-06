@@ -1092,6 +1092,8 @@ def get_project_export_dump(
         for attribute_item in attributes
     ]
     for attr in attributes_data:
+        if attr.get("additional_config", {}) is None:
+            continue
         attr.get("additional_config", {}).get("llmConfig", {}).pop("apiKey", None)
 
     labeling_tasks_data = [
