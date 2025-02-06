@@ -1,7 +1,10 @@
 from typing import List, Any, Optional, Tuple, Dict
 import os
 import requests
-from controller.embedding.connector import request_tensor_for_text
+from controller.embedding.connector import (
+    request_most_similar_records,
+    request_tensor_for_text,
+)
 from submodules.model.business_objects import (
     evaluation_group as evaluation_group_db_bo,
     evaluation_set as evaluation_set_db_bo,
@@ -203,9 +206,7 @@ def init_evaluation_run(
 def __get_tensors_for_texts(
     refinery_project_id: str, embedding_id: str, texts: List[str]
 ) -> Tuple[bool, Optional[List[Any]]]:
-
     obj = request_tensor_for_text(refinery_project_id, embedding_id, texts)
-
     return obj.get("tensor", None)
 
 
@@ -218,28 +219,15 @@ def __get_most_similar_records(
     threshold: Optional[float] = None,
     question: Optional[str] = None,
 ):
-    url = f"{NEURAL_SEARCH}/most_similar_by_embedding?include_scores=true"
-
-    response = requests.post(
-        url,
-        headers={
-            "accept": "application/json",
-            "content-type": "application/json",
-        },
-        json={
-            "project_id": project_id,
-            "embedding_id": embedding_id,
-            "embedding_tensor": embedding_tensor,
-            "limit": limit,
-            "att_filter": similarity_filter_option,
-            "threshold": threshold,
-            "question": question,
-        },
+    return request_most_similar_records(
+        project_id,
+        embedding_id,
+        embedding_tensor,
+        limit,
+        similarity_filter_option,
+        threshold,
+        question,
     )
-    if response.ok:
-        return response.json()
-    else:
-        return None
 
 
 def get_records_by_content(

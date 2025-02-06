@@ -10,7 +10,7 @@ NEURAL_SEARCH_BASE_URI = os.getenv("NEURAL_SEARCH")
 
 
 def request_listing_recommended_encoders() -> Any:
-    url = f"{EMBEDDING_BASE_URI}/classification/recommend/TEXT"  # TODO does here have to be a data type?
+    url = f"{EMBEDDING_BASE_URI}/classification/recommend/TEXT"
     return service_requests.get_call_or_raise(url)
 
 
@@ -104,8 +104,29 @@ def request_tensor_for_text(
     url = (
         f"{EMBEDDING_BASE_URI}/calc-tensor-by-pkl/{refinery_project_id}/{embedding_id}"
     )
-
     data = {
         "texts": texts,
+    }
+    return service_requests.post_call_or_raise(url, data)
+
+
+def request_most_similar_records(
+    project_id: str,
+    embedding_id: str,
+    embedding_tensor: List[float],
+    limit: int,
+    similarity_filter_option: Optional[List[Dict[str, Any]]] = None,
+    threshold: Optional[float] = None,
+    question: Optional[str] = None,
+) -> Any:
+    url = f"{NEURAL_SEARCH_BASE_URI}/most_similar_by_embedding?include_scores=true"
+    data = {
+        "project_id": project_id,
+        "embedding_id": embedding_id,
+        "embedding_tensor": embedding_tensor,
+        "limit": limit,
+        "att_filter": similarity_filter_option,
+        "threshold": threshold,
+        "question": question,
     }
     return service_requests.post_call_or_raise(url, data)
