@@ -213,7 +213,7 @@ def prepare_llm_response_code(
     if llm_playground_config is None:
         if not attribute_item.additional_config:
             llm_config = {}
-        else
+        else:
             llm_config = dict(
                 attribute_item.additional_config.get("llmConfig", {}),
                 llmIdentifier=attribute_item.additional_config["llmIdentifier"],
