@@ -1,6 +1,7 @@
 from typing import List, Any, Optional, Tuple, Dict
 import os
 import requests
+from controller.embedding.connector import request_tensor_for_text
 from submodules.model.business_objects import (
     evaluation_group as evaluation_group_db_bo,
     evaluation_set as evaluation_set_db_bo,
@@ -214,20 +215,9 @@ def __get_tensors_for_texts(
     refinery_project_id: str, embedding_id: str, texts: List[str]
 ) -> Tuple[bool, Optional[List[Any]]]:
 
-    url = f"{EMBEDDING_SERVICE}/calc-tensor-by-pkl/{refinery_project_id}/{embedding_id}"
+    obj = request_tensor_for_text(refinery_project_id, embedding_id, texts)
 
-    response = requests.post(
-        url,
-        headers={
-            "accept": "application/json",
-            "content-type": "application/json",
-        },
-        json={"texts": texts},
-    )
-    if response.ok:
-        return response.json()["tensor"]
-    else:
-        return None
+    return obj.get("tensor", None)
 
 
 def __get_most_similar_records(

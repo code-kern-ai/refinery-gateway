@@ -96,3 +96,16 @@ def delete_embedding_from_neural_search(embedding_id: str) -> None:
     url = f"{NEURAL_SEARCH_BASE_URI}/delete_collection"
     params = {"embedding_id": embedding_id}
     requests.put(url, params=params)
+
+
+def request_tensor_for_text(
+    refinery_project_id: str, embedding_id: str, texts: List[str]
+) -> Any:
+    url = (
+        f"{EMBEDDING_BASE_URI}/calc-tensor-by-pkl/{refinery_project_id}/{embedding_id}"
+    )
+
+    data = {
+        "texts": texts,
+    }
+    return service_requests.post_call_or_raise(url, data)
