@@ -1,3 +1,4 @@
+import traceback
 from typing import List, Any, Optional, Tuple, Dict
 import os
 from controller.embedding.connector import (
@@ -195,6 +196,7 @@ def init_evaluation_run(
             evaluation_results.append(result)
         state = EvaluationRunState.SUCCESS.value
     except Exception:
+        traceback.print_exc()
         state = EvaluationRunState.FAILED.value
     evaluation_run_db_bo.update(
         project_id, evaluation_run.id, state, evaluation_results, None, True
