@@ -1,6 +1,5 @@
 from typing import List, Any, Optional, Tuple, Dict
 import os
-import requests
 from controller.embedding.connector import (
     request_most_similar_records,
     request_tensor_for_text,
