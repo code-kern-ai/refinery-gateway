@@ -10,6 +10,7 @@ from submodules.model.business_objects import (
     record as record_db_bo,
 )
 from service.search.search import resolve_extended_search
+from submodules.model.enums import EvaluationRunState
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from concurrent.futures import ThreadPoolExecutor
 from .reformulation import reformulate_question
@@ -19,13 +20,6 @@ NEURAL_SEARCH = os.getenv("NEURAL_SEARCH")
 EMBEDDING_SERVICE = os.getenv("EMBEDDING_SERVICE")
 
 EVALUATION_RUN_LIMIT_DEFAULT = 100
-
-
-class EVALUATION_RUN_STATE:
-    INITIATED = "INITIATED"
-    RUNNING = "RUNNING"
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
 
 
 def get_search_result_for_text(
@@ -146,7 +140,7 @@ def init_evaluation_run(
         evaluation_group_id,
         created_by,
         embedding_id,
-        EVALUATION_RUN_STATE.RUNNING,
+        EvaluationRunState.RUNNING,
     )
     evaluation_results = []
     try:
@@ -207,9 +201,9 @@ def init_evaluation_run(
                 ),
             }
             evaluation_results.append(result)
-        state = EVALUATION_RUN_STATE.SUCCESS
+        state = EvaluationRunState.SUCCESS
     except Exception:
-        state = EVALUATION_RUN_STATE.FAILED
+        state = EvaluationRunState.FAILED
     evaluation_run_db_bo.update(
         project_id, evaluation_run.id, state, evaluation_results, None, True
     )
