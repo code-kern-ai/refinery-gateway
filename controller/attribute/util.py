@@ -210,17 +210,18 @@ def prepare_llm_response_code(
     source_code = attribute_item.source_code
 
     # llm_playground_config is only set if `run-llm-playground`` invoked this function
-    if not attribute_item.additional_config and llm_playground_config is None:
-        llm_config = {}
-    elif llm_playground_config is None:
-        llm_config = dict(
-            attribute_item.additional_config.get("llmConfig", {}),
-            llmIdentifier=attribute_item.additional_config["llmIdentifier"],
-            templatePrompt=attribute_item.additional_config["templatePrompt"],
-            questionPrompt=attribute_item.additional_config["questionPrompt"],
-            llmAcCacheAccessLink=llm_ac_cache_access_link,
-            llmAcCacheFileUploadLink=llm_ac_cache_file_upload_link,
-        )
+    if llm_playground_config is None:
+        if not attribute_item.additional_config:
+            llm_config = {}
+        else
+            llm_config = dict(
+                attribute_item.additional_config.get("llmConfig", {}),
+                llmIdentifier=attribute_item.additional_config["llmIdentifier"],
+                templatePrompt=attribute_item.additional_config["templatePrompt"],
+                questionPrompt=attribute_item.additional_config["questionPrompt"],
+                llmAcCacheAccessLink=llm_ac_cache_access_link,
+                llmAcCacheFileUploadLink=llm_ac_cache_file_upload_link,
+            )
     else:
         source_code = """import json
 
