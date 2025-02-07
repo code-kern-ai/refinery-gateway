@@ -202,7 +202,6 @@ def prepare_llm_response_code(
     max_api_call_retries: int = 5,
     retry_sleep_seconds: int = 5,
 ) -> str:
-    global LLM_RESPONSE_TMPL_PATH
     with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
         lines = [line.rstrip() for line in file if line[0] != "#"]
 
