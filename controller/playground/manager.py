@@ -296,3 +296,7 @@ def get_question_reformulation(question: str, api_key: str) -> Optional[Dict]:
 
 def get_playground_questions(project_id: str):
     return playground_question_db_bo.get_all(project_id)
+
+
+def delete_playground_question(project_id: str, question_id: str):
+    playground_question_db_bo.delete(project_id, question_id)

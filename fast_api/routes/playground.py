@@ -270,3 +270,16 @@ def get_question_reformulation(
         question_reformulation.question, question_reformulation.apiKey
     )
     return pack_json_result(reformulation)
+
+
+@router.delete(
+    "/{project_id}/playground-questions/{question_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_playground_question(
+    request: Request,
+    project_id: str,
+    question_id: str,
+):
+    playground_manager.delete_playground_question(project_id, question_id)
+    return get_silent_success()
