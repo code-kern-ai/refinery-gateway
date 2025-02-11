@@ -21,11 +21,14 @@ depends_on = None
 
 
 def upgrade():
-    meta = sa.MetaData(op.get_bind())
-    meta.reflect(only=("organization", "project"))
+    refinery_meta = sa.MetaData(op.get_bind())
+    cognition_meta = sa.MetaData(op.get_bind(), schema="cognition")
 
-    organization = sa.Table("organization", meta)
-    project = sa.Table("project", meta)
+    refinery_meta.reflect(only=("organization",))
+    cognition_meta.reflect(only=("project",))
+
+    organization = sa.Table("organization", refinery_meta)
+    project = sa.Table("project", cognition_meta)
 
     org_id, project_id = uuid.UUID(int=0), uuid.UUID(int=0)
     op.bulk_insert(
