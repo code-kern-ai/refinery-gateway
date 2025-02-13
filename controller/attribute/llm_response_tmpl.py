@@ -105,8 +105,6 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     check_valid: bool = True,
     prevent_cached_client: bool = True,
 ) -> Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI]:
-    global CLIENT_TYPE_A2VYBG
-
     if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value and (
         azure_endpoint is None or api_version is None
     ):
@@ -160,8 +158,6 @@ def __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
     azure_endpoint: Optional[str] = None,
     api_version: Optional[str] = None,
 ):
-    global CLIENT_TYPE_A2VYBG
-
     client = None
     if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value:
         if use_async:
@@ -312,7 +308,6 @@ async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
 
 
 def get_llm_config_a2vybg():
-    global API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG, CLIENT_TYPE_A2VYBG, MODEL_A2VYBG, SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, LLM_KWARGS_A2VYBG
     return {
         "client_type": CLIENT_TYPE_A2VYBG,
         "api_key": API_KEY_A2VYBG,
@@ -326,8 +321,6 @@ def get_llm_config_a2vybg():
 
 
 async def get_llm_response(record: dict, cached_records: dict):
-    global SYSTEM_PROMPT_A2VYBG, USER_PROMPT_A2VYBG, MODEL_A2VYBG, API_KEY_A2VYBG, API_BASE_A2VYBG, API_VERSION_A2VYBG
-
     curr_running_id = str(record["running_id"])
 
     if curr_running_id in cached_records:
