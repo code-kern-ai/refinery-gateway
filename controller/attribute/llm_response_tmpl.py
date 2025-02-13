@@ -105,6 +105,8 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     check_valid: bool = True,
     prevent_cached_client: bool = True,
 ) -> Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI]:
+    global CLIENT_LOOKUP_A2VYBG
+
     if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value and (
         azure_endpoint is None or api_version is None
     ):
@@ -113,7 +115,6 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     # tuples can be used as dict keys, primitive datatype comparison works flawless, caution with objects though!
     config = (CLIENT_TYPE_A2VYBG, use_async, api_key, azure_endpoint, api_version)
     use_cache = MAX_CACHED_CLIENTS_A2VYBG != 0 and not prevent_cached_client
-    global CLIENT_LOOKUP_A2VYBG
     if use_cache and config in CLIENT_LOOKUP_A2VYBG:
         if check_valid:
             exception = __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
