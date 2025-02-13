@@ -1,14 +1,19 @@
+import sys
 import time
-from typing import Any, List
+from typing import Union, Any, List, Dict
 import uuid
 import docker
 import json
 import os
 import pytz
+import traceback
+import requests
+import re
 
 import datetime
 from dateutil import parser
 
+from exceptions.exceptions import LlmResponseError
 from submodules.model.business_objects import (
     attribute,
     general,
@@ -29,6 +34,8 @@ exec_env_network = os.getenv("LF_NETWORK")
 __tz = pytz.timezone("Europe/Berlin")
 
 __containers_running = {}
+
+LLM_RESPONSE_TMPL_PATH = "controller/attribute/llm_response_tmpl.py"
 
 
 def add_log_to_attribute_logs(
@@ -52,13 +59,15 @@ def add_log_to_attribute_logs(
         general.commit()
 
 
-def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
+def prepare_sample_records_doc_bin(
+    attribute_id: str, project_id: str, record_ids: Union[List[str], None] = None
+) -> str:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
         project_id=project_id,
         missing_columns=record.get_missing_columns_str(project_id),
-        record_ids=[r[0] for r in sample_records],
+        record_ids=record_ids or [r[0] for r in sample_records],
     )
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
@@ -71,12 +80,222 @@ def prepare_sample_records_doc_bin(attribute_id: str, project_id: str) -> str:
     return prefixed_doc_bin
 
 
+def test_openai_llm_connection(api_key: str, model: str):
+    # more here: https://platform.openai.com/docs/api-reference/making-requests
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 20,
+    }
+
+    response = requests.post(
+        "https://api.openai.com/v1/chat/completions", headers=headers, json=payload
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def test_azure_llm_connection(
+    api_key: str, base_endpoint: str, api_version: str, model: str
+):
+    # more here: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference-preview
+    base_endpoint = base_endpoint.rstrip("/")
+    api_version_parts = (
+        api_version.split("-")
+        if "preview" not in api_version
+        else api_version.replace("-preview", "").split("-")
+    )
+    assert (
+        len(api_version_parts) == 3
+        and len(api_version_parts[0]) == 4
+        and len(api_version_parts[1]) == 2
+        and len(api_version_parts[2]) == 2
+    )
+
+    final_endpoint = f"{base_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}"
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": api_key,
+    }
+
+    payload = {
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 20,
+    }
+
+    response = requests.post(final_endpoint, headers=headers, json=payload)
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def validate_user_prompt(project_id: str, user_prompt: str):
+    def parse_mustache_attribute_names(mustache_str: str) -> List[str]:
+        for brace in "{}":
+            mustache_str = mustache_str.replace(brace, "")
+        return mustache_str.strip()
+
+    mustache_attributes = list(
+        map(
+            parse_mustache_attribute_names,
+            re.findall(r"{{\s*[A-Za-z0-9_]+\s*}}", user_prompt),
+        )
+    )
+
+    # 5 as min len criterion for double curly brackets + single char attribute
+    if len(user_prompt) < 5 or len(mustache_attributes) == 0:
+        raise LlmResponseError(
+            "User prompt does not carry a single valid Mustache syntax for attribute access. "
+            "You can access attributes by using '{{ attribute_name }}' in your prompt."
+        )
+
+    for attr in mustache_attributes:
+        if not attribute.get_by_name(project_id, attr):
+            raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
+
+
+def validate_llm_config(llm_config: Dict[str, Any]):
+    # test LLM connection before sending work package to execution environment
+    try:
+        if llm_config["llmIdentifier"] == enums.LLMProvider.OPENAI.value:
+            test_openai_llm_connection(
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
+            )
+        elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE.value:
+            test_azure_llm_connection(
+                api_key=llm_config["apiKey"],
+                model=llm_config["model"],
+                base_endpoint=llm_config["apiBase"],
+                api_version=llm_config["apiVersion"],
+            )
+        else:
+            raise LlmResponseError(
+                "LLM Identifier must be either Open AI or Azure, got: "
+                + llm_config["llmIdentifier"]
+            )
+    except AssertionError:
+        raise LlmResponseError(
+            "API version format must be YYYY-MM-DD, got: " + llm_config["apiVersion"]
+        )
+    except requests.exceptions.RequestException:
+        raise LlmResponseError(
+            "Encountered Exception when trying LLM connection: "
+            + traceback.format_exception(*sys.exc_info())[-1]
+        )
+
+
+def prepare_llm_response_code(
+    attribute_item: Attribute,
+    llm_playground_config: Union[Dict[str, Any], None] = None,
+    llm_ac_cache_access_link: Union[str, None] = None,
+    llm_ac_cache_file_upload_link: Union[str, None] = None,
+    num_workers: int = 100,
+    max_api_call_retries: int = 5,
+    retry_sleep_seconds: int = 5,
+) -> str:
+    with open(LLM_RESPONSE_TMPL_PATH, "r") as file:
+        lines = [line.rstrip() for line in file if line[0] != "#"]
+
+    llm_code = "\n".join(lines)
+    source_code = attribute_item.source_code
+
+    # llm_playground_config is only set if `run-llm-playground`` invoked this function
+    if llm_playground_config is None:
+        if not attribute_item.additional_config:
+            llm_config = {}
+        else:
+            llm_config = dict(
+                attribute_item.additional_config.get("llmConfig", {}),
+                llmIdentifier=attribute_item.additional_config["llmIdentifier"],
+                templatePrompt=attribute_item.additional_config["templatePrompt"],
+                questionPrompt=attribute_item.additional_config["questionPrompt"],
+                llmAcCacheAccessLink=llm_ac_cache_access_link,
+                llmAcCacheFileUploadLink=llm_ac_cache_file_upload_link,
+            )
+    else:
+        source_code = """import json
+
+async def ac(record):
+    llm_response = await get_llm_response()
+    return json.dumps(llm_response, indent=2)"""
+
+        llm_config = dict(
+            llm_playground_config.get("llmConfig", {}),
+            llmIdentifier=llm_playground_config["llmIdentifier"],
+            templatePrompt=llm_playground_config["templatePrompt"],
+            questionPrompt=llm_playground_config["questionPrompt"],
+        )
+
+    # already raises expressive LlmResponseError
+    validate_user_prompt(
+        project_id=attribute_item.project_id,
+        user_prompt=llm_config["questionPrompt"],
+    )
+    validate_llm_config(llm_config=llm_config)
+
+    try:
+        llm_config_mapping = {
+            "@@API_KEY@@": llm_config["apiKey"],
+            "@@API_BASE@@": llm_config.get("apiBase") or "",
+            "@@API_VERSION@@": llm_config.get("apiVersion") or "",
+            "@@MODEL@@": llm_config["model"],
+            "@@STOP_SEQUENCE@@": json.dumps(llm_config.get("stopSequences", [])),
+            "@@TEMPERATURE@@": str(llm_config.get("temperature", 0)),
+            "@@MAX_TOKENS@@": str(llm_config.get("maxLength", 1024)),
+            "@@TOP_P@@": str(llm_config.get("topP", 1)),
+            "@@FREQUENCY_PENALTY@@": str(llm_config.get("frequencyPenalty", 0)),
+            "@@PRESENCE_PENALTY@@": str(llm_config.get("presencePenalty", 0)),
+            "@@CLIENT_TYPE@@": llm_config["llmIdentifier"],
+            "@@SYSTEM_PROMPT@@": llm_config["templatePrompt"].replace('"', "'"),
+            "@@USER_PROMPT@@": llm_config["questionPrompt"].replace('"', "'"),
+            # below are less LLM config and more execution environment config
+            "@@NUM_WORKERS@@": str(num_workers),
+            "@@MAX_RETRIES_A2VYBG@@": str(max_api_call_retries),
+            "@@RETRY_SLEEP_SEC_A2VYBG@@": str(retry_sleep_seconds),
+            "@@CACHE_ACCESS_LINK@@": llm_config.get("llmAcCacheAccessLink", ""),
+            "@@CACHE_FILE_UPLOAD_LINK@@": llm_config.get(
+                "llmAcCacheFileUploadLink", ""
+            ),
+        }
+    except KeyError:
+        raise LlmResponseError(
+            "LLM configuration is missing a required field: "
+            + traceback.format_exception(*sys.exc_info())[-1]
+        )
+
+    for key, value in llm_config_mapping.items():
+        llm_code = llm_code.replace(key, value)
+
+    # modifying the ac signature here to pass cached_records reference for async-safe access
+    final_code = (
+        llm_code
+        + "\n\n"
+        + source_code.replace(
+            "get_llm_response()", "get_llm_response(record, cached_records)"
+        ).replace("ac(record)", "ac(record, cached_records)")
+    )
+
+    return final_code  # this still has mustache templates in it (e.g. in user_prompt)
+
+
 def run_attribute_calculation_exec_env(
-    attribute_id: str, project_id: str, doc_bin: str
+    attribute_id: str,
+    project_id: str,
+    doc_bin: str,
+    llm_playground_config: Union[Dict[str, Any], None] = None,
 ) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
 
-    if attribute_item.logs:
+    if attribute_item.logs and llm_playground_config is None:
         add_log_to_attribute_logs(
             project_id,
             attribute_id,
@@ -87,13 +306,53 @@ def run_attribute_calculation_exec_env(
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
     prefixed_knowledge_base = f"{attribute_id}_knowledge"
+    prefixed_llm_ac_cache = f"{attribute_id}_llm_ac_cache"
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
+
+    source_code = attribute_item.source_code
+    if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
+        if not s3.object_exists(org_id, project_id + "/" + prefixed_llm_ac_cache):
+            s3.put_object(
+                org_id,
+                project_id + "/" + prefixed_llm_ac_cache,
+                "{}",
+            )
+
+        kwargs = {}
+        if llm_playground_config is None:
+            kwargs.update(
+                {
+                    "llm_ac_cache_access_link": s3.create_access_link(
+                        org_id, project_id + "/" + prefixed_llm_ac_cache
+                    ),
+                    "llm_ac_cache_file_upload_link": s3.create_file_upload_link(
+                        org_id, project_id + "/" + prefixed_llm_ac_cache
+                    ),
+                }
+            )
+
+        try:
+            source_code = prepare_llm_response_code(
+                attribute_item, llm_playground_config=llm_playground_config, **kwargs
+            )
+        except LlmResponseError as e:
+            error_message = e.args[0]
+            if llm_playground_config is None:
+                add_log_to_attribute_logs(
+                    attribute_item.project_id,
+                    attribute_item.id,
+                    error_message,
+                    append_to_logs=False,
+                )
+                return {}
+            else:
+                return {"logs": [error_message]}
 
     s3.put_object(
         org_id,
         project_id + "/" + prefixed_function_name,
-        attribute_item.source_code,
+        source_code,
     )
     s3.put_object(
         org_id,
@@ -117,17 +376,19 @@ def run_attribute_calculation_exec_env(
         detach=True,
         network=exec_env_network,
     )
-    set_progress(project_id, attribute_item, 0.05)
+    if llm_playground_config is None:
+        set_progress(project_id, attribute_item, 0.05)
     __containers_running[container_name] = True
-    daemon.run_without_db_token(
-        read_container_logs_thread,
-        project_id,
-        container_name,
-        str(attribute_item.id),
-        container,
-    )
+    if llm_playground_config is None:
+        daemon.run_without_db_token(
+            read_container_logs_thread,
+            project_id,
+            container_name,
+            str(attribute_item.id),
+            container,
+        )
     container.start()
-    attribute_item.logs = [
+    final_logs = [
         line.decode("utf-8").strip("\n")
         for line in container.logs(
             stream=True, stdout=True, stderr=True, timestamps=True
@@ -146,11 +407,21 @@ def run_attribute_calculation_exec_env(
     if not doc_bin == "docbin_full":
         # sample records docbin should be deleted after calculation
         s3.delete_object(org_id, project_id + "/" + doc_bin)
+    elif (
+        doc_bin == "docbin_full"
+        and llm_playground_config is None
+        and len(calculated_attributes) > 0
+    ):
+        s3.delete_object(org_id, project_id + "/" + prefixed_llm_ac_cache)
+
     s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
     s3.delete_object(org_id, project_id + "/" + prefixed_payload)
-    set_progress(project_id, attribute_item, 0.9)
 
-    return calculated_attributes
+    if llm_playground_config is None:
+        attribute_item.logs = final_logs
+        set_progress(project_id, attribute_item, 0.9)
+        return calculated_attributes
+    return {**calculated_attributes, "logs": final_logs}
 
 
 def extend_logs(

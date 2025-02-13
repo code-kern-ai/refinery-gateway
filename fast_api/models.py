@@ -252,10 +252,16 @@ class UpdateAttributeBody(BaseModel):
     is_primary_key: Optional[StrictBool] = None
     source_code: Optional[StrictStr] = None
     visibility: Optional[StrictStr] = None
+    additional_config: Optional[Dict] = None
 
 
 class CalculateUserAttributeAllRecordsBody(BaseModel):
     attribute_id: StrictStr
+
+
+class RunLlmPlaygroundBody(BaseModel):
+    llm_config: Dict[StrictStr, Any]
+    record_ids: Optional[List[StrictStr]] = None
 
 
 class ModelProviderDeleteModelBody(BaseModel):

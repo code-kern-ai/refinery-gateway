@@ -52,3 +52,7 @@ class EmbeddingConnectorError(Exception):
 
 class AuthManagerError(Exception):
     pass
+
+
+class LlmResponseError(Exception):
+    pass
