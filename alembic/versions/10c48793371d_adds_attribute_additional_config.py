@@ -1,7 +1,7 @@
 """adds attribute `additional_config` and llm_config
 
 Revision ID: 10c48793371d
-Revises: eb5ecbee5090
+Revises: 0c8eb3ff1c71
 Create Date: 2025-01-15 17:08:30.137845
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '10c48793371d'
-down_revision = 'eb5ecbee5090'
+down_revision = '0c8eb3ff1c71'
 branch_labels = None
 depends_on = None
 
