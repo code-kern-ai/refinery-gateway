@@ -30,6 +30,7 @@ from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from fast_api.routes.task_execution import router as task_execution_router
+from fast_api.routes.playground import router as playground_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -55,6 +56,7 @@ from route_prefix import (
     PREFIX_WEAK_SUPERVISION,
     PREFIX_LABELING_TASKS,
     PREFIX_TASK_EXECUTION,
+    PREFIX_PLAYGROUND,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -106,7 +108,9 @@ fastapi_app.include_router(
 fastapi_app.include_router(
     labeling_tasks_router, prefix=PREFIX_LABELING_TASKS, tags=["labeling-tasks"]
 )
-
+fastapi_app.include_router(
+    playground_router, prefix=PREFIX_PLAYGROUND, tags=["playground"]
+)
 fastapi_app_internal = FastAPI()
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]

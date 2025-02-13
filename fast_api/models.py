@@ -444,3 +444,54 @@ class UpdateCustomerButton(BaseModel):
 
 class MissingUsersBody(BaseModel):
     user_ids: List[StrictStr]
+
+
+class SearchQuestionBody(BaseModel):
+    question: StrictStr
+    embeddingId: StrictStr
+    limit: Optional[StrictInt] = None
+    filter: Optional[List[Dict]] = None
+    threshold: Optional[StrictFloat] = None
+
+
+class EvaluationSetCreationBody(BaseModel):
+    question: StrictStr
+    recordIds: List[StrictStr]
+
+
+class EvaluationSetDeletionBody(BaseModel):
+    evaluationSetIds: List[StrictStr]
+
+
+class EvaluationGroupCreationBody(BaseModel):
+    evaluationSetIds: List[StrictStr]
+    name: StrictStr
+
+
+class EvaluationGroupDeletionBody(BaseModel):
+    evaluationGroupIds: List[StrictStr]
+
+
+class EvaluationRunCreationBody(BaseModel):
+    embeddingId: StrictStr
+    evaluationGroupId: StrictStr
+    threshold: StrictFloat
+
+
+class RecordSearchContains(BaseModel):
+    query: StrictStr
+    offset: StrictInt
+    limit: StrictInt
+
+
+class RecordsBatchBody(BaseModel):
+    record_ids: List[StrictStr]
+
+
+class EvaluationRunDeletionBody(BaseModel):
+    evaluationRunIds: List[StrictStr]
+
+
+class SearchQuestionReformulationBody(BaseModel):
+    question: StrictStr
+    apiKey: StrictStr
