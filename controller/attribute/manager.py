@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from controller.tokenization.tokenization_service import (
     request_reupload_docbins,
 )
@@ -6,6 +6,7 @@ import json
 from submodules.model.business_objects import (
     attribute,
     record,
+    project,
     tokenization,
     general,
 )
@@ -19,11 +20,31 @@ from submodules.model.enums import (
 from util import notification
 
 from submodules.model import daemon
+from submodules.s3 import controller as s3
 
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType
 from . import util
 from sqlalchemy import sql
+from hashlib import md5
+
+DEFAULT_LLM_RESPONSE_CONFIG = {
+    "llmIdentifier": "Open AI",
+    "templatePrompt": "Make your answer a single word, e.g. 'yes' or 'no'",
+    "questionPrompt": "Is this clickbait? => '{{ headline }}'",
+    "llmConfig": {
+        "model": "gpt-4o-mini",
+        "temperature": 0,
+        "maxLength": 1024,
+        "stopSequences": [],
+        "topP": 1,
+        "frequencyPenalty": 0,
+        "presencePenalty": 0,
+        "apiKey": None,
+        "apiBase": None,
+        "apiVersion": None,
+    },
+}
 
 
 def get_attribute(project_id: str, attribute_id: str) -> Attribute:
@@ -79,6 +100,9 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
     visibility = None  # default
     if data_type == DataTypes.EMBEDDING_LIST.value:
         visibility = AttributeVisibility.HIDE.value
+    additional_config = None
+    if data_type == DataTypes.LLM_RESPONSE.value:
+        additional_config = DEFAULT_LLM_RESPONSE_CONFIG
 
     attribute_item: Attribute = attribute.create(
         project_id,
@@ -90,6 +114,7 @@ def create_user_attribute(project_id: str, name: str, data_type: str) -> Attribu
         state=AttributeState.INITIAL.value,
         visibility=visibility,
         with_commit=True,
+        additional_config=additional_config,
     )
     notification.send_organization_update(
         project_id=project_id,
@@ -107,6 +132,7 @@ def update_attribute(
     name: str,
     source_code: str,
     visibility: str,
+    additional_config: Dict[str, Any] = None,
 ) -> None:
     attribute_item: Attribute = attribute.update(
         project_id,
@@ -117,6 +143,7 @@ def update_attribute(
         source_code,
         with_commit=True,
         visibility=visibility,
+        additional_config=additional_config,
     )
 
     notification.send_organization_update(
@@ -128,12 +155,21 @@ def update_attribute(
 def delete_attribute(project_id: str, attribute_id: str) -> None:
     attribute_item = attribute.get(project_id, attribute_id)
     if attribute_item.user_created:
-        is_text_attribute = attribute_item.data_type == DataTypes.TEXT.value
+        is_text_attribute = (
+            attribute_item.data_type == DataTypes.TEXT.value
+            or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+        )
         is_usable = attribute_item.state == AttributeState.USABLE.value
         if is_usable:
             record.delete_user_created_attribute(
                 project_id=project_id, attribute_id=attribute_id, with_commit=True
             )
+        elif not is_usable and attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
+            project_item = project.get(project_id)
+            org_id = str(project_item.organization_id)
+            s3.delete_object(org_id, project_id + "/" + f"{attribute_id}_knowledge")
+            s3.delete_object(org_id, project_id + "/" + f"{attribute_id}_llm_ac_cache")
+
         attribute.delete(project_id, attribute_id, with_commit=True)
         if is_usable and not is_text_attribute:
             request_reupload_docbins(project_id)
@@ -259,14 +295,17 @@ def calculate_user_attribute_all_records(
 
 
 def __calculate_user_attribute_all_records(
-    project_id: str, org_id: str, user_id: str, attribute_id: str, include_rats: bool
+    project_id: str,
+    org_id: str,
+    user_id: str,
+    attribute_id: str,
+    include_rats: bool,
 ) -> None:
     session_token = general.get_ctx_token()
+
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
-            attribute_id=attribute_id,
-            project_id=project_id,
-            doc_bin="docbin_full",
+            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
         )
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
@@ -313,7 +352,10 @@ def __calculate_user_attribute_all_records(
     attribute_item = attribute.get(project_id, attribute_id)
     if (
         attribute_item
-        and attribute_item.data_type == DataTypes.TEXT.value
+        and (
+            attribute_item.data_type == DataTypes.TEXT.value
+            or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+        )
         and not attribute_item.state == AttributeState.FAILED.value
     ):
         util.add_log_to_attribute_logs(
@@ -398,7 +440,9 @@ def calculate_user_attribute_sample_records(
         attribute_id=attribute_id, project_id=project_id
     )
     calculated_attributes = util.run_attribute_calculation_exec_env(
-        attribute_id=attribute_id, project_id=project_id, doc_bin=doc_bin_samples
+        attribute_id=attribute_id,
+        project_id=project_id,
+        doc_bin=doc_bin_samples,
     )
     values = None
     if (
@@ -412,3 +456,79 @@ def calculate_user_attribute_sample_records(
     else:
         values = list(calculated_attributes.values())
     return list(calculated_attributes.keys()), values
+
+
+def run_llm_playground(
+    project_id: str,
+    attribute_id: str,
+    llm_playground_config: Dict[str, Any],
+    record_ids: List[str],
+):
+    doc_bin_samples = util.prepare_sample_records_doc_bin(
+        attribute_id=attribute_id, project_id=project_id, record_ids=record_ids
+    )
+    calculated_attributes = util.run_attribute_calculation_exec_env(
+        attribute_id=attribute_id,
+        project_id=project_id,
+        doc_bin=doc_bin_samples,
+        llm_playground_config=llm_playground_config,
+    )
+    return calculated_attributes
+
+
+def llm_ac_cache(project_id: str, attribute_id: str):
+    attribute_item = attribute.get(project_id, attribute_id)
+    if attribute_item.data_type != DataTypes.LLM_RESPONSE.value:
+        raise ValueError("Attribute is not an LLM response attribute")
+
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+
+    llm_ac_cache_name = f"{attribute_id}_llm_ac_cache"
+    num_total_records = record.get_count_all_records(project_id)
+
+    if not s3.object_exists(org_id, project_id + "/" + llm_ac_cache_name):
+        return {
+            "num_cached_records": 0,
+            "num_total_records": num_total_records,
+            "has_cached_records": False,
+        }
+
+    llm_ac_cache = json.loads(
+        s3.get_object(org_id, project_id + "/" + llm_ac_cache_name)
+    )
+
+    llm_config = {
+        "client_type": attribute_item.additional_config["llmIdentifier"],
+        "api_key": attribute_item.additional_config["llmConfig"]["apiKey"],
+        "api_base": attribute_item.additional_config["llmConfig"]["apiBase"],
+        "api_version": attribute_item.additional_config["llmConfig"]["apiVersion"],
+        "model": attribute_item.additional_config["llmConfig"]["model"],
+        "system_prompt": attribute_item.additional_config["templatePrompt"]
+        + " You must only output valid JSON. If there is not yet a schema defined for the JSON output, please put everything into a single value under the key 'result' - otherwise stick to the schema that has been provided already.",
+        "user_prompt": attribute_item.additional_config["questionPrompt"],
+        "llm_kwargs": {
+            "response_format": {"type": "json_object"},
+            "stream": False,
+            "stop": attribute_item.additional_config["llmConfig"]["stopSequences"],
+            "temperature": float(
+                attribute_item.additional_config["llmConfig"]["temperature"]
+            ),
+            "max_tokens": attribute_item.additional_config["llmConfig"]["maxLength"],
+            "top_p": float(attribute_item.additional_config["llmConfig"]["topP"]),
+            "frequency_penalty": float(
+                attribute_item.additional_config["llmConfig"]["frequencyPenalty"]
+            ),
+            "presence_penalty": float(
+                attribute_item.additional_config["llmConfig"]["presencePenalty"]
+            ),
+        },
+    }
+
+    llm_config_hash = md5(json.dumps(llm_config).encode()).hexdigest()
+    cached_records = llm_ac_cache.get(llm_config_hash, {})
+    return {
+        "num_cached_records": len(cached_records),
+        "num_total_records": num_total_records,
+        "has_cached_records": bool(cached_records),
+    }

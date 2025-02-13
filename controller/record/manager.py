@@ -30,6 +30,10 @@ def get_record(project_id: str, record_id: str) -> Record:
     return record.get(project_id, record_id)
 
 
+def get_record_by_ids(project_id: str, record_ids: List[str]) -> List[Record]:
+    return record.get_by_record_ids(project_id, record_ids)
+
+
 def get_records_by_similarity_search(
     project_id: str,
     user_id: str,
@@ -273,7 +277,11 @@ def __check_and_prep_edit_records(
         (c["recordId"], str(attributes[c["attributeName"]].id))
         for c in changes.values()
         if "subKey" not in c
-        and attributes[c["attributeName"]].data_type == enums.DataTypes.TEXT.value
+        and (
+            attributes[c["attributeName"]].data_type == enums.DataTypes.TEXT.value
+            or attributes[c["attributeName"]].data_type
+            == enums.DataTypes.LLM_RESPONSE.value
+        )
     ]
 
     if len(useable_embeddings) > 0:
