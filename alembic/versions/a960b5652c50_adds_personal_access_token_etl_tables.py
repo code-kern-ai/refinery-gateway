@@ -1,8 +1,8 @@
 """adds personal access token etl tables
 
-Revision ID: 193a8c73ff45
+Revision ID: a960b5652c50
 Revises: 10c48793371d
-Create Date: 2025-02-14 10:44:23.043073
+Create Date: 2025-02-17 09:09:57.859717
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '193a8c73ff45'
+revision = 'a960b5652c50'
 down_revision = '10c48793371d'
 branch_labels = None
 depends_on = None
@@ -36,6 +36,7 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('scope', sa.String(), nullable=True),
     sa.Column('subject', sa.String(), nullable=True),
+    sa.Column('subject_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('token_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['token_id'], ['cognition.personal_access_token_etl.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
