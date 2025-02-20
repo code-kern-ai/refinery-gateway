@@ -1,8 +1,8 @@
-"""adds personal access token etl tables
+"""adds etl personal access token
 
-Revision ID: a960b5652c50
+Revision ID: eca999581359
 Revises: 10c48793371d
-Create Date: 2025-02-17 09:09:57.859717
+Create Date: 2025-02-20 10:31:15.686683
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "a960b5652c50"
+revision = "eca999581359"
 down_revision = "10c48793371d"
 branch_labels = None
 depends_on = None
