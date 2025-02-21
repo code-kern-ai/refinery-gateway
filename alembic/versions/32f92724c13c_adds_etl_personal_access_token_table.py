@@ -1,8 +1,8 @@
-"""adds etl personal access token
+"""adds etl personal access token table
 
-Revision ID: eca999581359
+Revision ID: 32f92724c13c
 Revises: 10c48793371d
-Create Date: 2025-02-20 10:31:15.686683
+Create Date: 2025-02-21 14:00:36.605984
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "eca999581359"
+revision = "32f92724c13c"
 down_revision = "10c48793371d"
 branch_labels = None
 depends_on = None
@@ -23,12 +23,16 @@ def upgrade():
         "personal_access_token_etl",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("expires_at", sa.DateTime(), nullable=True),
         sa.Column("last_used", sa.DateTime(), nullable=True),
         sa.Column("token", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["organization_id"], ["organization.id"], ondelete="SET NULL"
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="cognition",
     )
@@ -36,6 +40,13 @@ def upgrade():
         op.f("ix_cognition_personal_access_token_etl_created_by"),
         "personal_access_token_etl",
         ["created_by"],
+        unique=False,
+        schema="cognition",
+    )
+    op.create_index(
+        op.f("ix_cognition_personal_access_token_etl_organization_id"),
+        "personal_access_token_etl",
+        ["organization_id"],
         unique=False,
         schema="cognition",
     )
@@ -71,6 +82,11 @@ def downgrade():
         schema="cognition",
     )
     op.drop_table("personal_access_token_scope_etl", schema="cognition")
+    op.drop_index(
+        op.f("ix_cognition_personal_access_token_etl_organization_id"),
+        table_name="personal_access_token_etl",
+        schema="cognition",
+    )
     op.drop_index(
         op.f("ix_cognition_personal_access_token_etl_created_by"),
         table_name="personal_access_token_etl",
