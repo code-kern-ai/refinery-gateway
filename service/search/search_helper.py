@@ -279,6 +279,7 @@ __lookup_sql_cast_data_type = {
     DataTypes.BOOLEAN.value: "BOOLEAN",
     DataTypes.CATEGORY.value: "TEXT",
     DataTypes.TEXT.value: "TEXT",
+    DataTypes.LLM_RESPONSE.value: "TEXT",
 }
 
 

@@ -1,7 +1,7 @@
 from controller.attribute import manager
 from controller.auth import manager as auth_manager
 from typing import List, Union
-from fast_api.models import DeleteUserAttributeBody
+from fast_api.models import DeleteUserAttributeBody, RunLlmPlaygroundBody
 from fast_api.routes.client_response import pack_json_result, get_silent_success
 from fastapi import APIRouter, Body, Depends, Query, Request
 from submodules.model.enums import NotificationType
@@ -21,6 +21,7 @@ ALL_ATTRIBUTES_WHITELIST = {
     "state",
     "logs",
     "visibility",
+    "additional_config",
 }
 
 
@@ -34,6 +35,11 @@ def get_attributes(
 ):
     data = manager.get_all_attributes(project_id, state_filter)
     data_dict = sql_alchemy_to_dict(data, column_whitelist=ALL_ATTRIBUTES_WHITELIST)
+    # removes api key from llmConfig to prevent it from showing in the frontend
+    for attr in data_dict:
+        if attr.get("additional_config", {}) is None:
+            continue
+        attr.get("additional_config", {}).get("llmConfig", {}).pop("apiKey", None)
     return pack_json_result(data_dict)
 
 
@@ -88,3 +94,35 @@ def delete_user_attribute(
 ):
     manager.delete_attribute(project_id, body.attribute_id)
     return get_silent_success()
+
+
+@router.post(
+    "/{project_id}/{attribute_id}/run-llm-playground",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def run_llm_playground(
+    request: Request,
+    project_id,
+    attribute_id,
+    body: RunLlmPlaygroundBody = Body(...),
+):
+    return pack_json_result(
+        manager.run_llm_playground(
+            project_id,
+            attribute_id,
+            llm_playground_config=body.llm_config,
+            record_ids=body.record_ids,
+        ),
+        wrap_for_frontend=False,
+    )
+
+
+@router.get(
+    "/{project_id}/{attribute_id}/llm-ac-cache",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def llm_ac_cache(request: Request, project_id, attribute_id):
+    return pack_json_result(
+        manager.llm_ac_cache(project_id, attribute_id),
+        wrap_for_frontend=False,
+    )

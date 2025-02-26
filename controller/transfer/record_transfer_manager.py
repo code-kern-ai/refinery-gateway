@@ -135,6 +135,7 @@ def __match_data_type_to_function(data_type: str) -> Callable:
     elif (
         data_type == enums.DataTypes.TEXT.value
         or data_type == enums.DataTypes.CATEGORY.value
+        or data_type == enums.DataTypes.LLM_RESPONSE.value
     ):
         return str
 
@@ -372,7 +373,10 @@ def create_attributes_and_get_text_attributes(
                 False,
             )
             created_something = True
-            if attribute_item.data_type == enums.DataTypes.TEXT.value:
+            if (
+                attribute_item.data_type == enums.DataTypes.TEXT.value
+                or attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value
+            ):
                 text_attributes.append(attribute_item)
     general.flush()
     if created_something:
