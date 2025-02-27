@@ -1,8 +1,8 @@
 """add graphrag index
 
-Revision ID: 2f46377be599
-Revises: eb5ecbee5090
-Create Date: 2025-02-07 12:30:03.455560
+Revision ID: ab45734be591
+Revises: 32f92724c13c
+Create Date: 2025-02-27 12:38:55.549604
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '2f46377be599'
-down_revision = 'eb5ecbee5090'
+revision = 'ab45734be591'
+down_revision = '32f92724c13c'
 branch_labels = None
 depends_on = None
 
@@ -25,6 +25,10 @@ def upgrade():
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('state', sa.String(), nullable=True),
+    sa.Column('error', sa.String(), nullable=True),
+    sa.Column('settings', sa.JSON(), nullable=True),
+    sa.Column('root_dir', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['organization_id'], ['organization.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
