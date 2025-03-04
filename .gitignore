@@ -146,5 +146,3 @@ tmp/*
 logs/*
 
 current_config.json
-
-controller/attribute/llm_response.py
