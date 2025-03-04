@@ -1,4 +1,20 @@
 #!/bin/bash
+
+DEBUG_MODE=false
+DEBUG_PORT=15670
+
+while getopts d flag
+do
+    case "${flag}" in
+        d) DEBUG_MODE=true;;
+    esac
+done
+
+CMD=""
+if [ $DEBUG_MODE = true ]; then
+    CMD="debugpy --wait-for-client --listen 0.0.0.0:$DEBUG_PORT -m uvicorn app:app --host 0.0.0.0 --port 80 --reload"
+fi
+
 trap "echo -ne '\nstopping container...' && docker stop refinery-gateway > /dev/null 2>&1 && echo -ne '\t\t [done]\n'" EXIT
 
 unameOut="$(uname -s)"
@@ -60,7 +76,7 @@ then
 fi
 
 echo -ne 'building container...'
-docker build -t graphql-dev -f dev.Dockerfile . > /dev/null 2>&1
+docker build -t graphql-dev -f dev.Dockerfile .
 echo -ne '\t\t [done]\n'
 
 echo -ne 'migrating db...\n'
@@ -76,6 +92,7 @@ echo -ne 'migration done\n'
 echo -ne 'starting...'
 docker run -d --rm \
 --name refinery-gateway \
+-p $DEBUG_PORT:$DEBUG_PORT \
 -p 7051:80 \
 -e AC_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 \
 -e LF_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 \
@@ -106,7 +123,10 @@ docker run -d --rm \
 --mount type=bind,source="$(pwd)"/,target=/app \
 -v /var/run/docker.sock:/var/run/docker.sock \
 --network dev-setup_default \
-graphql-dev > /dev/null 2>&1
+graphql-dev $CMD > /dev/null 2>&1
 echo -ne '\t\t\t [done]\n'
 
+if [ $DEBUG_MODE = true ]; then
+    echo -e "\033[0;33muse VSCode Debugger (Python Debugger: refinery-gateway) to start the service\033[0m"
+fi
 docker logs -f refinery-gateway \
