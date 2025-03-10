@@ -20,6 +20,7 @@ class LLMProvider_A2VYBG(Enum):
     OPEN_AI = "Open AI"
     OPEN_SOURCE = "Open-Source"
     AZURE = "Azure"
+    AZURE_FOUNDRY = "AZURE_FOUNDRY"
 
 
 # OpenAI migration guides
