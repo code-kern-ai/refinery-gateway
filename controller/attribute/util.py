@@ -92,12 +92,33 @@ def test_openai_llm_connection(api_key: str, model: str):
         "messages": [
             {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
         ],
-        "max_tokens": 20,
+        "max_tokens": 5,
     }
 
     response = requests.post(
         "https://api.openai.com/v1/chat/completions", headers=headers, json=payload
     )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str):
+    # more here: https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/
+    base_endpoint = base_endpoint.rstrip("/")
+    final_endpoint = f"{base_endpoint}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    payload = {
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 5,
+    }
+
+    response = requests.post(final_endpoint, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
@@ -129,7 +150,7 @@ def test_azure_llm_connection(
         "messages": [
             {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
         ],
-        "max_tokens": 20,
+        "max_tokens": 5,
     }
 
     response = requests.post(final_endpoint, headers=headers, json=payload)
@@ -176,6 +197,11 @@ def validate_llm_config(llm_config: Dict[str, Any]):
                 model=llm_config["model"],
                 base_endpoint=llm_config["apiBase"],
                 api_version=llm_config["apiVersion"],
+            )
+        elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE_FOUNDRY.value:
+            test_azure_foundry_llm_connection(
+                api_key=llm_config["apiKey"],
+                base_endpoint=llm_config["apiBase"],
             )
         else:
             raise LlmResponseError(
