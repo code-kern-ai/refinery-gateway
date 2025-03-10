@@ -342,21 +342,60 @@ def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     api_key: str,
     azure_endpoint: Optional[str] = None,
     check_valid: bool = True,
+    prevent_cached_client: bool = True,
 ) -> Union[ChatCompletionsClient, AsyncChatCompletionsClient]:
 
-    client = __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-        use_async=use_async, api_key=api_key, azure_endpoint=azure_endpoint
-    )
-    if check_valid:
-        exception = (
-            __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-                client
-            )
-        )
-        if exception is not None:
-            raise exception
+    global CLIENT_LOOKUP_A2VYBG
 
-    return client
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE_FOUNDRY.value and (
+        azure_endpoint is None
+    ):
+        raise ValueError("azure_endpoint must be set for Azure Foundry")
+
+    # tuples can be used as dict keys, primitive datatype comparison works flawless, caution with objects though!
+    config = (CLIENT_TYPE_A2VYBG, use_async, api_key, azure_endpoint)
+    use_cache = MAX_CACHED_CLIENTS_A2VYBG != 0 and not prevent_cached_client
+    if use_cache and config in CLIENT_LOOKUP_A2VYBG:
+        if check_valid:
+            exception = (
+                __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                    CLIENT_LOOKUP_A2VYBG[config][0]
+                )
+            )
+            if exception is not None:
+                raise exception
+
+        CLIENT_LOOKUP_A2VYBG[config] = (CLIENT_LOOKUP_A2VYBG[config][0], time.time())
+
+        return CLIENT_LOOKUP_A2VYBG[config][0]
+
+    else:
+        if use_cache and len(CLIENT_LOOKUP_A2VYBG) >= MAX_CACHED_CLIENTS_A2VYBG:
+            # remove oldest client
+            tmp = sorted(
+                CLIENT_LOOKUP_A2VYBG.items(), key=lambda x: x[1][1], reverse=True
+            )
+            (client, _) = tmp.pop()
+            client.close()
+            CLIENT_LOOKUP_A2VYBG = dict(tmp)
+
+        client = __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+            use_async=use_async, api_key=api_key, azure_endpoint=azure_endpoint
+        )
+
+        # test client with api key
+        if check_valid:
+            exception = (
+                __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                    client
+                )
+            )
+            if exception is not None:
+                raise exception
+
+        if use_cache:
+            CLIENT_LOOKUP_A2VYBG[config] = (client, time.time())
+        return client
 
 
 def __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
