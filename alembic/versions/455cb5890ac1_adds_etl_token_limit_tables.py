@@ -1,8 +1,8 @@
 """adds etl token limit tables
 
-Revision ID: 619547cf2e45
+Revision ID: 455cb5890ac1
 Revises: ab45734be591
-Create Date: 2025-03-10 15:06:19.436830
+Create Date: 2025-03-10 18:01:29.434112
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "619547cf2e45"
+revision = "455cb5890ac1"
 down_revision = "ab45734be591"
 branch_labels = None
 depends_on = None
@@ -22,7 +22,7 @@ def upgrade():
     op.create_table(
         "personal_access_token_activity_log_etl",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("action", sa.String(), nullable=True),
         sa.Column("quantity", sa.Integer(), nullable=True),
         sa.Column("endpoint", sa.String(), nullable=True),
