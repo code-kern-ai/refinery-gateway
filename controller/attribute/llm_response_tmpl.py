@@ -3,7 +3,6 @@ import time
 from typing import Any, Optional, Union, List, Dict
 from enum import Enum
 import asyncio
-
 from openai import OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI
 from openai import (
     AuthenticationError,
@@ -14,12 +13,21 @@ from openai import (
     BadRequestError,
 )
 from openai.types.chat import ChatCompletion
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.aio import ChatCompletionsClient as AsyncChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import (
+    HttpResponseError,
+    ServiceRequestError,
+    ClientAuthenticationError,
+)
 
 
 class LLMProvider_A2VYBG(Enum):
     OPEN_AI = "Open AI"
     OPEN_SOURCE = "Open-Source"
     AZURE = "Azure"
+    AZURE_FOUNDRY = "Azure Foundry"
 
 
 # OpenAI migration guides
@@ -42,7 +50,6 @@ MODEL_A2VYBG = "@@MODEL@@"
 CACHE_ACCESS_LINK_A2VYBG = "@@CACHE_ACCESS_LINK@@"
 CACHE_FILE_UPLOAD_LINK_A2VYBG = "@@CACHE_FILE_UPLOAD_LINK@@"
 LLM_KWARGS_A2VYBG = {
-    "response_format": {"type": "json_object"},
     "stream": False,
     # fmt:off
     "stop": json.loads('@@STOP_SEQUENCE@@'),
@@ -67,37 +74,7 @@ USER_PROMPT_A2VYBG = (
 # azure_endpoint = api_base (before 1.0) - basically the link to the api
 
 
-def test_client_model_2c6ecfb1_9bce_4e89_80c8_cbc4e3fca9e5(
-    client: Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI], model: str
-):
-    if __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(client) is not None:
-        print(
-            "Error: Invalid OpenAI client config (api_key, api_version or endpoint)",
-            flush=True,
-        )
-        return False
-
-    try:
-        client.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": "A",
-                }
-            ],
-            stream=False,
-            temperature=1,
-            max_tokens=1,
-        )
-    except Exception as e:
-        print("Error: Test chat completion failed", flush=True)
-        print(e, flush=True)
-        return False
-    return True
-
-
-def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
+def get_client_openai_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
@@ -117,8 +94,10 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     use_cache = MAX_CACHED_CLIENTS_A2VYBG != 0 and not prevent_cached_client
     if use_cache and config in CLIENT_LOOKUP_A2VYBG:
         if check_valid:
-            exception = __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
-                CLIENT_LOOKUP_A2VYBG[config][0]
+            exception = (
+                __is_client_valid_ex_openai_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
+                    CLIENT_LOOKUP_A2VYBG[config][0]
+                )
             )
             if exception is not None:
                 raise exception
@@ -136,14 +115,14 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
             client.close()
             CLIENT_LOOKUP_A2VYBG = dict(tmp)
 
-        client = __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
+        client = __create_client_openai_bf47529a_75f7_498b_a091_4e7d52d35b6b(
             use_async, api_key, azure_endpoint, api_version
         )
 
         # test client with api key
         if check_valid:
-            exception = __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
-                client
+            exception = (
+                __is_client_valid_ex_openai_8840b3a8_92d2_4526_b054_3b83c5cccb5c(client)
             )
             if exception is not None:
                 raise exception
@@ -153,7 +132,7 @@ def get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
         return client
 
 
-def __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
+def __create_client_openai_bf47529a_75f7_498b_a091_4e7d52d35b6b(
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
@@ -185,7 +164,7 @@ def __create_client_bf47529a_75f7_498b_a091_4e7d52d35b6b(
     return client
 
 
-def __is_client_valid_ex_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
+def __is_client_valid_ex_openai_8840b3a8_92d2_4526_b054_3b83c5cccb5c(
     client: Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI], tries: int = 3
 ) -> Union[AuthenticationError, Exception, None]:
     i = 0
@@ -251,36 +230,6 @@ def convert_to_string(data):
         return str(data)
 
 
-# all work similar but use different classes etc.
-# note that kwargs is just passed to the openai client so adding unknown kwargs will result in issues
-# named parameter are NOT considered kwargs, only unknown parameters are kwargs
-def get_chat_completion_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-    model: str,
-    messages: List[Dict[str, str]],
-    api_key: str,
-    azure_endpoint: Optional[str] = None,
-    api_version: Optional[str] = None,
-    close_after: bool = False,
-    **kwargs,
-) -> ChatCompletion:
-    client = get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
-        use_async=False,
-        api_key=api_key,
-        azure_endpoint=azure_endpoint,
-        api_version=api_version,
-        prevent_cached_client=close_after,
-    )
-    completion = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        **kwargs,
-    )
-    if close_after:
-        client.close()
-
-    return completion
-
-
 async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     model: str,
     messages: List[Dict[str, str]],
@@ -290,21 +239,32 @@ async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     close_after: bool = False,
     **kwargs,
 ) -> ChatCompletion:
-    client = get_client_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
-        use_async=True,
-        api_key=api_key,
-        azure_endpoint=azure_endpoint,
-        api_version=api_version,
-        prevent_cached_client=close_after,
-    )
-    completion = await client.chat.completions.create(
-        model=model,
-        messages=messages,
-        **kwargs,
-    )
+    completion = None
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE_FOUNDRY.value:
+        client = await get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+            use_async=True,
+            api_key=api_key,
+            azure_endpoint=azure_endpoint,
+        )
+        completion = await client.complete(
+            messages=messages, response_format="json_object", **kwargs
+        )
+    else:
+        client = get_client_openai_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
+            use_async=True,
+            api_key=api_key,
+            azure_endpoint=azure_endpoint,
+            api_version=api_version,
+            prevent_cached_client=close_after,
+        )
+        completion = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"},
+            **kwargs,
+        )
     if close_after:
         await client.close()
-
     return completion
 
 
@@ -372,3 +332,102 @@ async def get_llm_response(record: dict, cached_records: dict):
     print(m, flush=True)
     cached_records[curr_running_id] = {"result": m}
     return {"result": m}
+
+
+# ------------------ AZURE FOUNDRY------------------
+
+
+async def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+    use_async: bool,
+    api_key: str,
+    azure_endpoint: Optional[str] = None,
+    check_valid: bool = True,
+    prevent_cached_client: bool = True,
+) -> Union[ChatCompletionsClient, AsyncChatCompletionsClient]:
+
+    global CLIENT_LOOKUP_A2VYBG
+
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE_FOUNDRY.value and (
+        azure_endpoint is None
+    ):
+        raise ValueError("azure_endpoint must be set for Azure Foundry")
+
+    # tuples can be used as dict keys, primitive datatype comparison works flawless, caution with objects though!
+    config = (CLIENT_TYPE_A2VYBG, use_async, api_key, azure_endpoint)
+    use_cache = MAX_CACHED_CLIENTS_A2VYBG != 0 and not prevent_cached_client
+    if use_cache and config in CLIENT_LOOKUP_A2VYBG:
+        if check_valid:
+            exception = await __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                CLIENT_LOOKUP_A2VYBG[config][0]
+            )
+            if exception is not None:
+                raise exception
+
+        CLIENT_LOOKUP_A2VYBG[config] = (CLIENT_LOOKUP_A2VYBG[config][0], time.time())
+
+        return CLIENT_LOOKUP_A2VYBG[config][0]
+
+    else:
+        if use_cache and len(CLIENT_LOOKUP_A2VYBG) >= MAX_CACHED_CLIENTS_A2VYBG:
+            # remove oldest client
+            tmp = sorted(
+                CLIENT_LOOKUP_A2VYBG.items(), key=lambda x: x[1][1], reverse=True
+            )
+            (client, _) = tmp.pop()
+            client.close()
+            CLIENT_LOOKUP_A2VYBG = dict(tmp)
+
+        client = __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+            use_async=use_async, api_key=api_key, azure_endpoint=azure_endpoint
+        )
+
+        # test client with api key
+        if check_valid:
+            exception = await __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                client
+            )
+            if exception is not None:
+                raise exception
+
+        if use_cache:
+            CLIENT_LOOKUP_A2VYBG[config] = (client, time.time())
+        return client
+
+
+def __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+    use_async: bool,
+    api_key: str,
+    azure_endpoint: Optional[str] = None,
+) -> Union[ChatCompletionsClient, AsyncChatCompletionsClient]:
+
+    if use_async:
+        client = AsyncChatCompletionsClient(
+            endpoint=azure_endpoint, credential=AzureKeyCredential(api_key)
+        )
+    else:
+        client = ChatCompletionsClient(
+            endpoint=azure_endpoint, credential=AzureKeyCredential(api_key)
+        )
+
+    return client
+
+
+async def __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+    client: AsyncChatCompletionsClient,
+    tries: int = 3,
+) -> Union[Exception, None]:
+    for i in range(tries + 1):
+        try:
+            await client.get_model_info()
+            return None
+        except (
+            HttpResponseError,
+            ServiceRequestError,
+            ClientAuthenticationError,
+            Exception,
+        ) as e:
+            if i < tries:
+                await asyncio.sleep(0.05)
+                continue
+            return ValueError("Invalid Azure client: " + str(e))
+    return None
