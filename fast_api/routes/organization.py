@@ -60,6 +60,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "log_admin_requests",
     "conversation_lifespan_days",
     "file_lifespan_days",
+    "token_limit",
 }
 
 
