@@ -241,7 +241,7 @@ async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
 ) -> ChatCompletion:
     completion = None
     if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE_FOUNDRY.value:
-        client = get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+        client = await get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
             use_async=True,
             api_key=api_key,
             azure_endpoint=azure_endpoint,
@@ -337,7 +337,7 @@ async def get_llm_response(record: dict, cached_records: dict):
 # ------------------ AZURE FOUNDRY------------------
 
 
-def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+async def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     use_async: bool,
     api_key: str,
     azure_endpoint: Optional[str] = None,
@@ -357,10 +357,8 @@ def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     use_cache = MAX_CACHED_CLIENTS_A2VYBG != 0 and not prevent_cached_client
     if use_cache and config in CLIENT_LOOKUP_A2VYBG:
         if check_valid:
-            exception = (
-                __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-                    CLIENT_LOOKUP_A2VYBG[config][0]
-                )
+            exception = await __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                CLIENT_LOOKUP_A2VYBG[config][0]
             )
             if exception is not None:
                 raise exception
@@ -385,10 +383,8 @@ def get_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
 
         # test client with api key
         if check_valid:
-            exception = (
-                __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
-                    client
-                )
+            exception = await __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+                client
             )
             if exception is not None:
                 raise exception
@@ -416,13 +412,13 @@ def __create_client_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     return client
 
 
-def __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
+async def __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
     client: AsyncChatCompletionsClient,
     tries: int = 3,
 ) -> Union[Exception, None]:
     for i in range(tries + 1):
         try:
-            client.get_model_info()
+            await client.get_model_info()
             return None
         except (
             HttpResponseError,
@@ -431,7 +427,7 @@ def __is_client_valid_ex_azure_foundry_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
             Exception,
         ) as e:
             if i < tries:
-                time.sleep(0.05)
+                await asyncio.sleep(0.05)
                 continue
             return ValueError("Invalid Azure client: " + str(e))
     return None
