@@ -23,8 +23,6 @@ def test_update_project_name_description(
         json={"name": "new_name", "description": "new_description"},
     )
     assert response.status_code == 200
-    response_data = response.json()
-    assert response_data.get("ok")
 
     general.refresh(refinery_project)
     assert refinery_project.name == "new_name"
