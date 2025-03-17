@@ -184,7 +184,7 @@ def change_organization(request: Request, body: ChangeOrganizationBody = Body(..
 def get_user_roles(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user_manager.get_user_roles()
-    return pack_json_result(data)
+    return pack_json_result(data, wrap_for_frontend=False)
 
 
 # in use admin-dashboard (08.01.25)
