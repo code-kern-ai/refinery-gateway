@@ -194,7 +194,7 @@ __notification_data = {
         "docs": enums.DOCS.WEAK_SUPERVISION.value,
     },
     enums.NotificationType.WEAK_SUPERVISION_TASK_FAILED.value: {
-        "message_template": "Could not start weak supervision.",
+        "message_template": "Weak supervision failed.",
         "title": "Weak supervision",
         "level": enums.Notification.ERROR.value,
         "page": enums.Pages.INFORMATION_SOURCES.value,

@@ -90,6 +90,11 @@ def run_weak_supervision(
         except Exception as e:
             print(traceback.format_exc(), flush=True)
             general.rollback()
+            create_notification(
+                NotificationType.WEAK_SUPERVISION_TASK_FAILED,
+                user_id,
+                project_id,
+            )
             weak_supervision.update_state(
                 project_id,
                 weak_supervision_task_id,
