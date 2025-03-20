@@ -263,8 +263,12 @@ async def get_chat_completion_async_4a90ecec_fc72_45af_ba0d_ae9a2dc4674c(
             response_format={"type": "json_object"},
             **kwargs,
         )
+
     if close_after:
-        await client.close()
+        result = client.close()
+        if asyncio.iscoroutine(result):
+            await result
+
     return completion
 
 
