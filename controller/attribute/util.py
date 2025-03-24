@@ -80,19 +80,22 @@ def prepare_sample_records_doc_bin(
     return prefixed_doc_bin
 
 
-def test_openai_llm_connection(api_key: str, model: str):
+def test_openai_llm_connection(api_key: str, model: str, is_o_series: bool = False):
     # more here: https://platform.openai.com/docs/api-reference/making-requests
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-
+    if is_o_series:
+        add_payload = {"max_completion_tokens": 5}
+    else:
+        add_payload = {"max_tokens": 5}
     payload = {
         "model": model,
         "messages": [
             {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
         ],
-        "max_tokens": 5,
+        **add_payload,
     }
 
     response = requests.post(
@@ -124,7 +127,11 @@ def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str):
 
 
 def test_azure_llm_connection(
-    api_key: str, base_endpoint: str, api_version: str, model: str
+    api_key: str,
+    base_endpoint: str,
+    api_version: str,
+    model: str,
+    is_o_series: bool = False,
 ):
     # more here: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference-preview
     base_endpoint = base_endpoint.rstrip("/")
@@ -146,11 +153,15 @@ def test_azure_llm_connection(
         "api-key": api_key,
     }
 
+    if is_o_series:
+        add_payload = {"max_completion_tokens": 5}
+    else:
+        add_payload = {"max_tokens": 5}
     payload = {
         "messages": [
             {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
         ],
-        "max_tokens": 5,
+        **add_payload,
     }
 
     response = requests.post(final_endpoint, headers=headers, json=payload)
@@ -190,6 +201,7 @@ def validate_llm_config(llm_config: Dict[str, Any]):
             test_openai_llm_connection(
                 api_key=llm_config["apiKey"],
                 model=llm_config["model"],
+                is_o_series=llm_config.get("openAioSeries", False),
             )
         elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE.value:
             test_azure_llm_connection(
@@ -197,6 +209,7 @@ def validate_llm_config(llm_config: Dict[str, Any]):
                 model=llm_config["model"],
                 base_endpoint=llm_config["apiBase"],
                 api_version=llm_config["apiVersion"],
+                is_o_series=llm_config.get("openAioSeries", False),
             )
         elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE_FOUNDRY.value:
             test_azure_foundry_llm_connection(
@@ -291,6 +304,8 @@ async def ac(record):
             "@@CACHE_FILE_UPLOAD_LINK@@": llm_config.get(
                 "llmAcCacheFileUploadLink", ""
             ),
+            # string quotes are replaced since bool("False") == True
+            '"@@IS_O_SERIES@@"': str(llm_config.get("openAioSeries", False)),
         }
     except KeyError:
         raise LlmResponseError(

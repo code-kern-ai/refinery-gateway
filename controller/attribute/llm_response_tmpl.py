@@ -61,6 +61,13 @@ LLM_KWARGS_A2VYBG = {
     "presence_penalty": float("@@PRESENCE_PENALTY@@"),
 }
 
+IS_O_SERIES_A2VYBG = bool("@@IS_O_SERIES@@")
+
+if IS_O_SERIES_A2VYBG:
+    del LLM_KWARGS_A2VYBG["temperature"]
+    LLM_KWARGS_A2VYBG["max_completion_tokens"] = LLM_KWARGS_A2VYBG.pop("max_tokens")
+
+
 SYSTEM_PROMPT_A2VYBG = (
     """@@SYSTEM_PROMPT@@ You must only output valid JSON. """
     "If there is not yet a schema defined for the JSON output, "
@@ -291,16 +298,29 @@ async def get_llm_response(record: dict, cached_records: dict):
     if curr_running_id in cached_records:
         return cached_records[curr_running_id]
 
-    messages = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT_A2VYBG,
-        },
-        {
-            "role": "user",
-            "content": USER_PROMPT_A2VYBG,
-        },
-    ]
+    if IS_O_SERIES_A2VYBG:
+        # doesn't have a system prompt
+        messages = [
+            {
+                "role": "user",
+                "content": f"""Instructions:
+{SYSTEM_PROMPT_A2VYBG}
+Further information:
+{USER_PROMPT_A2VYBG}
+""",
+            },
+        ]
+    else:
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT_A2VYBG,
+            },
+            {
+                "role": "user",
+                "content": USER_PROMPT_A2VYBG,
+            },
+        ]
     exception = None
     for _ in range(int(MAX_RETRIES_A2VYBG)):
         try:
