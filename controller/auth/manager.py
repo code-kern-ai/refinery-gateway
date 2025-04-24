@@ -11,6 +11,7 @@ from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
 from submodules.model import enums, exceptions
 from submodules.model.business_objects import organization
+from submodules.model.business_objects.user import check_email_in_full_admin
 from submodules.model.models import Organization, Project, User
 import sqlalchemy
 
@@ -152,3 +153,15 @@ def extract_state_info(request: Request, key: str) -> Any:
         return value
 
     return request.state.parsed[key]
+
+
+def check_is_full_admin(request: Any) -> bool:
+    if check_is_admin(request):
+        jwt_decoded: Dict[str, Any] = jwt.decode(
+            request.headers["Authorization"].split(" ")[1],
+            options={"verify_signature": False},
+        )
+        subject: Dict[str, Any] = jwt_decoded["session"]["identity"]
+        if check_email_in_full_admin(subject["traits"]["email"]):
+            return True
+    return False

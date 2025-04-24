@@ -271,3 +271,9 @@ def update_customer_buttons(
             update_request.visible,
         )
     )
+
+
+@router.get("/is-full-admin")
+def get_is_admin(request: Request) -> Dict:
+    data = auth.check_is_full_admin(request)
+    return pack_json_result(data)
