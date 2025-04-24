@@ -2,6 +2,7 @@ from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
 from fast_api.models import (
     CancelTaskBody,
+    InviteUsersBody,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
@@ -276,4 +277,11 @@ def update_customer_buttons(
 @router.get("/is-full-admin")
 def get_is_admin(request: Request) -> Dict:
     data = auth.check_is_full_admin(request)
+    return pack_json_result(data)
+
+
+@router.post("/invite-users")
+def invite_users(request: Request, body: InviteUsersBody = Body(...)):
+    auth.check_admin_access(request.state.info)
+    data = auth.invite_users(body.emails, body.organization_name)
     return pack_json_result(data)

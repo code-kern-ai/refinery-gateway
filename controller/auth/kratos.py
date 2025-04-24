@@ -191,3 +191,26 @@ def resolve_user_name_and_email_by_id(user_id: str) -> dict:
     if i and "traits" in i and i["traits"]:
         return i["traits"]["name"], i["traits"]["email"]
     return None
+
+
+def create_user_kratos(email: str):
+    payload_registration = {
+        "schema_id": "default",
+        "traits": {"email": email},
+    }
+    response_create = requests.post(
+        f"{KRATOS_ADMIN_URL}/identities",
+        json=payload_registration,
+    )
+    return response_create.json() if response_create.ok else None
+
+
+def get_recovery_link(user_id: str) -> str:
+    payload_recovery_link = {
+        "expires_in": "24h",
+        "identity_id": user_id,
+    }
+    response_link = requests.post(
+        f"{KRATOS_ADMIN_URL}/recovery/link", json=payload_recovery_link
+    )
+    return response_link.json() if response_link.ok else None

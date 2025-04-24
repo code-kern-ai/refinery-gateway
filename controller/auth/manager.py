@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from controller.auth import kratos
 from fastapi import Request
 from exceptions.exceptions import (
     AuthManagerError,
@@ -165,3 +166,23 @@ def check_is_full_admin(request: Any) -> bool:
         if check_email_in_full_admin(subject["traits"]["email"]):
             return True
     return False
+
+
+def invite_users(emails: List[str], organization_name: str):
+    for email in emails:
+        # Create accounts for the email
+        user = kratos.create_user_kratos(email)
+        if not user:
+            raise AuthManagerError("User creation failed")
+
+        # Assign the account to the organization
+        user_manager.update_organization_of_user(organization_name, email)
+
+        # Get the recovery link for the email
+        recovery_link = kratos.get_recovery_link(user["id"])
+        if not recovery_link:
+            raise AuthManagerError("Failed to get recovery link")
+
+        # Send the recovery link to the email
+
+        print("end", recovery_link)
