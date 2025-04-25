@@ -156,7 +156,7 @@ def resolve_user_name_by_id(user_id: str) -> Dict[str, str]:
     i = __get_identity(user_id, False)
     if i:
         i = i["identity"]
-        return i["traits"]["name"]
+        return i["traits"]["name"] if "name" in i["traits"] else None
     return None
 
 

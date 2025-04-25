@@ -185,4 +185,4 @@ def invite_users(emails: List[str], organization_name: str):
 
         # Send the recovery link to the email
 
-        print("end", recovery_link)
+        print("end", recovery_link["recovery_link"])

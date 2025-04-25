@@ -1,4 +1,5 @@
 import json
+from controller.auth import kratos
 from fastapi import APIRouter, Request, Body
 from fast_api.models import (
     AddUserToOrganizationBody,
@@ -90,6 +91,7 @@ def get_user_info(request: Request):
 # in use cognition-ui & admin dashboard (07.01.25)
 @router.get("/get-user-info-extended")
 def get_user_info_extended(request: Request):
+    kratos.__refresh_identity_cache()
     user = auth_manager.get_user_by_info(request.state.info)
     name = resolve_user_name_by_id(user.id)
     user_dict = {
@@ -98,8 +100,8 @@ def get_user_info_extended(request: Request):
             column_whitelist=USER_INFO_WHITELIST,
             column_rename_map=USER_INFO_RENAME_MAP,
         ),
-        "first_name": name.get("first"),
-        "last_name": name.get("last"),
+        "first_name": name.get("first") if name else None,
+        "last_name": name.get("last") if name else None,
     }
 
     return pack_json_result(user_dict)
