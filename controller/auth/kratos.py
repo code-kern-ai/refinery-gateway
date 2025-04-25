@@ -1,3 +1,5 @@
+from email.mime.text import MIMEText
+import smtplib
 from typing import Union, Any, List, Dict
 import os
 import requests
@@ -214,3 +216,15 @@ def get_recovery_link(user_id: str) -> str:
         f"{KRATOS_ADMIN_URL}/recovery/link", json=payload_recovery_link
     )
     return response_link.json() if response_link.ok else None
+
+
+def email_with_link(to_email: str, recovery_link: str) -> None:
+    msg = MIMEText(
+        f"Welcome! Click the link to complete your account setup:\n\n{recovery_link}"
+    )
+    msg["Subject"] = "You're invited to our app!"
+    msg["From"] = "no-reply@kern.com"
+    msg["To"] = to_email
+
+    with smtplib.SMTP("mailhog", 1025) as server:
+        server.send_message(msg)

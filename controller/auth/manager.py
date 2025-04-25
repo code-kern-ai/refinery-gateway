@@ -184,5 +184,5 @@ def invite_users(emails: List[str], organization_name: str):
             raise AuthManagerError("Failed to get recovery link")
 
         # Send the recovery link to the email
-
         print("end", recovery_link["recovery_link"])
+        kratos.email_with_link(email, recovery_link["recovery_link"])
