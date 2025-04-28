@@ -2,6 +2,7 @@ from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
 from fast_api.models import (
     CancelTaskBody,
+    CheckInviteUsersBody,
     InviteUsersBody,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
@@ -284,4 +285,11 @@ def get_is_admin(request: Request) -> Dict:
 def invite_users(request: Request, body: InviteUsersBody = Body(...)):
     auth.check_admin_access(request.state.info)
     data = auth.invite_users(body.emails, body.organization_name)
+    return pack_json_result(data)
+
+
+@router.post("/check-valid-emails")
+def check_valid_emails(request: Request, body: CheckInviteUsersBody = Body(...)):
+    auth.check_admin_access(request.state.info)
+    data = auth.check_valid_emails(body.emails)
     return pack_json_result(data)

@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List
 
 from controller.auth import kratos
@@ -169,6 +170,8 @@ def check_is_full_admin(request: Any) -> bool:
 
 
 def invite_users(emails: List[str], organization_name: str):
+    if not check_is_full_admin:
+        raise AuthManagerError("Full admin access required")
     for email in emails:
         # Create accounts for the email
         user = kratos.create_user_kratos(email)
@@ -185,3 +188,19 @@ def invite_users(emails: List[str], organization_name: str):
 
         # Send the recovery link to the email
         kratos.email_with_link(email, recovery_link["recovery_link"])
+
+
+def check_valid_emails(emails: List[str]):
+    if not check_is_full_admin:
+        raise AuthManagerError("Full admin access required")
+    for email in emails:
+        if not is_valid_email(email):
+            return False
+        if kratos.check_user_exists(email):
+            return False
+    return True
+
+
+def is_valid_email(email):
+    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    return re.match(pattern, email) is not None

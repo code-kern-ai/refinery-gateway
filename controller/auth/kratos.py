@@ -213,7 +213,7 @@ def create_user_kratos(email: str):
 
 def get_recovery_link(user_id: str) -> str:
     payload_recovery_link = {
-        "expires_in": "24h",
+        "expires_in": "48h",
         "identity_id": user_id,
     }
     response_link = requests.post(
@@ -236,3 +236,15 @@ def email_with_link(to_email: str, recovery_link: str) -> None:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
+
+
+def check_user_exists(email: str) -> bool:
+    request = requests.get(
+        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(email)}"
+    )
+    if request.ok:
+        identities = request.json()
+        for i in identities:
+            if i["traits"]["email"].lower() == email.lower():
+                return True
+    return False
