@@ -117,6 +117,8 @@ docker run -d --rm \
 -e SECRET_KEY=default \
 -e POSTGRES_POOL_USE_LIFO=x \
 -e KERN_S3_ENDPOINT=${MINIO_ENDPOINT} \
+-e SMTP_HOST=mailhog \
+-e SMTP_PORT=1025 \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
 -v "$CONFIG_DIR":/config \

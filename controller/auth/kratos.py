@@ -15,6 +15,10 @@ logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 KRATOS_ADMIN_URL = os.getenv("KRATOS_ADMIN_URL")
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # user_id -> {"identity" -> full identity, "simple" -> {"id": str, "mail": str, "firstName": str, "lastName": str}}
 # "collected" -> timestamp
@@ -226,5 +230,9 @@ def email_with_link(to_email: str, recovery_link: str) -> None:
     msg["From"] = "no-reply@kern.com"
     msg["To"] = to_email
 
-    with smtplib.SMTP("mailhog", 1025) as server:
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        if SMTP_USER and SMTP_PASSWORD:
+            server.ehlo()
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
