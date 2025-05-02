@@ -19,6 +19,8 @@ import sqlalchemy
 
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
+EMAIL_RE = re.compile(r"[\w\.-]+@[\w\.-]+\.\w+")
+
 
 def get_organization_id_by_info(info) -> Organization:
     user = get_user_by_info(info)
@@ -200,6 +202,5 @@ def check_valid_emails(emails: List[str]):
     return True
 
 
-def is_valid_email(email):
-    pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    return re.match(pattern, email) is not None
+def is_valid_email(email: str) -> bool:
+    return bool(EMAIL_RE.fullmatch(email))
