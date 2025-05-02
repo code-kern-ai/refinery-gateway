@@ -172,8 +172,6 @@ def check_is_full_admin(request: Any) -> bool:
 def invite_users(
     emails: List[str], organization_name: str, provider: Optional[str] = None
 ):
-    if not check_is_full_admin:
-        raise AuthManagerError("Full admin access required")
     for email in emails:
         # Create accounts for the email
         user = kratos.create_user_kratos(email, provider)
@@ -193,8 +191,7 @@ def invite_users(
 
 
 def check_valid_emails(emails: List[str]):
-    if not check_is_full_admin:
-        raise AuthManagerError("Full admin access required")
+
     for email in emails:
         if not is_valid_email(email):
             return False
