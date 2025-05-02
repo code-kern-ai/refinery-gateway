@@ -199,11 +199,18 @@ def resolve_user_name_and_email_by_id(user_id: str) -> dict:
     return None
 
 
-def create_user_kratos(email: str):
+def create_user_kratos(email: str, provider: str = None):
     payload_registration = {
         "schema_id": "default",
         "traits": {"email": email},
     }
+    if provider:
+        payload_registration["metadata_public"] = {
+            "registration_scope": {
+                "provider_id": provider,
+                "invitation_sso": True,
+            }
+        }
     response_create = requests.post(
         f"{KRATOS_ADMIN_URL}/identities",
         json=payload_registration,
@@ -227,7 +234,7 @@ def email_with_link(to_email: str, recovery_link: str) -> None:
         f"Welcome! Click the link to complete your account setup:\n\n{recovery_link}"
     )
     msg["Subject"] = "You're invited to our app!"
-    msg["From"] = "no-reply@kern.com"
+    msg["From"] = "no-reply@kern.ai"
     msg["To"] = to_email
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:

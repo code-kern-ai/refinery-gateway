@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from controller.auth import kratos
 from fastapi import Request
@@ -169,12 +169,14 @@ def check_is_full_admin(request: Any) -> bool:
     return False
 
 
-def invite_users(emails: List[str], organization_name: str):
+def invite_users(
+    emails: List[str], organization_name: str, provider: Optional[str] = None
+):
     if not check_is_full_admin:
         raise AuthManagerError("Full admin access required")
     for email in emails:
         # Create accounts for the email
-        user = kratos.create_user_kratos(email)
+        user = kratos.create_user_kratos(email, provider)
         if not user:
             raise AuthManagerError("User creation failed")
 

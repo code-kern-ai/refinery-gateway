@@ -40,7 +40,8 @@ def upgrade():
             (gen_random_uuid(), 'andrea.hrelja@kern.ai','{}'),
             (gen_random_uuid(), 'leonard.puettmann@kern.ai','{}'),
             (gen_random_uuid(), 'johannes.hoetter@kern.ai','{}'),
-            (gen_random_uuid(), 'henrik.wenck@kern.ai','{}')
+            (gen_random_uuid(), 'henrik.wenck@kern.ai','{}'),
+            (gen_random_uuid(), 'jason.wirth@kern.ai','{}')
         """
     )
 

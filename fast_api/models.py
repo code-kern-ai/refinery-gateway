@@ -506,6 +506,7 @@ class SearchQuestionReformulationBody(BaseModel):
 class InviteUsersBody(BaseModel):
     emails: List[StrictStr]
     organization_name: StrictStr
+    provider: Optional[StrictStr] = None
 
 
 class CheckInviteUsersBody(BaseModel):
