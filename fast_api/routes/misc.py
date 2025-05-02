@@ -284,8 +284,6 @@ def get_is_admin(request: Request) -> Dict:
 
 @router.post("/invite-users")
 def invite_users(request: Request, body: InviteUsersBody = Body(...)):
-    # auth.check_admin_access(request.state.info)
-
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
     data = auth.invite_users(body.emails, body.organization_name, body.provider)
@@ -294,7 +292,6 @@ def invite_users(request: Request, body: InviteUsersBody = Body(...)):
 
 @router.post("/check-valid-emails")
 def check_valid_emails(request: Request, body: CheckInviteUsersBody = Body(...)):
-    # auth.check_admin_access(request.state.info)
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
     data = auth.check_valid_emails(body.emails)
