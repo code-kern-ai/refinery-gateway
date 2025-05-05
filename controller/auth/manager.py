@@ -193,13 +193,13 @@ def invite_users(
 
 
 def check_valid_emails(emails: List[str]):
-
-    for email in emails:
-        if not is_valid_email(email):
-            return False
-        if kratos.check_user_exists(email):
-            return False
-    return True
+    valid_emails = [
+        email
+        for email in emails
+        if is_valid_email(email) and not kratos.check_user_exists(email)
+    ]
+    all_valid = len(valid_emails) == len(emails)
+    return {"valid_emails": valid_emails, "all_valid": all_valid}
 
 
 def is_valid_email(email: str) -> bool:
