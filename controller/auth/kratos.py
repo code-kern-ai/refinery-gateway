@@ -218,6 +218,14 @@ def create_user_kratos(email: str, provider: str = None):
     return response_create.json() if response_create.ok else None
 
 
+def delete_user_kratos(user_id: str) -> bool:
+    response_delete = requests.delete(f"{KRATOS_ADMIN_URL}/identities/{user_id}")
+    if response_delete.ok:
+        del KRATOS_IDENTITY_CACHE[user_id]
+        return True
+    return False
+
+
 def get_recovery_link(user_id: str) -> str:
     payload_recovery_link = {
         "expires_in": "48h",

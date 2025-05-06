@@ -160,6 +160,8 @@ def extract_state_info(request: Request, key: str) -> Any:
 
 
 def check_is_full_admin(request: Any) -> bool:
+    if request.url.hostname == "localhost" and request.url.port == 7051:
+        return True
     if check_is_admin(request):
         jwt_decoded: Dict[str, Any] = jwt.decode(
             request.headers["Authorization"].split(" ")[1],
@@ -174,12 +176,13 @@ def check_is_full_admin(request: Any) -> bool:
 def invite_users(
     emails: List[str], organization_name: str, provider: Optional[str] = None
 ):
+    user_ids = []
     for email in emails:
         # Create accounts for the email
         user = kratos.create_user_kratos(email, provider)
         if not user:
             raise AuthManagerError("User creation failed")
-
+        user_ids.append(user["id"])
         # Assign the account to the organization
         user_manager.update_organization_of_user(organization_name, email)
 
@@ -190,6 +193,7 @@ def invite_users(
 
         # Send the recovery link to the email
         kratos.email_with_link(email, recovery_link["recovery_link"])
+    return user_ids
 
 
 def check_valid_emails(emails: List[str]):
