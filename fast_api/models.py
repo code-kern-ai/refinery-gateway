@@ -501,3 +501,13 @@ class EvaluationRunDeletionBody(BaseModel):
 class SearchQuestionReformulationBody(BaseModel):
     question: StrictStr
     apiKey: StrictStr
+
+
+class InviteUsersBody(BaseModel):
+    emails: List[StrictStr]
+    organization_name: StrictStr
+    provider: Optional[StrictStr] = None
+
+
+class CheckInviteUsersBody(BaseModel):
+    emails: List[StrictStr]

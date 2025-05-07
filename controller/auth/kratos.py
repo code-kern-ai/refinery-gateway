@@ -1,3 +1,5 @@
+from email.mime.text import MIMEText
+import smtplib
 from typing import Union, Any, List, Dict
 import os
 import requests
@@ -13,6 +15,10 @@ logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 KRATOS_ADMIN_URL = os.getenv("KRATOS_ADMIN_URL")
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # user_id -> {"identity" -> full identity, "simple" -> {"id": str, "mail": str, "firstName": str, "lastName": str}}
 # "collected" -> timestamp
@@ -156,7 +162,7 @@ def resolve_user_name_by_id(user_id: str) -> Dict[str, str]:
     i = __get_identity(user_id, False)
     if i:
         i = i["identity"]
-        return i["traits"]["name"]
+        return i["traits"]["name"] if "name" in i["traits"] else None
     return None
 
 
@@ -191,3 +197,69 @@ def resolve_user_name_and_email_by_id(user_id: str) -> dict:
     if i and "traits" in i and i["traits"]:
         return i["traits"]["name"], i["traits"]["email"]
     return None
+
+
+def create_user_kratos(email: str, provider: str = None):
+    payload_registration = {
+        "schema_id": "default",
+        "traits": {"email": email},
+    }
+    if provider:
+        payload_registration["metadata_public"] = {
+            "registration_scope": {
+                "provider_id": provider,
+                "invitation_sso": True,
+            }
+        }
+    response_create = requests.post(
+        f"{KRATOS_ADMIN_URL}/identities",
+        json=payload_registration,
+    )
+    return response_create.json() if response_create.ok else None
+
+
+def delete_user_kratos(user_id: str) -> bool:
+    response_delete = requests.delete(f"{KRATOS_ADMIN_URL}/identities/{user_id}")
+    if response_delete.ok:
+        del KRATOS_IDENTITY_CACHE[user_id]
+        return True
+    return False
+
+
+def get_recovery_link(user_id: str) -> str:
+    payload_recovery_link = {
+        "expires_in": "48h",
+        "identity_id": user_id,
+    }
+    response_link = requests.post(
+        f"{KRATOS_ADMIN_URL}/recovery/link", json=payload_recovery_link
+    )
+    return response_link.json() if response_link.ok else None
+
+
+def email_with_link(to_email: str, recovery_link: str) -> None:
+    msg = MIMEText(
+        f"Welcome! Click the link to complete your account setup:\n\n{recovery_link}"
+    )
+    msg["Subject"] = "You're invited to our app!"
+    msg["From"] = "no-reply@kern.ai"
+    msg["To"] = to_email
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        if SMTP_USER and SMTP_PASSWORD:
+            server.ehlo()
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(msg)
+
+
+def check_user_exists(email: str) -> bool:
+    request = requests.get(
+        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(email)}"
+    )
+    if request.ok:
+        identities = request.json()
+        for i in identities:
+            if i["traits"]["email"].lower() == email.lower():
+                return True
+    return False

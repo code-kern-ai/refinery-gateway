@@ -1,5 +1,7 @@
-from typing import Any, Dict
+import re
+from typing import Any, Dict, List, Optional
 
+from controller.auth import kratos
 from fastapi import Request
 from exceptions.exceptions import (
     AuthManagerError,
@@ -11,10 +13,13 @@ from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
 from submodules.model import enums, exceptions
 from submodules.model.business_objects import organization
+from submodules.model.business_objects.user import check_email_in_full_admin
 from submodules.model.models import Organization, Project, User
 import sqlalchemy
 
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
+
+EMAIL_RE = re.compile(r"[\w\.-]+@[\w\.-]+\.\w+")
 
 
 def get_organization_id_by_info(info) -> Organization:
@@ -152,3 +157,54 @@ def extract_state_info(request: Request, key: str) -> Any:
         return value
 
     return request.state.parsed[key]
+
+
+def check_is_full_admin(request: Any) -> bool:
+    if request.url.hostname == "localhost" and request.url.port == 7051:
+        return True
+    if check_is_admin(request):
+        jwt_decoded: Dict[str, Any] = jwt.decode(
+            request.headers["Authorization"].split(" ")[1],
+            options={"verify_signature": False},
+        )
+        subject: Dict[str, Any] = jwt_decoded["session"]["identity"]
+        if check_email_in_full_admin(subject["traits"]["email"]):
+            return True
+    return False
+
+
+def invite_users(
+    emails: List[str], organization_name: str, provider: Optional[str] = None
+):
+    user_ids = []
+    for email in emails:
+        # Create accounts for the email
+        user = kratos.create_user_kratos(email, provider)
+        if not user:
+            raise AuthManagerError("User creation failed")
+        user_ids.append(user["id"])
+        # Assign the account to the organization
+        user_manager.update_organization_of_user(organization_name, email)
+
+        # Get the recovery link for the email
+        recovery_link = kratos.get_recovery_link(user["id"])
+        if not recovery_link:
+            raise AuthManagerError("Failed to get recovery link")
+
+        # Send the recovery link to the email
+        kratos.email_with_link(email, recovery_link["recovery_link"])
+    return user_ids
+
+
+def check_valid_emails(emails: List[str]):
+    valid_emails = [
+        email
+        for email in emails
+        if is_valid_email(email) and not kratos.check_user_exists(email)
+    ]
+    all_valid = len(valid_emails) == len(emails)
+    return {"valid_emails": valid_emails, "all_valid": all_valid}
+
+
+def is_valid_email(email: str) -> bool:
+    return bool(EMAIL_RE.fullmatch(email))

@@ -1,7 +1,10 @@
+from exceptions.exceptions import AuthManagerError
 from fastapi import APIRouter, Body, Request, status
 from fastapi.responses import PlainTextResponse
 from fast_api.models import (
     CancelTaskBody,
+    CheckInviteUsersBody,
+    InviteUsersBody,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
@@ -271,3 +274,25 @@ def update_customer_buttons(
             update_request.visible,
         )
     )
+
+
+@router.get("/is-full-admin")
+def get_is_full_admin(request: Request) -> Dict:
+    data = auth.check_is_full_admin(request)
+    return pack_json_result(data)
+
+
+@router.post("/invite-users")
+def invite_users(request: Request, body: InviteUsersBody = Body(...)):
+    if not auth.check_is_full_admin(request):
+        raise AuthManagerError("Full admin access required")
+    data = auth.invite_users(body.emails, body.organization_name, body.provider)
+    return pack_json_result(data)
+
+
+@router.post("/check-valid-emails")
+def check_valid_emails(request: Request, body: CheckInviteUsersBody = Body(...)):
+    if not auth.check_is_full_admin(request):
+        raise AuthManagerError("Full admin access required")
+    data = auth.check_valid_emails(body.emails)
+    return pack_json_result(data)
