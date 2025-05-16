@@ -115,3 +115,15 @@ def cancel_parse_cognition_file_task(
         transformation_key,
         with_commit=True,
     )
+
+
+def cancel_integration_task(
+    task_info: Dict[str, Any],
+) -> None:
+
+    integration_id = task_info.get("integrationId")
+
+    task_monitor.set_integration_task_to_failed(
+        integration_id,
+        with_commit=True,
+    )
