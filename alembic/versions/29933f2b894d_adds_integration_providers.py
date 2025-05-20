@@ -1,8 +1,8 @@
 """adds integration providers
 
-Revision ID: 29cbd76cbd09
+Revision ID: 29933f2b894d
 Revises: eb96f9b82cc1
-Create Date: 2025-05-16 14:57:44.107504
+Create Date: 2025-05-20 09:30:01.172135
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "29cbd76cbd09"
+revision = "29933f2b894d"
 down_revision = "eb96f9b82cc1"
 branch_labels = None
 depends_on = None
@@ -34,13 +34,6 @@ def upgrade():
         schema="cognition",
     )
     op.create_index(
-        op.f("ix_cognition_integration_access_created_by"),
-        "integration_access",
-        ["created_by"],
-        unique=False,
-        schema="cognition",
-    )
-    op.create_index(
         op.f("ix_cognition_integration_access_organization_id"),
         "integration_access",
         ["organization_id"],
@@ -55,6 +48,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("description", sa.String(), nullable=True),
+        sa.Column("tokenizer", sa.String(), nullable=True),
         sa.Column("state", sa.String(), nullable=True),
         sa.Column("type", sa.String(), nullable=True),
         sa.Column("config", sa.JSON(), nullable=True),
@@ -64,13 +58,6 @@ def upgrade():
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["project_id"], ["project.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        schema="cognition",
-    )
-    op.create_index(
-        op.f("ix_cognition_integration_created_by"),
-        "integration",
-        ["created_by"],
-        unique=False,
         schema="cognition",
     )
     op.create_index(
@@ -90,19 +77,9 @@ def downgrade():
         table_name="integration",
         schema="cognition",
     )
-    op.drop_index(
-        op.f("ix_cognition_integration_created_by"),
-        table_name="integration",
-        schema="cognition",
-    )
     op.drop_table("integration", schema="cognition")
     op.drop_index(
         op.f("ix_cognition_integration_access_organization_id"),
-        table_name="integration_access",
-        schema="cognition",
-    )
-    op.drop_index(
-        op.f("ix_cognition_integration_access_created_by"),
         table_name="integration_access",
         schema="cognition",
     )
