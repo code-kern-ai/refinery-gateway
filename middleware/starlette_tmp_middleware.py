@@ -3,7 +3,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from submodules.model.business_objects import general
 import traceback
 from fast_api.routes.client_response import GENERIC_FAILURE_RESPONSE
-
+from submodules.model.session_wrapper import run_async
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
             # fast api middleware handles these
             return await call_next(request)
 
-        session_token = general.get_ctx_token()
+        general.get_ctx_token()
         try:
             response = await call_next(request)
             # finally is still called even if returned response
@@ -26,4 +26,4 @@ class DatabaseSessionHandler(BaseHTTPMiddleware):
             print(traceback.format_exc(), flush=True)
             return GENERIC_FAILURE_RESPONSE
         finally:
-            general.remove_and_refresh_session(session_token)
+            general.remove_and_refresh_session()

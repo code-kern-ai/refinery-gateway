@@ -21,9 +21,9 @@ from submodules.model.models import (
 
 @pytest.fixture(scope="session", autouse=True)
 def database_session() -> Iterator[None]:
-    session_token = general.get_ctx_token()
+    general.get_ctx_token()
     yield
-    general.remove_and_refresh_session(session_token)
+    general.remove_and_refresh_session()
 
 
 @pytest.fixture(scope="session")

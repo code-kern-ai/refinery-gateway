@@ -14,9 +14,8 @@ logger = logging.getLogger(__name__)
 
 async def handle_db_session(request: Request, call_next):
     info = _prepare_info(request)
-    session_token = general.get_ctx_token()
+    general.get_ctx_token()
     try:
-        request.state.session_token = session_token
         info.context = {"request": request}
         request.state.info = info
         request.state.parsed = {}
@@ -37,7 +36,7 @@ async def handle_db_session(request: Request, call_next):
         print(traceback.format_exc(), flush=True)
         return GENERIC_FAILURE_RESPONSE
     finally:
-        general.remove_and_refresh_session(session_token)
+        general.remove_and_refresh_session()
 
 
 def _prepare_info(request):

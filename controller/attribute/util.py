@@ -492,7 +492,7 @@ def read_container_logs_thread(
     attribute_id: str,
     docker_container: Any,
 ) -> None:
-    ctx_token = general.get_ctx_token()
+    general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     attribute_item = attribute.get(project_id, attribute_id)
     previous_progress = -1
@@ -502,7 +502,7 @@ def read_container_logs_thread(
         time.sleep(1)
         c += 1
         if c > 100:
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            general.remove_and_refresh_session(True)
         attribute_item = attribute.get(project_id, attribute_id)
         if not attribute_item:
             break
@@ -544,7 +544,7 @@ def read_container_logs_thread(
             continue
         previous_progress = last_entry
         set_progress(project_id, attribute_item, last_entry * 0.8 + 0.05)
-    general.remove_and_refresh_session(ctx_token)
+    general.remove_and_refresh_session()
 
 
 def set_progress(
