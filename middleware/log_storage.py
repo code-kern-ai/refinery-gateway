@@ -102,7 +102,7 @@ async def set_request_data(request: Request) -> bytes:
 
 
 async def log_request(request):
-    log_request = run_db_async_with_session(auth_manager.extract_state_info, request, "log_request"))
+    log_request = await run_db_async_with_session(auth_manager.extract_state_info, request, "log_request")
     log_lvl: AdminLogLevel = try_parse_enum_value(log_request, AdminLogLevel, False)
     # lazy boolean resolution to avoid unnecessary calls
     if (
@@ -117,7 +117,7 @@ async def log_request(request):
         data = request.state.data
 
     now = datetime.now()
-    org_id = run_db_async_with_session(auth_manager.extract_state_info(request, "organization_id"))
+    org_id = await run_db_async_with_session(auth_manager.extract_state_info(request, "organization_id"))
     log_path = f"/logs/admin/{org_id}/{now.strftime('%Y-%m-%d')}.csv"
     log_entry = {
         "timestamp": now.strftime("%Y-%m-%d %H:%M:%S.%f"),
