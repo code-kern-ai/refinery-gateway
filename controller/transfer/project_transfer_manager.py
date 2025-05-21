@@ -926,7 +926,7 @@ def __post_processing_import_threaded(
     while True:
         c += 1
         if c > 12:
-            general.remove_and_refresh_session(True)
+            general.remove_and_refresh_session(None, True)
             c = 1
         if task_queue.get_by_tokenization(project_id):
             logger.info(f"Waiting for tokenization of project {project_id}")

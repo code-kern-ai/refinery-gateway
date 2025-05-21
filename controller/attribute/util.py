@@ -502,7 +502,7 @@ def read_container_logs_thread(
         time.sleep(1)
         c += 1
         if c > 100:
-            general.remove_and_refresh_session(True)
+            general.remove_and_refresh_session(None, True)
         attribute_item = attribute.get(project_id, attribute_id)
         if not attribute_item:
             break

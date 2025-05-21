@@ -462,7 +462,7 @@ def read_container_logs_thread(
         time.sleep(1)
         c += 1
         if c > 100:
-            general.remove_and_refresh_session(True)
+            general.remove_and_refresh_session(None, True)
             information_source_payload = information_source.get_payload(
                 project_id, payload_id
             )
