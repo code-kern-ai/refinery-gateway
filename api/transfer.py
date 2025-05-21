@@ -218,7 +218,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             if current_att.state == enums.AttributeState.RUNNING.value:
                 continue
             elif current_att.state == enums.AttributeState.INITIAL.value:
-                attribute_manager.calculate_user_attribute_all_records(
+                attribute_manager.calculate_user_attribute_missing_records(
                     project_id,
                     project.get_org_id(project_id),
                     user_id,

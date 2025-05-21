@@ -80,6 +80,25 @@ def prepare_sample_records_doc_bin(
     return prefixed_doc_bin
 
 
+def prepare_delta_records_doc_bin(attribute_id: str, project_id: str) -> str:
+    missing_records = record.get_missing_delta_record_ids(project_id, attribute_id)
+
+    sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
+        project_id=project_id,
+        missing_columns=record.get_missing_columns_str(project_id),
+        record_ids=missing_records,
+    )
+    project_item = project.get(project_id)
+    org_id = str(project_item.organization_id)
+    prefixed_doc_bin = f"{attribute_id}_doc_bin.json"
+    s3.put_object(
+        org_id,
+        project_id + "/" + prefixed_doc_bin,
+        sample_records_doc_bin,
+    )
+    return prefixed_doc_bin
+
+
 def test_openai_llm_connection(api_key: str, model: str, is_o_series: bool = False):
     # more here: https://platform.openai.com/docs/api-reference/making-requests
     headers = {

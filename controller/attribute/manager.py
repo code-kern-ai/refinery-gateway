@@ -234,7 +234,7 @@ def __add_running_id(
     general.remove_and_refresh_session(session_token)
 
 
-def calculate_user_attribute_all_records(
+def calculate_user_attribute_missing_records(
     project_id: str,
     org_id: str,
     user_id: str,
@@ -285,7 +285,7 @@ def calculate_user_attribute_all_records(
         project_id=project_id, message=f"calculate_attribute:started:{attribute_id}"
     )
     daemon.run_without_db_token(
-        __calculate_user_attribute_all_records,
+        __calculate_user_attribute_missing_records,
         project_id,
         org_id,
         user_id,
@@ -294,7 +294,7 @@ def calculate_user_attribute_all_records(
     )
 
 
-def __calculate_user_attribute_all_records(
+def __calculate_user_attribute_missing_records(
     project_id: str,
     org_id: str,
     user_id: str,
@@ -303,9 +303,18 @@ def __calculate_user_attribute_all_records(
 ) -> None:
     session_token = general.get_ctx_token()
 
+    all_records_count = record.count(project_id)
+    count_delta = record.count_missing_delta(project_id, attribute_id)
+
+    if count_delta != all_records_count:
+        doc_bin = util.prepare_delta_records_doc_bin(
+            attribute_id=attribute_id, project_id=project_id
+        )
+    else:
+        doc_bin = "docbin_full"
     try:
         calculated_attributes = util.run_attribute_calculation_exec_env(
-            attribute_id=attribute_id, project_id=project_id, doc_bin="docbin_full"
+            attribute_id=attribute_id, project_id=project_id, doc_bin=doc_bin
         )
         if not calculated_attributes:
             __notify_attribute_calculation_failed(

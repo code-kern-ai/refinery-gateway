@@ -25,7 +25,7 @@ def calculate_attributes(
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
     daemon.run_with_db_token(
-        attribute_manager.calculate_user_attribute_all_records,
+        attribute_manager.calculate_user_attribute_missing_records,
         attribute_calculation_task_execution.project_id,
         attribute_calculation_task_execution.organization_id,
         attribute_calculation_task_execution.user_id,
