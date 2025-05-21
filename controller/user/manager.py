@@ -159,4 +159,19 @@ def __migrate_kratos_users():
         if user_database.sso_provider != sso_provider:
             user_database.sso_provider = sso_provider
 
+        user_search = kratos.get_user_from_search(user_identity["traits"]["email"])
+        if user_search and user_search["credentials"]:
+            if user_search["credentials"].get("oidc", None):
+                oidc = (
+                    user_search["credentials"]
+                    .get("oidc", {})
+                    .get("identifiers", None)[0]
+                )
+                if oidc:
+                    oidc = oidc.split(":")
+                    if len(oidc) > 1:
+                        user_database.oidc_identifier = oidc[1]
+                    else:
+                        user_database.oidc_identifier = None
+
     general.commit()
