@@ -20,6 +20,11 @@ def handle_cognition_file_upload(path_parts: List[str]):
             or file_reference.state == enums.FileCachingState.RUNNING.value
             or file_reference.state == enums.FileCachingState.COMPLETED.value
         ):
+            # file_reference is None or already processed in queue
+            print("File reference duplication error, file is already processed", flush=True)
+            if file_reference:
+                print(f"File reference id: {str(file_reference.id)}", flush=True)
+                print(f"File name: {file_reference.original_file_name}", flush=True)
             return
         file_reference.state = enums.FileCachingState.COMPLETED.value
         general.commit()
