@@ -7,7 +7,7 @@ from controller.auth import manager as auth_manager
 from middleware import log_storage
 from fast_api.routes.client_response import GENERIC_FAILURE_RESPONSE
 import traceback
-
+from submodules.model.session_wrapper import run_db_async_with_session
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ async def handle_db_session(request: Request, call_next):
         request.state.info = info
         request.state.parsed = {}
 
-        log_request = auth_manager.extract_state_info(request, "log_request")
+        log_request = await run_db_async_with_session(auth_manager.extract_state_info, request, "log_request")
         length = request.headers.get("content-length")
 
         if length and int(length) > 0:
