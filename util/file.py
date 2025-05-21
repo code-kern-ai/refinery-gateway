@@ -2,7 +2,7 @@ import json
 import os
 import pyminizip
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, List
 from zipfile import ZipFile
 from exceptions.exceptions import BadPasswordError
 
@@ -38,6 +38,13 @@ def zip_to_json_file(zip_file_path: str, key: Optional[str] = None) -> str:
     file_name = __get_free_file_path(f"{zip_file_path}.json")
     with open(file_name, "w") as f:
         json.dump(json_data, f)
+    return file_name
+
+
+def store_records_as_json_file(record_data: List[Dict[str, Any]]) -> str:
+    file_name = __get_free_file_path("tmpdummy.json")
+    with open(file_name, "w") as f:
+        json.dump(record_data, f)
     return file_name
 
 

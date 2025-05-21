@@ -172,6 +172,21 @@ def download_file(project_id: str, task: UploadTask) -> str:
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
     tmp_file_name, file_type = download_file(project_id, upload_task)
+    __import_file(project_id, upload_task, file_type, tmp_file_name)
+
+
+def import_file_record_dict(
+    project_id: str, upload_task: UploadTask, records: List[Dict[str, Any]]
+) -> None:
+    # load data from s3 and do transfer task/notification management
+    tmp_file_name = file.store_records_as_json_file(records)
+    file_type = "json"
+    __import_file(project_id, upload_task, file_type, tmp_file_name)
+
+
+def __import_file(
+    project_id: str, upload_task: UploadTask, file_type: str, tmp_file_name: str
+) -> None:
     upload_task_manager.update_task(
         project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
