@@ -20,6 +20,7 @@ from submodules.model.business_objects import (
 
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
+from controller.embedding import manager as embedding_manager
 from util import file, security
 from submodules.s3 import controller as s3
 from submodules.model import enums, UploadTask, Attribute
@@ -287,6 +288,10 @@ def update_records_and_labels(
     )
     token_manager.delete_token_statistics(updated_records)
     token_manager.delete_docbins(project_id, updated_records)
+    # remove embedding tensors if there are any to prep for delta migration
+    embedding_manager.remove_tensors_by_record_ids(
+        project_id, [str(r.id) for r in updated_records]
+    )
     return remaining_records_data, remaining_labels_data
 
 
