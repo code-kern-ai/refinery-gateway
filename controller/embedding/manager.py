@@ -188,11 +188,6 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
     old_embedding_item = embedding.get(project_id, embedding_id)
     if not old_embedding_item:
         return None
-    print(
-        "state before ------------------------------------------",
-        old_embedding_item.state,
-        flush=True,
-    )
     needs_full_recreation = False
     if old_embedding_item.delta_full_recalculation_threshold == 0:
         needs_full_recreation = True
@@ -254,11 +249,6 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
     # request handles delta and full recreation
     request_embedding_id = (
         new_embedding_item.id if needs_full_recreation else embedding_id
-    )
-    print(
-        "needs_full_recreation -----------------------------------------",
-        needs_full_recreation,
-        flush=True,
     )
     daemon.run_without_db_token(
         connector.request_embedding, project_id, request_embedding_id
