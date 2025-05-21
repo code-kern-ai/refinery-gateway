@@ -3,7 +3,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from submodules.model.business_objects import general
 import traceback
 from fast_api.routes.client_response import GENERIC_FAILURE_RESPONSE
-from submodules.model.session_wrapper import run_async
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
