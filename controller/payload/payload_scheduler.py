@@ -123,7 +123,7 @@ def create_payload(
             )
         finally:
             if in_thread:
-                general.reset_ctx_token(True)
+                general.reset_ctx_token(None, True)
 
     def prepare_input_data_for_payload(
         information_source_item: InformationSource,
