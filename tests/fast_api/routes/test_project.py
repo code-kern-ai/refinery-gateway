@@ -101,7 +101,7 @@ def test_create_embedding(client: TestClient, refinery_project: RefineryProject)
 
     assert response.status_code == 200
 
-    for _ in range(10):
+    for _ in range(20):
         time.sleep(1)
         all = embedding_bo.get_all_by_attribute_ids(refinery_project.id, [str(att.id)])
         if len(all) > 0:
@@ -109,7 +109,8 @@ def test_create_embedding(client: TestClient, refinery_project: RefineryProject)
     assert len(all) > 0
     assert all[0].type == enums.EmbeddingType.ON_ATTRIBUTE.value
 
-    for _ in range(20):
+    # quite long since for a fresh start the model needs to be downloaded!
+    for _ in range(60):
         time.sleep(1)
         count = embedding_bo.get_tensor_count(all[0].id)
         if count > 0:

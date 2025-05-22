@@ -32,8 +32,8 @@ def org() -> Iterator[Organization]:
     org_item = organization_bo.create(name="test_org", with_commit=True)
     s3.create_bucket(str(org_item.id))
     yield org_item
-    # organization_bo.delete(org_item.id, with_commit=True)
-    # s3.remove_bucket(str(org_item.id), True)
+    organization_bo.delete(org_item.id, with_commit=True)
+    s3.remove_bucket(str(org_item.id), True)
 
 
 @pytest.fixture(scope="session")
@@ -54,7 +54,7 @@ def refinery_project(org: Organization, user: User) -> Iterator[RefineryProject]
         with_commit=True,
     )
     yield project_item
-    # project_bo.delete(project_item.id, with_commit=True)
+    project_bo.delete(project_item.id, with_commit=True)
 
 
 @pytest.fixture
