@@ -939,7 +939,7 @@ def __post_processing_import_threaded(
     if not data.get(
         "embedding_tensors_data",
     ):
-        embedding_manager.recreate_embeddings(project_id, user_id=user_id)
+        embedding_manager.recreate_or_extend_embeddings(project_id, user_id=user_id)
     else:
         for old_id in embedding_ids:
             embedding_manager.request_tensor_upload(
