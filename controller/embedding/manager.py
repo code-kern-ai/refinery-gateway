@@ -206,7 +206,6 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
             old_embedding_item.current_delta_record_count += to_calc
     #
     if needs_full_recreation:
-        old_id = old_embedding_item.id
         new_embedding_item = embedding.create(
             project_id,
             old_embedding_item.attribute_id,
@@ -231,7 +230,7 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
             or new_embedding_item.platform == enums.EmbeddingPlatform.AZURE.value
         ):
             agreement_item = agreement.get_by_xfkey(
-                project_id, old_id, enums.AgreementType.EMBEDDING.value
+                project_id, embedding_id, enums.AgreementType.EMBEDDING.value
             )
             if not agreement_item:
                 new_embedding_item.state = enums.EmbeddingState.FAILED.value
@@ -242,7 +241,7 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
             agreement_item.xfkey = new_embedding_item.id
             general.commit()
 
-        connector.request_deleting_embedding(project_id, old_id)
+        connector.request_deleting_embedding(project_id, embedding_id)
     else:
         general.commit()
 
@@ -301,7 +300,4 @@ def remove_tensors_by_record_ids(
 ) -> None:
     if not record_ids:
         return
-    if embedding_id:
-        embedding.delete_tensors_by_record_ids(project_id, record_ids, embedding_id)
-    else:
-        embedding.delete_tensors_by_record_ids(project_id, record_ids)
+    embedding.delete_tensors_by_record_ids(project_id, record_ids, embedding_id)
