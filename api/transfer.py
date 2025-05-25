@@ -4,7 +4,7 @@ import time
 from typing import Optional
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse
-from controller.embedding.manager import recreate_embeddings
+from controller.embedding.manager import recreate_or_extend_embeddings
 
 from controller.transfer.cognition import (
     import_preparator as cognition_preparator,
@@ -165,7 +165,7 @@ def __recalculate_missing_attributes_and_embeddings(
     project_id: str, user_id: str
 ) -> None:
     __calculate_missing_attributes(project_id, user_id)
-    recreate_embeddings(project_id)
+    recreate_or_extend_embeddings(project_id)
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
@@ -218,7 +218,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             if current_att.state == enums.AttributeState.RUNNING.value:
                 continue
             elif current_att.state == enums.AttributeState.INITIAL.value:
-                attribute_manager.calculate_user_attribute_all_records(
+                attribute_manager.calculate_user_attribute_missing_records(
                     project_id,
                     project.get_org_id(project_id),
                     user_id,

@@ -1,3 +1,6 @@
 #!/bin/bash
 
-docker exec -it refinery-gateway bash -c "cd /app && python -m pytest -v"
+
+# add -s to see print statements
+# add -v to see test names
+docker exec -it refinery-gateway bash -c "cd /app && python -m pytest -v -s"
