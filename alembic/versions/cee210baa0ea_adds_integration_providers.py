@@ -1,8 +1,8 @@
 """adds integration providers
 
-Revision ID: a9d19af1cc5d
+Revision ID: cee210baa0ea
 Revises: eb96f9b82cc1
-Create Date: 2025-05-26 15:11:26.608774
+Create Date: 2025-05-26 15:18:32.868727
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "a9d19af1cc5d"
+revision = "cee210baa0ea"
 down_revision = "eb96f9b82cc1"
 branch_labels = None
 depends_on = None
@@ -47,6 +47,7 @@ def upgrade():
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("finished_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("description", sa.String(), nullable=True),
