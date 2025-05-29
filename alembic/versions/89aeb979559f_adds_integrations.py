@@ -1,8 +1,8 @@
 """adds integrations
 
-Revision ID: 9507990cb116
+Revision ID: 89aeb979559f
 Revises: 74f6e03f8e00
-Create Date: 2025-05-29 14:43:23.627964
+Create Date: 2025-05-29 19:11:50.782335
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "9507990cb116"
+revision = "89aeb979559f"
 down_revision = "74f6e03f8e00"
 branch_labels = None
 depends_on = None
@@ -41,6 +41,9 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "integration_id", "running_id", "source", name="unique_github_file_source"
+        ),
         schema="integration",
     )
     op.create_index(
@@ -74,19 +77,21 @@ def upgrade():
         sa.Column("integration_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
+        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.Column("url", sa.String(), nullable=True),
         sa.Column("state", sa.String(), nullable=True),
         sa.Column("assignee", sa.String(), nullable=True),
         sa.Column("milestone", sa.String(), nullable=True),
         sa.Column("number", sa.Integer(), nullable=True),
-        sa.Column("delta_criteria", sa.JSON(), nullable=True),
-        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "integration_id", "running_id", "source", name="unique_github_issue_source"
+        ),
         schema="integration",
     )
     op.create_index(
@@ -120,18 +125,20 @@ def upgrade():
         sa.Column("integration_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
+        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.Column("file_path", sa.String(), nullable=True),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("total_pages", sa.Integer(), nullable=True),
         sa.Column("title", sa.String(), nullable=True),
-        sa.Column("delta_criteria", sa.JSON(), nullable=True),
-        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "integration_id", "running_id", "source", name="unique_pdf_source"
+        ),
         schema="integration",
     )
     op.create_index(
@@ -165,6 +172,7 @@ def upgrade():
         sa.Column("integration_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
+        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.Column("extension", sa.String(), nullable=True),
         sa.Column("object_id", sa.String(), nullable=True),
         sa.Column("parent_path", sa.String(), nullable=True),
@@ -172,21 +180,22 @@ def upgrade():
         sa.Column("web_url", sa.String(), nullable=True),
         sa.Column("sharepoint_created_by", sa.String(), nullable=True),
         sa.Column("modified_by", sa.String(), nullable=True),
-        sa.Column("created", sa.String(), nullable=True),
-        sa.Column("modified", sa.String(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=True),
+        sa.Column("modified", sa.DateTime(), nullable=True),
         sa.Column("description", sa.String(), nullable=True),
-        sa.Column("size", sa.String(), nullable=True),
+        sa.Column("size", sa.Integer(), nullable=True),
         sa.Column("mime_type", sa.String(), nullable=True),
         sa.Column("hashes", sa.JSON(), nullable=True),
         sa.Column("permissions", sa.JSON(), nullable=True),
-        sa.Column("delta_criteria", sa.JSON(), nullable=True),
-        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "integration_id", "running_id", "source", name="unique_sharepoint_source"
+        ),
         schema="integration",
     )
     op.create_index(
