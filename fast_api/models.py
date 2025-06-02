@@ -511,3 +511,7 @@ class InviteUsersBody(BaseModel):
 
 class CheckInviteUsersBody(BaseModel):
     emails: List[StrictStr]
+
+
+class RecordDeletion(BaseModel):
+    record_ids: List[str]
