@@ -41,11 +41,9 @@ def sync_records(
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def delete_by_record_ids(
-    request: Request,
     project_id: str,
     body: RecordDeletion,
     as_thread: Optional[bool] = False,
 ):
-    # user_id = auth_manager.get_user_by_info(request.state.info).id
     manager.delete_records(project_id, body.record_ids, as_thread)
     return get_silent_success()
