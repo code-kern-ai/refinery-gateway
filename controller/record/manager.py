@@ -333,7 +333,7 @@ def delete_records(
 
 def __delete_records(project_id: str, record_ids: List[str]) -> None:
     try:
-        row_count = record.delete_multiple(project_id, record_ids)
+        row_count = record.delete_many(project_id, record_ids)
         if row_count == 0:
             print(
                 f"No records found to delete for {record_ids} in project {project_id}",
