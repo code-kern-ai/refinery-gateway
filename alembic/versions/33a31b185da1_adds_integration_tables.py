@@ -1,8 +1,8 @@
 """adds integration tables
 
-Revision ID: a6faf9b0c59c
+Revision ID: 33a31b185da1
 Revises: 96fbb404381e
-Create Date: 2025-06-03 10:17:24.723183
+Create Date: 2025-06-03 12:28:26.368699
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "a6faf9b0c59c"
+revision = "33a31b185da1"
 down_revision = "96fbb404381e"
 branch_labels = None
 depends_on = None
@@ -58,6 +58,8 @@ def upgrade():
         sa.Column("config", sa.JSON(), nullable=True),
         sa.Column("llm_config", sa.JSON(), nullable=True),
         sa.Column("error_message", sa.String(), nullable=True),
+        sa.Column("is_synced", sa.Boolean(), nullable=True),
+        sa.Column("last_synced_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
