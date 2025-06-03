@@ -13,6 +13,7 @@ from submodules.model.business_objects import (
     embedding,
     agreement,
     general,
+    record,
 )
 from submodules.model import daemon
 
@@ -99,7 +100,7 @@ def get_embedding_name(
     return name
 
 
-def recreate_embeddings(
+def recreate_or_extend_embeddings(
     project_id: str, embedding_ids: Optional[List[str]] = None, user_id: str = None
 ) -> None:
     if not embedding_ids:
@@ -126,7 +127,9 @@ def recreate_embeddings(
             embedding_item = embedding.get(project_id, embedding_id)
             if not embedding_item:
                 continue
-            embedding_item = __recreate_embedding(project_id, embedding_id)
+            embedding_item = __recreate_or_extend_embedding(project_id, embedding_id)
+            if not embedding_item:
+                continue
             new_id = embedding_item.id
             time.sleep(2)
             while True:
@@ -179,49 +182,77 @@ def __handle_failed_embedding(
     general.commit()
 
 
-def __recreate_embedding(project_id: str, embedding_id: str) -> Embedding:
-    old_embedding_item = embedding.get(project_id, embedding_id)
-    old_id = old_embedding_item.id
-    new_embedding_item = embedding.create(
-        project_id,
-        old_embedding_item.attribute_id,
-        old_embedding_item.name,
-        old_embedding_item.created_by,
-        enums.EmbeddingState.INITIALIZING.value,
-        type=old_embedding_item.type,
-        model=old_embedding_item.model,
-        platform=old_embedding_item.platform,
-        api_token=old_embedding_item.api_token,
-        filter_attributes=old_embedding_item.filter_attributes,
-        additional_data=old_embedding_item.additional_data,
-        with_commit=False,
-    )
-    embedding.delete(project_id, embedding_id, with_commit=False)
-    embedding.delete_tensors(embedding_id, with_commit=False)
-    general.commit()
+def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedding:
 
-    if (
-        new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value
-        or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value
-        or new_embedding_item.platform == enums.EmbeddingPlatform.AZURE.value
-    ):
-        agreement_item = agreement.get_by_xfkey(
-            project_id, old_id, enums.AgreementType.EMBEDDING.value
+    # check how many embeddings need to be recreated
+    old_embedding_item = embedding.get(project_id, embedding_id)
+    if not old_embedding_item:
+        return None
+    needs_full_recreation = False
+    if old_embedding_item.delta_full_recalculation_threshold == 0:
+        needs_full_recreation = True
+    elif old_embedding_item.delta_full_recalculation_threshold > 0:
+        already_deltaed = old_embedding_item.current_delta_record_count
+        full_count = record.count(project_id)
+        current_count = embedding.get_record_ids_count(embedding_id)
+        to_calc = full_count - current_count
+        if (
+            already_deltaed + to_calc
+            > old_embedding_item.delta_full_recalculation_threshold * full_count
+        ):
+            # only to a full recreation if the delta is larger than the threshold
+            needs_full_recreation = True
+        else:
+            old_embedding_item.current_delta_record_count += to_calc
+    #
+    if needs_full_recreation:
+        new_embedding_item = embedding.create(
+            project_id,
+            old_embedding_item.attribute_id,
+            old_embedding_item.name,
+            old_embedding_item.created_by,
+            enums.EmbeddingState.INITIALIZING.value,
+            type=old_embedding_item.type,
+            model=old_embedding_item.model,
+            platform=old_embedding_item.platform,
+            api_token=old_embedding_item.api_token,
+            filter_attributes=old_embedding_item.filter_attributes,
+            additional_data=old_embedding_item.additional_data,
+            with_commit=False,
         )
-        if not agreement_item:
-            new_embedding_item.state = enums.EmbeddingState.FAILED.value
-            general.commit()
-            raise ApiTokenImportError(
-                f"No agreement found for embedding {new_embedding_item.name}"
-            )
-        agreement_item.xfkey = new_embedding_item.id
+        embedding.delete(project_id, embedding_id, with_commit=False)
+        embedding.delete_tensors(embedding_id, with_commit=False)
         general.commit()
 
-    connector.request_deleting_embedding(project_id, old_id)
-    daemon.run_without_db_token(
-        connector.request_embedding, project_id, new_embedding_item.id
+        if (
+            new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value
+            or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value
+            or new_embedding_item.platform == enums.EmbeddingPlatform.AZURE.value
+        ):
+            agreement_item = agreement.get_by_xfkey(
+                project_id, embedding_id, enums.AgreementType.EMBEDDING.value
+            )
+            if not agreement_item:
+                new_embedding_item.state = enums.EmbeddingState.FAILED.value
+                general.commit()
+                raise ApiTokenImportError(
+                    f"No agreement found for embedding {new_embedding_item.name}"
+                )
+            agreement_item.xfkey = new_embedding_item.id
+            general.commit()
+
+        connector.request_deleting_embedding(project_id, embedding_id)
+    else:
+        general.commit()
+
+    # request handles delta and full recreation
+    request_embedding_id = (
+        new_embedding_item.id if needs_full_recreation else embedding_id
     )
-    return new_embedding_item
+    daemon.run_without_db_token(
+        connector.request_embedding, project_id, request_embedding_id
+    )
+    return new_embedding_item if needs_full_recreation else old_embedding_item
 
 
 def update_embedding_payload(
@@ -262,3 +293,11 @@ def update_label_payloads_for_neural_search(
         embedding_ids=[str(e.id) for e in relevant_embeddings],
         record_ids=record_ids,
     )
+
+
+def remove_tensors_by_record_ids(
+    project_id: str, record_ids: List[str], embedding_id: Optional[str] = None
+) -> None:
+    if not record_ids:
+        return
+    embedding.delete_tensors_by_record_ids(project_id, record_ids, embedding_id)

@@ -64,10 +64,23 @@ def prepare_sample_records_doc_bin(
 ) -> str:
     sample_records = record.get_attribute_calculation_sample_records(project_id)
 
+    return __prepare_records_doc_bin(
+        attribute_id, project_id, record_ids or [r[0] for r in sample_records]
+    )
+
+
+def prepare_delta_records_doc_bin(attribute_id: str, project_id: str) -> str:
+    missing_records = record.get_missing_delta_record_ids(project_id, attribute_id)
+    return __prepare_records_doc_bin(attribute_id, project_id, missing_records)
+
+
+def __prepare_records_doc_bin(
+    attribute_id: str, project_id: str, record_ids: List[str]
+) -> str:
     sample_records_doc_bin = tokenization.get_doc_bin_table_to_json(
         project_id=project_id,
         missing_columns=record.get_missing_columns_str(project_id),
-        record_ids=record_ids or [r[0] for r in sample_records],
+        record_ids=record_ids,
     )
     project_item = project.get(project_id)
     org_id = str(project_item.organization_id)
