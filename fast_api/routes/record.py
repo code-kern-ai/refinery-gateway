@@ -58,10 +58,10 @@ def add_access_groups_or_users(
     project_id: str,
     body: dict = Body(...),
 ):
-    group_ids = body.group_ids
-    user_ids = body.user_ids
-    record_ids = body.record_ids
-    errors = manager.add_access_groups_or_users(project_id, record_ids, groups_ids=group_ids, user_ids=user_ids)
+    group_ids = body.get("group_ids")
+    user_ids = body.get("user_ids")
+    record_ids = body.get("record_ids")
+    errors = manager.add_access_groups_or_users(project_id, record_ids, group_ids=group_ids, user_ids=user_ids)
     if errors and len(errors) > 0:
         return get_custom_response(
             status_code=status.HTTP_200_OK,

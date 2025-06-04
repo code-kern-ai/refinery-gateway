@@ -348,10 +348,10 @@ def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids
             else:
                 current_group_ids = record_item.data["__ACCESS_GROUPS"]
             extended_group_ids = list(set(current_group_ids + group_ids))  # remove duplicates
-            record_change_dict[f"{record_item.id}@__ACCESS_GROUPS"] = {
+            record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
                 "attributeName": "__ACCESS_GROUPS",
                 "newValue": extended_group_ids,
-                "recordId": record_item.id,
+                "recordId": str(record_item.id),
             }
     if user_ids and len(user_ids) > 0:
         for record_item in records_to_change:
@@ -360,10 +360,10 @@ def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids
             else:
                 current_user_ids = record_item.data["__ACCESS_USERS"]
             extended_user_ids = list(set(current_user_ids + user_ids))
-            record_change_dict[f"{record_item.id}@__ACCESS_USERS"] = {
+            record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
                 "attributeName": "__ACCESS_USERS",
                 "newValue": extended_user_ids,
-                "recordId": record_item.id,
+                "recordId": str(record_item.id),
             }
     # user not required for access management updates
     return edit_records(None, project_id, record_change_dict, True)
