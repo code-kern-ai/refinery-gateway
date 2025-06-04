@@ -77,6 +77,16 @@ def get_all_projects_with_tokens(request: Request) -> Dict:
     return pack_json_result(projects_with_access_management)
 
 
+@router.post("/{project_id}/access-management")
+def activate_access_management(
+    request: Request,
+    project_id: str,
+):
+    org_id = auth_manager.get_organization_id_by_info(request.state.info)
+    manager.activate_access_management(project_id, org_id)
+    return get_silent_success()
+
+
 @router.get("/all-projects-mini")
 def get_all_projects_mini(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(

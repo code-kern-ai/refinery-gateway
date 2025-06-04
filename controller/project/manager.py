@@ -15,6 +15,7 @@ from submodules.model.business_objects import (
     data_slice,
     information_source,
     general,
+    attribute
 )
 from submodules.model import daemon
 from fast_api.types import HuddleData, ProjectSize
@@ -55,6 +56,16 @@ def get_all_projects(organization_id: str) -> List[Project]:
 
 def get_all_projects_with_access_management(organization_id: str) -> List[Project]:
     return project.get_all_with_access_management(organization_id)
+
+
+def activate_access_management(project_id, org_id):
+    relative_position = attribute.get_relative_position(project_id)
+    if relative_position is None:
+        relative_position = 1
+    else:
+        relative_position += 1
+    attribute.create(project_id=project_id, relative_position=relative_position, name="__ACCESS_GROUPS", data_type=enums.DataTypes.PERMISSION, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
+    attribute.create(project_id=project_id, relative_position=relative_position + 1, name="__ACCESS_USERS", data_type=enums.DataTypes.PERMISSION, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
 
 
 def get_all_projects_by_user(organization_id) -> List[Project]:
