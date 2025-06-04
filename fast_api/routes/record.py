@@ -47,3 +47,24 @@ def delete_by_record_ids(
 ):
     manager.delete_records(project_id, body.record_ids, as_thread)
     return get_silent_success()
+
+
+# TODO: add some admin checks for access management
+@router.post(
+    "/{project_id}/access-management",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def add_access_groups_or_users(
+    project_id: str,
+    body: dict = Body(...),
+):
+    group_ids = body.group_ids
+    user_ids = body.user_ids
+    record_ids = body.record_ids
+    errors = manager.add_access_groups_or_users(project_id, record_ids, groups_ids=group_ids, user_ids=user_ids)
+    if errors and len(errors) > 0:
+        return get_custom_response(
+            status_code=status.HTTP_200_OK,
+            content=json.dumps(errors),
+        )
+    return get_silent_success()

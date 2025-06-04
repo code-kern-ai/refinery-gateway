@@ -138,7 +138,7 @@ def get_unique_values_by_attributes(project_id: str) -> Dict[str, List[str]]:
 
 
 def edit_records(
-    user_id: str, project_id: str, changes: Dict[str, Any]
+    user_id: str, project_id: str, changes: Dict[str, Any], only_access_management_update: Optional[bool] = False
 ) -> Optional[List[str]]:
     prepped = __check_and_prep_edit_records(project_id, changes)
     if "errors_found" in prepped:
@@ -159,6 +159,11 @@ def edit_records(
         record.data = new_data
     general.commit()
 
+    # Exit early if only access management update
+    if only_access_management_update:
+        # TODO maybe do something
+        return
+    
     # remove labels
     for chunk in chunk_list(prepped["rla_delete_tuples"], 1):
         record_label_association.delete_by_record_attribute_tuples(project_id, chunk)
@@ -329,6 +334,39 @@ def delete_records(
         )
     else:
         __delete_records(project_id, record_ids)
+
+
+def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids: Optional[List[str]] = None, user_ids: Optional[List[str]] = None) -> None:
+    if not record_ids or len(record_ids) == 0:
+        return
+    record_change_dict = {}
+    records_to_change = record.get_by_record_ids(project_id, record_ids)
+    if group_ids and len(group_ids) > 0:
+        for record_item in records_to_change:
+            if not record_item.data.get("__ACCESS_GROUPS"):
+                current_group_ids = []
+            else:
+                current_group_ids = record_item.data["__ACCESS_GROUPS"]
+            extended_group_ids = list(set(current_group_ids + group_ids))  # remove duplicates
+            record_change_dict[f"{record_item.id}@__ACCESS_GROUPS"] = {
+                "attributeName": "__ACCESS_GROUPS",
+                "newValue": extended_group_ids,
+                "recordId": record_item.id,
+            }
+    if user_ids and len(user_ids) > 0:
+        for record_item in records_to_change:
+            if not record_item.data.get("__ACCESS_USERS"):
+                current_user_ids = []
+            else:
+                current_user_ids = record_item.data["__ACCESS_USERS"]
+            extended_user_ids = list(set(current_user_ids + user_ids))
+            record_change_dict[f"{record_item.id}@__ACCESS_USERS"] = {
+                "attributeName": "__ACCESS_USERS",
+                "newValue": extended_user_ids,
+                "recordId": record_item.id,
+            }
+    # user not required for access management updates
+    return edit_records(None, project_id, record_change_dict, True)
 
 
 def __delete_records(project_id: str, record_ids: List[str]) -> None:

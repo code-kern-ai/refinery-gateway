@@ -91,7 +91,7 @@ def activate_access_management(
 
 
 # TO DO, some admin check should be added here
-@router.post("/{project_id}/deactivate-access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
+@router.delete("/{project_id}/access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
 def deactivate_access_management(
     request: Request,
     project_id: str,
@@ -117,7 +117,6 @@ def get_all_projects_mini(request: Request) -> Dict:
         }
         for project in projects
     ]
-
     return pack_json_result(project_extended)
 
 
