@@ -12,6 +12,7 @@ from submodules.model.business_objects import (
     tokenization,
     task_queue,
     record_label_association,
+    comments,
 )
 from service.search import search
 from submodules.model import enums
@@ -22,6 +23,10 @@ from controller.record import neural_search_connector
 from controller.embedding import manager as embedding_manager
 from controller.tokenization import tokenization_service
 from util.miscellaneous_functions import chunk_list
+from controller.tokenization.tokenization_service import (
+    request_reupload_docbins,
+)
+from util import notification
 import time
 import traceback
 
@@ -307,3 +312,46 @@ def __check_and_prep_edit_records(
         "rla_delete_tuples": rla_delete_tuples,
         "embedding_rebuilds": embedding_rebuilds,
     }
+
+
+def delete_records(
+    project_id: str,
+    record_ids: List[str],
+    as_thread: Optional[bool] = False,
+) -> None:
+    if not record_ids or len(record_ids) == 0:
+        return
+    if as_thread:
+        daemon.run_with_db_token(
+            __delete_records,
+            project_id,
+            record_ids,
+        )
+    else:
+        __delete_records(project_id, record_ids)
+
+
+def __delete_records(project_id: str, record_ids: List[str]) -> None:
+    try:
+        row_count = record.delete_many(project_id, record_ids)
+        if row_count == 0:
+            print(
+                f"No records found to delete for {record_ids} in project {project_id}",
+                flush=True,
+            )
+            return
+        comments.delete_by_type_and_xfkey(
+            project_id, record_ids, enums.CommentCategory.RECORD
+        )
+        general.commit()
+
+        request_reupload_docbins(project_id)
+
+        all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+
+        for embedding_item in all_embeddings:
+            embedding_manager.request_tensor_upload(project_id, str(embedding_item.id))
+        notification.send_organization_update(project_id, "records_changed")
+
+    except Exception:
+        print(traceback.format_exc(), flush=True)

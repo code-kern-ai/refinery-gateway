@@ -20,6 +20,7 @@ from submodules.model.business_objects import (
 
 from controller.upload_task import manager as upload_task_manager
 from controller.tokenization import manager as token_manager
+from controller.embedding import manager as embedding_manager
 from util import file, security
 from submodules.s3 import controller as s3
 from submodules.model import enums, UploadTask, Attribute
@@ -171,6 +172,21 @@ def download_file(project_id: str, task: UploadTask) -> str:
 def import_file(project_id: str, upload_task: UploadTask) -> None:
     # load data from s3 and do transfer task/notification management
     tmp_file_name, file_type = download_file(project_id, upload_task)
+    __import_file(project_id, upload_task, file_type, tmp_file_name)
+
+
+def import_file_record_dict(
+    project_id: str, upload_task: UploadTask, records: List[Dict[str, Any]]
+) -> None:
+    # load data from s3 and do transfer task/notification management
+    tmp_file_name = file.store_records_as_json_file(records)
+    file_type = "json"
+    __import_file(project_id, upload_task, file_type, tmp_file_name)
+
+
+def __import_file(
+    project_id: str, upload_task: UploadTask, file_type: str, tmp_file_name: str
+) -> None:
     upload_task_manager.update_task(
         project_id, upload_task.id, state=enums.UploadStates.IN_PROGRESS.value
     )
@@ -287,6 +303,10 @@ def update_records_and_labels(
     )
     token_manager.delete_token_statistics(updated_records)
     token_manager.delete_docbins(project_id, updated_records)
+    # remove embedding tensors if there are any to prep for delta migration
+    embedding_manager.remove_tensors_by_record_ids(
+        project_id, [str(r.id) for r in updated_records]
+    )
     return remaining_records_data, remaining_labels_data
 
 
