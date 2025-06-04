@@ -69,7 +69,13 @@ def activate_access_management(project_id):
 
 
 def deactivate_access_management(project_id: str) -> None:
-    pass
+    record.delete_access_management_attributes(project_id)
+    access_groups_attribute = attribute.get_by_name(project_id, "__ACCESS_GROUPS")
+    access_users_attribute = attribute.get_by_name(project_id, "__ACCESS_USERS")
+    if access_groups_attribute:
+        attribute.delete(project_id, access_groups_attribute.id, with_commit=True)
+    if access_users_attribute:
+        attribute.delete(project_id, access_users_attribute.id, with_commit=True)
 
 
 def is_access_management_activated(project_id: str) -> bool:

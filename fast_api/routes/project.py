@@ -70,6 +70,7 @@ def get_all_projects(request: Request) -> Dict:
     return pack_json_result(projects)
 
 
+# TO DO, some admin check should be added here
 @router.get("/all-projects-with-access-management")
 def get_all_projects_with_tokens(request: Request) -> Dict:
     org_id = auth_manager.get_organization_id_by_info(request.state.info)
@@ -77,6 +78,7 @@ def get_all_projects_with_tokens(request: Request) -> Dict:
     return pack_json_result(projects_with_access_management)
 
 
+# TO DO, some admin check should be added here
 @router.post("/{project_id}/access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
 def activate_access_management(
     request: Request,
@@ -88,6 +90,7 @@ def activate_access_management(
     return get_silent_success()
 
 
+# TO DO, some admin check should be added here
 @router.post("/{project_id}/deactivate-access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
 def deactivate_access_management(
     request: Request,
