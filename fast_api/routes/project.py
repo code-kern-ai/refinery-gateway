@@ -70,6 +70,13 @@ def get_all_projects(request: Request) -> Dict:
     return pack_json_result(projects)
 
 
+@router.get("/all-projects-with-access-management")
+def get_all_projects_with_tokens(request: Request) -> Dict:
+    org_id = auth_manager.get_organization_id_by_info(request.state.info)
+    projects_with_access_management = manager.get_all_projects_with_access_management(org_id)
+    return pack_json_result(projects_with_access_management)
+
+
 @router.get("/all-projects-mini")
 def get_all_projects_mini(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(

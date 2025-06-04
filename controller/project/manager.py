@@ -53,6 +53,10 @@ def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
 
 
+def get_all_projects_with_access_management(organization_id: str) -> List[Project]:
+    return project.get_all_with_access_management(organization_id)
+
+
 def get_all_projects_by_user(organization_id) -> List[Project]:
     projects = project.get_all_by_user_organization_id(organization_id)
     project_dicts = sql_alchemy_to_dict(
