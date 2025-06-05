@@ -159,32 +159,28 @@ def edit_records(
         record.data = new_data
     general.commit()
 
-    # Exit early if only access management update
-    if only_access_management_update:
-        # TODO maybe do something
-        return
-    
     # remove labels
     for chunk in chunk_list(prepped["rla_delete_tuples"], 1):
         record_label_association.delete_by_record_attribute_tuples(project_id, chunk)
 
     general.commit()
+    # TODO check if this is still needed for access management updates
+    if not only_access_management_update:
+        try:
+            # tokenization currently with a complete rebuild of the docbins of touched records
+            # optimization possible by only rebuilding the changed record & attribute combinations and reuploading
+            tokenization.delete_record_docbins_by_id(project_id, records.keys(), True)
+            tokenization.delete_token_statistics_by_id(project_id, records.keys(), True)
+            tokenization_service.request_tokenize_project(project_id, user_id)
+            time.sleep(1)
+            # wait for tokenization to finish, the endpoint itself handles missing docbins
+            while tokenization.is_doc_bin_creation_running_or_queued(project_id):
+                time.sleep(0.5)
 
-    try:
-        # tokenization currently with a complete rebuild of the docbins of touched records
-        # optimization possible by only rebuilding the changed record & attribute combinations and reuploading
-        tokenization.delete_record_docbins_by_id(project_id, records.keys(), True)
-        tokenization.delete_token_statistics_by_id(project_id, records.keys(), True)
-        tokenization_service.request_tokenize_project(project_id, user_id)
-        time.sleep(1)
-        # wait for tokenization to finish, the endpoint itself handles missing docbins
-        while tokenization.is_doc_bin_creation_running_or_queued(project_id):
-            time.sleep(0.5)
-
-    except Exception:
-        __revert_record_data_changes(records, prepped["record_data_backup"])
-        print(traceback.format_exc(), flush=True)
-        return ["tokenization failed"]
+        except Exception:
+            __revert_record_data_changes(records, prepped["record_data_backup"])
+            print(traceback.format_exc(), flush=True)
+            return ["tokenization failed"]
 
     try:
         embedding_connector.request_re_embed_records(
