@@ -29,6 +29,7 @@ from controller.tokenization.tokenization_service import (
 from util import notification
 import time
 import traceback
+from controller.embedding import connector
 
 
 def get_record(project_id: str, record_id: str) -> Record:
@@ -361,8 +362,12 @@ def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids
                 "newValue": extended_user_ids,
                 "recordId": str(record_item.id),
             }
-    # user not required for access management updates
-    return edit_records(None, project_id, record_change_dict, True)
+    # maybe wait for embedding to finish first?
+    errors = edit_records(None, project_id, record_change_dict, True)
+    if not errors:
+        all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+        for embedding_item in all_embeddings:
+            connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id))
 
 
 def __delete_records(project_id: str, record_ids: List[str]) -> None:
