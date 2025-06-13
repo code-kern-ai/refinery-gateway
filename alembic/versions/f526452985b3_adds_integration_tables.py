@@ -232,6 +232,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.Column("integration_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("delta_url", sa.String(), nullable=True),
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
         sa.Column("minio_file_name", sa.String(), nullable=True),
