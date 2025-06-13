@@ -511,3 +511,7 @@ class InviteUsersBody(BaseModel):
 
 class CheckInviteUsersBody(BaseModel):
     emails: List[StrictStr]
+
+
+class AdminQueryFilterBody(BaseModel):
+    parameters: Optional[Dict[str, Any]] = None
