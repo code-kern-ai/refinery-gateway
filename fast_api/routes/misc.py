@@ -1,6 +1,6 @@
 from exceptions.exceptions import AuthManagerError
 from fastapi import APIRouter, Body, Request, status
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, FileResponse
 from fast_api.models import (
     CancelTaskBody,
     CheckInviteUsersBody,
@@ -313,3 +313,21 @@ def get_admin_queries(
         raise AuthManagerError("Full admin access required")
     data = admin_queries_db_go.get_result_admin_query(query, body.parameters)
     return pack_json_result(data)
+
+
+@router.post("/admin-query/{query}/download")
+def get_admin_query_excel(
+    request: Request, query: AdminQueries, body: AdminQueryFilterBody = Body(...)
+):
+    auth.check_admin_access(request.state.info)
+    if not auth.check_is_full_admin(request):
+        raise AuthManagerError("Full admin access required")
+
+    file_path = manager.create_admin_query_excel(query, body.parameters)
+
+    if file_path is None:
+        return GENERIC_FAILURE_RESPONSE
+    return FileResponse(
+        file_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
