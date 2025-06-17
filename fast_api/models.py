@@ -515,3 +515,7 @@ class CheckInviteUsersBody(BaseModel):
 
 class AdminQueryFilterBody(BaseModel):
     parameters: Optional[Dict[str, Any]] = None
+
+
+class RecordDeletion(BaseModel):
+    record_ids: List[str]
