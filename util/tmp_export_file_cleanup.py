@@ -1,6 +1,4 @@
 from datetime import datetime, timedelta
-
-# from src.util import daemon
 from submodules.model.daemon import run_without_db_token
 import glob
 import os
