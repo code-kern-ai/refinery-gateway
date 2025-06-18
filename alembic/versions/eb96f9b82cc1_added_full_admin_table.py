@@ -36,7 +36,6 @@ def upgrade():
             (gen_random_uuid(), 'lina.lumburovska@kern.ai','{}'),
             (gen_random_uuid(), 'jens.wittmeyer@kern.ai','{}'),
             (gen_random_uuid(), 'lennart.schmidt@kern.ai','{}'),
-            (gen_random_uuid(), 'anmar.hindi@kern.ai','{}'),
             (gen_random_uuid(), 'andrea.hrelja@kern.ai','{}'),
             (gen_random_uuid(), 'leonard.puettmann@kern.ai','{}'),
             (gen_random_uuid(), 'johannes.hoetter@kern.ai','{}'),
