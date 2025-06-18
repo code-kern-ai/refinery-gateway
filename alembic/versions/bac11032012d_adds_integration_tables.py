@@ -1,8 +1,8 @@
 """adds integration tables
 
-Revision ID: f526452985b3
+Revision ID: bac11032012d
 Revises: 96fbb404381e
-Create Date: 2025-06-03 13:23:51.843158
+Create Date: 2025-06-16 13:05:55.961555
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "f526452985b3"
+revision = "bac11032012d"
 down_revision = "96fbb404381e"
 branch_labels = None
 depends_on = None
@@ -48,6 +48,8 @@ def upgrade():
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("updated_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("finished_at", sa.DateTime(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
@@ -60,11 +62,13 @@ def upgrade():
         sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("is_synced", sa.Boolean(), nullable=True),
         sa.Column("last_synced_at", sa.DateTime(), nullable=True),
+        sa.Column("delta_criteria", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(["project_id"], ["project.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
         schema="cognition",
     )
