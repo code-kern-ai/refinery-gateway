@@ -79,6 +79,15 @@ def update_user_language_display(user_id: str, language_display: str) -> User:
     return user_item
 
 
+def set_use_new_ui(user_id: str, value: bool) -> User:
+    user_item = user.get(user_id)
+    if not user_item:
+        raise ValueError("User not found")
+    user_item.use_new_cognition_ui = value
+    general.commit()
+    return user_item
+
+
 def remove_organization_from_user(user_mail: str) -> None:
     user_id = kratos.get_userid_from_mail(user_mail)
     if user_id is None:
