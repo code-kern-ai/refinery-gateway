@@ -46,6 +46,7 @@ USER_INFO_WHITELIST = {
     "role",
     "language_display",
     "email",
+    "use_new_cognition_ui",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
