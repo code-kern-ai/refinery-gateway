@@ -354,30 +354,33 @@ def sync_access_groups_and_users_sharepoint(project_id: str, integration_id: str
             meta_data_dict = json.loads(record_item.data.get("metadata", "{}"))
             permission_ids = meta_data_dict.get("permissions")
             new_group_ids = [str(integration_groups_by_permission_id.get(permission_id).id) for permission_id in permission_ids if integration_groups_by_permission_id.get(permission_id)]  
-            extended_group_ids = list(set(current_group_ids + new_group_ids))  # remove duplicates
-            record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
-                "attributeName": "__ACCESS_GROUPS",
-                "newValue": extended_group_ids,
-                "recordId": str(record_item.id),
-            }
+            # Only update if new group ids differ from current group ids
+            if not set(new_group_ids) == set(current_group_ids):
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
+                    "attributeName": "__ACCESS_GROUPS",
+                    "newValue": new_group_ids,
+                    "recordId": str(record_item.id),
+                }
             if not record_item.data.get("__ACCESS_USERS"):
                 current_user_ids = []
             else:
                 current_user_ids = record_item.data["__ACCESS_USERS"]
                 new_user_ids = [permissions_users.get(permission_id) for permission_id in permission_ids if permissions_users.get(permission_id)]
-                if new_user_ids:
-                    extended_user_ids = list(set(current_user_ids + new_user_ids))
+                # Only update if new user ids differ from current user ids
+                if not set(new_user_ids) == set(current_user_ids):
+                    extended_user_ids = new_user_ids
                     record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
                         "attributeName": "__ACCESS_USERS",
                         "newValue": extended_user_ids,
                         "recordId": str(record_item.id),
                     }
-
+        changed_records_ids = list(record_change_dict.keys())
+        partial_update = len(changed_records_ids) < len(project_records)
         errors = edit_records(None, project_id, record_change_dict, True)
         if not errors:
             all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
             for embedding_item in all_embeddings:
-                connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id))
+                connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id), record_ids=changed_records_ids if partial_update else None)
     except Exception:
         print(traceback.format_exc(), flush=True)
         raise Exception("Error syncing access groups and users from SharePoint integration")
