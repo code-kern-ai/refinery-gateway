@@ -30,7 +30,10 @@ def upgrade():
 
     update_dataset_sql = """
         UPDATE cognition.project
-        SET icon = 'IconBolt';
+        SET icon = 'IconBolt';"""
+    connection.execute(update_dataset_sql)
+
+    update_dataset_sql = """
         UPDATE public.user
         SET use_new_cognition_ui = FALSE; """
     connection.execute(update_dataset_sql)

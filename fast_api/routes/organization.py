@@ -247,19 +247,11 @@ def archive_admin_message(
     return get_silent_success()
 
 
-# in use cognition-ui (08.01.25)
-@router.put("/set-language-display/{language}")
-def set_language_display(request: Request, language: str):
-    user_id = auth_manager.get_user_id_by_info(request.state.info)
-    user_manager.update_user_language_display(user_id, language)
-    return get_silent_success()
-
-
 # in use cognition-ui (23.06.25)
-@router.put("/set-use-new-ui/{value}")
-def set_use_new_ui(request: Request, value: bool):
+@router.put("/update-user-field/{field}/{value}")
+def set_language_display(request: Request, field: str, value: str):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
-    user_manager.set_use_new_ui(user_id, value)
+    user_manager.update_user_field(user_id, field, value)
     return get_silent_success()
 
 
