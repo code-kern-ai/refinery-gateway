@@ -1,6 +1,9 @@
 from typing import Any, Dict, List
 from fast_api.types import ServiceVersionResult
-from submodules.model.global_objects import customer_button
+from submodules.model.global_objects import (
+    customer_button,
+    admin_queries as admin_queries_db_go,
+)
 from datetime import datetime
 import os
 from controller.auth import kratos
@@ -8,6 +11,11 @@ from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import enums
 import requests
 from urllib.parse import urlparse, urlencode, parse_qsl, parse_qs
+from util.tmp_export_file_cleanup import add_cleanup_task
+from uuid import uuid4
+import pandas as pd
+from submodules.model.util import ensure_sql_text
+from submodules.model.business_objects import general
 
 import base64
 
@@ -169,3 +177,16 @@ def __patch_url(url: str, **kwargs):
         ._replace(query=urlencode(dict(parse_qsl(urlparse(url).query), **kwargs)))
         .geturl()
     )
+
+
+def create_admin_query_excel(
+    query: enums.AdminQueries, parameters: Dict[str, Any]
+) -> str:
+
+    q = admin_queries_db_go.get_result_admin_query(query, parameters, as_query=True)
+
+    df = pd.read_sql(ensure_sql_text(q), con=general.get_bind())
+    tmp_filename = f"tmp/feedback_{uuid4()}.xlsx"
+    df.to_excel(tmp_filename, index=False)
+    add_cleanup_task(tmp_filename, 5)
+    return tmp_filename
