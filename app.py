@@ -16,6 +16,7 @@ from config_handler import (
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
+from fast_api.routes.project_internal import router as project_internal_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
 from fast_api.routes.attribute import router as attribute_router
@@ -43,6 +44,7 @@ from route_prefix import (
     PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
     PREFIX_PROJECT_SETTING,
+    PREFIX_PROJECT_INTERNAL,
     PREFIX_MISC,
     PREFIX_COMMENT,
     PREFIX_ATTRIBUTE,
@@ -120,6 +122,9 @@ fastapi_app_internal.include_router(
 
 fastapi_app_internal.include_router(
     record_internal_router, prefix=PREFIX_RECORD_INTERNAL, tags=["record-internal"]
+)
+fastapi_app_internal.include_router(
+    project_internal_router, prefix=PREFIX_PROJECT_INTERNAL, tags=["project-internal"]
 )
 
 

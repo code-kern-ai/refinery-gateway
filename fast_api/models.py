@@ -515,3 +515,7 @@ class CheckInviteUsersBody(BaseModel):
 
 class RecordDeletion(BaseModel):
     record_ids: List[str]
+
+
+class ProjectDeletion(BaseModel):
+    user_id: str
