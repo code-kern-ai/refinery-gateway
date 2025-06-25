@@ -250,8 +250,7 @@ def archive_admin_message(
 # in use cognition-ui (08.01.25)
 @router.post("/set-language-display")
 def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
-    user_id = auth_manager.get_user_id_by_info(request.state.info)
-    user_manager.update_user_language_display(user_id, body.language_display)
+    user_manager.update_user_language_display(body.user_id, body.language_display)
     return get_silent_success()
 
 
