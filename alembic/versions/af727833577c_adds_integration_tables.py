@@ -1,8 +1,8 @@
 """adds integration tables
 
-Revision ID: deb19e3e620b
+Revision ID: af727833577c
 Revises: 96fbb404381e
-Create Date: 2025-06-25 14:26:11.212310
+Create Date: 2025-06-25 14:37:40.733075
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "deb19e3e620b"
+revision = "af727833577c"
 down_revision = "96fbb404381e"
 branch_labels = None
 depends_on = None
@@ -74,7 +74,7 @@ def upgrade():
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
         ),
-        sa.ForeignKeyConstraint(["project_id"], ["project.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["project_id"], ["project.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["updated_by"], ["user.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
         schema="cognition",
