@@ -519,3 +519,4 @@ class RecordDeletion(BaseModel):
 
 class ProjectDeletion(BaseModel):
     user_id: str
+    project_ids: List[str]

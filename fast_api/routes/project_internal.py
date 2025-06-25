@@ -13,19 +13,20 @@ router = APIRouter()
 
 
 @router.delete(
-    "/{project_id}/delete-projects",
+    "/delete-projects",
 )
-def delete_project(request: Request, project_id: str, data: ProjectDeletion):
-    manager.update_project(project_id, status=enums.ProjectStatus.IN_DELETION.value)
-    user = auth_manager.get_user_by_info(data.user_id)
-    project_item = manager.get_project(project_id)
-    organization_id = str(project_item.organization_id)
-    notification.create_notification(
-        enums.NotificationType.PROJECT_DELETED, user.id, None, project_item.name
-    )
-    notification_model.remove_project_connection_for_last_x(project_id)
-    manager.delete_project(project_id)
-    notification.send_organization_update(
-        project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
-    )
+def delete_project(request: Request, data: ProjectDeletion):
+    for project_id in data.project_ids:
+        manager.update_project(project_id, status=enums.ProjectStatus.IN_DELETION.value)
+        user = auth_manager.get_user_by_info(data.user_id)
+        project_item = manager.get_project(project_id)
+        organization_id = str(project_item.organization_id)
+        notification.create_notification(
+            enums.NotificationType.PROJECT_DELETED, user.id, None, project_item.name
+        )
+        notification_model.remove_project_connection_for_last_x(project_id)
+        manager.delete_project(project_id)
+        notification.send_organization_update(
+            project_id, f"project_deleted:{project_id}:{user.id}", True, organization_id
+        )
     return get_silent_success()
