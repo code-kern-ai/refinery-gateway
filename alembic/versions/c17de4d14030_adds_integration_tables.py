@@ -1,8 +1,8 @@
 """adds integration tables
 
-Revision ID: af727833577c
+Revision ID: c17de4d14030
 Revises: 96fbb404381e
-Create Date: 2025-06-25 14:37:40.733075
+Create Date: 2025-06-26 12:14:54.827953
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "af727833577c"
+revision = "c17de4d14030"
 down_revision = "96fbb404381e"
 branch_labels = None
 depends_on = None
@@ -117,11 +117,11 @@ def upgrade():
         sa.Column("integration_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
+        sa.Column("minio_file_name", sa.String(), nullable=True),
+        sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("path", sa.String(), nullable=True),
         sa.Column("sha", sa.String(), nullable=True),
         sa.Column("code_language", sa.String(), nullable=True),
-        sa.Column("delta_criteria", sa.JSON(), nullable=True),
-        sa.Column("minio_file_name", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
@@ -179,6 +179,7 @@ def upgrade():
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
         sa.Column("minio_file_name", sa.String(), nullable=True),
+        sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("url", sa.String(), nullable=True),
         sa.Column("state", sa.String(), nullable=True),
         sa.Column("assignee", sa.String(), nullable=True),
@@ -241,6 +242,7 @@ def upgrade():
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
         sa.Column("minio_file_name", sa.String(), nullable=True),
+        sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("file_path", sa.String(), nullable=True),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("total_pages", sa.Integer(), nullable=True),
@@ -302,6 +304,7 @@ def upgrade():
         sa.Column("running_id", sa.Integer(), nullable=True),
         sa.Column("source", sa.String(), nullable=True),
         sa.Column("minio_file_name", sa.String(), nullable=True),
+        sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("extension", sa.String(), nullable=True),
         sa.Column("object_id", sa.String(), nullable=True),
         sa.Column("parent_path", sa.String(), nullable=True),
