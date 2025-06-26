@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
@@ -6,6 +6,7 @@ from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
 from datetime import datetime, timedelta
 from util.decorator import param_throttle
+from submodules.model.util import is_string_true_value
 
 
 def get_user(user_id: str) -> User:
@@ -70,11 +71,13 @@ def update_user_role(user_id: str, role: str) -> User:
     return user_item
 
 
-def update_user_language_display(user_id: str, language_display: str) -> User:
+def update_user_field(user_id: str, field: str, value: Any) -> User:
     user_item = user.get(user_id)
     if not user_item:
         raise ValueError("User not found")
-    user_item.language_display = language_display
+    if field == "use_new_cognition_ui":
+        value = is_string_true_value(value)
+    setattr(user_item, field, value)
     general.commit()
     return user_item
 
