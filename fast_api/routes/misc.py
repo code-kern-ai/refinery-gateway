@@ -1,6 +1,6 @@
 from exceptions.exceptions import AuthManagerError
 from fastapi import APIRouter, Body, Request, status
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, FileResponse
 from fast_api.models import (
     CancelTaskBody,
     CheckInviteUsersBody,
@@ -9,6 +9,7 @@ from fast_api.models import (
     ModelProviderDownloadModelBody,
     CreateCustomerButton,
     UpdateCustomerButton,
+    AdminQueryFilterBody,
 )
 from fast_api.routes.client_response import (
     pack_json_result,
@@ -22,12 +23,16 @@ from controller.monitor import manager as controller_manager
 from controller.model_provider import manager as model_provider_manager
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums
-from submodules.model.global_objects import customer_button as customer_button_db_go
+from submodules.model.global_objects import (
+    customer_button as customer_button_db_go,
+    admin_queries as admin_queries_db_go,
+)
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model.enums import (
     try_parse_enum_value,
     CustomerButtonType,
     CustomerButtonLocation,
+    AdminQueries,
 )
 from submodules.model.business_objects import task_queue as task_queue_bo
 
@@ -296,3 +301,33 @@ def check_valid_emails(request: Request, body: CheckInviteUsersBody = Body(...))
         raise AuthManagerError("Full admin access required")
     data = auth.check_valid_emails(body.emails)
     return pack_json_result(data)
+
+
+# post to allow for a body to be sent
+@router.post("/admin-query/{query}")
+def get_admin_queries(
+    request: Request, query: AdminQueries, body: AdminQueryFilterBody = Body(...)
+):
+    auth.check_admin_access(request.state.info)
+    if not auth.check_is_full_admin(request):
+        raise AuthManagerError("Full admin access required")
+    data = admin_queries_db_go.get_result_admin_query(query, body.parameters)
+    return pack_json_result(data)
+
+
+@router.post("/admin-query/{query}/download")
+def get_admin_query_excel(
+    request: Request, query: AdminQueries, body: AdminQueryFilterBody = Body(...)
+):
+    auth.check_admin_access(request.state.info)
+    if not auth.check_is_full_admin(request):
+        raise AuthManagerError("Full admin access required")
+
+    file_path = manager.create_admin_query_excel(query, body.parameters)
+
+    if file_path is None:
+        return GENERIC_FAILURE_RESPONSE
+    return FileResponse(
+        file_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )

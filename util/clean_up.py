@@ -1,5 +1,6 @@
 from submodules.model.business_objects import upload_task
-import os, shutil
+import os
+import shutil
 
 
 def clean_up_database() -> None:

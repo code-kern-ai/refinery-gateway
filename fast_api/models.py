@@ -383,11 +383,6 @@ class TokenizedRecordBody(BaseModel):
     record_id: StrictStr
 
 
-class UserLanguageDisplay(BaseModel):
-    user_id: str
-    language_display: str
-
-
 class MappedSortedPaginatedUsers(BaseModel):
     sort_key: str
     sort_direction: int
@@ -511,6 +506,10 @@ class InviteUsersBody(BaseModel):
 
 class CheckInviteUsersBody(BaseModel):
     emails: List[StrictStr]
+
+
+class AdminQueryFilterBody(BaseModel):
+    parameters: Optional[Dict[str, Any]] = None
 
 
 class RecordDeletion(BaseModel):
