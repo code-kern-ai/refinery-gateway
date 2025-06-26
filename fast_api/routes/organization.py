@@ -13,7 +13,6 @@ from fast_api.models import (
     MappedSortedPaginatedUsers,
     MissingUsersBody,
     RemoveUserToOrganizationBody,
-    UserLanguageDisplay,
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
@@ -47,6 +46,7 @@ USER_INFO_WHITELIST = {
     "role",
     "language_display",
     "email",
+    "use_new_cognition_ui",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
@@ -247,10 +247,11 @@ def archive_admin_message(
     return get_silent_success()
 
 
-# in use cognition-ui (08.01.25)
-@router.post("/set-language-display")
-def set_language_display(request: Request, body: UserLanguageDisplay = Body(...)):
-    user_manager.update_user_language_display(body.user_id, body.language_display)
+# in use cognition-ui (23.06.25)
+@router.put("/update-user-field/{field}/{value}")
+def set_language_display(request: Request, field: str, value: str):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    user_manager.update_user_field(user_id, field, value)
     return get_silent_success()
 
 
