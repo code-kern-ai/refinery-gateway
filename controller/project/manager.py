@@ -15,6 +15,8 @@ from submodules.model.business_objects import (
     data_slice,
     information_source,
     general,
+    attribute,
+    embedding
 )
 from submodules.model import daemon
 from fast_api.types import HuddleData, ProjectSize
@@ -25,6 +27,8 @@ from submodules.s3 import controller as s3
 from service.search import search
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
+from controller.embedding import connector
+
 
 ALL_PROJECTS_WHITELIST = {
     "id",
@@ -51,6 +55,47 @@ def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
 
 def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
+
+
+def get_all_projects_with_access_management(organization_id: str) -> List[Project]:
+    return project.get_all_with_access_management(organization_id)
+
+
+def activate_access_management(project_id):
+    relative_position = attribute.get_relative_position(project_id)
+    if relative_position is None:
+        relative_position = 1
+    else:
+        relative_position += 1
+    filter_attributes = ["__ACCESS_GROUPS", "__ACCESS_USERS"]
+    attribute.create(project_id=project_id, relative_position=relative_position, name=filter_attributes[0], data_type=enums.DataTypes.PERMISSION.value, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
+    attribute.create(project_id=project_id, relative_position=relative_position + 1, name=filter_attributes[1], data_type=enums.DataTypes.PERMISSION.value, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
+    all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+    for embedding_item in all_embeddings:
+        prev_filter_attributes = embedding_item.filter_attributes or []
+        new_filter_attributes = list(set(prev_filter_attributes + filter_attributes))
+        embedding_item.filter_attributes = new_filter_attributes
+        general.commit()
+        if connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id)):
+            embedding.update_embedding_filter_attributes(
+                project_id, str(embedding_item.id), new_filter_attributes, with_commit=True
+            )
+ 
+
+def deactivate_access_management(project_id: str) -> None:
+    record.delete_access_management_attributes(project_id)
+    access_groups_attribute = attribute.get_by_name(project_id, "__ACCESS_GROUPS")
+    access_users_attribute = attribute.get_by_name(project_id, "__ACCESS_USERS")
+    if access_groups_attribute:
+        attribute.delete(project_id, access_groups_attribute.id, with_commit=True)
+    if access_users_attribute:
+        attribute.delete(project_id, access_users_attribute.id, with_commit=True)
+
+
+def is_access_management_activated(project_id: str) -> bool:
+    access_groups = attribute.get_by_name(project_id, "__ACCESS_GROUPS")
+    access_users = attribute.get_by_name(project_id, "__ACCESS_USERS")
+    return access_groups is not None and access_users is not None
 
 
 def get_all_projects_by_user(organization_id) -> List[Project]:

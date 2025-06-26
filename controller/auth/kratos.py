@@ -263,3 +263,15 @@ def check_user_exists(email: str) -> bool:
             if i["traits"]["email"].lower() == email.lower():
                 return True
     return False
+
+
+def get_user_from_search(email: str) -> bool:
+    request = requests.get(
+        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(email)}"
+    )
+    if request.ok:
+        identities = request.json()
+        for i in identities:
+            if i["traits"]["email"].lower() == email.lower():
+                return i
+    return None

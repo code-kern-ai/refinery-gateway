@@ -13,6 +13,7 @@ from submodules.model.business_objects import (
     task_queue,
     record_label_association,
     comments,
+    project
 )
 from service.search import search
 from submodules.model import enums
@@ -29,6 +30,9 @@ from controller.tokenization.tokenization_service import (
 from util import notification
 import time
 import traceback
+from controller.embedding import connector
+from submodules.model.cognition_objects import group as group_db
+import json
 
 
 def get_record(project_id: str, record_id: str) -> Record:
@@ -138,7 +142,7 @@ def get_unique_values_by_attributes(project_id: str) -> Dict[str, List[str]]:
 
 
 def edit_records(
-    user_id: str, project_id: str, changes: Dict[str, Any]
+    user_id: str, project_id: str, changes: Dict[str, Any], only_access_management_update: Optional[bool] = False
 ) -> Optional[List[str]]:
     prepped = __check_and_prep_edit_records(project_id, changes)
     if "errors_found" in prepped:
@@ -164,22 +168,23 @@ def edit_records(
         record_label_association.delete_by_record_attribute_tuples(project_id, chunk)
 
     general.commit()
+    # TODO check if this is still needed for access management updates
+    if not only_access_management_update:
+        try:
+            # tokenization currently with a complete rebuild of the docbins of touched records
+            # optimization possible by only rebuilding the changed record & attribute combinations and reuploading
+            tokenization.delete_record_docbins_by_id(project_id, records.keys(), True)
+            tokenization.delete_token_statistics_by_id(project_id, records.keys(), True)
+            tokenization_service.request_tokenize_project(project_id, user_id)
+            time.sleep(1)
+            # wait for tokenization to finish, the endpoint itself handles missing docbins
+            while tokenization.is_doc_bin_creation_running_or_queued(project_id):
+                time.sleep(0.5)
 
-    try:
-        # tokenization currently with a complete rebuild of the docbins of touched records
-        # optimization possible by only rebuilding the changed record & attribute combinations and reuploading
-        tokenization.delete_record_docbins_by_id(project_id, records.keys(), True)
-        tokenization.delete_token_statistics_by_id(project_id, records.keys(), True)
-        tokenization_service.request_tokenize_project(project_id, user_id)
-        time.sleep(1)
-        # wait for tokenization to finish, the endpoint itself handles missing docbins
-        while tokenization.is_doc_bin_creation_running_or_queued(project_id):
-            time.sleep(0.5)
-
-    except Exception:
-        __revert_record_data_changes(records, prepped["record_data_backup"])
-        print(traceback.format_exc(), flush=True)
-        return ["tokenization failed"]
+        except Exception:
+            __revert_record_data_changes(records, prepped["record_data_backup"])
+            print(traceback.format_exc(), flush=True)
+            return ["tokenization failed"]
 
     try:
         embedding_connector.request_re_embed_records(
@@ -329,6 +334,100 @@ def delete_records(
         )
     else:
         __delete_records(project_id, record_ids)
+
+
+def sync_access_groups_and_users_sharepoint(project_id: str, integration_id: str, permissions_users: Dict[str, Any], record_ids: Optional[List[str]]) -> None:
+    try:
+        if record_ids:
+            project_records = record.get_by_record_ids(project_id, record_ids)
+        else:
+            project_records = record.get_all(project_id)
+        organization_id = project.get_org_id(project_id)
+        integration_groups_by_permission_id = group_db.get_all_by_integration_id_permission_grouped(organization_id, integration_id)
+        record_change_dict = {}
+        for record_item in project_records:
+            if not record_item.data.get("__ACCESS_GROUPS"):
+                current_group_ids = []
+            else:
+                current_group_ids = record_item.data["__ACCESS_GROUPS"]
+
+            meta_data_dict = json.loads(record_item.data.get("metadata", "{}"))
+            permission_ids = meta_data_dict.get("permissions")
+            new_group_ids = [str(integration_groups_by_permission_id.get(permission_id).id) for permission_id in permission_ids if integration_groups_by_permission_id.get(permission_id)]  
+            # Only update if new group ids differ from current group ids
+            if not set(new_group_ids) == set(current_group_ids):
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
+                    "attributeName": "__ACCESS_GROUPS",
+                    "newValue": new_group_ids,
+                    "recordId": str(record_item.id),
+                }
+            if not record_item.data.get("__ACCESS_USERS"):
+                current_user_ids = []
+            else:
+                current_user_ids = record_item.data["__ACCESS_USERS"]
+                new_user_ids = [permissions_users.get(permission_id) for permission_id in permission_ids if permissions_users.get(permission_id)]
+                # Only update if new user ids differ from current user ids
+                if not set(new_user_ids) == set(current_user_ids):
+                    extended_user_ids = new_user_ids
+                    record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
+                        "attributeName": "__ACCESS_USERS",
+                        "newValue": extended_user_ids,
+                        "recordId": str(record_item.id),
+                    }
+        changed_records_ids = list(record_change_dict.keys())
+        partial_update = len(changed_records_ids) < len(project_records)
+        errors = edit_records(None, project_id, record_change_dict, True)
+        if not errors:
+            all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+            for embedding_item in all_embeddings:
+                connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id), record_ids=changed_records_ids if partial_update else None)
+        return errors
+
+    except Exception as e:
+        print(traceback.format_exc(), flush=True)
+        return [str(e)]
+
+
+def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids: Optional[List[str]] = None, user_ids: Optional[List[str]] = None) -> None:
+    try:
+        if not record_ids or len(record_ids) == 0:
+            return
+        record_change_dict = {}
+        records_to_change = record.get_by_record_ids(project_id, record_ids)
+        if group_ids and len(group_ids) > 0:
+            for record_item in records_to_change:
+                if not record_item.data.get("__ACCESS_GROUPS"):
+                    current_group_ids = []
+                else:
+                    current_group_ids = record_item.data["__ACCESS_GROUPS"]
+                extended_group_ids = list(set(current_group_ids + group_ids))  # remove duplicates
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
+                    "attributeName": "__ACCESS_GROUPS",
+                    "newValue": extended_group_ids,
+                    "recordId": str(record_item.id),
+                }
+        if user_ids and len(user_ids) > 0:
+            for record_item in records_to_change:
+                if not record_item.data.get("__ACCESS_USERS"):
+                    current_user_ids = []
+                else:
+                    current_user_ids = record_item.data["__ACCESS_USERS"]
+                extended_user_ids = list(set(current_user_ids + user_ids))
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
+                    "attributeName": "__ACCESS_USERS",
+                    "newValue": extended_user_ids,
+                    "recordId": str(record_item.id),
+                }
+        # maybe wait for embedding to finish first?
+        errors = edit_records(None, project_id, record_change_dict, True)
+        if not errors:
+            all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+            for embedding_item in all_embeddings:
+                connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id))
+        return errors
+    except Exception as e:
+        print(traceback.format_exc(), flush=True)
+        return [str(e)]
 
 
 def __delete_records(project_id: str, record_ids: List[str]) -> None:

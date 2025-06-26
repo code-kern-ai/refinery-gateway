@@ -70,6 +70,38 @@ def get_all_projects(request: Request) -> Dict:
     return pack_json_result(projects)
 
 
+# TO DO, some admin check should be added here
+@router.get("/all-projects-with-access-management")
+def get_all_projects_with_tokens(request: Request) -> Dict:
+    org_id = auth_manager.get_organization_id_by_info(request.state.info)
+    projects_with_access_management = manager.get_all_projects_with_access_management(org_id)
+    return pack_json_result(projects_with_access_management)
+
+
+# TO DO, some admin check should be added here
+@router.post("/{project_id}/access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
+def activate_access_management(
+    request: Request,
+    project_id: str,
+):
+    if manager.is_access_management_activated(project_id):
+        return get_silent_success()
+    manager.activate_access_management(project_id)
+    return get_silent_success()
+
+
+# TO DO, some admin check should be added here
+@router.delete("/{project_id}/access-management", dependencies=[Depends(auth_manager.check_project_access_dep)])
+def deactivate_access_management(
+    request: Request,
+    project_id: str,
+):
+    if not manager.is_access_management_activated(project_id):
+        return get_silent_success()
+    manager.deactivate_access_management(project_id)
+    return get_silent_success()
+
+
 @router.get("/all-projects-mini")
 def get_all_projects_mini(request: Request) -> Dict:
     projects = manager.get_all_projects_by_user(
@@ -85,7 +117,6 @@ def get_all_projects_mini(request: Request) -> Dict:
         }
         for project in projects
     ]
-
     return pack_json_result(project_extended)
 
 
