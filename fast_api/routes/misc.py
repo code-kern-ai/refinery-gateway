@@ -134,7 +134,7 @@ def cancel_task(
             controller_manager.cancel_parse_cognition_file_task(
                 task_entity.organization_id, task_info
             )
-        elif task_type == enums.TaskType.INTEGRATION.value:
+        elif task_type == enums.TaskType.EXECUTE_INTEGRATION.value:
             controller_manager.cancel_integration_task(task_info)
         else:
             raise ValueError(f"{task_type} is no valid task type")
