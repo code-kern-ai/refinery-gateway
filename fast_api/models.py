@@ -383,11 +383,6 @@ class TokenizedRecordBody(BaseModel):
     record_id: StrictStr
 
 
-class UserLanguageDisplay(BaseModel):
-    user_id: str
-    language_display: str
-
-
 class MappedSortedPaginatedUsers(BaseModel):
     sort_key: str
     sort_direction: int
