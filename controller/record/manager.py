@@ -381,46 +381,53 @@ def sync_access_groups_and_users_sharepoint(project_id: str, integration_id: str
             all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
             for embedding_item in all_embeddings:
                 connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id), record_ids=changed_records_ids if partial_update else None)
-    except Exception:
+        return errors
+
+    except Exception as e:
         print(traceback.format_exc(), flush=True)
-        raise Exception("Error syncing access groups and users from SharePoint integration")
+        return [str(e)]
 
 
 def add_access_groups_or_users(project_id: str, record_ids: List[str], group_ids: Optional[List[str]] = None, user_ids: Optional[List[str]] = None) -> None:
-    if not record_ids or len(record_ids) == 0:
-        return
-    record_change_dict = {}
-    records_to_change = record.get_by_record_ids(project_id, record_ids)
-    if group_ids and len(group_ids) > 0:
-        for record_item in records_to_change:
-            if not record_item.data.get("__ACCESS_GROUPS"):
-                current_group_ids = []
-            else:
-                current_group_ids = record_item.data["__ACCESS_GROUPS"]
-            extended_group_ids = list(set(current_group_ids + group_ids))  # remove duplicates
-            record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
-                "attributeName": "__ACCESS_GROUPS",
-                "newValue": extended_group_ids,
-                "recordId": str(record_item.id),
-            }
-    if user_ids and len(user_ids) > 0:
-        for record_item in records_to_change:
-            if not record_item.data.get("__ACCESS_USERS"):
-                current_user_ids = []
-            else:
-                current_user_ids = record_item.data["__ACCESS_USERS"]
-            extended_user_ids = list(set(current_user_ids + user_ids))
-            record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
-                "attributeName": "__ACCESS_USERS",
-                "newValue": extended_user_ids,
-                "recordId": str(record_item.id),
-            }
-    # maybe wait for embedding to finish first?
-    errors = edit_records(None, project_id, record_change_dict, True)
-    if not errors:
-        all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
-        for embedding_item in all_embeddings:
-            connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id))
+    try:
+        if not record_ids or len(record_ids) == 0:
+            return
+        record_change_dict = {}
+        records_to_change = record.get_by_record_ids(project_id, record_ids)
+        if group_ids and len(group_ids) > 0:
+            for record_item in records_to_change:
+                if not record_item.data.get("__ACCESS_GROUPS"):
+                    current_group_ids = []
+                else:
+                    current_group_ids = record_item.data["__ACCESS_GROUPS"]
+                extended_group_ids = list(set(current_group_ids + group_ids))  # remove duplicates
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
+                    "attributeName": "__ACCESS_GROUPS",
+                    "newValue": extended_group_ids,
+                    "recordId": str(record_item.id),
+                }
+        if user_ids and len(user_ids) > 0:
+            for record_item in records_to_change:
+                if not record_item.data.get("__ACCESS_USERS"):
+                    current_user_ids = []
+                else:
+                    current_user_ids = record_item.data["__ACCESS_USERS"]
+                extended_user_ids = list(set(current_user_ids + user_ids))
+                record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
+                    "attributeName": "__ACCESS_USERS",
+                    "newValue": extended_user_ids,
+                    "recordId": str(record_item.id),
+                }
+        # maybe wait for embedding to finish first?
+        errors = edit_records(None, project_id, record_change_dict, True)
+        if not errors:
+            all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+            for embedding_item in all_embeddings:
+                connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id))
+        return errors
+    except Exception as e:
+        print(traceback.format_exc(), flush=True)
+        return [str(e)]
 
 
 def __delete_records(project_id: str, record_ids: List[str]) -> None:

@@ -513,5 +513,14 @@ class CheckInviteUsersBody(BaseModel):
     emails: List[StrictStr]
 
 
+class AdminQueryFilterBody(BaseModel):
+    parameters: Optional[Dict[str, Any]] = None
+
+
 class RecordDeletion(BaseModel):
     record_ids: List[str]
+
+
+class ProjectDeletion(BaseModel):
+    user_id: str
+    project_ids: List[str]
