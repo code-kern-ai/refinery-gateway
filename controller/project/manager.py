@@ -23,6 +23,10 @@ from fast_api.types import HuddleData, ProjectSize
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
+from submodules.model.integration_objects.helper import (
+    REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+    REFINERY_ATTRIBUTE_ACCESS_USERS,
+)
 from submodules.s3 import controller as s3
 from service.search import search
 from controller.auth import kratos
@@ -67,7 +71,10 @@ def activate_access_management(project_id):
         relative_position = 1
     else:
         relative_position += 1
-    filter_attributes = ["__ACCESS_GROUPS", "__ACCESS_USERS"]
+    filter_attributes = [
+        REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+        REFINERY_ATTRIBUTE_ACCESS_USERS,
+    ]
     attribute.create(
         project_id=project_id,
         relative_position=relative_position,
@@ -107,8 +114,12 @@ def activate_access_management(project_id):
 
 def deactivate_access_management(project_id: str) -> None:
     record.delete_access_management_attributes(project_id)
-    access_groups_attribute = attribute.get_by_name(project_id, "__ACCESS_GROUPS")
-    access_users_attribute = attribute.get_by_name(project_id, "__ACCESS_USERS")
+    access_groups_attribute = attribute.get_by_name(
+        project_id, REFINERY_ATTRIBUTE_ACCESS_GROUPS
+    )
+    access_users_attribute = attribute.get_by_name(
+        project_id, REFINERY_ATTRIBUTE_ACCESS_USERS
+    )
     if access_groups_attribute:
         attribute.delete(project_id, access_groups_attribute.id, with_commit=True)
     if access_users_attribute:
@@ -116,8 +127,8 @@ def deactivate_access_management(project_id: str) -> None:
 
 
 def is_access_management_activated(project_id: str) -> bool:
-    access_groups = attribute.get_by_name(project_id, "__ACCESS_GROUPS")
-    access_users = attribute.get_by_name(project_id, "__ACCESS_USERS")
+    access_groups = attribute.get_by_name(project_id, REFINERY_ATTRIBUTE_ACCESS_GROUPS)
+    access_users = attribute.get_by_name(project_id, REFINERY_ATTRIBUTE_ACCESS_USERS)
     return access_groups is not None and access_users is not None
 
 

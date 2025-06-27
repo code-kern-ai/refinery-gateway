@@ -15,6 +15,10 @@ from submodules.model.business_objects import (
     comments,
     project,
 )
+from submodules.model.integration_objects.helper import (
+    REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+    REFINERY_ATTRIBUTE_ACCESS_USERS,
+)
 from service.search import search
 from submodules.model import enums
 from submodules.model import daemon
@@ -365,10 +369,10 @@ def sync_access_groups_and_users_sharepoint(
         )
         record_change_dict = {}
         for record_item in project_records:
-            if not record_item.data.get("__ACCESS_GROUPS"):
+            if not record_item.data.get(REFINERY_ATTRIBUTE_ACCESS_GROUPS):
                 current_group_ids = []
             else:
-                current_group_ids = record_item.data["__ACCESS_GROUPS"]
+                current_group_ids = record_item.data[REFINERY_ATTRIBUTE_ACCESS_GROUPS]
 
             meta_data_dict = json.loads(record_item.data.get("metadata", "{}"))
             permission_ids = meta_data_dict.get("permissions")
@@ -379,15 +383,17 @@ def sync_access_groups_and_users_sharepoint(
             ]
             # Only update if new group ids differ from current group ids
             if not set(new_group_ids) == set(current_group_ids):
-                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
-                    "attributeName": "__ACCESS_GROUPS",
+                record_change_dict[
+                    f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_GROUPS}"
+                ] = {
+                    "attributeName": REFINERY_ATTRIBUTE_ACCESS_GROUPS,
                     "newValue": new_group_ids,
                     "recordId": str(record_item.id),
                 }
-            if not record_item.data.get("__ACCESS_USERS"):
+            if not record_item.data.get(REFINERY_ATTRIBUTE_ACCESS_USERS):
                 current_user_ids = []
             else:
-                current_user_ids = record_item.data["__ACCESS_USERS"]
+                current_user_ids = record_item.data[REFINERY_ATTRIBUTE_ACCESS_USERS]
                 new_user_ids = [
                     permissions_users.get(permission_id)
                     for permission_id in permission_ids
@@ -396,8 +402,10 @@ def sync_access_groups_and_users_sharepoint(
                 # Only update if new user ids differ from current user ids
                 if not set(new_user_ids) == set(current_user_ids):
                     extended_user_ids = new_user_ids
-                    record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
-                        "attributeName": "__ACCESS_USERS",
+                    record_change_dict[
+                        f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
+                    ] = {
+                        "attributeName": REFINERY_ATTRIBUTE_ACCESS_USERS,
                         "newValue": extended_user_ids,
                         "recordId": str(record_item.id),
                     }
@@ -434,27 +442,33 @@ def add_access_groups_or_users(
         records_to_change = record.get_by_record_ids(project_id, record_ids)
         if group_ids and len(group_ids) > 0:
             for record_item in records_to_change:
-                if not record_item.data.get("__ACCESS_GROUPS"):
+                if not record_item.data.get(REFINERY_ATTRIBUTE_ACCESS_GROUPS):
                     current_group_ids = []
                 else:
-                    current_group_ids = record_item.data["__ACCESS_GROUPS"]
+                    current_group_ids = record_item.data[
+                        REFINERY_ATTRIBUTE_ACCESS_GROUPS
+                    ]
                 extended_group_ids = list(
                     set(current_group_ids + group_ids)
                 )  # remove duplicates
-                record_change_dict[f"{str(record_item.id)}@__ACCESS_GROUPS"] = {
-                    "attributeName": "__ACCESS_GROUPS",
+                record_change_dict[
+                    f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_GROUPS}"
+                ] = {
+                    "attributeName": REFINERY_ATTRIBUTE_ACCESS_GROUPS,
                     "newValue": extended_group_ids,
                     "recordId": str(record_item.id),
                 }
         if user_ids and len(user_ids) > 0:
             for record_item in records_to_change:
-                if not record_item.data.get("__ACCESS_USERS"):
+                if not record_item.data.get(REFINERY_ATTRIBUTE_ACCESS_USERS):
                     current_user_ids = []
                 else:
-                    current_user_ids = record_item.data["__ACCESS_USERS"]
+                    current_user_ids = record_item.data[REFINERY_ATTRIBUTE_ACCESS_USERS]
                 extended_user_ids = list(set(current_user_ids + user_ids))
-                record_change_dict[f"{str(record_item.id)}@__ACCESS_USERS"] = {
-                    "attributeName": "__ACCESS_USERS",
+                record_change_dict[
+                    f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
+                ] = {
+                    "attributeName": REFINERY_ATTRIBUTE_ACCESS_USERS,
                     "newValue": extended_user_ids,
                     "recordId": str(record_item.id),
                 }
