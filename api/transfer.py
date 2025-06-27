@@ -196,7 +196,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             i += 1
             if i >= 60:
                 i = 0
-                daemon.reset_session_token_in_thread()
+                daemon.reset_session_token_in_thread()  # TODO: this function does not exist
             if tokenization.is_doc_bin_creation_running_or_queued(project_id):
                 time.sleep(2)
                 continue
@@ -211,7 +211,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 break
             if i >= 60:
                 i = 0
-                daemon.reset_session_token_in_thread()
+                daemon.reset_session_token_in_thread()  # TODO: this function does not exist
 
             current_att_id = attribute_ids[0]
             current_att = attribute.get(project_id, current_att_id)

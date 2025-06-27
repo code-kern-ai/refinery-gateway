@@ -124,6 +124,5 @@ def cancel_integration_task(
     integration_id = task_info.get("integrationId")
 
     task_monitor.set_integration_task_to_failed(
-        integration_id,
-        with_commit=True,
+        integration_id, error_message="Cancelled by task manager"
     )

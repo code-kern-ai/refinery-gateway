@@ -16,7 +16,7 @@ from submodules.model.business_objects import (
     information_source,
     general,
     attribute,
-    embedding
+    embedding,
 )
 from submodules.model import daemon
 from fast_api.types import HuddleData, ProjectSize
@@ -68,19 +68,42 @@ def activate_access_management(project_id):
     else:
         relative_position += 1
     filter_attributes = ["__ACCESS_GROUPS", "__ACCESS_USERS"]
-    attribute.create(project_id=project_id, relative_position=relative_position, name=filter_attributes[0], data_type=enums.DataTypes.PERMISSION.value, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
-    attribute.create(project_id=project_id, relative_position=relative_position + 1, name=filter_attributes[1], data_type=enums.DataTypes.PERMISSION.value, user_created=False, visibility=enums.AttributeVisibility.HIDE.value, with_commit=True, state=enums.AttributeState.AUTOMATICALLY_CREATED.value)
+    attribute.create(
+        project_id=project_id,
+        relative_position=relative_position,
+        name=filter_attributes[0],
+        data_type=enums.DataTypes.PERMISSION.value,
+        user_created=False,
+        visibility=enums.AttributeVisibility.HIDE.value,
+        with_commit=True,
+        state=enums.AttributeState.AUTOMATICALLY_CREATED.value,
+    )
+    attribute.create(
+        project_id=project_id,
+        relative_position=relative_position + 1,
+        name=filter_attributes[1],
+        data_type=enums.DataTypes.PERMISSION.value,
+        user_created=False,
+        visibility=enums.AttributeVisibility.HIDE.value,
+        with_commit=True,
+        state=enums.AttributeState.AUTOMATICALLY_CREATED.value,
+    )
     all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
     for embedding_item in all_embeddings:
         prev_filter_attributes = embedding_item.filter_attributes or []
         new_filter_attributes = list(set(prev_filter_attributes + filter_attributes))
         embedding_item.filter_attributes = new_filter_attributes
         general.commit()
-        if connector.update_attribute_payloads_for_neural_search(project_id, str(embedding_item.id)):
+        if connector.update_attribute_payloads_for_neural_search(
+            project_id, str(embedding_item.id)
+        ):
             embedding.update_embedding_filter_attributes(
-                project_id, str(embedding_item.id), new_filter_attributes, with_commit=True
+                project_id,
+                str(embedding_item.id),
+                new_filter_attributes,
+                with_commit=True,
             )
- 
+
 
 def deactivate_access_management(project_id: str) -> None:
     record.delete_access_management_attributes(project_id)
