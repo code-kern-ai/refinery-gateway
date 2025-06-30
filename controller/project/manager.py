@@ -65,7 +65,7 @@ def get_all_projects_with_access_management(organization_id: str) -> List[Projec
     return project.get_all_with_access_management(organization_id)
 
 
-def activate_access_management(project_id):
+def activate_access_management(project_id: str) -> None:
     relative_position = attribute.get_relative_position(project_id)
     if relative_position is None:
         relative_position = 1

@@ -210,8 +210,6 @@ def edit_records(
         print(traceback.format_exc(), flush=True)
         return ["embedding failed"]
 
-    return None
-
 
 def __revert_record_data_changes(
     records: Dict[str, Record], data_backup: Dict[str, Any]
@@ -355,7 +353,7 @@ def sync_access_groups_and_users_sharepoint(
     integration_id: str,
     permissions_users: Dict[str, Any],
     record_ids: Optional[List[str]],
-) -> None:
+) -> Optional[List[str]]:
     try:
         if record_ids:
             project_records = record.get_by_record_ids(project_id, record_ids)
