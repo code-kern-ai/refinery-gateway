@@ -102,16 +102,13 @@ def activate_access_management(project_id: str) -> None:
         prev_filter_attributes = embedding_item.filter_attributes or []
         new_filter_attributes = list(set(prev_filter_attributes + filter_attributes))
         embedding_item.filter_attributes = new_filter_attributes
-        general.commit()
         if connector.update_attribute_payloads_for_neural_search(
             project_id, str(embedding_item.id)
         ):
             embedding.update_embedding_filter_attributes(
-                project_id,
-                str(embedding_item.id),
-                new_filter_attributes,
-                with_commit=True,
+                project_id, str(embedding_item.id), new_filter_attributes
             )
+    general.commit()
 
 
 def deactivate_access_management(project_id: str) -> None:
