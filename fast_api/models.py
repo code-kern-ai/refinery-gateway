@@ -519,3 +519,12 @@ class RecordDeletion(BaseModel):
 class ProjectDeletion(BaseModel):
     user_id: str
     project_ids: List[str]
+
+
+class GetEmbeddingNameBody(BaseModel):
+    org_id: str
+    attribute_id: str
+    platform: str
+    embedding_type: str
+    model: Optional[str] = None
+    api_token_env_name: Optional[str] = None
