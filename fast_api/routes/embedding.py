@@ -1,6 +1,10 @@
 from typing import List, Optional
 
-from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
+from fast_api.models import (
+    CreateEmbeddingBody,
+    UpdateEmbeddingBody,
+    GetEmbeddingNameBody,
+)
 from fast_api.routes.client_response import (
     pack_json_result,
     get_silent_success,
@@ -13,6 +17,7 @@ from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.enums import TaskType
 from submodules.model.business_objects import embedding
+from submodules.model.cognition_objects import environment_variable as env_var_db_bo
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification, spacy_util
 import json
@@ -169,3 +174,22 @@ def update_embedding_payload(
         return get_silent_success()
     else:
         return GENERIC_FAILURE_RESPONSE
+
+
+@router.get("/{project_id}/embedding-name")
+def get_embedding_name(
+    project_id: str,
+    data: GetEmbeddingNameBody = Body(...),
+) -> str:
+    if data.api_token_env_name:
+        api_token = env_var_db_bo.get_by_name_and_org_id(
+            data.org_id, data.api_token_env_name
+        ).value
+    return manager.get_embedding_name(
+        project_id,
+        data.attribute_id,
+        data.platform,
+        data.embedding_type,
+        data.model,
+        api_token,
+    )
