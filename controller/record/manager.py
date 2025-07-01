@@ -380,7 +380,7 @@ def sync_access_groups_and_users_sharepoint(
                 if integration_groups_by_permission_id.get(permission_id)
             ]
             # Only update if new group ids differ from current group ids
-            if not set(new_group_ids) == set(current_group_ids):
+            if set(new_group_ids).difference(current_group_ids):
                 record_change_dict[
                     f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_GROUPS}"
                 ] = {
@@ -398,7 +398,7 @@ def sync_access_groups_and_users_sharepoint(
                     if permissions_users.get(permission_id)
                 ]
                 # Only update if new user ids differ from current user ids
-                if not set(new_user_ids) == set(current_user_ids):
+                if set(new_user_ids).difference(current_user_ids):
                     extended_user_ids = new_user_ids
                     record_change_dict[
                         f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
@@ -432,7 +432,7 @@ def add_access_groups_or_users(
     record_ids: List[str],
     group_ids: Optional[List[str]] = None,
     user_ids: Optional[List[str]] = None,
-) -> None:
+) -> Optional[List[str]]:
     try:
         if not record_ids or len(record_ids) == 0:
             return
@@ -447,7 +447,7 @@ def add_access_groups_or_users(
                         REFINERY_ATTRIBUTE_ACCESS_GROUPS
                     ]
                 extended_group_ids = list(
-                    set(current_group_ids + group_ids)
+                    set(current_group_ids).union(group_ids)
                 )  # remove duplicates
                 record_change_dict[
                     f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_GROUPS}"
@@ -462,7 +462,7 @@ def add_access_groups_or_users(
                     current_user_ids = []
                 else:
                     current_user_ids = record_item.data[REFINERY_ATTRIBUTE_ACCESS_USERS]
-                extended_user_ids = list(set(current_user_ids + user_ids))
+                extended_user_ids = list(set(current_user_ids).union(user_ids))
                 record_change_dict[
                     f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
                 ] = {
