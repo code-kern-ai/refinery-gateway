@@ -64,7 +64,6 @@ def get_all_projects(organization_id: str) -> List[Project]:
 def get_all_projects_with_access_management(organization_id: str) -> List[Project]:
     all_projects = project.get_all_with_access_management(organization_id)
     all_projects_dict = sql_alchemy_to_dict(all_projects)
-    print("all_projects", all_projects_dict, type(all_projects_dict))
     return all_projects_dict
 
 
