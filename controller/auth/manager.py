@@ -208,3 +208,11 @@ def check_valid_emails(emails: List[str]):
 
 def is_valid_email(email: str) -> bool:
     return bool(EMAIL_RE.fullmatch(email))
+
+
+def check_group_auth(request: Request):
+    user_item = get_user_by_info(request.state.info)
+    if not user_item:
+        raise AuthManagerError(status_code=404, detail="User not found")
+    if not user_item.role == enums.UserRoles.ENGINEER.value:
+        raise AuthManagerError(status_code=403, detail="User not authorized")
