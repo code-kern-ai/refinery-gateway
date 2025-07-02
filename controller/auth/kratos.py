@@ -136,7 +136,7 @@ def get_userid_from_mail(user_mail: str) -> str:
         if values[key]["simple"]["mail"] == user_mail:
             return key
     # not in cached values, try search kratos
-    return __search_kratos_for_user_mail(user_mail)
+    return __search_kratos_for_user_mail(user_mail)["id"]
 
 
 def __search_kratos_for_user_mail(user_mail: str) -> str:
@@ -147,7 +147,7 @@ def __search_kratos_for_user_mail(user_mail: str) -> str:
         identities = request.json()
         for i in identities:
             if i["traits"]["email"].lower() == user_mail.lower():
-                return i["id"]
+                return i
     return None
 
 
@@ -263,15 +263,3 @@ def check_user_exists(email: str) -> bool:
             if i["traits"]["email"].lower() == email.lower():
                 return True
     return False
-
-
-def get_user_from_search(email: str) -> bool:
-    request = requests.get(
-        f"{KRATOS_ADMIN_URL}/identities?preview_credentials_identifier_similar={quote(email)}"
-    )
-    if request.ok:
-        identities = request.json()
-        for i in identities:
-            if i["traits"]["email"].lower() == email.lower():
-                return i
-    return None
