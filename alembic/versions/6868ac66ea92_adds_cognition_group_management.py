@@ -33,7 +33,6 @@ def upgrade():
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name"),
         schema="cognition",
     )
     op.create_index(
