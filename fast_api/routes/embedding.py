@@ -176,7 +176,8 @@ def update_embedding_payload(
         return GENERIC_FAILURE_RESPONSE
 
 
-@router.get("/{project_id}/embedding-name")
+# should really be a GET, but is only used internally by cognition-integration-provider
+@router.post("/{project_id}/embedding-name")
 def get_embedding_name(
     project_id: str,
     data: GetEmbeddingNameBody = Body(...),

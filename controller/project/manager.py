@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
@@ -61,7 +61,9 @@ def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
 
 
-def get_all_projects_with_access_management(organization_id: str) -> List[Project]:
+def get_all_projects_with_access_management(
+    organization_id: str,
+) -> List[Dict[str, Any]]:
     all_projects = project.get_all_with_access_management(organization_id)
     all_projects_dict = sql_alchemy_to_dict(all_projects)
     return all_projects_dict
