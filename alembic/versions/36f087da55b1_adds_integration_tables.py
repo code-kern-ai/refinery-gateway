@@ -319,6 +319,7 @@ def upgrade():
         sa.Column("mime_type", sa.String(), nullable=True),
         sa.Column("hashes", sa.JSON(), nullable=True),
         sa.Column("permissions", sa.JSON(), nullable=True),
+        sa.Column("file_properties", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
