@@ -10,7 +10,7 @@ annotated-types==0.7.0
     # via
     #   -r requirements/common-requirements.txt
     #   pydantic
-anyio==4.8.0
+anyio==4.9.0
     # via
     #   -r requirements/common-requirements.txt
     #   httpx
@@ -30,14 +30,14 @@ catalogue==2.0.10
     #   spacy
     #   srsly
     #   thinc
-certifi==2025.1.31
+certifi==2025.6.15
     # via
     #   -r requirements/common-requirements.txt
     #   httpcore
     #   httpx
     #   minio
     #   requests
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -r requirements/common-requirements.txt
     #   requests
@@ -63,20 +63,22 @@ docker==5.0.0
     # via -r requirements/requirements.in
 et-xmlfile==1.1.0
     # via openpyxl
-exceptiongroup==1.2.2
+exceptiongroup==1.3.0
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
 fastapi==0.115.2
     # via -r requirements/common-requirements.txt
-h11==0.14.0
+h11==0.16.0
     # via
     #   -r requirements/common-requirements.txt
     #   httpcore
     #   uvicorn
-httpcore==1.0.7
-    # via httpx
-httpx==0.27.2
+httpcore==1.0.9
+    # via
+    #   -r requirements/requirements.in
+    #   httpx
+httpx==0.28.1
     # via
     #   -r requirements/requirements.in
     #   openai
@@ -161,7 +163,7 @@ python-dateutil==2.9.0.post0
     #   -r requirements/common-requirements.txt
     #   botocore
     #   pandas
-pytz==2025.1
+pytz==2025.2
     # via
     #   -r requirements/common-requirements.txt
     #   pandas
@@ -187,7 +189,6 @@ sniffio==1.3.1
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
-    #   httpx
     #   openai
 spacy[ja]==3.7.5
     # via -r requirements/requirements.in
@@ -225,23 +226,25 @@ typer==0.4.2
     # via
     #   spacy
     #   weasel
-typing-extensions==4.12.2
+typing-extensions==4.14.0
     # via
     #   -r requirements/common-requirements.txt
     #   anyio
     #   cloudpathlib
+    #   exceptiongroup
     #   fastapi
     #   openai
     #   pydantic
     #   pydantic-core
     #   starlette
+    #   uvicorn
 urllib3==1.26.20
     # via
     #   -r requirements/common-requirements.txt
     #   botocore
     #   minio
     #   requests
-uvicorn==0.22.0
+uvicorn==0.35.0
     # via -r requirements/common-requirements.txt
 wasabi==0.10.1
     # via
