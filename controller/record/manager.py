@@ -392,21 +392,22 @@ def sync_access_groups_and_users_sharepoint(
                 current_user_ids = []
             else:
                 current_user_ids = record_item.data[REFINERY_ATTRIBUTE_ACCESS_USERS]
-                new_user_ids = [
-                    permissions_users.get(permission_id)
-                    for permission_id in permission_ids
-                    if permissions_users.get(permission_id)
-                ]
-                # Only update if new user ids differ from current user ids
-                if set(new_user_ids).difference(current_user_ids):
-                    extended_user_ids = new_user_ids
-                    record_change_dict[
-                        f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
-                    ] = {
-                        "attributeName": REFINERY_ATTRIBUTE_ACCESS_USERS,
-                        "newValue": extended_user_ids,
-                        "recordId": str(record_item.id),
-                    }
+            new_user_ids = [
+                user_id
+                for permission_id in permission_ids
+                if permissions_users.get(permission_id)
+                for user_id in permissions_users.get(permission_id)
+            ]
+            # Only update if new user ids differ from current user ids
+            if set(new_user_ids).difference(current_user_ids):
+                extended_user_ids = new_user_ids
+                record_change_dict[
+                    f"{str(record_item.id)}@{REFINERY_ATTRIBUTE_ACCESS_USERS}"
+                ] = {
+                    "attributeName": REFINERY_ATTRIBUTE_ACCESS_USERS,
+                    "newValue": extended_user_ids,
+                    "recordId": str(record_item.id),
+                }
         changed_records_ids = [
             record_change_dict[key]["recordId"] for key in record_change_dict
         ]
