@@ -408,9 +408,9 @@ def sync_access_groups_and_users_sharepoint(
                     "newValue": extended_user_ids,
                     "recordId": str(record_item.id),
                 }
-        changed_records_ids = [
-            record_change_dict[key]["recordId"] for key in record_change_dict
-        ]
+        changed_records_ids = list(
+            set([record_change_dict[key]["recordId"] for key in record_change_dict])
+        )
         partial_update = len(changed_records_ids) < len(project_records)
         errors = edit_records(None, project_id, record_change_dict, True)
         if not errors:
