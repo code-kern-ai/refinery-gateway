@@ -9,7 +9,6 @@ from fast_api.models import (
 )
 from fastapi import APIRouter, Body, Depends, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from typing import Dict
 from controller.auth import manager as auth_manager
 from controller.upload_task import manager as upload_task_manager
 from submodules.model.business_objects import labeling_task
@@ -55,23 +54,64 @@ TOKENS_WHITELIST = {
     "/{project_id}/project-by-project-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def get_project_by_project_id(
-    project_id: str,
-) -> Dict:
+def get_project_by_project_id(project_id: str):
     data = get_project_by_project_id_sql(project_id)
     return pack_json_result(data)
 
 
 @router.get("/all-projects")
-def get_all_projects(request: Request) -> Dict:
+def get_all_projects(request: Request):
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
     return pack_json_result(projects)
 
 
+@router.get("/all-projects-with-access-management")
+def get_all_projects_with_tokens(request: Request):
+    org_id = auth_manager.get_organization_id_by_info(request.state.info)
+    projects_with_access_management = manager.get_all_projects_with_access_management(
+        org_id
+    )
+    return pack_json_result(projects_with_access_management)
+
+
+@router.post(
+    "/{project_id}/access-management",
+    dependencies=[
+        Depends(auth_manager.check_project_access_dep),
+        Depends(auth_manager.check_group_auth),
+    ],
+)
+def activate_access_management(
+    request: Request,
+    project_id: str,
+):
+    if manager.is_access_management_activated(project_id):
+        return get_silent_success()
+    manager.activate_access_management(project_id)
+    return get_silent_success()
+
+
+@router.delete(
+    "/{project_id}/access-management",
+    dependencies=[
+        Depends(auth_manager.check_project_access_dep),
+        Depends(auth_manager.check_group_auth),
+    ],
+)
+def deactivate_access_management(
+    request: Request,
+    project_id: str,
+):
+    if not manager.is_access_management_activated(project_id):
+        return get_silent_success()
+    manager.deactivate_access_management(project_id)
+    return get_silent_success()
+
+
 @router.get("/all-projects-mini")
-def get_all_projects_mini(request: Request) -> Dict:
+def get_all_projects_mini(request: Request):
     projects = manager.get_all_projects_by_user(
         auth_manager.get_organization_id_by_info(request.state.info)
     )
@@ -85,7 +125,6 @@ def get_all_projects_mini(request: Request) -> Dict:
         }
         for project in projects
     ]
-
     return pack_json_result(project_extended)
 
 
@@ -97,7 +136,7 @@ def general_project_stats(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
-) -> Dict:
+):
     data = manager.get_general_project_stats(project_id, labeling_task_id, slice_id)
     return pack_json_result(
         data,
@@ -113,7 +152,7 @@ def label_distribution(
     project_id: str,
     labeling_task_id: Optional[str] = None,
     slice_id: Optional[str] = None,
-) -> str:
+):
     data = manager.get_label_distribution(project_id, labeling_task_id, slice_id)
     return pack_json_result(
         data,
@@ -125,7 +164,7 @@ def label_distribution(
     "/{project_id}/project-tokenization",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def project_tokenization(project_id: str) -> str:
+def project_tokenization(project_id: str):
     waiting_task = task_queue.get_by_tokenization(project_id)
     data = None
     if waiting_task and not waiting_task.is_active:
@@ -150,7 +189,7 @@ def project_tokenization(project_id: str) -> str:
     "/{project_id}/labeling-tasks-by-project-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def labeling_tasks_by_project_id(project_id: str) -> str:
+def labeling_tasks_by_project_id(project_id: str):
     data = labeling_task.get_labeling_tasks_by_project_id_full(project_id)
     return pack_json_result(data)
 
@@ -159,13 +198,13 @@ def labeling_tasks_by_project_id(project_id: str) -> str:
     "/{project_id}/record-export-by-project-id",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def record_export_by_project_id(project_id: str) -> str:
+def record_export_by_project_id(project_id: str):
     data = manager.get_project_with_labeling_tasks_info_attributes(project_id)
     return pack_json_result(data)
 
 
 @router.get("/model-provider-info")
-def get_model_provider_info(request: Request) -> Dict:
+def get_model_provider_info(request: Request):
     data = model_manager.get_model_provider_info()
     return pack_json_result(data)
 
@@ -177,7 +216,7 @@ def get_model_provider_info(request: Request) -> Dict:
 def last_export_credentials(
     request: Request,
     project_id: str,
-) -> Dict:
+):
 
     data = transfer_manager.last_project_export_credentials(project_id)
     return pack_json_result(data)
@@ -213,7 +252,7 @@ def upload_task_by_id(
     request: Request,
     project_id: str,
     upload_task_id: str,
-) -> Dict:
+):
     if upload_task_id.find("/") != -1:
         upload_task_id = upload_task_id.split("/")[-1]
     data = upload_task_manager.get_upload_task(project_id, upload_task_id)

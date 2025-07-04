@@ -1,7 +1,7 @@
 """Step template table
 
 Revision ID: 0e975f452a77
-Revises: ad13850a7245
+Revises: 6868ac66ea92
 Create Date: 2025-05-26 13:17:19.196643
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0e975f452a77"
-down_revision = "ad13850a7245"
+down_revision = "6868ac66ea92"
 branch_labels = None
 depends_on = None
 

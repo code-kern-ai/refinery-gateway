@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from controller.transfer import project_transfer_manager as handler
 from controller.labeling_access_link import manager as link_manager
@@ -15,16 +15,24 @@ from submodules.model.business_objects import (
     data_slice,
     information_source,
     general,
+    attribute,
+    embedding,
 )
 from submodules.model import daemon
 from fast_api.types import HuddleData, ProjectSize
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
+from submodules.model.integration_objects.helper import (
+    REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+    REFINERY_ATTRIBUTE_ACCESS_USERS,
+)
 from submodules.s3 import controller as s3
 from service.search import search
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
+from controller.embedding import connector
+
 
 ALL_PROJECTS_WHITELIST = {
     "id",
@@ -51,6 +59,78 @@ def get_project_with_orga_id(organization_id: str, project_id: str) -> Project:
 
 def get_all_projects(organization_id: str) -> List[Project]:
     return project.get_all(organization_id)
+
+
+def get_all_projects_with_access_management(
+    organization_id: str,
+) -> List[Dict[str, Any]]:
+    all_projects = project.get_all_with_access_management(organization_id)
+    all_projects_dict = sql_alchemy_to_dict(all_projects)
+    return all_projects_dict
+
+
+def activate_access_management(project_id: str) -> None:
+    relative_position = attribute.get_relative_position(project_id)
+    if relative_position is None:
+        relative_position = 1
+    else:
+        relative_position += 1
+    filter_attributes = [
+        REFINERY_ATTRIBUTE_ACCESS_GROUPS,
+        REFINERY_ATTRIBUTE_ACCESS_USERS,
+    ]
+    attribute.create(
+        project_id=project_id,
+        relative_position=relative_position,
+        name=filter_attributes[0],
+        data_type=enums.DataTypes.PERMISSION.value,
+        user_created=False,
+        visibility=enums.AttributeVisibility.HIDE.value,
+        with_commit=True,
+        state=enums.AttributeState.AUTOMATICALLY_CREATED.value,
+    )
+    attribute.create(
+        project_id=project_id,
+        relative_position=relative_position + 1,
+        name=filter_attributes[1],
+        data_type=enums.DataTypes.PERMISSION.value,
+        user_created=False,
+        visibility=enums.AttributeVisibility.HIDE.value,
+        with_commit=True,
+        state=enums.AttributeState.AUTOMATICALLY_CREATED.value,
+    )
+    all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
+    for embedding_item in all_embeddings:
+        prev_filter_attributes = embedding_item.filter_attributes or []
+        new_filter_attributes = list(set(prev_filter_attributes + filter_attributes))
+        embedding_item.filter_attributes = new_filter_attributes
+        if connector.update_attribute_payloads_for_neural_search(
+            project_id, str(embedding_item.id)
+        ):
+            embedding.update_embedding_filter_attributes(
+                project_id, str(embedding_item.id), new_filter_attributes
+            )
+    general.commit()
+
+
+def deactivate_access_management(project_id: str) -> None:
+    record.delete_access_management_attributes(project_id)
+    access_groups_attribute = attribute.get_by_name(
+        project_id, REFINERY_ATTRIBUTE_ACCESS_GROUPS
+    )
+    access_users_attribute = attribute.get_by_name(
+        project_id, REFINERY_ATTRIBUTE_ACCESS_USERS
+    )
+    if access_groups_attribute:
+        attribute.delete(project_id, access_groups_attribute.id, with_commit=True)
+    if access_users_attribute:
+        attribute.delete(project_id, access_users_attribute.id, with_commit=True)
+
+
+def is_access_management_activated(project_id: str) -> bool:
+    access_groups = attribute.get_by_name(project_id, REFINERY_ATTRIBUTE_ACCESS_GROUPS)
+    access_users = attribute.get_by_name(project_id, REFINERY_ATTRIBUTE_ACCESS_USERS)
+    return access_groups is not None and access_users is not None
 
 
 def get_all_projects_by_user(organization_id) -> List[Project]:

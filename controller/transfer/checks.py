@@ -70,13 +70,12 @@ def run_checks(df: pd.DataFrame, project_id, user_id) -> None:
     # check attribute equality
     attribute_entities = attribute.get_all(
         project_id,
-        state_filter=[
-            AttributeState.UPLOADED.value,
-            AttributeState.AUTOMATICALLY_CREATED.value,
-        ],
+        state_filter=[AttributeState.UPLOADED.value],
     )
-    attribute_names = [attribute_item.name for attribute_item in attribute_entities]
-    differences = set(attribute_names).difference(set(attributes))
+    attribute_names = [attribute_item.name for attribute_item in attribute_entities] + [
+        attribute.get_running_id_name(project_id)
+    ]
+    differences = set(filter(None, attribute_names)).difference(set(attributes))
 
     if differences:
         guard = True

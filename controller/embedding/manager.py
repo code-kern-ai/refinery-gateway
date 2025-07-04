@@ -102,12 +102,15 @@ def get_embedding_name(
 
 def recreate_or_extend_embeddings(
     project_id: str, embedding_ids: Optional[List[str]] = None, user_id: str = None
-) -> None:
+) -> bool:
     if not embedding_ids:
         embeddings = embedding.get_all_embeddings_by_project_id(project_id)
         if len(embeddings) == 0:
-            return
+            return False
         embedding_ids = [str(embed.id) for embed in embeddings]
+
+    if len(embedding_ids) == 0:
+        return False
 
     set_to_wait = False
     for embedding_id in embedding_ids:
@@ -157,6 +160,7 @@ def recreate_or_extend_embeddings(
         notification.send_organization_update(
             project_id=project_id, message="embedding:finished:all"
         )
+    return True
 
 
 def __handle_failed_embedding(
