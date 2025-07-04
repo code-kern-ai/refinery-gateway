@@ -1,7 +1,7 @@
 """adds integration tables
 
 Revision ID: 36f087da55b1
-Revises: ad13850a7245
+Revises: 0e975f452a77
 Create Date: 2025-06-26 12:57:31.654259
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "36f087da55b1"
-down_revision = "ad13850a7245"
+down_revision = "0e975f452a77"
 branch_labels = None
 depends_on = None
 
