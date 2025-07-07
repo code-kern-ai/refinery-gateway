@@ -16,7 +16,7 @@ from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.enums import TaskType
-from submodules.model.business_objects import embedding
+from submodules.model.business_objects import embedding as embedding_bo
 from submodules.model.cognition_objects import environment_variable as env_var_db_bo
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification, spacy_util
@@ -51,13 +51,16 @@ def language_models(request: Request) -> List:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def get_embeddings(project_id: str) -> List:
-    embeddings_extended = embedding.get_all_embeddings_by_project_id_extended(
+    embeddings_extended = embedding_bo.get_all_embeddings_by_project_id_extended(
         project_id
     )
     data = [
         {
             **sql_alchemy_to_dict(embedding),
             "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
+            "count": sql_alchemy_to_dict(
+                embedding_bo.get_tensor_count(embedding["id"])
+            ),
         }
         for embedding in embeddings_extended
     ]
