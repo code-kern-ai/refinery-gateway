@@ -155,6 +155,11 @@ def get_all_projects_by_user(organization_id) -> List[Project]:
         else:
             p["num_data_scale_uploaded"] = record.get_count_scale_uploaded(p["id"])
 
+        p["is_integration_project"] = any(
+            p["name"].startswith(f"[{integration_type.value}]")
+            for integration_type in enums.CognitionIntegrationType
+        )
+
         del p["created_by"]
 
     return project_dicts
