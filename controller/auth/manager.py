@@ -174,7 +174,10 @@ def check_is_full_admin(request: Any) -> bool:
 
 
 def invite_users(
-    emails: List[str], organization_name: str, provider: Optional[str] = None
+    emails: List[str],
+    organization_name: str,
+    user_role: str,
+    provider: Optional[str] = None,
 ):
     user_ids = []
     for email in emails:
@@ -185,6 +188,9 @@ def invite_users(
         user_ids.append(user["id"])
         # Assign the account to the organization
         user_manager.update_organization_of_user(organization_name, email)
+
+        # Assign the user role
+        user_manager.update_user_role(user["id"], user_role)
 
         # Get the recovery link for the email
         recovery_link = kratos.get_recovery_link(user["id"])

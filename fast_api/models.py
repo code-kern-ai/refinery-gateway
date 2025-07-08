@@ -502,6 +502,7 @@ class InviteUsersBody(BaseModel):
     emails: List[StrictStr]
     organization_name: StrictStr
     provider: Optional[StrictStr] = None
+    user_role: StrictStr
 
 
 class CheckInviteUsersBody(BaseModel):
