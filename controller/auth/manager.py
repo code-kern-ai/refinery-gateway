@@ -19,7 +19,7 @@ import sqlalchemy
 
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
-EMAIL_RE = re.compile(r"[\w\.-]+@[\w\.-]+\.\w+")
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
 def get_organization_id_by_info(info) -> Organization:
@@ -174,7 +174,10 @@ def check_is_full_admin(request: Any) -> bool:
 
 
 def invite_users(
-    emails: List[str], organization_name: str, provider: Optional[str] = None
+    emails: List[str],
+    organization_name: str,
+    user_role: str,
+    provider: Optional[str] = None,
 ):
     user_ids = []
     for email in emails:
@@ -185,6 +188,9 @@ def invite_users(
         user_ids.append(user["id"])
         # Assign the account to the organization
         user_manager.update_organization_of_user(organization_name, email)
+
+        # Assign the user role
+        user_manager.update_user_role(user["id"], user_role)
 
         # Get the recovery link for the email
         recovery_link = kratos.get_recovery_link(user["id"])
@@ -197,13 +203,18 @@ def invite_users(
 
 
 def check_valid_emails(emails: List[str]):
-    valid_emails = [
-        email
-        for email in emails
-        if is_valid_email(email) and not kratos.check_user_exists(email)
-    ]
+    message = ""
+    valid_emails = []
+    for email in emails:
+        if not is_valid_email(email):
+            message += f"{email} is not a valid email address."
+        elif kratos.check_user_exists(email):
+            message += f"{email} already exists."
+        else:
+            valid_emails.append(email)
+
     all_valid = len(valid_emails) == len(emails)
-    return {"valid_emails": valid_emails, "all_valid": all_valid}
+    return {"valid_emails": valid_emails, "all_valid": all_valid, "message": message}
 
 
 def is_valid_email(email: str) -> bool:
