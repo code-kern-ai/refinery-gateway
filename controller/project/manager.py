@@ -23,6 +23,7 @@ from fast_api.types import HuddleData, ProjectSize
 from controller.task_master import manager as task_master_manager
 from submodules.model.enums import TaskType, RecordTokenizationScope
 from submodules.model.business_objects import util as db_util
+from submodules.model.cognition_objects import integration as integration_db_co
 from submodules.model.integration_objects.helper import (
     REFINERY_ATTRIBUTE_ACCESS_GROUPS,
     REFINERY_ATTRIBUTE_ACCESS_USERS,
@@ -133,11 +134,15 @@ def is_access_management_activated(project_id: str) -> bool:
     return access_groups is not None and access_users is not None
 
 
-def get_all_projects_by_user(organization_id) -> List[Project]:
+def get_all_projects_by_user(organization_id: str) -> List[Project]:
     projects = project.get_all_by_user_organization_id(organization_id)
     project_dicts = sql_alchemy_to_dict(
         projects, column_whitelist=ALL_PROJECTS_WHITELIST
     )
+
+    all_integration_project_ids = {
+        i.project_id for i in integration_db_co.get_all_in_org(organization_id)
+    }
 
     for p in project_dicts:
         user_id = p["created_by"]
@@ -155,10 +160,7 @@ def get_all_projects_by_user(organization_id) -> List[Project]:
         else:
             p["num_data_scale_uploaded"] = record.get_count_scale_uploaded(p["id"])
 
-        p["is_integration_project"] = any(
-            p["name"].startswith(f"[{integration_type.value}]")
-            for integration_type in enums.CognitionIntegrationType
-        )
+        p["is_integration_project"] = p["id"] in all_integration_project_ids
 
         del p["created_by"]
 
