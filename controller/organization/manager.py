@@ -7,6 +7,10 @@ from submodules.model.models import Organization, User
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.s3 import controller as s3
+from submodules.model.cognition_objects import integration
+from api import transfer as transfer_api
+from util.decorator import param_debounce
+
 
 USER_INFO_WHITELIST = {"id", "role"}
 ORGANIZATION_WHITELIST = {"id", "name", "max_rows", "max_cols", "max_char_count"}
@@ -93,3 +97,13 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
     if org_id is None:
         return []
     return organization.get_organization_overview_stats(org_id)
+
+
+@param_debounce(seconds=10)
+def sync_organization_sharepoint_integrations(org_id: str) -> None:
+    print("EXECUTING SYNC ORGANIZATION SHAREPOINT INTEGRATIONS", flush=True)
+    all_integrations = integration.get_all_in_org(
+        org_id, enums.CognitionIntegrationType.SHAREPOINT.value
+    )
+    for integration_entity in all_integrations:
+        transfer_api.post_process_integration(integration_entity.id)
