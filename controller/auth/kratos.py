@@ -28,11 +28,13 @@ KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 LANGUAGE_MESSAGES = {
     "en": "Welcome! Click the link to complete your account setup:\n\n",
     "de": "Willkommen! Klicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
+    "nl": "Welkom! Klik op de link om uw accountinstellingen te voltooien:\n\n",
 }
 
 LANGUAGE_SUBJECTS = {
     "en": "You're invited to our app!",
     "de": "Sie sind zu unserer App eingeladen!",
+    "nl": "U bent uitgenodigd voor onze app!",
 }
 
 
