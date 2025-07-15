@@ -57,6 +57,7 @@ def test_invite_users(client: TestClient, org: Organization):
             "organization_name": org.name,
             "emails": valid_emails_to_test,
             "user_role": UserRoles.ENGINEER.value,
+            "language": "en",
         },
     )
     assert response.status_code == 200

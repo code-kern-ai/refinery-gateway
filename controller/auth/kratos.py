@@ -25,6 +25,16 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
+LANGUAGE_MESSAGES = {
+    "en": "Welcome! Click the link to complete your account setup:\n\n",
+    "de": "Willkommen! Klicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
+}
+
+LANGUAGE_SUBJECTS = {
+    "en": "You're invited to our app!",
+    "de": "Sie sind zu unserer App eingeladen!",
+}
+
 
 def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
@@ -237,11 +247,9 @@ def get_recovery_link(user_id: str) -> str:
     return response_link.json() if response_link.ok else None
 
 
-def email_with_link(to_email: str, recovery_link: str) -> None:
-    msg = MIMEText(
-        f"Welcome! Click the link to complete your account setup:\n\n{recovery_link}"
-    )
-    msg["Subject"] = "You're invited to our app!"
+def email_with_link(to_email: str, recovery_link: str, language: str) -> None:
+    msg = MIMEText(f"{LANGUAGE_MESSAGES[language]}{recovery_link}")
+    msg["Subject"] = LANGUAGE_SUBJECTS[language]
     msg["From"] = "no-reply@kern.ai"
     msg["To"] = to_email
 

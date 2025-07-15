@@ -177,6 +177,7 @@ def invite_users(
     emails: List[str],
     organization_name: str,
     user_role: str,
+    language: str,
     provider: Optional[str] = None,
 ):
     user_ids = []
@@ -192,13 +193,16 @@ def invite_users(
         # Assign the user role
         user_manager.update_user_role(user["id"], user_role)
 
+        # Add the preferred language
+        user_manager.update_user_field(user["id"], "language_display", language)
+
         # Get the recovery link for the email
         recovery_link = kratos.get_recovery_link(user["id"])
         if not recovery_link:
             raise AuthManagerError("Failed to get recovery link")
 
         # Send the recovery link to the email
-        kratos.email_with_link(email, recovery_link["recovery_link"])
+        kratos.email_with_link(email, recovery_link["recovery_link"], language)
     return user_ids
 
 
