@@ -99,6 +99,7 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
     return organization.get_organization_overview_stats(org_id)
 
 
+# INFO: Not fully debounced if server runs multiple instances
 @param_debounce(seconds=10)
 def sync_organization_sharepoint_integrations(org_id: str) -> None:
     all_integrations = integration.get_all_in_org(
