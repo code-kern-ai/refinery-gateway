@@ -16,6 +16,7 @@ from submodules.model.business_objects import (
     record,
     record_label_association,
     upload_task,
+    project,
 )
 
 from controller.upload_task import manager as upload_task_manager
@@ -28,6 +29,7 @@ from util import category
 from util import notification
 from controller.transfer.util import convert_to_record_dict
 import os
+from controller.task_master import manager as task_master_manager
 
 
 logger = logging.getLogger(__name__)
@@ -182,6 +184,19 @@ def import_file_record_dict(
     tmp_file_name = file.store_records_as_json_file(records)
     file_type = "json"
     __import_file(project_id, upload_task, file_type, tmp_file_name)
+    project_item = project.get(project_id)
+    org_id = project_item.organization_id
+    task_master_manager.queue_task(
+        str(org_id),
+        str(upload_task.user_id),
+        enums.TaskType.TOKENIZATION,
+        {
+            "project_id": str(project_id),
+            "scope": enums.RecordTokenizationScope.PROJECT.value,
+            "include_rats": True,
+            "only_uploaded_attributes": True,
+        },
+    )
 
 
 def __import_file(

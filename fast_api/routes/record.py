@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Request, Body
 from controller.record import manager
 from controller.auth import manager as auth_manager
@@ -5,7 +6,7 @@ from fast_api.routes.client_response import (
     get_custom_response,
     get_silent_success,
 )
-from fast_api.models import RecordSyncBody
+from fast_api.models import RecordSyncBody, RecordDeletion
 from util import notification
 from fastapi import status
 import json
@@ -32,4 +33,43 @@ def sync_records(
         )
 
     notification.send_organization_update(project_id, "records_changed")
+    return get_silent_success()
+
+
+@router.delete(
+    "/{project_id}/delete-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def delete_by_record_ids(
+    project_id: str,
+    body: RecordDeletion,
+    as_thread: Optional[bool] = False,
+):
+    manager.delete_records(project_id, body.record_ids, as_thread)
+    return get_silent_success()
+
+
+@router.post(
+    "/{project_id}/access-management",
+    dependencies=[
+        Depends(auth_manager.check_project_access_dep),
+        Depends(auth_manager.check_group_auth),
+    ],
+)
+def add_access_groups_or_users(
+    request: Request,
+    project_id: str,
+    body: dict = Body(...),
+):
+    group_ids = body.get("group_ids")
+    user_ids = body.get("user_ids")
+    record_ids = body.get("record_ids")
+    errors = manager.add_access_groups_or_users(
+        project_id, record_ids, group_ids=group_ids, user_ids=user_ids
+    )
+    if errors and len(errors) > 0:
+        return get_custom_response(
+            status_code=status.HTTP_200_OK,
+            content=json.dumps(errors),
+        )
     return get_silent_success()

@@ -1,6 +1,7 @@
 import logging
 import traceback
 import time
+import os
 from typing import Optional
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse
@@ -16,6 +17,8 @@ from submodules.model.business_objects import (
     tokenization,
     project,
 )
+from submodules.model.cognition_objects import integration
+from util import service_requests
 
 from controller.transfer import manager as transfer_manager
 from controller.upload_task import manager as upload_task_manager
@@ -35,6 +38,10 @@ from submodules.model.enums import TaskType, RecordTokenizationScope
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+COGNITION_INTEGRATION_PROVIDER = os.getenv(
+    "COGNITION_INTEGRATION_PROVIDER", "http://cognition-integration-provider:80"
+)
 
 
 class Notify(HTTPEndpoint):
@@ -165,12 +172,26 @@ def __recalculate_missing_attributes_and_embeddings(
     project_id: str, user_id: str
 ) -> None:
     __calculate_missing_attributes(project_id, user_id)
-    recreate_or_extend_embeddings(project_id)
+    has_embeddings = recreate_or_extend_embeddings(project_id)
+    if not has_embeddings:
+        return
+
+    integration_items = integration.get_all_by_project_id(project_id)
+    if not integration_items:
+        return
+
+    for integration_item in integration_items:
+        integration_id = str(integration_item.id)
+        post_process_integration(integration_id)
+
+
+def post_process_integration(integration_id: str) -> None:
+    url = f"{COGNITION_INTEGRATION_PROVIDER}/integrations/postprocess/{integration_id}"
+    service_requests.post_call_or_raise(url, data=None)
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     # wait a second to ensure that the process is started in the tokenization service
-    time.sleep(5)
     attributes_usable = attribute.get_all_ordered(
         project_id,
         True,
@@ -186,6 +207,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
     for att_id in attribute_ids:
         attribute.update(project_id, att_id, state=enums.AttributeState.INITIAL.value)
     general.commit()
+    time.sleep(5)
     notification.send_organization_update(
         project_id=project_id, message="calculate_attribute:started:all"
     )

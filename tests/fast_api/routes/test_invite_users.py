@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from controller.auth.kratos import delete_user_kratos
 
 from submodules.model.models import Organization
+from submodules.model.enums import UserRoles
 import requests
 import time
 
@@ -52,7 +53,11 @@ def test_invite_users(client: TestClient, org: Organization):
     valid_emails_to_test = ["test@kern.ai"]
     response = client.post(
         "/api/v1/misc/invite-users",
-        json={"organization_name": org.name, "emails": valid_emails_to_test},
+        json={
+            "organization_name": org.name,
+            "emails": valid_emails_to_test,
+            "user_role": UserRoles.ENGINEER.value,
+        },
     )
     assert response.status_code == 200
     created_user_ids = response.json()

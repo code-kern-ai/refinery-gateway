@@ -16,6 +16,7 @@ from config_handler import (
 from fast_api.routes.organization import router as org_router
 from fast_api.routes.project import router as project_router
 from fast_api.routes.project_setting import router as project_setting_router
+from fast_api.routes.project_internal import router as project_internal_router
 from fast_api.routes.misc import router as misc_router
 from fast_api.routes.comment import router as comment_router
 from fast_api.routes.attribute import router as attribute_router
@@ -30,6 +31,7 @@ from fast_api.routes.record import router as record_router
 from fast_api.routes.weak_supervision import router as weak_supervision_router
 from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from fast_api.routes.task_execution import router as task_execution_router
+from fast_api.routes.record_internal import router as record_internal_router
 from fast_api.routes.playground import router as playground_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
@@ -42,6 +44,7 @@ from route_prefix import (
     PREFIX_ORGANIZATION,
     PREFIX_PROJECT,
     PREFIX_PROJECT_SETTING,
+    PREFIX_PROJECT_INTERNAL,
     PREFIX_MISC,
     PREFIX_COMMENT,
     PREFIX_ATTRIBUTE,
@@ -53,6 +56,7 @@ from route_prefix import (
     PREFIX_DATA_BROWSER,
     PREFIX_LABELING,
     PREFIX_RECORD,
+    PREFIX_RECORD_INTERNAL,
     PREFIX_WEAK_SUPERVISION,
     PREFIX_LABELING_TASKS,
     PREFIX_TASK_EXECUTION,
@@ -115,6 +119,14 @@ fastapi_app_internal = FastAPI()
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
 )
+
+fastapi_app_internal.include_router(
+    record_internal_router, prefix=PREFIX_RECORD_INTERNAL, tags=["record-internal"]
+)
+fastapi_app_internal.include_router(
+    project_internal_router, prefix=PREFIX_PROJECT_INTERNAL, tags=["project-internal"]
+)
+
 
 routes = [
     Route("/full_config", FullConfigRest),

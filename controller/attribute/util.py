@@ -250,7 +250,6 @@ def prepare_llm_response_code(
     llm_playground_config: Union[Dict[str, Any], None] = None,
     llm_ac_cache_access_link: Union[str, None] = None,
     llm_ac_cache_file_upload_link: Union[str, None] = None,
-    num_workers: int = 100,
     max_api_call_retries: int = 5,
     retry_sleep_seconds: int = 5,
 ) -> str:
@@ -293,6 +292,14 @@ async def ac(record):
         user_prompt=llm_config["questionPrompt"],
     )
     validate_llm_config(llm_config=llm_config)
+
+    num_workers = 50
+    if (
+        llm_config is not None
+        and enums.LLMProvider.from_string(llm_config.get("llmIdentifier", "Open ai"))
+        == enums.LLMProvider.AZURE_FOUNDRY
+    ):
+        num_workers = 25
 
     try:
         llm_config_mapping = {

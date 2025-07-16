@@ -149,3 +149,25 @@ def test_update_records_to_project(
     emb = embedding_bo.get_all_embeddings_by_project_id(refinery_project.id)
     assert len(emb) > 0
     assert emb[0].current_delta_record_count > 0
+
+
+def test_delete_records_from_project(
+    client: TestClient, refinery_project: RefineryProject
+):
+    assert record_bo.count(refinery_project.id) == 2
+
+    record_ids = record_bo.get_all_ids(refinery_project.id)
+    to_del = record_ids[:1]  # delete one record
+
+    ##note that .delete doesn'T seem to support bodies so we use the request directly
+    response = client.request(
+        "DELETE",
+        f"/api/v1/record/{refinery_project.id}/delete-records",
+        json={"record_ids": to_del},  # delete one record
+    )
+
+    assert response.status_code == 200
+
+    record_ids = record_bo.get_all_ids(refinery_project.id)
+    assert len(record_ids) == 1
+    assert record_ids[0] != to_del[0]  # the deleted record should not be present

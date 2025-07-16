@@ -1,8 +1,8 @@
 from threading import Timer
 from inspect import signature
-
 from datetime import datetime, timedelta
 from functools import wraps
+import threading
 
 
 def debounce(wait):
@@ -97,5 +97,38 @@ class param_throttle(object):
             if call:
                 self.time_of_last_call[first_param] = now
                 return fn(*args, **kwargs)
+
+        return wrapper
+
+
+class param_debounce:
+
+    def __init__(self, seconds=0, minutes=0, hours=0):
+        # total debounce delay in seconds
+        self.delay = timedelta(
+            seconds=seconds, minutes=minutes, hours=hours
+        ).total_seconds()
+        # map: key -> (Timer, last_args, last_kwargs)
+        self._timers = {}
+
+    def __call__(self, fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            key = args[0] if args else None
+
+            existing = self._timers.get(key)
+            if existing:
+                timer, _, _ = existing
+                timer.cancel()
+
+            def call_it():
+                _, last_args, last_kwargs = self._timers.pop(key, (None, None, None))
+                fn(*last_args, **last_kwargs)
+
+            timer = threading.Timer(self.delay, call_it)
+
+            self._timers[key] = (timer, args, kwargs)
+            timer.daemon = True
+            timer.start()
 
         return wrapper

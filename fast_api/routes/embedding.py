@@ -1,6 +1,10 @@
 from typing import List, Optional
 
-from fast_api.models import CreateEmbeddingBody, UpdateEmbeddingBody
+from fast_api.models import (
+    CreateEmbeddingBody,
+    UpdateEmbeddingBody,
+    GetEmbeddingNameBody,
+)
 from fast_api.routes.client_response import (
     pack_json_result,
     get_silent_success,
@@ -12,7 +16,8 @@ from controller.task_master import manager as task_master_manager
 from controller.auth import manager as auth_manager
 from controller.embedding.connector import collection_on_qdrant
 from submodules.model.enums import TaskType
-from submodules.model.business_objects import embedding
+from submodules.model.business_objects import embedding as embedding_bo
+from submodules.model.cognition_objects import environment_variable as env_var_db_bo
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification, spacy_util
 import json
@@ -46,13 +51,16 @@ def language_models(request: Request) -> List:
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
 def get_embeddings(project_id: str) -> List:
-    embeddings_extended = embedding.get_all_embeddings_by_project_id_extended(
+    embeddings_extended = embedding_bo.get_all_embeddings_by_project_id_extended(
         project_id
     )
     data = [
         {
             **sql_alchemy_to_dict(embedding),
             "on_qdrant": collection_on_qdrant(project_id, embedding["id"]),
+            "count": sql_alchemy_to_dict(
+                embedding_bo.get_tensor_count(embedding["id"])
+            ),
         }
         for embedding in embeddings_extended
     ]
@@ -169,3 +177,23 @@ def update_embedding_payload(
         return get_silent_success()
     else:
         return GENERIC_FAILURE_RESPONSE
+
+
+# should really be a GET, but is only used internally by cognition-integration-provider
+@router.post("/{project_id}/embedding-name")
+def get_embedding_name(
+    project_id: str,
+    data: GetEmbeddingNameBody = Body(...),
+) -> str:
+    if data.api_token_env_name:
+        api_token = env_var_db_bo.get_by_name_and_org_id(
+            data.org_id, data.api_token_env_name
+        ).value
+    return manager.get_embedding_name(
+        project_id,
+        data.attribute_id,
+        data.platform,
+        data.embedding_type,
+        data.model,
+        api_token,
+    )

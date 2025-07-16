@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
@@ -6,6 +6,7 @@ from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
 from datetime import datetime, timedelta
 from util.decorator import param_throttle
+from submodules.model.util import is_string_true_value
 
 
 def get_user(user_id: str) -> User:
@@ -53,7 +54,9 @@ def update_organization_of_user(organization_name: str, user_mail: str) -> None:
         raise Exception(
             f"User {user_mail} is already part of organization {user_item.organization.name}"
         )
+
     user.update_organization(user_item.id, organization.id, with_commit=True)
+    organization_manager.sync_organization_sharepoint_integrations(organization.id)
 
 
 def update_user_role(user_id: str, role: str) -> User:
@@ -70,11 +73,13 @@ def update_user_role(user_id: str, role: str) -> User:
     return user_item
 
 
-def update_user_language_display(user_id: str, language_display: str) -> User:
+def update_user_field(user_id: str, field: str, value: Any) -> User:
     user_item = user.get(user_id)
     if not user_item:
         raise ValueError("User not found")
-    user_item.language_display = language_display
+    if field == "use_new_cognition_ui":
+        value = is_string_true_value(value)
+    setattr(user_item, field, value)
     general.commit()
     return user_item
 
@@ -158,5 +163,23 @@ def __migrate_kratos_users():
         )
         if user_database.sso_provider != sso_provider:
             user_database.sso_provider = sso_provider
+
+        if user_database.oidc_identifier is None:
+            user_search = kratos.__search_kratos_for_user_mail(
+                user_identity["traits"]["email"]
+            )
+            if user_search and user_search["credentials"]:
+                if user_search["credentials"].get("oidc", None):
+                    oidc = (
+                        user_search["credentials"]
+                        .get("oidc", {})
+                        .get("identifiers", None)[0]
+                    )
+                    if oidc:
+                        oidc = oidc.split(":")
+                        if len(oidc) > 1:
+                            user_database.oidc_identifier = oidc[1]
+                        else:
+                            user_database.oidc_identifier = None
 
     general.commit()

@@ -383,11 +383,6 @@ class TokenizedRecordBody(BaseModel):
     record_id: StrictStr
 
 
-class UserLanguageDisplay(BaseModel):
-    user_id: str
-    language_display: str
-
-
 class MappedSortedPaginatedUsers(BaseModel):
     sort_key: str
     sort_direction: int
@@ -507,7 +502,30 @@ class InviteUsersBody(BaseModel):
     emails: List[StrictStr]
     organization_name: StrictStr
     provider: Optional[StrictStr] = None
+    user_role: StrictStr
 
 
 class CheckInviteUsersBody(BaseModel):
     emails: List[StrictStr]
+
+
+class AdminQueryFilterBody(BaseModel):
+    parameters: Optional[Dict[str, Any]] = None
+
+
+class RecordDeletion(BaseModel):
+    record_ids: List[str]
+
+
+class ProjectDeletion(BaseModel):
+    user_id: str
+    project_ids: List[str]
+
+
+class GetEmbeddingNameBody(BaseModel):
+    org_id: str
+    attribute_id: str
+    platform: str
+    embedding_type: str
+    model: Optional[str] = None
+    api_token_env_name: Optional[str] = None
