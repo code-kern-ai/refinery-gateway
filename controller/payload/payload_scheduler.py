@@ -97,7 +97,7 @@ def create_payload(
         in_thread: bool = False,
     ) -> None:
         if in_thread:
-            ctx_token = general.get_ctx_token()
+            general.get_ctx_token()
         try:
             add_file_name, input_data = prepare_input_data_for_payload(
                 information_source_item
@@ -123,7 +123,7 @@ def create_payload(
             )
         finally:
             if in_thread:
-                general.reset_ctx_token(ctx_token, True)
+                general.reset_ctx_token(None, True)
 
     def prepare_input_data_for_payload(
         information_source_item: InformationSource,
@@ -452,7 +452,7 @@ def read_container_logs_thread(
     payload_id: str,
     docker_container: Any,
 ):
-    ctx_token = general.get_ctx_token()
+    general.get_ctx_token()
     # needs to be refetched since it is not thread safe
     information_source_payload = information_source.get_payload(project_id, payload_id)
     previous_progress = -1
@@ -462,7 +462,7 @@ def read_container_logs_thread(
         time.sleep(1)
         c += 1
         if c > 100:
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            general.remove_and_refresh_session(None, True)
             information_source_payload = information_source.get_payload(
                 project_id, payload_id
             )
@@ -504,7 +504,7 @@ def read_container_logs_thread(
         set_payload_progress(
             project_id, information_source_payload, last_entry, factor=0.8
         )
-    general.remove_and_refresh_session(ctx_token)
+    general.remove_and_refresh_session()
 
 
 def get_inference_dir() -> str:
