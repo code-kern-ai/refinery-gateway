@@ -215,7 +215,7 @@ def __add_running_id(
     attribute_name: str,
     for_retokenization: bool = True,
 ):
-    session_token = general.get_ctx_token()
+    general.get_ctx_token()
     attribute.add_running_id(
         project_id, attribute_name, for_retokenization, with_commit=True
     )
@@ -231,7 +231,7 @@ def __add_running_id(
                 "project_id": str(project_id),
             },
         )
-    general.remove_and_refresh_session(session_token)
+    general.remove_and_refresh_session()
 
 
 def calculate_user_attribute_missing_records(
@@ -301,7 +301,7 @@ def __calculate_user_attribute_missing_records(
     attribute_id: str,
     include_rats: bool,
 ) -> None:
-    session_token = general.get_ctx_token()
+    general.get_ctx_token()
 
     all_records_count = record.count(project_id)
     count_delta = record.count_missing_delta(project_id, attribute_id)
@@ -329,7 +329,7 @@ def __calculate_user_attribute_missing_records(
             attribute_id=attribute_id,
             log="Attribute calculation failed",
         )
-        general.remove_and_refresh_session(session_token)
+        general.remove_and_refresh_session()
         return
 
     util.add_log_to_attribute_logs(
@@ -354,7 +354,7 @@ def __calculate_user_attribute_missing_records(
             attribute_id=attribute_id,
             log="Writing to the database failed.",
         )
-        general.remove_and_refresh_session(session_token)
+        general.remove_and_refresh_session()
         return
     util.add_log_to_attribute_logs(project_id, attribute_id, "Finished writing.")
 
@@ -394,7 +394,7 @@ def __calculate_user_attribute_missing_records(
                 attribute_id=attribute_id,
                 log="Writing to the database failed.",
             )
-            general.remove_and_refresh_session(session_token)
+            general.remove_and_refresh_session()
             return
 
     else:
@@ -410,7 +410,7 @@ def __calculate_user_attribute_missing_records(
             attribute_id=attribute_id,
             log="Writing to the database failed.",
         )
-        general.remove_and_refresh_session(session_token)
+        general.remove_and_refresh_session()
         return
     util.set_progress(project_id, attribute_item, 1.0)
     attribute.update(
@@ -424,7 +424,7 @@ def __calculate_user_attribute_missing_records(
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
     )
-    general.remove_and_refresh_session(session_token)
+    general.remove_and_refresh_session()
 
 
 def __notify_attribute_calculation_failed(
