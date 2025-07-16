@@ -101,7 +101,6 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
 
 @param_debounce(seconds=10)
 def sync_organization_sharepoint_integrations(org_id: str) -> None:
-    print("EXECUTING SYNC ORGANIZATION SHAREPOINT INTEGRATIONS", flush=True)
     all_integrations = integration.get_all_in_org(
         org_id, enums.CognitionIntegrationType.SHAREPOINT.value
     )
