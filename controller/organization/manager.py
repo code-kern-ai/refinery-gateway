@@ -100,10 +100,14 @@ def get_overview_stats(org_id: str) -> List[Dict[str, Union[str, int]]]:
 
 
 # INFO: Not fully debounced if server runs multiple instances
+# TODO: Change to 60 to 300 for prod
 @param_debounce(seconds=10)
 def sync_organization_sharepoint_integrations(org_id: str) -> None:
     all_integrations = integration.get_all_in_org(
         org_id, enums.CognitionIntegrationType.SHAREPOINT.value
     )
-    for integration_entity in all_integrations:
-        transfer_api.post_process_integration(integration_entity.id)
+    all_integration_ids = [
+        str(integration_entity.id) for integration_entity in all_integrations
+    ]
+    for integration_id in all_integration_ids:
+        transfer_api.post_process_integration(integration_id)
