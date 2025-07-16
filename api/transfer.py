@@ -182,8 +182,12 @@ def __recalculate_missing_attributes_and_embeddings(
 
     for integration_item in integration_items:
         integration_id = str(integration_item.id)
-        url = f"{COGNITION_INTEGRATION_PROVIDER}/integrations/postprocess/{integration_id}"
-        service_requests.post_call_or_raise(url, data=None)
+        post_process_integration(integration_id)
+
+
+def post_process_integration(integration_id: str) -> None:
+    url = f"{COGNITION_INTEGRATION_PROVIDER}/integrations/postprocess/{integration_id}"
+    service_requests.post_call_or_raise(url, data=None)
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:

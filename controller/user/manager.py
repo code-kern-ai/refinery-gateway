@@ -54,7 +54,9 @@ def update_organization_of_user(organization_name: str, user_mail: str) -> None:
         raise Exception(
             f"User {user_mail} is already part of organization {user_item.organization.name}"
         )
+
     user.update_organization(user_item.id, organization.id, with_commit=True)
+    organization_manager.sync_organization_sharepoint_integrations(organization.id)
 
 
 def update_user_role(user_id: str, role: str) -> User:
