@@ -182,8 +182,12 @@ def __recalculate_missing_attributes_and_embeddings(
 
     for integration_item in integration_items:
         integration_id = str(integration_item.id)
-        url = f"{COGNITION_INTEGRATION_PROVIDER}/integrations/postprocess/{integration_id}"
-        service_requests.post_call_or_raise(url, data=None)
+        post_process_integration(integration_id)
+
+
+def post_process_integration(integration_id: str) -> None:
+    url = f"{COGNITION_INTEGRATION_PROVIDER}/integrations/postprocess/{integration_id}"
+    service_requests.post_call_or_raise(url, data=None)
 
 
 def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
@@ -214,7 +218,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
             i += 1
             if i >= 60:
                 i = 0
-                general.remove_and_refresh_session(request_new=True)
+                general.remove_and_refresh_session(None, True)
             if tokenization.is_doc_bin_creation_running_or_queued(project_id):
                 time.sleep(2)
                 continue
@@ -229,7 +233,7 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                 break
             if i >= 60:
                 i = 0
-                general.remove_and_refresh_session(request_new=True)
+                general.remove_and_refresh_session(None, True)
 
             current_att_id = attribute_ids[0]
             current_att = attribute.get(project_id, current_att_id)

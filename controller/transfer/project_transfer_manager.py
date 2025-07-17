@@ -921,12 +921,12 @@ def __post_processing_import_threaded(
     user_id: str,
 ) -> None:
     time.sleep(5)
-    ctx_token = general.get_ctx_token()
+    general.get_ctx_token()
     c = 1
     while True:
         c += 1
         if c > 12:
-            ctx_token = general.remove_and_refresh_session(ctx_token, True)
+            general.remove_and_refresh_session(None, True)
             c = 1
         if task_queue.get_by_tokenization(project_id):
             logger.info(f"Waiting for tokenization of project {project_id}")
@@ -945,7 +945,7 @@ def __post_processing_import_threaded(
             embedding_manager.request_tensor_upload(
                 project_id, str(embedding_ids[old_id])
             )
-    general.remove_and_refresh_session(ctx_token)
+    general.remove_and_refresh_session()
 
 
 def get_project_export_dump(

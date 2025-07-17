@@ -58,7 +58,7 @@ def run_weak_supervision(
         overwrite_default_precision: Optional[float] = None,
         overwrite_weak_supervision: Optional[Dict[str, float]] = None,
     ):
-        ctx_token = general.get_ctx_token()
+        general.get_ctx_token()
         try:
             labeling_tasks = labeling_task.get_labeling_tasks_by_selected_sources(
                 project_id
@@ -106,7 +106,7 @@ def run_weak_supervision(
             )
             raise e
         finally:
-            general.reset_ctx_token(ctx_token)
+            general.reset_ctx_token()
 
     daemon.run_without_db_token(
         execution_pipeline,
