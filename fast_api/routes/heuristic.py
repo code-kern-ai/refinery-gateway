@@ -209,7 +209,7 @@ def create_heuristic(
     notification.send_organization_update(
         project_id, f"information_source_created:{str(info_source.id)}"
     )
-    return get_silent_success()
+    return pack_json_result({"id": str(info_source.id)}, wrap_for_frontend=False)
 
 
 @router.post(
