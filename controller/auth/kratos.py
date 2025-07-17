@@ -37,6 +37,12 @@ LANGUAGE_SUBJECTS = {
     "nl": "U bent uitgenodigd voor onze app!",
 }
 
+LANGUAGE_EXPIRATION_INFO = {
+    "en": "This link can only be clicked once and is valid for 2 days. Contact your system admin if you have issues.",
+    "de": "Dieser Link kann nur einmal angeklickt werden und ist 2 Tage lang gültig. Kontaktieren Sie Ihren Systemadministrator, wenn Sie Probleme haben.",
+    "nl": "Deze link kan maar één keer worden aangeklikt en is 2 dagen geldig. Neem contact op met uw systeembeheerder als u problemen ondervindt.",
+}
+
 
 def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
@@ -250,7 +256,9 @@ def get_recovery_link(user_id: str) -> str:
 
 
 def email_with_link(to_email: str, recovery_link: str, language: str) -> None:
-    msg = MIMEText(f"{LANGUAGE_MESSAGES[language]}{recovery_link}")
+    msg = MIMEText(
+        f"{LANGUAGE_MESSAGES[language]}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO[language]}"
+    )
     msg["Subject"] = LANGUAGE_SUBJECTS[language]
     msg["From"] = "no-reply@kern.ai"
     msg["To"] = to_email
