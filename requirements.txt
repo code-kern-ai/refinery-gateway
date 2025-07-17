@@ -58,13 +58,13 @@ click==8.2.1
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   typer
     #   uvicorn
-cloudpathlib==0.18.1
+cloudpathlib==0.21.1
     # via weasel
-confection==0.1.4
+confection==0.1.5
     # via
     #   thinc
     #   weasel
-cymem==2.0.8
+cymem==2.0.11
     # via
     #   preshed
     #   spacy
@@ -73,7 +73,7 @@ distro==1.9.0
     # via openai
 docker==5.0.0
     # via -r requirements/requirements.in
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 fastapi==0.115.2
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
@@ -98,28 +98,32 @@ idna==3.10
     #   anyio
     #   httpx
     #   requests
-jinja2==3.1.4
+jinja2==3.1.6
     # via spacy
 jmespath==1.0.1
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   boto3
     #   botocore
-langcodes==3.4.0
+langcodes==3.5.0
     # via spacy
-language-data==1.2.0
+language-data==1.3.0
     # via langcodes
-mako==1.3.5
+mako==1.3.10
     # via alembic
-marisa-trie==1.1.1
+marisa-trie==1.2.1
     # via language-data
-markupsafe==2.1.5
+markdown-it-py==3.0.0
+    # via rich
+markupsafe==3.0.2
     # via
     #   jinja2
     #   mako
+mdurl==0.1.2
+    # via markdown-it-py
 minio==7.2.15
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
-murmurhash==1.0.10
+murmurhash==1.0.13
     # via
     #   preshed
     #   spacy
@@ -135,14 +139,14 @@ openai==1.31.0
     # via -r requirements/requirements.in
 openpyxl==3.0.10
     # via -r requirements/requirements.in
-packaging==24.0
+packaging==25.0
     # via
     #   spacy
     #   thinc
     #   weasel
 pandas==1.5.1
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
-preshed==3.0.9
+preshed==3.0.10
     # via
     #   spacy
     #   thinc
@@ -171,6 +175,8 @@ pydantic-core==2.18.4
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   pydantic
+pygments==2.19.2
+    # via rich
 pyjwt==2.4.0
     # via -r requirements/requirements.in
 pyminizip==0.2.6
@@ -190,17 +196,21 @@ requests==2.32.4
     #   docker
     #   spacy
     #   weasel
+rich==14.0.0
+    # via typer
 rncryptor==3.3.0
     # via -r requirements/requirements.in
 s3transfer==0.13.0
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   boto3
+shellingham==1.5.4
+    # via typer
 six==1.17.0
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   python-dateutil
-smart-open==6.4.0
+smart-open==7.3.0.post1
     # via weasel
 sniffio==1.3.1
     # via
@@ -217,7 +227,7 @@ sqlalchemy==1.4.42
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   alembic
-srsly==2.4.8
+srsly==2.5.1
     # via
     #   confection
     #   spacy
@@ -227,19 +237,19 @@ starlette==0.40.0
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
     #   fastapi
-sudachidict-core==20240409
+sudachidict-core==20250515
     # via spacy
-sudachipy==0.6.8
+sudachipy==0.6.10
     # via
     #   spacy
     #   sudachidict-core
 thinc==8.2.5
     # via spacy
-tqdm==4.66.4
+tqdm==4.67.1
     # via
     #   openai
     #   spacy
-typer==0.4.2
+typer==0.16.0
     # via
     #   spacy
     #   weasel
@@ -252,6 +262,7 @@ typing-extensions==4.14.1
     #   openai
     #   pydantic
     #   pydantic-core
+    #   typer
 urllib3==2.5.0
     # via
     #   -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
@@ -260,7 +271,7 @@ urllib3==2.5.0
     #   requests
 uvicorn==0.35.0
     # via -r /home/runner/work/refinery-submodule-parent-images/refinery-submodule-parent-images/refinery-gateway/requirements/common-requirements.txt
-wasabi==0.10.1
+wasabi==1.1.3
     # via
     #   spacy
     #   thinc
@@ -269,6 +280,8 @@ weasel==0.4.1
     # via spacy
 websocket-client==1.8.0
     # via docker
+wrapt==1.17.2
+    # via smart-open
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
