@@ -2,5 +2,8 @@
 
 
 # add -s to see print statements
-# add -v to see test names
+# add -v to see test names 
 docker exec -it refinery-gateway bash -c "cd /app && python -m pytest -v -s"
+
+## to test a specific file
+# docker exec -it refinery-gateway bash -c "cd /app && python -m pytest tests/test_admin_queries.py -v -s"
