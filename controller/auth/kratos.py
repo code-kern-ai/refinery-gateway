@@ -26,21 +26,15 @@ KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
 LANGUAGE_MESSAGES = {
-    "en": "Welcome! Click the link to complete your account setup:\n\n",
-    "de": "Willkommen! Klicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
-    "nl": "Welkom! Klik op de link om uw accountinstellingen te voltooien:\n\n",
+    "en": "Hello!\n\nClick the link to complete your account setup:\n\n",
+    "de": "Hallo!\n\nKlicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
 }
 
-LANGUAGE_SUBJECTS = {
-    "en": "You're invited to our app!",
-    "de": "Sie sind zu unserer App eingeladen!",
-    "nl": "U bent uitgenodigd voor onze app!",
-}
+INVITATION_SUBJECT = "Sie sind zu unserer app eingeladen/You are invited to our app"
 
 LANGUAGE_EXPIRATION_INFO = {
     "en": "This link can only be clicked once and is valid for 2 days. Contact your system admin if you have issues.",
     "de": "Dieser Link kann nur einmal angeklickt werden und ist 2 Tage lang gültig. Kontaktieren Sie Ihren Systemadministrator, wenn Sie Probleme haben.",
-    "nl": "Deze link kan maar één keer worden aangeklikt en is 2 dagen geldig. Neem contact op met uw systeembeheerder als u problemen ondervindt.",
 }
 
 
@@ -255,11 +249,11 @@ def get_recovery_link(user_id: str) -> str:
     return response_link.json() if response_link.ok else None
 
 
-def email_with_link(to_email: str, recovery_link: str, language: str) -> None:
+def email_with_link(to_email: str, recovery_link: str) -> None:
     msg = MIMEText(
-        f"{LANGUAGE_MESSAGES[language]}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO[language]}"
+        f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
     )
-    msg["Subject"] = LANGUAGE_SUBJECTS[language]
+    msg["Subject"] = INVITATION_SUBJECT
     msg["From"] = "no-reply@kern.ai"
     msg["To"] = to_email
 

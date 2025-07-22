@@ -202,7 +202,7 @@ def invite_users(
             raise AuthManagerError("Failed to get recovery link")
 
         # Send the recovery link to the email
-        kratos.email_with_link(email, recovery_link["recovery_link"], language)
+        kratos.email_with_link(email, recovery_link["recovery_link"])
     return user_ids
 
 
