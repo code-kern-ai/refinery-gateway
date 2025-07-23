@@ -25,6 +25,18 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
+LANGUAGE_MESSAGES = {
+    "en": "Hello!\n\nClick the link to complete your account setup:\n\n",
+    "de": "Hallo!\n\nKlicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
+}
+
+INVITATION_SUBJECT = "Sie sind zu unserer app eingeladen/You are invited to our app"
+
+LANGUAGE_EXPIRATION_INFO = {
+    "en": "This link can only be clicked once and is valid for 2 days. Contact your system admin if you have issues.",
+    "de": "Dieser Link kann nur einmal angeklickt werden und ist 2 Tage lang gültig. Kontaktieren Sie Ihren Systemadministrator, wenn Sie Probleme haben.",
+}
+
 
 def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]:
     global KRATOS_IDENTITY_CACHE
@@ -239,9 +251,9 @@ def get_recovery_link(user_id: str) -> str:
 
 def email_with_link(to_email: str, recovery_link: str) -> None:
     msg = MIMEText(
-        f"Welcome! Click the link to complete your account setup:\n\n{recovery_link}"
+        f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
     )
-    msg["Subject"] = "You're invited to our app!"
+    msg["Subject"] = INVITATION_SUBJECT
     msg["From"] = "no-reply@kern.ai"
     msg["To"] = to_email
 

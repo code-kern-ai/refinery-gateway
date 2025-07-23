@@ -503,6 +503,7 @@ class InviteUsersBody(BaseModel):
     organization_name: StrictStr
     provider: Optional[StrictStr] = None
     user_role: StrictStr
+    language: StrictStr
 
 
 class CheckInviteUsersBody(BaseModel):
