@@ -294,7 +294,11 @@ def invite_users(request: Request, body: InviteUsersBody = Body(...)):
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
     data = auth.invite_users(
-        body.emails, body.organization_name, body.user_role, body.provider
+        body.emails,
+        body.organization_name,
+        body.user_role,
+        body.language,
+        body.provider,
     )
     return pack_json_result(data)
 
