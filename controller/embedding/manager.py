@@ -230,7 +230,6 @@ def __recreate_or_extend_embedding(project_id: str, embedding_id: str) -> Embedd
 
         if (
             new_embedding_item.platform == enums.EmbeddingPlatform.OPENAI.value
-            or new_embedding_item.platform == enums.EmbeddingPlatform.COHERE.value
             or new_embedding_item.platform == enums.EmbeddingPlatform.AZURE.value
         ):
             agreement_item = agreement.get_by_xfkey(
