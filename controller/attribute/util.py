@@ -139,6 +139,29 @@ def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str):
     return response.json()["choices"][0]["message"]["content"]
 
 
+def test_privatemode_ai_llm_connection(model: str):
+    # more here: https://docs.privatemode.ai/api/chat-completions
+    headers = {
+        "Content-Type": "application/json",
+        # "Authorization": f"Bearer {api_key}",
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
+        ],
+        "max_tokens": 5,
+    }
+
+    response = requests.post(
+        "http://privatemode-proxy:8080/v1/chat/completions",
+        headers=headers,
+        json=payload,
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
 def test_azure_llm_connection(
     api_key: str,
     base_endpoint: str,
@@ -229,6 +252,10 @@ def validate_llm_config(llm_config: Dict[str, Any]):
                 api_key=llm_config["apiKey"],
                 base_endpoint=llm_config["apiBase"],
             )
+        elif llm_config["llmIdentifier"] == enums.LLMProvider.PRIVATEMODE_AI.value:
+            test_privatemode_ai_llm_connection(
+                model=llm_config["model"],
+            )
         else:
             raise LlmResponseError(
                 "LLM Identifier must be either Open AI or Azure, got: "
@@ -294,12 +321,15 @@ async def ac(record):
     validate_llm_config(llm_config=llm_config)
 
     num_workers = 50
-    if (
-        llm_config is not None
-        and enums.LLMProvider.from_string(llm_config.get("llmIdentifier", "Open ai"))
-        == enums.LLMProvider.AZURE_FOUNDRY
-    ):
+    llm_provider = enums.LLMProvider.from_string(
+        llm_config.get("llmIdentifier", "Open ai")
+    )
+
+    if llm_config is not None and llm_provider == enums.LLMProvider.AZURE_FOUNDRY:
         num_workers = 25
+    elif llm_provider == enums.LLMProvider.PRIVATEMODE_AI:
+        # to prevent api rate limit issues
+        num_workers = 10
 
     try:
         llm_config_mapping = {
