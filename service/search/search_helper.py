@@ -280,6 +280,7 @@ __lookup_sql_cast_data_type = {
     DataTypes.CATEGORY.value: "TEXT",
     DataTypes.TEXT.value: "TEXT",
     DataTypes.LLM_RESPONSE.value: "TEXT",
+    DataTypes.TEXT_LIST.value: "TEXT",
 }
 
 
