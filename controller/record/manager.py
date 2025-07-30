@@ -270,7 +270,7 @@ def __check_and_prep_edit_records(
             continue
 
         emb_path = os.path.join(
-            "/inference", project_id, str(embedding_item.id), "reducer.pkl"
+            "/inference", project_id, str(embedding_item.id), "embedder.json"
         )
         if not os.path.exists(emb_path):
             errors_found.append(
