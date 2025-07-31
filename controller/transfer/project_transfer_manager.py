@@ -339,10 +339,7 @@ def import_file(
         attribute_name = splitted_name[0]
         embedding_type = splitted_name[1]
         model = "-".join(splitted_name[2:])
-        if "bag-of-words" == model or "bag-of-characters" == model or "tf-idf" == model:
-            platform = enums.EmbeddingPlatform.PYTHON.value
-        else:
-            platform = enums.EmbeddingPlatform.HUGGINGFACE.value
+        platform = enums.EmbeddingPlatform.HUGGINGFACE.value
         name = f"{attribute_name}-{embedding_type}-{platform}-{model}"
         return platform, model, name
 
