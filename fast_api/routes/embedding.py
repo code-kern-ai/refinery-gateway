@@ -189,6 +189,8 @@ def get_embedding_name(
         api_token = env_var_db_bo.get_by_name_and_org_id(
             data.org_id, data.api_token_env_name
         ).value
+    else:
+        api_token = None
     return manager.get_embedding_name(
         project_id,
         data.attribute_id,
