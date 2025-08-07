@@ -143,7 +143,6 @@ def test_privatemode_ai_llm_connection(model: str):
     # more here: https://docs.privatemode.ai/api/chat-completions
     headers = {
         "Content-Type": "application/json",
-        # "Authorization": f"Bearer {api_key}",
     }
     payload = {
         "model": model,
