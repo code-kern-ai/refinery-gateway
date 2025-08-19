@@ -10,7 +10,6 @@ import traceback
 NEXT_EXEC = {}
 SUM_TABLE_TASKS = {
     AdminQueries.PRIVATEMODE_USE_OVER_TIME.value: timedelta(days=1),
-    # AdminQueries.PRIVATEMODE_USE_OVER_TIME.value: timedelta(minutes=5),
 }
 SUM_TABLE_REMOVES = {
     AdminQueries.PRIVATEMODE_USE_OVER_TIME.value: timedelta(days=90),
