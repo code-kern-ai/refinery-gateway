@@ -24,7 +24,7 @@ def upgrade():
         "size",
         existing_type=sa.Integer(),
         type_=sa.BigInteger(),
-        # postgresql_using="size::bigint",
+        postgresql_using="size::bigint",
         schema="integration",
     )
 
@@ -35,6 +35,6 @@ def downgrade():
         "size",
         existing_type=sa.BigInteger(),
         type_=sa.Integer(),
-        # postgresql_using="size::integer",
+        postgresql_using="LEAST(size, 2147483647)::integer",
         schema="integration",
     )
