@@ -65,6 +65,7 @@ from route_prefix import (
 from util import security, clean_up
 from middleware import log_storage
 from submodules.model import session
+from controller.sums_table import manager as sums_table_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -151,3 +152,4 @@ clean_up.clean_up_disk()
 
 session.start_session_cleanup_thread()
 log_storage.start_persist_thread()
+sums_table_manager.start_sums_table_thread()

@@ -25,9 +25,9 @@ from azure.core.exceptions import (
 
 class LLMProvider_A2VYBG(Enum):
     OPEN_AI = "Open AI"
-    OPEN_SOURCE = "Open-Source"
     AZURE = "Azure"
     AZURE_FOUNDRY = "Azure Foundry"
+    PRIVATEMODE_AI = "Privatemode AI"
 
 
 # OpenAI migration guides
@@ -90,6 +90,13 @@ def get_client_openai_8e8a360e_3f7f_4cf9_ba80_8cb239e897d2(
     prevent_cached_client: bool = True,
 ) -> Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI]:
     global CLIENT_LOOKUP_A2VYBG
+
+    if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.PRIVATEMODE_AI.value:
+        # caching was disabled (and doesn't work) so shorthand here to prevent bloated code
+        return AsyncOpenAI(
+            api_key="dummy",
+            base_url="http://privatemode-proxy:8080/v1",
+        )
 
     if CLIENT_TYPE_A2VYBG == LLMProvider_A2VYBG.AZURE.value and (
         azure_endpoint is None or api_version is None
