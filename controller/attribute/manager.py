@@ -457,6 +457,8 @@ def calculate_user_attribute_sample_records(
     if (
         attribute.get(project_id, attribute_id).data_type
         == DataTypes.EMBEDDING_LIST.value
+        or attribute.get(project_id, attribute_id).data_type
+        == DataTypes.TEXT_LIST.value
     ):
         # values are json serialized so they can be easily transferred to the frontend.
         # Since the return type is a list of strings, without json.dumps a str(xxxx) will be called
