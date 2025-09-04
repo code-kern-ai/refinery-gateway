@@ -41,12 +41,14 @@ def upgrade():
         "sharepoint_property_sync",
         ["created_by"],
         unique=False,
+        schema="integration",
     )
     op.create_index(
         op.f("ix_sharepoint_property_sync_integration_id"),
         "sharepoint_property_sync",
         ["integration_id"],
         unique=False,
+        schema="integration",
     )
     # ### end Alembic commands ###
 
@@ -56,10 +58,12 @@ def downgrade():
     op.drop_index(
         op.f("ix_sharepoint_property_sync_integration_id"),
         table_name="sharepoint_property_sync",
+        schema="integration",
     )
     op.drop_index(
         op.f("ix_sharepoint_property_sync_created_by"),
         table_name="sharepoint_property_sync",
+        schema="integration",
     )
     op.drop_table("sharepoint_property_sync", schema="integration")
     # ### end Alembic commands ###
