@@ -1,7 +1,7 @@
 """add integration sharepoint property sync
 
 Revision ID: 7334713b30a6
-Revises: 6868ac66ea92
+Revises: 312568866ac4
 Create Date: 2025-07-29 12:31:04.171629
 
 """
@@ -34,6 +34,7 @@ def upgrade():
             ["integration_id"], ["cognition.integration.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
+        schema="integration",
     )
     op.create_index(
         op.f("ix_sharepoint_property_sync_created_by"),
@@ -60,5 +61,5 @@ def downgrade():
         op.f("ix_sharepoint_property_sync_created_by"),
         table_name="sharepoint_property_sync",
     )
-    op.drop_table("sharepoint_property_sync")
+    op.drop_table("sharepoint_property_sync", schema="integration")
     # ### end Alembic commands ###
