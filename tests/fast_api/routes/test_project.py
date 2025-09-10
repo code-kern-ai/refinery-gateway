@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from submodules.model.models import Project as RefineryProject, User
+from submodules.model.models import Project as RefineryProject
 
 from controller.transfer import record_transfer_manager
 from api import transfer as transfer_api

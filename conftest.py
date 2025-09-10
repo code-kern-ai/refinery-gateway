@@ -14,8 +14,6 @@ from submodules.model.business_objects import (
 )
 from submodules.s3 import controller as s3
 from submodules.model.models import (
-    Organization,
-    User,
     Project as RefineryProject,
 )
 
