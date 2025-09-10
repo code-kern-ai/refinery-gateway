@@ -7,6 +7,7 @@ from controller.organization import manager as organization_manager
 from datetime import datetime, timedelta
 from util.decorator import param_throttle
 from submodules.model.util import is_string_true_value
+from submodules.model.business_objects import team_member as team_member_db_co
 
 
 def get_user(user_id: str) -> User:
@@ -82,6 +83,12 @@ def update_user_field(user_id: str, field: str, value: Any) -> User:
     setattr(user_item, field, value)
     general.commit()
     return user_item
+
+
+def add_user_to_teams(creation_user_id: str, user_id: str, team_ids: list) -> User:
+    for team_id in team_ids:
+        team_member_db_co.create(team_id, user_id, creation_user_id, with_commit=False)
+    general.commit()
 
 
 def remove_organization_from_user(user_mail: str) -> None:

@@ -293,12 +293,15 @@ def get_is_full_admin(request: Request) -> Dict:
 def invite_users(request: Request, body: InviteUsersBody = Body(...)):
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
+    user_id = auth.get_user_id_by_info(request.state.info)
     data = auth.invite_users(
+        user_id,
         body.emails,
         body.organization_name,
         body.user_role,
         body.language,
         body.provider,
+        body.team_ids,
     )
     return pack_json_result(data)
 
