@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from controller.auth.kratos import delete_user_kratos
 
-from submodules.model.models import Organization
+from submodules.model.business_objects import organization as organization_bo
 from submodules.model.enums import UserRoles
 import requests
 import time
@@ -48,8 +48,9 @@ def test_invalid_emails(client: TestClient):
     assert len(response_data["validEmails"]) == len(valid_emails_to_test)
 
 
-def test_invite_users(client: TestClient, org: Organization):
+def test_invite_users(client: TestClient, org_id: str):
     requests.delete("http://mailhog:8025/api/v1/messages")
+    org = organization_bo.get(org_id)
     valid_emails_to_test = ["test@kern.ai"]
     response = client.post(
         "/api/v1/misc/invite-users",
