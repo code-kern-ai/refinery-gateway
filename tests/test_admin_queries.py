@@ -28,7 +28,13 @@ def test_full_admin_queries():
 
 def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
     # USERS_TO_PROJECTS, USERS_BY_ORG
-    if query in (AdminQueries.USERS_TO_PROJECTS, AdminQueries.USERS_BY_ORG):
+    # AVG_MESSAGES_PER_CONVERSATION_GLOBAL, CREATED_TAGS_PER_ORG
+    if query in (
+        AdminQueries.USERS_TO_PROJECTS,
+        AdminQueries.USERS_BY_ORG,
+        AdminQueries.AVG_MESSAGES_PER_CONVERSATION_GLOBAL,
+        AdminQueries.CREATED_TAGS_PER_ORG,
+    ):
         return {
             "organization_id": "",
             "without_kern_email": False,
@@ -53,13 +59,6 @@ def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
         return {
             "period": "days",
             "slices": 7,
-            "organization_id": "",
-            "without_kern_email": False,
-        }
-
-    # AVG_MESSAGES_PER_CONVERSATION_GLOBAL
-    elif query is AdminQueries.AVG_MESSAGES_PER_CONVERSATION_GLOBAL:
-        return {
             "organization_id": "",
             "without_kern_email": False,
         }
