@@ -71,9 +71,12 @@ def get_all_users(
     )
     all_users_expanded = kratos.expand_user_mail_name(all_users_dict)
     all_users_expanded = [
-        user
+        {
+            **user,
+            "firstName": user["firstName"] or "<FN nya>",
+            "lastName": user["lastName"] or "<LN nya>",
+        }
         for user in all_users_expanded
-        if user["firstName"] is not None and user["lastName"] is not None
     ]
     return all_users_expanded
 

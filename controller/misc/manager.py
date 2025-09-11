@@ -93,7 +93,11 @@ def finalize_customer_buttons(
     for e in buttons:
         e[key_name] = name_lookup[str(e[key])]
         e[key_name] = (
-            (e[key_name].get("first", "") + " " + e[key_name].get("last", ""))
+            (
+                (e[key_name].get("first", "") or "")
+                + " "
+                + (e[key_name].get("last", "") or "")
+            )
             if e[key_name]
             else "Unknown"
         )

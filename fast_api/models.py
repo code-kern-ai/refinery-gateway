@@ -504,6 +504,7 @@ class InviteUsersBody(BaseModel):
     provider: Optional[StrictStr] = None
     user_role: StrictStr
     language: StrictStr
+    team_ids: Optional[List[StrictStr]] = None
 
 
 class CheckInviteUsersBody(BaseModel):

@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from submodules.model.models import Project as RefineryProject, User
+from submodules.model.models import Project as RefineryProject
 
 from controller.transfer import record_transfer_manager
 from api import transfer as transfer_api
@@ -41,10 +41,10 @@ def test_update_project_name_description(
 
 
 def test_upload_records_to_project(
-    client: TestClient, refinery_project: RefineryProject, user: User
+    client: TestClient, refinery_project: RefineryProject, user_id: str
 ):
     upload_task = upload_task_manager.create_upload_task(
-        str(user.id),
+        user_id,
         str(refinery_project.id),
         "dummy_file_name.csv",
         "records",
@@ -119,11 +119,11 @@ def test_create_embedding(client: TestClient, refinery_project: RefineryProject)
 
 
 def test_update_records_to_project(
-    client: TestClient, refinery_project: RefineryProject, user: User
+    client: TestClient, refinery_project: RefineryProject, user_id: str
 ):
 
     upload_task = upload_task_manager.create_upload_task(
-        str(user.id),
+        user_id,
         str(refinery_project.id),
         "dummy_file_name.csv",
         "records",
@@ -143,7 +143,7 @@ def test_update_records_to_project(
     assert len(all_records) == 2
     assert any(r.data["data"] == "goodbye world" for r in all_records)
     transfer_api.__recalculate_missing_attributes_and_embeddings(
-        project_id=refinery_project.id, user_id=user.id
+        project_id=refinery_project.id, user_id=user_id
     )
     time.sleep(5)
     emb = embedding_bo.get_all_embeddings_by_project_id(refinery_project.id)

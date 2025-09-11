@@ -27,8 +27,17 @@ def test_full_admin_queries():
 
 
 def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
-    # USERS_TO_PROJECTS, USERS_BY_ORG
-    if query in (AdminQueries.USERS_TO_PROJECTS, AdminQueries.USERS_BY_ORG):
+    # USERS_TO_PROJECTS, USERS_BY_ORG,
+    # AVG_MESSAGES_PER_CONVERSATION_GLOBAL, CREATED_TAGS_PER_ORG,
+    # PRIVATEMODE_USE_OVER_TIME, MULTITAGGED_CONVERSATIONS
+    if query in (
+        AdminQueries.USERS_TO_PROJECTS,
+        AdminQueries.USERS_BY_ORG,
+        AdminQueries.AVG_MESSAGES_PER_CONVERSATION_GLOBAL,
+        AdminQueries.CREATED_TAGS_PER_ORG,
+        AdminQueries.PRIVATEMODE_USE_OVER_TIME,
+        AdminQueries.MULTITAGGED_CONVERSATIONS,
+    ):
         return {
             "organization_id": "",
             "without_kern_email": False,
@@ -57,13 +66,6 @@ def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
             "without_kern_email": False,
         }
 
-    # AVG_MESSAGES_PER_CONVERSATION_GLOBAL
-    elif query is AdminQueries.AVG_MESSAGES_PER_CONVERSATION_GLOBAL:
-        return {
-            "organization_id": "",
-            "without_kern_email": False,
-        }
-
     # AVG_MESSAGES_PER_CONVERSATION, MACRO_EXECUTIONS
     elif query in (
         AdminQueries.AVG_MESSAGES_PER_CONVERSATION,
@@ -81,6 +83,19 @@ def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
         return {
             "slices": 7,
             "organization_id": "",
+        }
+
+    # TEMPLATE_USAGE
+    elif query is AdminQueries.TEMPLATE_USAGE:
+        return {
+            "organization_id": "",
+        }
+
+    elif query is AdminQueries.CONVERSATIONS_PER_TAG:
+        return {
+            "organization_id": "",
+            "without_kern_email": False,
+            "distinct_conversations": False,
         }
 
     else:

@@ -174,11 +174,13 @@ def check_is_full_admin(request: Any) -> bool:
 
 
 def invite_users(
+    creation_user_id: str,
     emails: List[str],
     organization_name: str,
     user_role: str,
     language: str,
     provider: Optional[str] = None,
+    team_ids: Optional[List[str]] = None,
 ):
     user_ids = []
     for email in emails:
@@ -195,6 +197,10 @@ def invite_users(
 
         # Add the preferred language
         user_manager.update_user_field(user["id"], "language_display", language)
+
+        # Add the user to the teams
+        if team_ids:
+            user_manager.add_user_to_teams(creation_user_id, user["id"], team_ids)
 
         # Get the recovery link for the email
         recovery_link = kratos.get_recovery_link(user["id"])
