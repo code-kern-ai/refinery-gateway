@@ -1,5 +1,5 @@
 from typing import Dict, Optional, Any
-from submodules.model import User, daemon, enums
+from submodules.model import User, daemon, enums, DELETED_USER_ID
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
 from submodules.model.exceptions import EntityNotFoundException
@@ -138,7 +138,11 @@ def __migrate_kratos_users():
 
     for user_database in users_database:
         user_id = str(user_database.id)
-        if user_id not in users_kratos or users_kratos[user_id] is None:
+        if (
+            user_id not in users_kratos
+            or users_kratos[user_id] is None
+            or user_id == DELETED_USER_ID
+        ):
             continue
         user_identity = users_kratos[user_id]["identity"]
         if user_database.email != user_identity["traits"]["email"]:
