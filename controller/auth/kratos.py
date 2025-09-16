@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from urllib.parse import quote
 
 from controller.user import manager
+from submodules.model import DELETED_USER_ID, DELETED_USER_EMAIL
 
 
 logging.basicConfig(level=logging.INFO)
@@ -75,6 +76,24 @@ def __refresh_identity_cache(update_db_users: bool = True) -> None:
     else:
         KRATOS_IDENTITY_CACHE = {}
 
+    # dummy identity for deleted users
+    # this identity should not be in kratos but in db only
+    # note that deleted users usually SET_NULL on foreign keys so the id is not in use anymore
+    KRATOS_IDENTITY_CACHE[DELETED_USER_ID] = {
+        "identity": {
+            "id": DELETED_USER_ID,
+            "traits": {
+                "email": DELETED_USER_EMAIL,
+                "name": {"first": "Deleted", "last": "User"},
+            },
+        },
+        "simple": {
+            "id": DELETED_USER_ID,
+            "mail": DELETED_USER_EMAIL,
+            "firstName": "Deleted",
+            "lastName": "User",
+        },
+    }
     if update_db_users:
         manager.migrate_kratos_users()
 
