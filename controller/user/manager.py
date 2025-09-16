@@ -80,6 +80,10 @@ def update_user_field(user_id: str, field: str, value: Any) -> User:
         raise ValueError("User not found")
     if field == "use_new_cognition_ui":
         value = is_string_true_value(value)
+
+    if value == "null":
+        value = None
+
     setattr(user_item, field, value)
     general.commit()
     return user_item

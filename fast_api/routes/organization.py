@@ -47,6 +47,7 @@ USER_INFO_WHITELIST = {
     "language_display",
     "email",
     "use_new_cognition_ui",
+    "auto_logout_minutes",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
