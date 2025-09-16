@@ -7,7 +7,7 @@ Create Date: 2025-09-15 14:08:25.901703
 """
 
 from alembic import op
-import sqlalchemy as sa
+from submodules.model import DELETED_USER_ID
 
 
 # revision identifiers, used by Alembic.
@@ -15,8 +15,6 @@ revision = "58c0e071db99"
 down_revision = "de396670d10f"
 branch_labels = None
 depends_on = None
-
-DELETED_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 
 def upgrade():
@@ -41,7 +39,7 @@ insert into	public."user" (
 	NULL, 
 	NULL, 
 	NULL, 
-	'deleted.user@domain.ai', 
+	'deleted.user@kern.ai', 
 	false, 
 	NOW(),
 	NULL, 
