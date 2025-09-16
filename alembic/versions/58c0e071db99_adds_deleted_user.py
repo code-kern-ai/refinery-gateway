@@ -7,8 +7,7 @@ Create Date: 2025-09-15 14:08:25.901703
 """
 
 from alembic import op
-from submodules.model import DELETED_USER_ID
-
+from submodules.model import DELETED_USER_ID, DELETED_USER_EMAIL
 
 # revision identifiers, used by Alembic.
 revision = "58c0e071db99"
@@ -39,7 +38,7 @@ insert into	public."user" (
 	NULL, 
 	NULL, 
 	NULL, 
-	'deleted.user@kern.ai', 
+	'{DELETED_USER_EMAIL}', 
 	false, 
 	NOW(),
 	NULL, 
