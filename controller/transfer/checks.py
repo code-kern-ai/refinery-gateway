@@ -5,6 +5,7 @@ from controller.transfer import util as transfer_util
 from controller.transfer.valid_arguments import valid_arguments
 import pandas as pd
 from util.notification import create_notification
+from submodules.model import DELETED_USER_ID
 from submodules.model.enums import AttributeState, NotificationType
 from submodules.model.business_objects import attribute, record, general
 from controller.labeling_task.util import infer_labeling_task_name
@@ -127,6 +128,8 @@ def run_checks(df: pd.DataFrame, project_id, user_id) -> None:
 
 
 def run_limit_checks(df: pd.DataFrame, project_id, user_id) -> None:
+    if user_id == DELETED_USER_ID:
+        return
     org = auth_manager.get_organization_by_user_id(user_id)
     guard = False
     errors = {}
