@@ -416,6 +416,8 @@ def sync_access_groups_and_users_sharepoint(
         if not errors:
             all_embeddings = embedding.get_all_embeddings_by_project_id(project_id)
             for embedding_item in all_embeddings:
+                if embedding_item.state != enums.EmbeddingState.FINISHED.value:
+                    continue
                 connector.update_attribute_payloads_for_neural_search(
                     project_id,
                     str(embedding_item.id),
