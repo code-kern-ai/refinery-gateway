@@ -2,7 +2,6 @@ from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
 from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
-from submodules.model import DELETED_USER_ID
 
 
 def monitor_all_tasks(page: int, limit: int) -> List[Any]:
@@ -10,7 +9,6 @@ def monitor_all_tasks(page: int, limit: int) -> List[Any]:
     tasks_dict = sql_alchemy_to_dict(tasks)
     user_ids = {str(t["created_by"]) for t in tasks}  # set comprehension
     name_lookup = {u_id: kratos.resolve_user_name_by_id(u_id) for u_id in user_ids}
-    name_lookup[DELETED_USER_ID] = {"first": "Deleted", "last": "User"}
 
     for t in tasks_dict:
         created_by_first_last = name_lookup[str(t["created_by"])]
