@@ -63,9 +63,9 @@ from route_prefix import (
     PREFIX_TASK_EXECUTION,
     PREFIX_PLAYGROUND,
 )
-from util import security, clean_up, telemetry
+from util import security, clean_up
 from middleware import log_storage
-from submodules.model import session
+from submodules.model import session, telemetry
 from controller.sums_table import manager as sums_table_manager
 
 logging.basicConfig(level=logging.DEBUG)
@@ -122,7 +122,15 @@ fastapi_app.include_router(
 fastapi_app.include_router(
     playground_router, prefix=PREFIX_PLAYGROUND, tags=["playground"]
 )
+
+
 fastapi_app_internal = FastAPI()
+telemetry.setting_otlp(
+    fastapi_app_internal,
+    app_name="refinery-gateway-internal",
+    endpoint=OTLP_GRPC_ENDPOINT,
+)
+
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
 )
@@ -149,6 +157,10 @@ routes = [
 fastapi_app.middleware("http")(handle_db_session)
 fastapi_app.add_middleware(telemetry.PrometheusMiddleware, app_name="refinery-gateway")
 fastapi_app.add_route("/metrics", telemetry.metrics)
+fastapi_app_internal.add_route("/metrics", telemetry.metrics)
+fastapi_app_internal.add_middleware(
+    telemetry.PrometheusMiddleware, app_name="refinery-gateway-internal"
+)
 
 middleware = [Middleware(DatabaseSessionHandler)]
 app = Starlette(routes=routes, middleware=middleware)
