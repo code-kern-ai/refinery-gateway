@@ -1,4 +1,5 @@
 import logging
+import os
 from fastapi import FastAPI
 from starlette.middleware import Middleware
 
@@ -62,7 +63,7 @@ from route_prefix import (
     PREFIX_TASK_EXECUTION,
     PREFIX_PLAYGROUND,
 )
-from util import security, clean_up
+from util import security, clean_up, telemetry
 from middleware import log_storage
 from submodules.model import session
 from controller.sums_table import manager as sums_table_manager
@@ -70,9 +71,14 @@ from controller.sums_table import manager as sums_table_manager
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+OTLP_GRPC_ENDPOINT = os.getenv("OTLP_GRPC_ENDPOINT", "tempo:4317")
+
 init_config()
 migrate_kratos_users()
 fastapi_app = FastAPI()
+telemetry.setting_otlp(
+    fastapi_app, app_name="refinery-gateway", endpoint=OTLP_GRPC_ENDPOINT
+)
 
 
 fastapi_app.include_router(
@@ -141,6 +147,8 @@ routes = [
 
 
 fastapi_app.middleware("http")(handle_db_session)
+fastapi_app.add_middleware(telemetry.PrometheusMiddleware, app_name="refinery-gateway")
+fastapi_app.add_route("/metrics", telemetry.metrics)
 
 middleware = [Middleware(DatabaseSessionHandler)]
 app = Starlette(routes=routes, middleware=middleware)
