@@ -2,11 +2,13 @@
 
 DEBUG_MODE=false
 DEBUG_PORT=15670
+ENABLE_TELEMETRY=false
 
-while getopts d flag
+while getopts dg flag
 do
     case "${flag}" in
         d) DEBUG_MODE=true;;
+        g) ENABLE_TELEMETRY=true;;
     esac
 done
 
@@ -58,13 +60,13 @@ fi
 
 MINIO_ENDPOINT="http://$HOST_IP:7053"
 
-INFERENCE_DIR=${DEV_SETUP_DIR}inference/
-LOG_DIR=${DEV_SETUP_DIR}logs/
+INFERENCE_DIR=${DEV_SETUP_DIR}etc/inference/
+LOG_DIR=${DEV_SETUP_DIR}etc/logs/
 
-CONFIG_DIR=${PWD%/*}/dev-setup/config/
+CONFIG_DIR=${PWD%/*}/dev-setup/etc/config/
 if [ ! -d "$CONFIG_DIR" ] 
 then
-    CONFIG_DIR=${PWD%/*/*}/dev-setup/config/
+    CONFIG_DIR=${PWD%/*/*}/dev-setup/etc/config/
     if [ ! -d "$CONFIG_DIR" ] 
     then
         # to include volume for local development, use the dev-setup inference folder:  
@@ -120,6 +122,7 @@ docker run -d --rm \
 -e KERN_S3_ENDPOINT=${MINIO_ENDPOINT} \
 -e SMTP_HOST=mailhog \
 -e SMTP_PORT=1025 \
+-e ENABLE_TELEMETRY=$ENABLE_TELEMETRY \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
 -v "$CONFIG_DIR":/config \

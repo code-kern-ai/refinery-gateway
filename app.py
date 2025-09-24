@@ -75,11 +75,9 @@ OTLP_GRPC_ENDPOINT = os.getenv("OTLP_GRPC_ENDPOINT", "tempo:4317")
 
 init_config()
 migrate_kratos_users()
-fastapi_app = FastAPI()
-telemetry.setting_otlp(
-    fastapi_app, app_name="refinery-gateway", endpoint=OTLP_GRPC_ENDPOINT
-)
 
+app_name = "refinery-gateway"
+fastapi_app = FastAPI(title=app_name)
 
 fastapi_app.include_router(
     org_router, prefix=PREFIX_ORGANIZATION, tags=["organization"]
@@ -123,13 +121,8 @@ fastapi_app.include_router(
     playground_router, prefix=PREFIX_PLAYGROUND, tags=["playground"]
 )
 
-
-fastapi_app_internal = FastAPI()
-telemetry.setting_otlp(
-    fastapi_app_internal,
-    app_name="refinery-gateway-internal",
-    endpoint=OTLP_GRPC_ENDPOINT,
-)
+app_name_internal = app_name + "-i"
+fastapi_app_internal = FastAPI(title=app_name_internal)
 
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
@@ -155,12 +148,30 @@ routes = [
 
 
 fastapi_app.middleware("http")(handle_db_session)
-fastapi_app.add_middleware(telemetry.PrometheusMiddleware, app_name="refinery-gateway")
-fastapi_app.add_route("/metrics", telemetry.metrics)
-fastapi_app_internal.add_route("/metrics", telemetry.metrics)
-fastapi_app_internal.add_middleware(
-    telemetry.PrometheusMiddleware, app_name="refinery-gateway-internal"
-)
+
+if telemetry.ENABLE_TELEMETRY:
+    print("WARNING:  Running telemetry.", flush=True)
+    telemetry.setting_otlp(fastapi_app, app_name=app_name, endpoint=OTLP_GRPC_ENDPOINT)
+    fastapi_app.add_middleware(telemetry.PrometheusMiddleware, app_name=app_name)
+    fastapi_app.add_route("/metrics", telemetry.metrics)
+
+    # -------- internal --------
+    app_name += "-i"
+    telemetry.setting_otlp(
+        fastapi_app_internal, app_name=app_name_internal, endpoint=OTLP_GRPC_ENDPOINT
+    )
+    fastapi_app_internal.add_middleware(
+        telemetry.PrometheusMiddleware, app_name=app_name_internal
+    )
+    fastapi_app_internal.add_route("/metrics", telemetry.metrics)
+
+    # Filter out /metrics
+    logging.getLogger("uvicorn.access").addFilter(
+        lambda record: not any(
+            item in record.getMessage()
+            for item in ("GET /api/metrics", "GET /internal/api/metrics")
+        )
+    )
 
 middleware = [Middleware(DatabaseSessionHandler)]
 app = Starlette(routes=routes, middleware=middleware)
