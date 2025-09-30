@@ -1,7 +1,7 @@
 """new message field
 
 Revision ID: 9e606cf1f902
-Revises: 626c2c026041
+Revises: 49122cddaf65
 Create Date: 2025-09-29 12:02:05.914392
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '9e606cf1f902'
-down_revision = '626c2c026041'
+down_revision = '49122cddaf65'
 branch_labels = None
 depends_on = None
 
