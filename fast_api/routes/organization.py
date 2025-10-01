@@ -24,7 +24,7 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model.business_objects import organization, user
+from submodules.model.business_objects import organization, release_notification, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 
@@ -313,4 +313,12 @@ def get_missing_users_interaction(request: Request, body: MissingUsersBody = Bod
 def get_user_to_organization(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user.get_user_to_organization()
+    return pack_json_result(data, wrap_for_frontend=False)
+
+
+# in use admin-dashboard (01.10.25)
+@router.get("/all-release-notifications")
+def get_all_release_notifications(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = release_notification.get_all()
     return pack_json_result(data, wrap_for_frontend=False)
