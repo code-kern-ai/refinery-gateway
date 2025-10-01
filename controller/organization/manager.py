@@ -93,6 +93,18 @@ def create_organization(name: str) -> Organization:
 
 def delete_organization(name: str) -> None:
     org = organization.get_by_name(name)
+
+    if not org:
+        return
+    all_users = user.get_all(org.id)
+    unassigned = False
+    for u in all_users:
+        if (u.email or "").endswith("@kern.ai"):
+            unassigned = True
+            u.organization_id = None
+    if unassigned:
+        general.commit()
+
     organization.delete(org.id, with_commit=True)
 
 
