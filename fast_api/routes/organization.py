@@ -8,6 +8,7 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateAdminMessageBody,
     CreateOrganizationBody,
+    CreateReleaseNotificationBody,
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
@@ -16,6 +17,7 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
+    resolve_user_mail_by_id,
     resolve_user_name_by_id,
 )
 from controller.organization import manager
@@ -320,5 +322,18 @@ def get_user_to_organization(request: Request):
 @router.get("/all-release-notifications")
 def get_all_release_notifications(request: Request):
     auth_manager.check_admin_access(request.state.info)
-    data = release_notification.get_all()
-    return pack_json_result(data, wrap_for_frontend=False)
+    data = sql_alchemy_to_dict(release_notification.get_all())
+    for item in data:
+        item["createdByEmail"] = resolve_user_mail_by_id(item["created_by"])
+    return pack_json_result(data)
+
+
+# in use admin-dashboard (01.10.25)
+@router.post("/create-release-notification")
+def create_release_notification(
+    request: Request, body: CreateReleaseNotificationBody = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    release_notification.create(body.link, body.config, user_id, with_commit=True)
+    return get_silent_success()
