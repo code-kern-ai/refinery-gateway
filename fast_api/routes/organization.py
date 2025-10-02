@@ -8,7 +8,7 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateAdminMessageBody,
     CreateOrganizationBody,
-    CreateReleaseNotificationBody,
+    CreateUpdateReleaseNotificationBody,
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
@@ -331,9 +331,31 @@ def get_all_release_notifications(request: Request):
 # in use admin-dashboard (01.10.25)
 @router.post("/create-release-notification")
 def create_release_notification(
-    request: Request, body: CreateReleaseNotificationBody = Body(...)
+    request: Request, body: CreateUpdateReleaseNotificationBody = Body(...)
 ):
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     release_notification.create(body.link, body.config, user_id, with_commit=True)
+    return get_silent_success()
+
+
+# in use admin-dashboard (02.10.25)
+@router.put("/update-release-notification/{notification_id}")
+def update_release_notification(
+    request: Request,
+    notification_id: str,
+    body: CreateUpdateReleaseNotificationBody = Body(...),
+):
+    auth_manager.check_admin_access(request.state.info)
+    release_notification.update(
+        notification_id, body.link, body.config, with_commit=True
+    )
+    return get_silent_success()
+
+
+# in use admin-dashboard (02.10.25)
+@router.delete("/delete-release-notification/{notification_id}")
+def delete_release_notification(request: Request, notification_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    release_notification.delete(notification_id, with_commit=True)
     return get_silent_success()
