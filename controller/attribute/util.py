@@ -118,7 +118,7 @@ def test_openai_llm_connection(api_key: str, model: str, is_o_series: bool = Fal
     return response.json()["choices"][0]["message"]["content"]
 
 
-def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str):
+def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str, model: str):
     # more here: https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/
     base_endpoint = base_endpoint.rstrip("/")
     final_endpoint = f"{base_endpoint}/chat/completions"
@@ -132,6 +132,7 @@ def test_azure_foundry_llm_connection(api_key: str, base_endpoint: str):
             {"role": "user", "content": [{"type": "text", "text": "only say 'hello'"}]},
         ],
         "max_tokens": 5,
+        "model": model,
     }
 
     response = requests.post(final_endpoint, headers=headers, json=payload)
@@ -243,13 +244,14 @@ def validate_llm_config(llm_config: Dict[str, Any]):
                 api_key=llm_config["apiKey"],
                 model=llm_config["model"],
                 base_endpoint=llm_config["apiBase"],
-                api_version=llm_config["apiVersion"],
+                api_version=llm_config.get("apiVersion"),
                 is_o_series=llm_config.get("openAioSeries", False),
             )
         elif llm_config["llmIdentifier"] == enums.LLMProvider.AZURE_FOUNDRY.value:
             test_azure_foundry_llm_connection(
                 api_key=llm_config["apiKey"],
                 base_endpoint=llm_config["apiBase"],
+                model=llm_config["model"],
             )
         elif llm_config["llmIdentifier"] == enums.LLMProvider.PRIVATEMODE_AI.value:
             test_privatemode_ai_llm_connection(
