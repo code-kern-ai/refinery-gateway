@@ -335,6 +335,9 @@ def create_release_notification(
 ):
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
+    validate_result = manager.validate_json(body.config)
+    if not validate_result["is_valid"]:
+        return pack_json_result(validate_result, wrap_for_frontend=False)
     release_notification.create(body.link, body.config, user_id, with_commit=True)
     return get_silent_success()
 

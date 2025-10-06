@@ -116,3 +116,27 @@ def sync_organization_sharepoint_integrations(org_id: str) -> None:
     general.remove_and_refresh_session()
     for integration_id in all_integration_ids:
         transfer_api.post_process_integration(integration_id)
+
+
+def validate_json(data: str) -> Dict[str, Any]:
+    required_languages = ["en", "de", "nl", "it"]
+    required_fields = ["headline", "description"]
+
+    for lang in required_languages:
+        if lang not in data:
+            return {"message": f"Missing language: {lang}", "is_valid": False}
+
+    for lang in required_languages:
+        for field in required_fields:
+            if field not in data[lang]:
+                return {
+                    "message": f"Missing field '{field}' in language '{lang}'",
+                    "is_valid": False,
+                }
+            if not isinstance(data[lang][field], str):
+                return {
+                    "message": f"Field '{field}' in '{lang}' is not a string",
+                    "is_valid": False,
+                }
+
+    return {"message": "", "is_valid": True}
