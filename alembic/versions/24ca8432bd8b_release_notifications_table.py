@@ -1,7 +1,7 @@
 """Release notifications table
 
 Revision ID: 24ca8432bd8b
-Revises: 49122cddaf65
+Revises: 9e606cf1f902
 Create Date: 2025-10-01 08:49:37.899217
 
 """
