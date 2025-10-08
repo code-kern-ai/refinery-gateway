@@ -66,6 +66,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "file_lifespan_days",
     "token_limit",
 }
+RELEASE_NOTIFICATIONS_WHITELIST = {"id", "link", "config"}
 
 
 # in use refinery-ui (07.01.25)
@@ -319,12 +320,22 @@ def get_user_to_organization(request: Request):
 
 
 # in use admin-dashboard (01.10.25)
-@router.get("/all-release-notifications")
+@router.get("/all-release-notifications-admin")
 def get_all_release_notifications(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = sql_alchemy_to_dict(release_notification.get_all())
     for item in data:
         item["createdByEmail"] = resolve_user_mail_by_id(item["created_by"])
+    return pack_json_result(data)
+
+
+# in use admin-dashboard (08.10.25)
+@router.get("/release-notifications")
+def get_release_notifications(request: Request):
+    data = sql_alchemy_to_dict(
+        release_notification.get_all(),
+        column_whitelist=RELEASE_NOTIFICATIONS_WHITELIST,
+    )
     return pack_json_result(data)
 
 
@@ -335,7 +346,7 @@ def create_release_notification(
 ):
     auth_manager.check_admin_access(request.state.info)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
-    validate_result = manager.validate_json(body.config)
+    validate_result = manager.validate_json_release_notification(body.config)
     if validate_result["is_valid"]:
         release_notification.create(body.link, body.config, user_id, with_commit=True)
     return pack_json_result(validate_result, wrap_for_frontend=False)

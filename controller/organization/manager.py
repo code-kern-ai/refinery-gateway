@@ -130,7 +130,7 @@ def sync_organization_sharepoint_integrations(org_id: str) -> None:
         transfer_api.post_process_integration(integration_id)
 
 
-def validate_json(data: str) -> Dict[str, Any]:
+def validate_json_release_notification(data: Dict[str, Any]) -> Dict[str, Any]:
     required_languages = ["en", "de", "nl", "it"]
     required_fields = ["headline", "description"]
 
