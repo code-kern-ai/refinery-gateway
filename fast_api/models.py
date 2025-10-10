@@ -531,3 +531,8 @@ class GetEmbeddingNameBody(BaseModel):
     embedding_type: str
     model: Optional[str] = None
     api_token_env_name: Optional[str] = None
+
+
+class CreateUpdateReleaseNotificationBody(BaseModel):
+    link: StrictStr
+    config: Dict[str, Any]
