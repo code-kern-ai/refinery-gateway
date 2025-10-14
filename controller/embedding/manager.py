@@ -107,15 +107,22 @@ def recreate_or_extend_embeddings(
         embeddings = embedding.get_all_embeddings_by_project_id(project_id)
         if len(embeddings) == 0:
             return False
-        embedding_ids = [str(embed.id) for embed in embeddings]
+        embedding_ids = [
+            str(embed.id)
+            for embed in embeddings
+            if embed.state != enums.EmbeddingState.FAILED.value
+        ]
 
     if len(embedding_ids) == 0:
         return False
 
     set_to_wait = False
     for embedding_id in embedding_ids:
+        # if embedding_ids are provided, we force update to waiting to ensure they are processed
         set_to_wait = True
-        embedding.update_embedding_state_waiting(project_id, embedding_id)
+        embedding.update_embedding_state_waiting(
+            project_id, embedding_id, force_update=True
+        )
     general.commit()
 
     if set_to_wait:

@@ -8,6 +8,7 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateAdminMessageBody,
     CreateOrganizationBody,
+    CreateUpdateReleaseNotificationBody,
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
@@ -16,6 +17,7 @@ from fast_api.models import (
 )
 from controller.auth import manager as auth_manager
 from controller.auth.kratos import (
+    resolve_user_mail_by_id,
     resolve_user_name_by_id,
 )
 from controller.organization import manager
@@ -24,7 +26,7 @@ from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from submodules.model.business_objects import organization, user
+from submodules.model.business_objects import organization, release_notification, user
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 
@@ -47,6 +49,7 @@ USER_INFO_WHITELIST = {
     "language_display",
     "email",
     "use_new_cognition_ui",
+    "auto_logout_minutes",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
@@ -63,6 +66,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "file_lifespan_days",
     "token_limit",
 }
+RELEASE_NOTIFICATIONS_WHITELIST = {"id", "link", "config"}
 
 
 # in use refinery-ui (07.01.25)
@@ -313,3 +317,58 @@ def get_user_to_organization(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = user.get_user_to_organization()
     return pack_json_result(data, wrap_for_frontend=False)
+
+
+# in use admin-dashboard (01.10.25)
+@router.get("/all-release-notifications-admin")
+def get_all_release_notifications(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = sql_alchemy_to_dict(release_notification.get_all())
+    for item in data:
+        item["createdByEmail"] = resolve_user_mail_by_id(item["created_by"])
+    return pack_json_result(data)
+
+
+# in use admin-dashboard (08.10.25)
+@router.get("/release-notifications")
+def get_release_notifications(request: Request):
+    data = sql_alchemy_to_dict(
+        release_notification.get_all(),
+        column_whitelist=RELEASE_NOTIFICATIONS_WHITELIST,
+    )
+    return pack_json_result(data)
+
+
+# in use admin-dashboard (01.10.25)
+@router.post("/create-release-notification")
+def create_release_notification(
+    request: Request, body: CreateUpdateReleaseNotificationBody = Body(...)
+):
+    auth_manager.check_admin_access(request.state.info)
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    validate_result = manager.validate_json_release_notification(body.config)
+    if validate_result["is_valid"]:
+        release_notification.create(body.link, body.config, user_id, with_commit=True)
+    return pack_json_result(validate_result, wrap_for_frontend=False)
+
+
+# in use admin-dashboard (02.10.25)
+@router.put("/update-release-notification/{notification_id}")
+def update_release_notification(
+    request: Request,
+    notification_id: str,
+    body: CreateUpdateReleaseNotificationBody = Body(...),
+):
+    auth_manager.check_admin_access(request.state.info)
+    release_notification.update(
+        notification_id, body.link, body.config, with_commit=True
+    )
+    return get_silent_success()
+
+
+# in use admin-dashboard (02.10.25)
+@router.delete("/delete-release-notification/{notification_id}")
+def delete_release_notification(request: Request, notification_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    release_notification.delete(notification_id, with_commit=True)
+    return get_silent_success()
