@@ -1,6 +1,9 @@
 from submodules.model.business_objects import upload_task
 import os
 import shutil
+from submodules.model.daemon import run_without_db_token
+from time import sleep
+from submodules.model.global_objects import timed_executions
 
 
 def clean_up_database() -> None:
@@ -21,3 +24,17 @@ def clean_up_disk() -> None:
                 shutil.rmtree(file_path)
         except Exception as e:
             print("Failed to delete %s. Reason: %s" % (file_path, e))
+
+
+def start_timed_executions_thread() -> None:
+    run_without_db_token(__run_timed_executions)
+
+
+def __run_timed_executions() -> None:
+    sleep(10)  # wait a bit until app is started
+    while True:
+        try:
+            timed_executions.execute_time_key_update(with_commit=True)
+        except Exception as e:
+            print(f"Error during timed executions: {e}")
+        sleep(3600)  # run every hour
