@@ -282,6 +282,7 @@ def get_mapped_sorted_paginated_users(
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "metadata_public": user.metadata_public,
             "sso_provider": user.sso_provider,
+            "messages_created_this_month": user.messages_created_this_month,
         }
         for user in active_users
     ]
@@ -304,7 +305,7 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
 
 
 # in use admin-dashboard (08.01.25)
-@router.post("/missing-users-interaction")
+@router.post("/missing-users-interaction-and-message-count")
 def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
     data = user.get_missing_users(body.user_ids)

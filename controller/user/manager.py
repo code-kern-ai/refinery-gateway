@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
@@ -113,7 +113,7 @@ def get_active_users_filtered(
     sort_direction: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-) -> User:
+) -> List[User]:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
     return user.get_active_users_after_filter(
