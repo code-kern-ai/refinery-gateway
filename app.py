@@ -151,6 +151,7 @@ fastapi_app.middleware("http")(handle_db_session)
 
 if telemetry.ENABLE_TELEMETRY:
     print("WARNING:  Running telemetry.", flush=True)
+    telemetry.setting_app_name(app_name)
     telemetry.setting_otlp(fastapi_app, app_name=app_name, endpoint=OTLP_GRPC_ENDPOINT)
     fastapi_app.add_middleware(telemetry.PrometheusMiddleware, app_name=app_name)
     fastapi_app.add_route("/metrics", telemetry.metrics)
