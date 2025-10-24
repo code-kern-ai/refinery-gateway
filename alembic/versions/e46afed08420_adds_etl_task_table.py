@@ -1,8 +1,8 @@
 """adds etl task table
 
-Revision ID: ac36ed533db7
+Revision ID: e46afed08420
 Revises: 24ca8432bd8b
-Create Date: 2025-10-24 10:50:23.262494
+Create Date: 2025-10-24 11:02:58.188338
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "ac36ed533db7"
+revision = "e46afed08420"
 down_revision = "24ca8432bd8b"
 branch_labels = None
 depends_on = None
@@ -30,6 +30,7 @@ def upgrade():
         sa.Column("transform_config", sa.JSON(), nullable=True),
         sa.Column("load_config", sa.JSON(), nullable=True),
         sa.Column("notify_config", sa.JSON(), nullable=True),
+        sa.Column("llm_config", sa.JSON(), nullable=True),
         sa.Column("priority", sa.Boolean(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=True),
         sa.Column("started_at", sa.DateTime(), nullable=True),
