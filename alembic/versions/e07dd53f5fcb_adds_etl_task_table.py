@@ -1,8 +1,8 @@
 """adds etl task table
 
-Revision ID: 8a5e0469e9d0
+Revision ID: e07dd53f5fcb
 Revises: 24ca8432bd8b
-Create Date: 2025-10-24 11:47:15.649814
+Create Date: 2025-10-25 20:13:45.417677
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "8a5e0469e9d0"
+revision = "e07dd53f5fcb"
 down_revision = "24ca8432bd8b"
 branch_labels = None
 depends_on = None
@@ -27,6 +27,9 @@ def upgrade():
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("markdown_file_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("sharepoint_file_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("file_path", sa.String(), nullable=True),
+        sa.Column("file_size_bytes", sa.BigInteger(), nullable=True),
+        sa.Column("tokenizer", sa.String(), nullable=True),
         sa.Column("extract_config", sa.JSON(), nullable=True),
         sa.Column("transform_config", sa.JSON(), nullable=True),
         sa.Column("load_config", sa.JSON(), nullable=True),
