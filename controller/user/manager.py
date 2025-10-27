@@ -17,12 +17,14 @@ def get_user(user_id: str) -> User:
     return user_item
 
 
-def get_or_create_user(user_id: str) -> User:
+def get_or_create_user(user_id: str, with_commit: bool = True) -> User:
     user_item = user.get(user_id)
     if not user_item:
-        user_item = user.create(user_id, with_commit=True)
-        kratos.__refresh_identity_cache()
-    update_last_interaction(user_item.id)
+        user_item = user.create(user_id, with_commit=with_commit)
+        if with_commit:
+            kratos.__refresh_identity_cache()
+    else:
+        update_last_interaction(user_item.id)
     return user_item
 
 
@@ -89,10 +91,13 @@ def update_user_field(user_id: str, field: str, value: Any) -> User:
     return user_item
 
 
-def add_user_to_teams(creation_user_id: str, user_id: str, team_ids: list) -> User:
+def add_user_to_teams(
+    creation_user_id: str, user_id: str, team_ids: list, with_commit: bool = True
+) -> User:
     for team_id in team_ids:
         team_member_db_co.create(team_id, user_id, creation_user_id, with_commit=False)
-    general.commit()
+    if with_commit:
+        general.commit()
 
 
 def remove_organization_from_user(user_mail: str) -> None:
