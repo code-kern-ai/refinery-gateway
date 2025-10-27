@@ -1,8 +1,8 @@
 """adds etl task table
 
-Revision ID: e07dd53f5fcb
+Revision ID: 5f8de6fcce30
 Revises: 24ca8432bd8b
-Create Date: 2025-10-25 20:13:45.417677
+Create Date: 2025-10-26 20:43:48.216324
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "e07dd53f5fcb"
+revision = "5f8de6fcce30"
 down_revision = "24ca8432bd8b"
 branch_labels = None
 depends_on = None
@@ -31,6 +31,7 @@ def upgrade():
         sa.Column("file_size_bytes", sa.BigInteger(), nullable=True),
         sa.Column("tokenizer", sa.String(), nullable=True),
         sa.Column("extract_config", sa.JSON(), nullable=True),
+        sa.Column("split_config", sa.JSON(), nullable=True),
         sa.Column("transform_config", sa.JSON(), nullable=True),
         sa.Column("load_config", sa.JSON(), nullable=True),
         sa.Column("notify_config", sa.JSON(), nullable=True),
