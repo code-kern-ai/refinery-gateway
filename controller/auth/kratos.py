@@ -254,7 +254,7 @@ def email_with_link(to_email: str, recovery_link: str) -> None:
         f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
     )
     msg["Subject"] = INVITATION_SUBJECT
-    msg["From"] = "no-reply@kern.ai"
+    msg["From"] = "signup@kern.ai"
     msg["To"] = to_email
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
@@ -263,6 +263,24 @@ def email_with_link(to_email: str, recovery_link: str) -> None:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
+
+
+def send_bulk_emails(emails: List[str], recovery_links: List[str]) -> None:
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        if SMTP_USER and SMTP_PASSWORD:
+            server.ehlo()
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+
+        for to_email, recovery_link in zip(emails, recovery_links):
+            msg = MIMEText(
+                f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
+            )
+            msg["Subject"] = INVITATION_SUBJECT
+            msg["From"] = "signup@kern.ai"
+            msg["To"] = to_email
+            server.send_message(msg)
 
 
 def check_user_exists(email: str) -> bool:
