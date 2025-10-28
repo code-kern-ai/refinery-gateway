@@ -12,7 +12,7 @@ from controller.project import manager as project_manager
 from controller.user import manager as user_manager
 from controller.organization import manager as organization_manager
 from submodules.model import enums, exceptions
-from submodules.model.business_objects import organization
+from submodules.model.business_objects import general, organization
 from submodules.model.business_objects.user import check_email_in_full_admin
 from submodules.model.models import Organization, Project, User
 import sqlalchemy
@@ -183,32 +183,44 @@ def invite_users(
     team_ids: Optional[List[str]] = None,
 ):
     user_ids = []
+    recovery_links = []
+    organization = organization_manager.get_organization_by_name(organization_name)
+    if organization is None:
+        raise exceptions.EntityNotFoundException("Organization not found")
     for email in emails:
         # Create accounts for the email
         user = kratos.create_user_kratos(email, provider)
         if not user:
             raise AuthManagerError("User creation failed")
         user_ids.append(user["id"])
-        # Assign the account to the organization
-        user_manager.update_organization_of_user(organization_name, email)
+        user_database = user_manager.get_or_create_user(user["id"], with_commit=False)
+        if not user_database:
+            raise AuthManagerError("User creation in database failed")
 
-        # Assign the user role
-        user_manager.update_user_role(user["id"], user_role)
+        user_database.language_display = language
 
-        # Add the preferred language
-        user_manager.update_user_field(user["id"], "language_display", language)
+        try:
+            role = enums.UserRoles[user_role.upper()].value
+        except KeyError:
+            raise ValueError(f"Invalid role: {role}")
+        user_database.role = role
+        user_database.organization_id = organization.id
 
         # Add the user to the teams
         if team_ids:
-            user_manager.add_user_to_teams(creation_user_id, user["id"], team_ids)
+            user_manager.add_user_to_teams(
+                creation_user_id, user["id"], team_ids, with_commit=False
+            )
 
         # Get the recovery link for the email
         recovery_link = kratos.get_recovery_link(user["id"])
         if not recovery_link:
             raise AuthManagerError("Failed to get recovery link")
-
-        # Send the recovery link to the email
-        kratos.email_with_link(email, recovery_link["recovery_link"])
+        recovery_links.append(recovery_link["recovery_link"])
+    general.commit()
+    kratos.send_bulk_emails(emails, recovery_links)
+    kratos.__refresh_identity_cache()
+    organization_manager.sync_organization_sharepoint_integrations(organization.id)
     return user_ids
 
 

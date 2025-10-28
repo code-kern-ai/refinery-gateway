@@ -1,7 +1,7 @@
 """new org column
 
 Revision ID: 199a0d8aefbe
-Revises: 24ca8432bd8b
+Revises: c6d1cbcccb41
 Create Date: 2025-10-20 07:36:33.488523
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "199a0d8aefbe"
-down_revision = "24ca8432bd8b"
+down_revision = "c6d1cbcccb41"
 branch_labels = None
 depends_on = None
 
