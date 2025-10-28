@@ -126,3 +126,14 @@ def cancel_integration_task(
     task_monitor.set_integration_task_to_failed(
         integration_id, error_message="Cancelled by task manager"
     )
+
+
+def cancel_etl_task(
+    task_info: Dict[str, Any],
+) -> None:
+
+    etl_task_id = task_info.get("etlTaskId")
+
+    task_monitor.set_etl_task_to_failed(
+        etl_task_id, error_message="Cancelled by task manager"
+    )
