@@ -72,9 +72,10 @@ def handle_cognition_file_upload(path_parts: List[str]):
                 enums.ETLExtractorPDF.VISION,
             ],
             cache_config={
-                "use_file_cache": True,
-                "use_extraction_cache": False,
-                "use_transformation_cache": True,
+                enums.ETLCacheKeys.FILE_CACHE.value: True,
+                enums.ETLCacheKeys.EXTRACTION.value: True,
+                enums.ETLCacheKeys.SPLITTING.value: True,
+                enums.ETLCacheKeys.TRANSFORMATION.value: True,
             },
             split_config={
                 "strategy": enums.ETLSplitStrategy.CHUNK.value,
