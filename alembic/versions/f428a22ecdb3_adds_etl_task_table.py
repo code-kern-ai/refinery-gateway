@@ -1,8 +1,8 @@
 """adds etl task table
 
-Revision ID: bf8e8646ebdc
-Revises: 24ca8432bd8b
-Create Date: 2025-10-30 00:21:05.246324
+Revision ID: f428a22ecdb3
+Revises: 199a0d8aefbe
+Create Date: 2025-10-30 10:45:20.843280
 
 """
 
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "bf8e8646ebdc"
-down_revision = "24ca8432bd8b"
+revision = "f428a22ecdb3"
+down_revision = "199a0d8aefbe"
 branch_labels = None
 depends_on = None
 
@@ -61,11 +61,6 @@ def upgrade():
         ["organization_id"],
         unique=False,
         schema="global",
-    )
-    op.add_column(
-        "conversation",
-        sa.Column("incognito_mode", sa.Boolean(), nullable=True),
-        schema="cognition",
     )
     op.add_column(
         "markdown_file",
