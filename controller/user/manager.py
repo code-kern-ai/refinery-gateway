@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
@@ -118,7 +118,7 @@ def get_active_users_filtered(
     sort_direction: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-) -> User:
+) -> List[User]:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
     return user.get_active_users_after_filter(
@@ -179,23 +179,5 @@ def __migrate_kratos_users():
         )
         if user_database.sso_provider != sso_provider:
             user_database.sso_provider = sso_provider
-
-        if user_database.oidc_identifier is None:
-            user_search = kratos.__search_kratos_for_user_mail(
-                user_identity["traits"]["email"]
-            )
-            if user_search and user_search["credentials"]:
-                if user_search["credentials"].get("oidc", None):
-                    oidc = (
-                        user_search["credentials"]
-                        .get("oidc", {})
-                        .get("identifiers", None)[0]
-                    )
-                    if oidc:
-                        oidc = oidc.split(":")
-                        if len(oidc) > 1:
-                            user_database.oidc_identifier = oidc[1]
-                        else:
-                            user_database.oidc_identifier = None
 
     general.commit()
