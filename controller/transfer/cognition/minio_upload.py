@@ -44,23 +44,6 @@ def handle_cognition_file_upload(path_parts: List[str]):
             == enums.FileCachingInitiator.TMP_DOC_RETRIEVAL.value
         ):
             priority = 1
-        # task_master_manager.queue_task(
-        #     str(file_reference.organization_id),
-        #     str(file_reference.created_by),
-        #     TaskType.PARSE_COGNITION_FILE,
-        #     {
-        #         "parse_scope": FileCachingProcessingScope.EXTRACT_TRANSFORM.value,
-        #         "file_reference_id": str(file_reference.id),
-        #         "extraction_method": extraction_method,
-        #         "meta_data": file_reference.meta_data,
-        #         "extraction_key": file_reference.meta_data.get("extraction_key"),
-        #         "transformation_key": file_reference.meta_data.get(
-        #             "transformation_key"
-        #         ),
-        #         "file_name": file_reference.original_file_name,
-        #     },
-        #     prio,  # not sure if prio is right here as the prio tasks should only take < 1 min but waiting for the normal queue will take ages depending on the queue
-        # )
 
         markdown_file = markdown_file_bo.get(
             org_id, file_reference.meta_data.get("markdown_file_id")
@@ -133,6 +116,10 @@ def handle_cognition_file_upload(path_parts: List[str]):
                 }
             },
             priority=priority,
+        )
+
+        markdown_file_bo.update(
+            org_id=org_id, markdown_file_id=markdown_file.id, etl_task_id=etl_task.id
         )
 
         task_master_manager.queue_task(
