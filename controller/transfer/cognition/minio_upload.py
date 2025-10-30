@@ -83,7 +83,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             transform_config={
                 "transformers": [
                     {  # NOTE: __call_gpt_with_key only reads user_prompt
-                        "enabled": True,
+                        "enabled": False,  # this transformer is disabled because it often hangs the ETL process
                         "name": enums.ETLTransformer.CLEANSE.value,
                         "system_prompt": None,
                         "user_prompt": None,
