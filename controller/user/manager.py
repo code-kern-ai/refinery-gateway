@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
 from controller.auth import kratos
@@ -17,12 +17,14 @@ def get_user(user_id: str) -> User:
     return user_item
 
 
-def get_or_create_user(user_id: str) -> User:
+def get_or_create_user(user_id: str, with_commit: bool = True) -> User:
     user_item = user.get(user_id)
     if not user_item:
-        user_item = user.create(user_id, with_commit=True)
-        kratos.__refresh_identity_cache()
-    update_last_interaction(user_item.id)
+        user_item = user.create(user_id, with_commit=with_commit)
+        if with_commit:
+            kratos.__refresh_identity_cache()
+    else:
+        update_last_interaction(user_item.id)
     return user_item
 
 
@@ -89,10 +91,13 @@ def update_user_field(user_id: str, field: str, value: Any) -> User:
     return user_item
 
 
-def add_user_to_teams(creation_user_id: str, user_id: str, team_ids: list) -> User:
+def add_user_to_teams(
+    creation_user_id: str, user_id: str, team_ids: list, with_commit: bool = True
+) -> User:
     for team_id in team_ids:
         team_member_db_co.create(team_id, user_id, creation_user_id, with_commit=False)
-    general.commit()
+    if with_commit:
+        general.commit()
 
 
 def remove_organization_from_user(user_mail: str) -> None:
@@ -113,7 +118,7 @@ def get_active_users_filtered(
     sort_direction: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-) -> User:
+) -> List[User]:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
     return user.get_active_users_after_filter(
@@ -174,23 +179,5 @@ def __migrate_kratos_users():
         )
         if user_database.sso_provider != sso_provider:
             user_database.sso_provider = sso_provider
-
-        if user_database.oidc_identifier is None:
-            user_search = kratos.__search_kratos_for_user_mail(
-                user_identity["traits"]["email"]
-            )
-            if user_search and user_search["credentials"]:
-                if user_search["credentials"].get("oidc", None):
-                    oidc = (
-                        user_search["credentials"]
-                        .get("oidc", {})
-                        .get("identifiers", None)[0]
-                    )
-                    if oidc:
-                        oidc = oidc.split(":")
-                        if len(oidc) > 1:
-                            user_database.oidc_identifier = oidc[1]
-                        else:
-                            user_database.oidc_identifier = None
 
     general.commit()
