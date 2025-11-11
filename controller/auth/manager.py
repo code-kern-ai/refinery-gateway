@@ -126,6 +126,12 @@ def check_is_admin(request: Any) -> bool:
             and subject["verifiable_addresses"][0]["verified"]
         ):
             return True
+        elif (
+            # subject metadata_public can be None so we use or {} instead of get with default
+            (subject.get("metadata_public") or {}).get("role") == "ADMIN"
+            and subject["verifiable_addresses"][0]["verified"]
+        ):
+            return True
     return False
 
 
