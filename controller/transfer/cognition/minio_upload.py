@@ -1,7 +1,7 @@
 from typing import List
 
 from controller.task_master import manager as task_master_manager
-from submodules.model import enums
+from submodules.model import enums, etl_utils
 from submodules.model.business_objects import general
 from submodules.model.global_objects import etl_task as etl_task_bo
 from submodules.model.cognition_objects import (
@@ -12,9 +12,12 @@ from submodules.model.cognition_objects import (
 
 
 def handle_cognition_file_upload(path_parts: List[str]):
-
+    print(path_parts, flush=True)
+    # raise NotImplementedError("This function is not yet implemented.")
     if path_parts[1] != "_cognition" or len(path_parts) < 5:
         return
+    ##tmp doc retrieval => need to understand how .info file is an indicator for cognition gateway to pick it up
+
     if path_parts[2] == "files" and path_parts[4].startswith("file_original"):
         org_id = path_parts[0]
         file_hash, file_size = path_parts[3].split("_")
@@ -34,31 +37,43 @@ def handle_cognition_file_upload(path_parts: List[str]):
                 print(f"File reference id: {str(file_reference.id)}", flush=True)
                 print(f"File name: {file_reference.original_file_name}", flush=True)
             return
-        file_reference.state = enums.FileCachingState.COMPLETED.value
-        general.commit()
-
+        # file_reference.state = enums.FileCachingState.COMPLETED.value
+        # general.commit()
+        # {"project_id": "c155f6f9-7731-4c18-84f3-2e68b4747037", "file_caching_initiator": "TMP_DOC_RETRIEVAL", "conversation_id": "75448474-1836-4bec-88ec-0df586c8ea0b", "extraction_method": "pdf2markdown", "file_name": "Local Explorer - Final- page2.pdf", "extraction_key": "pdf2markdown", "transformation_key": "PRIVATEMODE_AI"}
         chunk_size = 1000
-        priority = -1
         if (
             file_reference.meta_data.get("transformation_initiator")
             == enums.FileCachingInitiator.TMP_DOC_RETRIEVAL.value
         ):
             priority = 1
+            # llm_config_extraction = proj
+        else:
+            priority = -1
 
-        markdown_file = markdown_file_bo.get(
-            org_id, file_reference.meta_data.get("markdown_file_id")
-        )
-        if not markdown_file:
-            print(
-                "ERROR: Markdown file not found for the given markdown_file_id",
-                flush=True,
+            markdown_file = markdown_file_bo.get(
+                org_id, file_reference.meta_data.get("markdown_file_id")
             )
-            raise ValueError(
-                f"Markdown file not found for file reference {file_reference.id}"
-            )
+        # if not markdown_file:
+        #     print(
+        #         "ERROR: Markdown file not found for the given markdown_file_id",
+        #         flush=True,
+        #     )
+        #     raise ValueError(
+        #         f"Markdown file not found for file reference {file_reference.id}"
+        #     )
 
         markdown_dataset = markdown_dataset_bo.get(
             org_id=org_id, id=markdown_file.dataset_id
+        )
+
+        task_config = etl_utils.create_etl_config_for_tmp_doc(
+            extract_config={
+                "file_type": markdown_file.category_origin,
+                "extractor": markdown_file.meta_data.get("extractor"),
+                "fallback_extractors": [fe.value for fe in fallback_extractors],
+                "minio_path": file_reference.minio_path,
+                "original_file_name": file_reference.original_file_name,
+            }
         )
 
         etl_task = etl_task_bo.get_or_create_markdown_file_etl_task(
@@ -128,4 +143,5 @@ def handle_cognition_file_upload(path_parts: List[str]):
             str(file_reference.created_by),
             enums.TaskType.EXECUTE_ETL,
             {"etl_task_id": str(etl_task.id)},
+            priority=priority != -1,
         )
