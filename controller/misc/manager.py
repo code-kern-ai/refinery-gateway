@@ -6,7 +6,7 @@ from submodules.model.global_objects import (
 )
 from datetime import datetime
 import os
-from controller.auth import kratos
+from submodules.model import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.model import enums
 import requests

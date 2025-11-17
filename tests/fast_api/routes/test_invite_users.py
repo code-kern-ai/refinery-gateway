@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from controller.auth.kratos import delete_user_kratos
+from submodules.model.kratos import delete_user_kratos
 
 from submodules.model.business_objects import organization as organization_bo
 from submodules.model.enums import UserRoles

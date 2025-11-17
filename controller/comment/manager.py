@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
-from controller.auth import kratos
+from submodules.model import kratos
 from controller.auth import manager as user_manager
 from submodules.model import enums
 from submodules.model.models import CommentData, User

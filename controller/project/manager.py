@@ -30,7 +30,7 @@ from submodules.model.integration_objects.helper import (
 )
 from submodules.s3 import controller as s3
 from service.search import search
-from controller.auth import kratos
+from submodules.model import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from controller.embedding import connector
 

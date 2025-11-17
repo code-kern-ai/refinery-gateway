@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Any
 from submodules.model import User, daemon, enums
 from submodules.model.business_objects import user, general
-from controller.auth import kratos
+from submodules.model import kratos
 from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
 from datetime import datetime, timedelta

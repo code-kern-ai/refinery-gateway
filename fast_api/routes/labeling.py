@@ -32,7 +32,7 @@ from submodules.model.business_objects import (
 )
 from submodules.model.util import sql_alchemy_to_dict, to_frontend_obj_raw
 from util import notification
-from controller.auth import kratos
+from submodules.model import kratos
 
 
 router = APIRouter()
