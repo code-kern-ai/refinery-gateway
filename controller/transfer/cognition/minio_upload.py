@@ -57,7 +57,11 @@ def handle_cognition_file_upload(path_parts: List[str]):
                 org_id,
                 str(file_reference.created_by),
                 enums.TaskType.EXECUTE_ETL,
-                {"etl_task_id": str(etl_task.id)},
+                {
+                    "etl_task_id": str(etl_task.id),
+                    "project_id": file_reference.meta_data.get("project_id"),
+                    "conversation_id": file_reference.meta_data.get("conversation_id"),
+                },
                 priority=True,
             )
 
