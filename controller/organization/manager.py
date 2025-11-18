@@ -4,7 +4,7 @@ from submodules.model import enums
 from submodules.model.business_objects import organization, general, user
 from submodules.model.exceptions import EntityAlreadyExistsException
 from submodules.model.models import Organization, User
-from submodules.model import kratos
+from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 from submodules.s3 import controller as s3
 from submodules.model.cognition_objects import integration

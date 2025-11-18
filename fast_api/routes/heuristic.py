@@ -11,7 +11,7 @@ from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums
-from submodules.model import kratos
+from controller.auth import kratos
 
 router = APIRouter()
 

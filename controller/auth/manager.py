@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional
 
-from submodules.model import kratos
+from controller.auth import kratos
 from fastapi import Request
 from exceptions.exceptions import (
     AuthManagerError,

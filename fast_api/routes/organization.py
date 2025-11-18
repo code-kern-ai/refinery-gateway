@@ -15,7 +15,7 @@ from fast_api.models import (
     RemoveUserToOrganizationBody,
 )
 from controller.auth import manager as auth_manager
-from submodules.model.kratos import (
+from controller.auth.kratos import (
     resolve_user_mail_by_id,
     resolve_user_name_by_id,
 )

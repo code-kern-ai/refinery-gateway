@@ -1,6 +1,6 @@
 from typing import Any, List, Dict
 from submodules.model.business_objects import monitor as task_monitor
-from submodules.model import kratos
+from controller.auth import kratos
 from submodules.model.util import sql_alchemy_to_dict
 
 
