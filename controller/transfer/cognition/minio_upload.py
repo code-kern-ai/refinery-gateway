@@ -36,6 +36,9 @@ def handle_cognition_file_upload(path_parts: List[str]):
                 print(f"File reference id: {str(file_reference.id)}", flush=True)
                 print(f"File name: {file_reference.original_file_name}", flush=True)
             return
+
+        file_reference.state = enums.FileCachingState.COMPLETED.value
+        general.commit()
         if (
             file_reference.meta_data.get("file_caching_initiator")
             == enums.FileCachingInitiator.TMP_DOC_RETRIEVAL.value
