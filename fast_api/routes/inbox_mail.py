@@ -32,14 +32,14 @@ def create_inbox_mail_by_thread(request: Request, inbox_mail: InboxMailCreateReq
             (str(inbox_mail_thread.organization_id) != str(user.organization_id))
             or not inbox_mail_go.get_inbox_mail_thread_association_by_thread_id_and_user_id(
                 thread_id=inbox_mail.threadId,
-                user_id=user.id,
+                user_id=str(user.id),
             )
         ):
             raise HTTPException(status_code=403, detail="Not authorized")
 
     mail = inbox_mail_manager.create_inbox_mail_by_thread(
         org_id=user.organization_id,
-        sender_id=user.id,
+        sender_id=str(user.id),
         recipient_ids=inbox_mail.recipientIds,
         subject=inbox_mail.subject,
         content=inbox_mail.content,
@@ -59,7 +59,7 @@ def get_inbox_mails_by_thread(request: Request, thread_id: str) -> List[Dict[str
 
     mails = inbox_mail_manager.get_inbox_mails_by_thread(
         org_id=user.organization_id,
-        user_id=user.id,
+        user_id=str(user.id),
         thread_id=thread_id,
         user_is_admin=user_is_admin,
     )
@@ -72,11 +72,10 @@ def get_inbox_mail_thread_overview_paginated(
 ):
     user_is_admin = auth_manager.check_is_admin(request)
     user = auth_manager.get_user_by_info(request.state.info)
-    print("is admin", user_is_admin, flush=True)
 
     mail = inbox_mail_manager.get_inbox_mail_threads_overview(
         org_id=user.organization_id,
-        user_id=user.id,
+        user_id=str(user.id),
         page=page,
         limit=limit,
         user_is_admin=user_is_admin,
@@ -101,8 +100,9 @@ def update_inbox_mail_thread_being_worked_on(
         raise HTTPException(status_code=403, detail="Not authorized")
 
     inbox_mail_go.update_thread_progress(
+        str(user.id),
         thread_id=thread_id,
-        is_in_progress=inbox_mail_thread_update.progress,
+        progress_state=inbox_mail_thread_update.progressState,
         with_commit=True,
     )
     return get_silent_success()

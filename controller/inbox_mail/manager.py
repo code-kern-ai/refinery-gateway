@@ -100,6 +100,9 @@ def get_inbox_mail_threads_overview(
     for thread in overview_by_threads["threads"]:
         if not thread.get("latest_mail"):
             continue
+        if not user_is_admin:
+            thread.pop("meta_data", None)
+
         extend_inbox_mail_sender_receiver_names(
             participant_ids=thread["participant_ids"],
             mail_dict=thread["latest_mail"],
@@ -165,7 +168,6 @@ def extend_inbox_mail_sender_receiver_names(
     user_is_admin = str(user_id) in admin_user_ids
     user_is_sender = str(user_id) == str(mail_dict["sender_id"])
     sender_is_admin = str(mail_dict["sender_id"]) in admin_user_ids
-    print(is_auto_generated, user_is_admin, user_is_sender, sender_is_admin, flush=True)
     if is_auto_generated and user_is_admin:
 
         if not (mail_dict.get("sender_id")):

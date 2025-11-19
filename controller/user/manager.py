@@ -6,8 +6,9 @@ from submodules.model.exceptions import EntityNotFoundException
 from controller.organization import manager as organization_manager
 from datetime import datetime, timedelta
 from util.decorator import param_throttle
-from submodules.model.util import is_string_true_value
+from submodules.model.util import is_string_true_value, sql_alchemy_to_dict
 from submodules.model.business_objects import team_member as team_member_db_co
+from controller.organization.manager import USER_INFO_WHITELIST
 
 
 def get_user(user_id: str) -> User:
@@ -35,6 +36,17 @@ def get_or_create_user_by_email(email: str) -> User:
 
 def get_user_roles() -> Dict[str, str]:
     return {str(u.id): u.role for u in user.get_all()}
+
+
+def get_admin_users(expand_mail_name: bool = False) -> List[User]:
+    admin_users = user.get_admin_users()
+    admin_users_dict = sql_alchemy_to_dict(
+        admin_users, column_whitelist=USER_INFO_WHITELIST
+    )
+    if expand_mail_name:
+        all_users_expanded = kratos.expand_user_mail_name(admin_users_dict)
+        return all_users_expanded
+    return admin_users_dict
 
 
 def update_organization_of_user(organization_name: str, user_mail: str) -> None:

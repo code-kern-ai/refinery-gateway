@@ -549,4 +549,4 @@ class InboxMailCreateRequest(BaseModel):
 
 
 class UpdateInboxMailThreadProgressRequest(BaseModel):
-    progress: bool
+    progressState: str
