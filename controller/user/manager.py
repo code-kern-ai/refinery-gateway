@@ -49,6 +49,17 @@ def get_admin_users(expand_mail_name: bool = False) -> List[User]:
     return admin_users_dict
 
 
+def get_engineer_users(org_id: str, expand_mail_name: bool = False) -> List[User]:
+    engineer_users = user.get_engineer_users(org_id=org_id)
+    engineer_users_dict = sql_alchemy_to_dict(
+        engineer_users, column_whitelist=USER_INFO_WHITELIST
+    )
+    if expand_mail_name:
+        all_users_expanded = kratos.expand_user_mail_name(engineer_users_dict)
+        return all_users_expanded
+    return engineer_users_dict
+
+
 def update_organization_of_user(organization_name: str, user_mail: str) -> None:
     organization = organization_manager.get_organization_by_name(organization_name)
 

@@ -122,7 +122,8 @@ def get_org_id_name_map(request: Request):
 @router.get("/all-users")
 def get_all_user(
     request: Request,
-    include_admin_support: bool = False,
+    include_engineers: bool = False,
+    include_admins: bool = False,
     limited_teams: bool = False,
     org_id: str = None,
 ):
@@ -134,12 +135,19 @@ def get_all_user(
         relevant_users = manager.get_all_users(org_id)
     else:
         user_info = auth_manager.get_user_by_info(request.state.info)
+        if not user_info.organization_id:
+            return pack_json_result([], wrap_for_frontend=False)
         relevant_users = manager.get_all_users(
             user_info.organization_id, limited_teams=limited_teams, user_id=user_info.id
         )
-    if include_admin_support:
+    if include_admins:
         admin_support_users = user_manager.get_admin_users(expand_mail_name=True)
         relevant_users.extend(admin_support_users)
+    if include_engineers:
+        engineer_users = user_manager.get_engineer_users(
+            org_id=user_info.organization_id, expand_mail_name=True
+        )
+        relevant_users.extend(engineer_users)
     # Remove duplicates by user id
     unique_users = {str(user["id"]): user for user in relevant_users}.values()
     return pack_json_result(list(unique_users), wrap_for_frontend=False)
