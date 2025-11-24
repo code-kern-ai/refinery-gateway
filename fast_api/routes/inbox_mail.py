@@ -84,7 +84,7 @@ def get_inbox_mail_thread_overview_paginated(
 
 
 @router.put("/thread/{thread_id}/progress")
-def update_inbox_mail_thread_being_worked_on(
+def update_inbox_mail_thread_progress(
     request: Request,
     thread_id: str,
     inbox_mail_thread_update: UpdateInboxMailThreadProgressRequest,
