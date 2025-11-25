@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
-from controller.auth import manager as auth_manager
+from conftest import user_id
+from controller.auth import kratos, manager as auth_manager
 from fast_api.models import (
     InboxMailCreateRequest,
     UpdateInboxMailThreadProgressRequest,
@@ -99,10 +100,12 @@ def update_inbox_mail_thread_progress(
     if not user_is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    user_name = kratos.resolve_user_name_by_id(str(user.id))
     inbox_mail_go.update_thread_progress(
         str(user.id),
         thread_id=thread_id,
         progress_state=inbox_mail_thread_update.progressState,
+        user_name=user_name,
         with_commit=True,
     )
     return get_silent_success()
