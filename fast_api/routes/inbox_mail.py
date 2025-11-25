@@ -1,5 +1,4 @@
 from typing import List, Dict, Any
-from conftest import user_id
 from controller.auth import kratos, manager as auth_manager
 from fast_api.models import (
     InboxMailCreateRequest,
