@@ -8,7 +8,6 @@ from submodules.model.cognition_objects import (
     file_reference as file_reference_db_bo,
     markdown_file as markdown_file_bo,
     markdown_dataset as markdown_dataset_bo,
-    project as cognition_project_bo,
 )
 
 
@@ -48,19 +47,16 @@ def handle_cognition_file_upload(path_parts: List[str]):
     ):
         project_id = file_reference.meta_data.get("project_id")
         conversation_id = file_reference.meta_data.get("conversation_id")
-        project_item = cognition_project_bo.get(project_id)
-
+        full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
+            file_reference, project_id=project_id, conversation_id=conversation_id
+        )
         etl_task = etl_task_bo.create(
             org_id,
             file_reference.created_by,
             file_reference.original_file_name,
             file_reference.file_size_bytes,
-            full_config=etl_utils.get_full_config_for_tmp_doc(
-                file_reference,
-                project_item,
-                conversation_id,
-            ),
-            tokenizer=project_item.tokenizer,
+            full_config=full_config,
+            tokenizer=tokenizer,
             priority=1,
         )
 
