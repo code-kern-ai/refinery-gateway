@@ -30,12 +30,18 @@ def handle_cognition_file_upload(path_parts: List[str]):
     ):
         # file_reference is None or already processed in queue
         print(
-            "File reference duplication error, file is already processed",
+            f"WARNING:  {__name__} - file reference duplication error, file is already processed",
             flush=True,
         )
         if file_reference:
-            print(f"File reference id: {str(file_reference.id)}", flush=True)
-            print(f"File name: {file_reference.original_file_name}", flush=True)
+            print(
+                f"INFO:     {__name__} - file reference id: {str(file_reference.id)}",
+                flush=True,
+            )
+            print(
+                f"INFO:     {__name__} - file name: {file_reference.original_file_name}",
+                flush=True,
+            )
         return
 
     file_reference.state = enums.FileCachingState.COMPLETED.value
