@@ -152,7 +152,7 @@ def __conversion_helper():
             update_sql,
             {
                 "config_list": json.dumps(
-                    [{"id": converted_object["id"], "is_default": True}]
+                    [{"id": converted_object["id"], "isDefault": True}]
                 ),
                 "project_id": row["id"],
             },
