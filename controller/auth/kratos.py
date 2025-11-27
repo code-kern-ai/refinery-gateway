@@ -6,10 +6,7 @@ import requests
 import logging
 from datetime import datetime, timedelta
 from urllib.parse import quote
-
-from submodules.model import daemon
-from submodules.model.business_objects import general, user
-
+from controller.user import manager
 
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
@@ -77,7 +74,7 @@ def __refresh_identity_cache(update_db_users: bool = True) -> None:
         KRATOS_IDENTITY_CACHE = {}
 
     if update_db_users:
-        migrate_kratos_users()
+        manager.migrate_kratos_users()
 
 
 def __get_link_from_kratos_request(request: requests.Response) -> str:
@@ -294,49 +291,3 @@ def check_user_exists(email: str) -> bool:
             if i["traits"]["email"].lower() == email.lower():
                 return True
     return False
-
-
-def migrate_kratos_users() -> None:
-    daemon.run_with_db_token(__migrate_kratos_users)
-
-
-def __migrate_kratos_users():
-    users_kratos = get_cached_values(False)
-    users_database = user.get_all()
-
-    for user_database in users_database:
-        user_id = str(user_database.id)
-        if user_id not in users_kratos or users_kratos[user_id] is None:
-            continue
-        user_identity = users_kratos[user_id]["identity"]
-        if user_database.email != user_identity["traits"]["email"]:
-            user_database.email = user_identity["traits"]["email"]
-        if (
-            user_database.verified
-            != user_identity["verifiable_addresses"][0]["verified"]
-        ):
-            user_database.verified = user_identity["verifiable_addresses"][0][
-                "verified"
-            ]
-        if (
-            user_database.created_at
-            != user_identity["verifiable_addresses"][0]["created_at"]
-        ):
-            user_database.created_at = user_identity["verifiable_addresses"][0][
-                "created_at"
-            ]
-        if user_database.metadata_public != user_identity["metadata_public"]:
-            user_database.metadata_public = user_identity["metadata_public"]
-        sso_provider = (
-            (
-                user_identity["metadata_public"]
-                .get("registration_scope", {})
-                .get("provider_id", None)
-            )
-            if user_identity["metadata_public"]
-            else None
-        )
-        if user_database.sso_provider != sso_provider:
-            user_database.sso_provider = sso_provider
-
-    general.commit()

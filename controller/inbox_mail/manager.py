@@ -37,8 +37,8 @@ def create_inbox_mail_by_thread(
 def get_inbox_mails_by_thread(
     org_id: str,
     user_id: str,
-    thread_id: Optional[str] = None,
     user_is_admin: bool = False,
+    thread_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     mails = inbox_mail.get_by_thread(
         org_id, user_id, thread_id, user_is_admin=user_is_admin

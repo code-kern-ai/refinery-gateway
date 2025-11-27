@@ -60,8 +60,8 @@ def get_inbox_mails_by_thread(request: Request, thread_id: str) -> List[Dict[str
     mails = inbox_mail_manager.get_inbox_mails_by_thread(
         org_id=user.organization_id,
         user_id=str(user.id),
-        thread_id=thread_id,
         user_is_admin=user_is_admin,
+        thread_id=thread_id,
     )
     return pack_json_result(mails)
 
