@@ -291,3 +291,17 @@ def check_user_exists(email: str) -> bool:
             if i["traits"]["email"].lower() == email.lower():
                 return True
     return False
+
+
+def get_admin_users_by_public_metadata() -> List[Dict[str, Any]]:
+    admins = []
+    cache = get_cached_values()
+    for key in cache:
+        if key == "collected":
+            continue
+        identity = cache[key]["identity"]
+        if (identity.get("metadata_public") or {}).get("role") == "ADMIN" and identity[
+            "verifiable_addresses"
+        ][0]["verified"]:
+            admins.append(cache[key]["simple"])
+    return admins

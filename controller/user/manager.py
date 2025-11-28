@@ -40,6 +40,14 @@ def get_user_roles() -> Dict[str, str]:
 
 def get_admin_users(expand_mail_name: bool = False) -> List[User]:
     admin_users = user.get_admin_users()
+    kratos_public_metadata_admins = kratos.get_admin_users_by_public_metadata()
+    kratos_public_metadata_admin_ids = [
+        identity["id"] for identity in kratos_public_metadata_admins
+    ]
+    kratos_admins = user.get_by_id_list(kratos_public_metadata_admin_ids)
+    admin_users.extend(kratos_admins)
+    admin_users_unique = {str(u.id): u for u in admin_users}
+    admin_users = list(admin_users_unique.values())
     admin_users_dict = sql_alchemy_to_dict(
         admin_users, column_whitelist=USER_INFO_WHITELIST
     )
