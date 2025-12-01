@@ -43,9 +43,7 @@ def get_inbox_mails_by_thread(
     mails = inbox_mail.get_by_thread(
         org_id, user_id, thread_id, user_is_admin=user_is_admin
     )
-    participant_ids = [
-        str(pid) for pid in inbox_mail.get_participant_ids_by_thread_id(thread_id)
-    ]
+    participant_ids = inbox_mail.get_participant_ids_by_thread_id(thread_id)
     admin_user_ids = [str(u.id) for u in user.get_admin_users()]
 
     mail_dicts = [sql_alchemy_to_dict(mail) for mail in mails]
