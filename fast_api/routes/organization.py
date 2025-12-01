@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Request, Body
+from fastapi import APIRouter, Request, Body, HTTPException
 from fast_api.models import (
     AddUserToOrganizationBody,
     ArchiveAdminMessageBody,
@@ -120,11 +120,37 @@ def get_org_id_name_map(request: Request):
 
 # in use cognition-ui & refinery-ui (08.01.25)
 @router.get("/all-users")
-def get_all_user(request: Request):
-    organization_id = auth_manager.get_user_by_info(request.state.info).organization_id
-    return pack_json_result(
-        manager.get_all_users(organization_id), wrap_for_frontend=False
-    )
+def get_all_user(
+    request: Request,
+    include_engineers: bool = False,
+    include_admins: bool = False,
+    limited_teams: bool = False,
+    org_id: str = None,
+):
+    relevant_users = []
+    user_is_admin = auth_manager.check_is_admin(request)
+    if org_id:
+        if not user_is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        relevant_users = manager.get_all_users(org_id)
+    else:
+        user_info = auth_manager.get_user_by_info(request.state.info)
+        if not user_info.organization_id:
+            return pack_json_result([], wrap_for_frontend=False)
+        relevant_users = manager.get_all_users(
+            user_info.organization_id, limited_teams=limited_teams, user_id=user_info.id
+        )
+    if include_admins:
+        admin_support_users = user_manager.get_admin_users(expand_mail_name=True)
+        relevant_users.extend(admin_support_users)
+    if include_engineers:
+        engineer_users = user_manager.get_engineer_users(
+            org_id=user_info.organization_id, expand_mail_name=True
+        )
+        relevant_users.extend(engineer_users)
+    # Remove duplicates by user id
+    unique_users = {str(user["id"]): user for user in relevant_users}.values()
+    return pack_json_result(list(unique_users), wrap_for_frontend=False)
 
 
 # in use cognition-ui & refinery-ui & admin-dashboard (08.01.25)

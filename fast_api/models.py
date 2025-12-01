@@ -536,3 +536,17 @@ class GetEmbeddingNameBody(BaseModel):
 class CreateUpdateReleaseNotificationBody(BaseModel):
     link: StrictStr
     config: Dict[str, Any]
+
+
+class InboxMailCreateRequest(BaseModel):
+    recipientIds: List[str]
+    subject: str
+    content: str
+    isImportant: bool = False
+    isAdminSupportThread: bool = False
+    metaData: Optional[Dict[str, Any]] = None
+    threadId: Optional[str] = None
+
+
+class UpdateInboxMailThreadProgressRequest(BaseModel):
+    progressState: str

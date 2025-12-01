@@ -34,6 +34,7 @@ from fast_api.routes.labeling_tasks import router as labeling_tasks_router
 from fast_api.routes.task_execution import router as task_execution_router
 from fast_api.routes.record_internal import router as record_internal_router
 from fast_api.routes.playground import router as playground_router
+from fast_api.routes.inbox_mail import router as inbox_mail_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -62,6 +63,7 @@ from route_prefix import (
     PREFIX_LABELING_TASKS,
     PREFIX_TASK_EXECUTION,
     PREFIX_PLAYGROUND,
+    PREFIX_INBOX_MAIL,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -119,6 +121,10 @@ fastapi_app.include_router(
 )
 fastapi_app.include_router(
     playground_router, prefix=PREFIX_PLAYGROUND, tags=["playground"]
+)
+
+fastapi_app.include_router(
+    inbox_mail_router, prefix=PREFIX_INBOX_MAIL, tags=["inbox_mail"]
 )
 
 app_name_internal = app_name + "-i"
