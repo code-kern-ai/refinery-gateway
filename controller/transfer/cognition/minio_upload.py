@@ -63,6 +63,13 @@ def handle_cognition_file_upload(path_parts: List[str]):
             file_reference.file_size_bytes,
             full_config=full_config,
             tokenizer=tokenizer,
+            meta_data={
+                "file_reference_id": str(file_reference.id),
+                "tmp_doc_metadata": {
+                    "project_id": project_id,
+                    "conversation_id": conversation_id,
+                },
+            },
             priority=1,
         )
 
@@ -72,11 +79,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             enums.TaskType.EXECUTE_ETL,
             {
                 "etl_task_id": str(etl_task.id),
-                "file_reference_id": str(file_reference.id),
-                "tmp_doc_metadata": {
-                    "project_id": project_id,
-                    "conversation_id": conversation_id,
-                },
+                **etl_task.meta_data,
             },
             priority=True,
         )
@@ -84,25 +87,23 @@ def handle_cognition_file_upload(path_parts: List[str]):
     else:
         priority = -1
 
-        markdown_dataset = markdown_dataset_bo.get(
-            org_id, file_reference.meta_data.get("dataset_id")
-        )
-
         markdown_file = markdown_file_bo.get(
             org_id, file_reference.meta_data.get("markdown_file_id")
         )
 
+        full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
+            file_reference
+        )
         etl_task = etl_task_bo.create(
             org_id,
             file_reference.created_by,
             file_reference.original_file_name,
             file_reference.file_size_bytes,
-            full_config=etl_utils.get_full_config_for_markdown_file(
-                file_reference,
-                markdown_dataset,
-                markdown_file,
-            ),
-            tokenizer=markdown_dataset.tokenizer,
+            full_config=full_config,
+            tokenizer=tokenizer,
+            meta_data={
+                "file_reference_id": str(file_reference.id),
+            },
             priority=priority,
         )
 
@@ -118,7 +119,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             enums.TaskType.EXECUTE_ETL,
             {
                 "etl_task_id": str(etl_task.id),
-                "file_reference_id": str(file_reference.id),
+                **etl_task.meta_data,
             },
             priority=priority != -1,
         )
