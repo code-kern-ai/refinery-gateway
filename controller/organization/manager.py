@@ -11,7 +11,6 @@ from submodules.model.cognition_objects import integration
 from api import transfer as transfer_api
 from util.decorator import param_debounce
 
-
 USER_INFO_WHITELIST = {"id", "role"}
 ORGANIZATION_WHITELIST = {"id", "name", "max_rows", "max_cols", "max_char_count"}
 
@@ -55,7 +54,11 @@ def get_user_count(organization_id: str) -> int:
 
 
 def get_all_users(
-    organization_id: str, user_role: Optional[str] = None, as_dict: bool = True
+    organization_id: str,
+    as_dict: bool = True,
+    limited_teams: bool = False,
+    user_role: Optional[str] = None,
+    user_id: Optional[str] = None,
 ) -> List[User]:
     parsed = None
     if user_role:
@@ -63,7 +66,11 @@ def get_all_users(
             parsed = enums.UserRoles[user_role.upper()]
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
-    all_users = user.get_all(organization_id, parsed)
+    all_users = []
+    if limited_teams:
+        all_users = user.get_all_users_by_users_team(user_id)
+    else:
+        all_users = user.get_all(organization_id)
     if not as_dict:
         return all_users
     all_users_dict = sql_alchemy_to_dict(
