@@ -1,7 +1,7 @@
 """adds etl task table
 
 Revision ID: f428a22ecdb3
-Revises: 85bb3ebee137
+Revises: 0ea9ab7cb60f
 Create Date: 2025-10-30 10:45:20.843280
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "f428a22ecdb3"
-down_revision = "85bb3ebee137"
+down_revision = "0ea9ab7cb60f"
 branch_labels = None
 depends_on = None
 
