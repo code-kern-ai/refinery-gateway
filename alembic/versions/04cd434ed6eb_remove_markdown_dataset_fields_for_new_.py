@@ -105,7 +105,7 @@ def __conversion_helper():
         update_sql = sa.text(
             """
             UPDATE cognition.markdown_dataset
-            SET useable_etl_configurations = :config_list
+            SET useable_etl_configurations = :config_list, category_origin = 'DOCUMENTS'
             WHERE id = :dataset_id
         """
         )
