@@ -205,11 +205,13 @@ def __convert_object(row):
     }
     final_object = {
         "id": str(uuid.uuid4()),
-        "organization_id": str(row["organization_id"]),
+        "organization_id": (
+            str(row["organization_id"]) if row["organization_id"] != "None" else None
+        ),
         "name": row["name"] + " - migrated etl config",
         "description": "ETL configuration migrated from old project settings",
         "created_at": row["created_at"].isoformat(),
-        "created_by": str(row["created_by"]),
+        "created_by": str(row["created_by"]) if row["created_by"] != "None" else None,
         "etl_config": json.dumps(converted_object),
         "add_config": json.dumps({}),
     }
