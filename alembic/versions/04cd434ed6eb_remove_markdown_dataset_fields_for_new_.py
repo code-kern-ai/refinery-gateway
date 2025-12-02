@@ -126,16 +126,18 @@ def __convert_object(row):
     # converted_object = {"llm_config": row["llm_config"], "tokenizer": row["tokenizer"]}
     pdf_extraction = {}
     extraction_data = row["llm_config"].get("extraction", {})
-    if extraction_data.get("extractor") == "pdf2markdown":
-        pdf_extraction["extractor"] = "PDF2MD"
-    elif extraction_data.get("extractor").lower() == "azure_di":
+    if (
+        LLMProvider.from_string(extraction_data.get("llmIdentifier", "")).value
+        == "AZURE_DI"
+    ):
         pdf_extraction["azureDiApiBase"] = extraction_data.get("azureDiApiBase", "")
         pdf_extraction["azureDiEnvVarId"] = extraction_data.get("azureDiEnvVarId", "")
         pdf_extraction["extractor"] = "AZURE_DI"
-    elif (
-        extraction_data.get("extractor").lower() == "gpt"
-        or extraction_data.get("extractor").lower() == "vision"
-        or extraction_data.get("extractor").lower() == "gpt-4"
+    elif LLMProvider.from_string(extraction_data.get("llmIdentifier", "")).value in (
+        "AZURE",
+        "OPEN_AI",
+        "AZURE_FOUNDRY",
+        "PRIVATEMODE_AI",
     ):
         pdf_extraction["overwriteVisionPrompt"] = extraction_data.get(
             "overwriteVisionPrompt", False
@@ -149,6 +151,8 @@ def __convert_object(row):
         llm_config.pop("overwriteVisionPrompt", None)
         llm_config.pop("llmIdentifier", None)
         pdf_extraction["llmConfig"] = llm_config
+    else:
+        pdf_extraction["extractor"] = "PDF2MD"
     transformation_data = row["llm_config"].get("transformation", {})
     transformation_config = {}
     transformation_config["llmIdentifier"] = LLMProvider.from_string(
@@ -170,7 +174,7 @@ def __convert_object(row):
         "name": row["name"] + " - migrated etl config",
         "description": "ETL configuration migrated from old project settings",
         "created_at": row["created_at"].isoformat(),
-        "created_by": str(row["created_by"]),
+        "created_by": str(row["created_by"]) if row["created_by"] is not None else None,
         "etl_config": json.dumps(converted_object),
         "add_config": json.dumps({}),
     }
