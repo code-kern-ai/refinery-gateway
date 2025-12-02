@@ -5,9 +5,10 @@ from submodules.model import enums, etl_utils
 from submodules.model.business_objects import general
 from submodules.model.global_objects import etl_task as etl_task_bo
 from submodules.model.cognition_objects import (
-    file_reference as file_reference_db_bo,
-    markdown_file as markdown_file_bo,
-    markdown_dataset as markdown_dataset_bo,
+    project as project_db_co,
+    file_reference as file_reference_db_co,
+    markdown_file as markdown_file_db_co,
+    markdown_dataset as markdown_dataset_db_co,
 )
 
 
@@ -21,7 +22,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
 
     org_id = path_parts[0]
     file_hash, file_size = path_parts[3].split("_")
-    file_reference = file_reference_db_bo.get(org_id, file_hash, int(file_size))
+    file_reference = file_reference_db_co.get(org_id, file_hash, int(file_size))
 
     if (
         not file_reference
@@ -54,7 +55,10 @@ def handle_cognition_file_upload(path_parts: List[str]):
         project_id = file_reference.meta_data.get("project_id")
         conversation_id = file_reference.meta_data.get("conversation_id")
         full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
-            file_reference, project_id=project_id, conversation_id=conversation_id
+            file_reference,
+            etl_config_id=project_db_co.get_default_etl_config_id(project_id),
+            project_id=project_id,
+            conversation_id=conversation_id,
         )
         etl_task = etl_task_bo.create(
             org_id,
@@ -87,12 +91,15 @@ def handle_cognition_file_upload(path_parts: List[str]):
     else:
         priority = -1
 
-        markdown_file = markdown_file_bo.get(
+        markdown_file = markdown_file_db_co.get(
             org_id, file_reference.meta_data.get("markdown_file_id")
         )
 
         full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
-            file_reference
+            file_reference,
+            etl_config_id=markdown_dataset_db_co.get_default_etl_config_id(
+                str(markdown_file.organization_id), markdown_file.dataset_id
+            ),
         )
         etl_task = etl_task_bo.create(
             org_id,
@@ -107,7 +114,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             priority=priority,
         )
 
-        markdown_file_bo.update(
+        markdown_file_db_co.update(
             org_id=org_id,
             markdown_file_id=markdown_file.id,
             etl_task_id=etl_task.id,
