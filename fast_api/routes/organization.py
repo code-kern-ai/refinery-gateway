@@ -15,6 +15,7 @@ from fast_api.models import (
     RemoveUserToOrganizationBody,
 )
 from controller.auth import manager as auth_manager
+from controller.auth import kratos
 from controller.auth.kratos import (
     resolve_user_mail_by_id,
     resolve_user_name_by_id,
@@ -95,6 +96,7 @@ def get_user_info(request: Request):
 @router.get("/get-user-info-extended")
 def get_user_info_extended(request: Request):
     user = auth_manager.get_user_by_info(request.state.info)
+    kratos.__refresh_identity_cache()
     name = resolve_user_name_by_id(user.id)
     user_dict = {
         **sql_alchemy_to_dict(
