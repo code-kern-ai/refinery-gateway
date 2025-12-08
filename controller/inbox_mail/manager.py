@@ -190,7 +190,7 @@ def extend_inbox_mail_sender_receiver_names(
         mail_dict["recipientNames"] = [DEFAULT_KERN_AI_ADMIN_NAME]
     elif user_is_admin and sender_is_admin and not user_is_sender:
         mail_dict["senderName"] = kratos.resolve_user_name_by_id(mail_dict["sender_id"])
-        mail_dict["recipientNames"] = DEFAULT_KERN_AI_ADMIN_NAME
+        mail_dict["recipientNames"] = [DEFAULT_KERN_AI_ADMIN_NAME]
     elif user_is_admin and sender_is_admin:
         mail_dict["senderName"] = DEFAULT_KERN_AI_ADMIN_NAME
         mail_dict["recipientNames"] = [
