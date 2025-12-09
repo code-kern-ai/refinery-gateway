@@ -127,13 +127,16 @@ def __convert_object(row):
     pdf_extraction = {}
     extraction_data = row["llm_config"].get("extraction", {})
     if (
-        LLMProvider.from_string(extraction_data.get("llmIdentifier", "")).value
+        "llmIdentifier" in extraction_data
+        and LLMProvider.from_string(extraction_data.get("llmIdentifier")).value
         == "AZURE_DI"
     ):
         pdf_extraction["azureDiApiBase"] = extraction_data.get("azureDiApiBase", "")
         pdf_extraction["azureDiEnvVarId"] = extraction_data.get("azureDiEnvVarId", "")
         pdf_extraction["extractor"] = "AZURE_DI"
-    elif LLMProvider.from_string(extraction_data.get("llmIdentifier", "")).value in (
+    elif "llmIdentifier" in extraction_data and LLMProvider.from_string(
+        extraction_data.get("llmIdentifier")
+    ).value in (
         "AZURE",
         "OPEN_AI",
         "AZURE_FOUNDRY",
