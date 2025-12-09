@@ -45,7 +45,6 @@ def get_notifications(
     data = sql_alchemy_to_dict(notifications)
     for notification in data:
         notification_data = __notification_data.get(notification["type"])
-        notification["docs"] = notification_data["docs"]
         notification["page"] = notification_data["page"]
         notification["title"] = notification_data["title"]
 
