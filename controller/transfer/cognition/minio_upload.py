@@ -100,6 +100,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             etl_config_id=markdown_dataset_db_co.get_default_etl_config_id(
                 str(markdown_file.organization_id), markdown_file.dataset_id
             ),
+            markdown_file_id=str(markdown_file.id),
         )
         etl_task = etl_task_bo.create(
             org_id,
@@ -110,6 +111,7 @@ def handle_cognition_file_upload(path_parts: List[str]):
             tokenizer=tokenizer,
             meta_data={
                 "file_reference_id": str(file_reference.id),
+                "markdown_file_id": str(markdown_file.id),
             },
             priority=priority,
         )
