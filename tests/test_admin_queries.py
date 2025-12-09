@@ -98,5 +98,12 @@ def __get_default_filter_for_admin_query(query: AdminQueries) -> dict:
             "distinct_conversations": False,
         }
 
+    elif query is AdminQueries.INCOGNITO_USE_OVER_TIME:
+        return {
+            "period": "days",
+            "slices": 7,
+            "organization_id": "",
+        }
+
     else:
         raise ValueError(f"Unknown admin query: {query}")
