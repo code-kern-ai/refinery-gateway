@@ -1,8 +1,8 @@
 """adds etl new attributes
 
-Revision ID: 28a36f227ad7
+Revision ID: 15f133dd208b
 Revises: 04cd434ed6eb
-Create Date: 2025-12-11 22:22:28.935296
+Create Date: 2025-12-11 22:34:07.966633
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "28a36f227ad7"
+revision = "15f133dd208b"
 down_revision = "04cd434ed6eb"
 branch_labels = None
 depends_on = None
@@ -26,6 +26,14 @@ def upgrade():
     )
     op.add_column(
         "etl_task", sa.Column("is_stale", sa.Boolean(), nullable=True), schema="global"
+    )
+    op.add_column(
+        "etl_task", sa.Column("llm_ops", sa.JSON(), nullable=True), schema="global"
+    )
+    op.add_column(
+        "etl_task",
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        schema="global",
     )
     op.create_index(
         op.f("ix_global_etl_task_full_config_hash"),
@@ -44,6 +52,8 @@ def downgrade():
         table_name="etl_task",
         schema="global",
     )
+    op.drop_column("etl_task", "updated_at", schema="global")
+    op.drop_column("etl_task", "llm_ops", schema="global")
     op.drop_column("etl_task", "is_stale", schema="global")
     op.drop_column("etl_task", "full_config_hash", schema="global")
     # ### end Alembic commands ###
