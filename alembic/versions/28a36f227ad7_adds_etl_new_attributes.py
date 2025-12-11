@@ -1,8 +1,8 @@
-"""adds etl stale check
+"""adds etl new attributes
 
-Revision ID: cb0c970f42d1
+Revision ID: 28a36f227ad7
 Revises: 04cd434ed6eb
-Create Date: 2025-12-11 19:57:52.502994
+Create Date: 2025-12-11 22:22:28.935296
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "cb0c970f42d1"
+revision = "28a36f227ad7"
 down_revision = "04cd434ed6eb"
 branch_labels = None
 depends_on = None
