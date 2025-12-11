@@ -50,6 +50,7 @@ USER_INFO_WHITELIST = {
     "email",
     "use_new_cognition_ui",
     "auto_logout_minutes",
+    "one_drive_path",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
