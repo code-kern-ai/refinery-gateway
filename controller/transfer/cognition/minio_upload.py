@@ -54,12 +54,9 @@ def handle_cognition_file_upload(path_parts: List[str]):
     ):
         project_id = file_reference.meta_data.get("project_id")
         conversation_id = file_reference.meta_data.get("conversation_id")
-        etl_config_id = file_reference.meta_data.get(
-            "etl_config_id"
-        ) or project_db_co.get_default_etl_config_id(project_id)
         full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
             file_reference,
-            etl_config_id=etl_config_id,
+            etl_config_id=project_db_co.get_default_etl_config_id(project_id),
             project_id=project_id,
             conversation_id=conversation_id,
         )
