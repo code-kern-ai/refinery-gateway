@@ -550,3 +550,7 @@ class InboxMailCreateRequest(BaseModel):
 
 class UpdateInboxMailThreadProgressRequest(BaseModel):
     progressState: str
+
+
+class UpdateOneDriveFieldRequest(BaseModel):
+    oneDrivePath: StrictStr
