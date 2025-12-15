@@ -1,5 +1,7 @@
 from typing import List
 
+import datetime
+
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums, etl_utils
 from submodules.model.business_objects import general
@@ -120,6 +122,9 @@ def handle_cognition_file_upload(path_parts: List[str]):
             org_id=org_id,
             markdown_file_id=markdown_file.id,
             etl_task_id=etl_task.id,
+            meta_data={"file_reference_id": str(file_reference.id)},
+            started_at=datetime.datetime.now(datetime.UTC),
+            overwrite_meta_data=False,
         )
 
         task_master_manager.queue_task(
