@@ -1,7 +1,7 @@
 """One drive path for desktop version
 
 Revision ID: e3e108cd4b22
-Revises: 04cd434ed6eb
+Revises: 15f133dd208b
 Create Date: 2025-12-10 15:30:56.732793
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "e3e108cd4b22"
-down_revision = "04cd434ed6eb"
+down_revision = "15f133dd208b"
 branch_labels = None
 depends_on = None
 
