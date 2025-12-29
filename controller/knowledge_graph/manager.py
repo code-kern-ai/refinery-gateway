@@ -66,9 +66,10 @@ def create_graph(
         )
         return
 
-    knowledge_graph_db_bo.create(
+    knowledge_graph = knowledge_graph_db_bo.create(
         org_id, user_id, project_id, name, description, type, with_commit=True
     )
+    return knowledge_graph
 
 
 def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
