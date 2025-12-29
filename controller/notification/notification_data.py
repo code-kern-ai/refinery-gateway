@@ -322,6 +322,18 @@ __notification_data = {
         "level": enums.Notification.ERROR.value,
         "page": enums.Pages.SETTINGS.value,
     },
+    enums.NotificationType.KNOWLEDGE_GRAPH_ALREADY_EXISTS.value: {
+        "message_template": "@@arg@@ graph already exists.",
+        "title": "Knowledge graphs",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.KNOWLEDGE_GRAPH.value,
+    },
+    enums.NotificationType.KNOWLEDGE_GRAPH_NOT_SUPPORTED.value: {
+        "message_template": "Knowledge graph is not supported for this type of project.",
+        "title": "Knowledge graphs",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.KNOWLEDGE_GRAPH.value,
+    },
 }
 
 

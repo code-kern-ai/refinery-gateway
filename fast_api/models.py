@@ -7,7 +7,11 @@ from pydantic import (
     StrictStr,
     ConfigDict,
 )
-from submodules.model.enums import CustomerButtonType, CustomerButtonLocation
+from submodules.model.enums import (
+    CustomerButtonType,
+    CustomerButtonLocation,
+    KnowledgeGraphType,
+)
 
 """
 Pydantic models for FastAPI.
@@ -554,3 +558,14 @@ class UpdateInboxMailThreadProgressRequest(BaseModel):
 
 class UpdateOneDriveFieldRequest(BaseModel):
     oneDrivePath: StrictStr
+
+
+class KnowledgeGraphCreateRequest(BaseModel):
+    project_id: str
+    name: StrictStr
+    description: StrictStr
+    type: KnowledgeGraphType
+
+
+class KnowledgeGraphDeleteRequest(BaseModel):
+    ids: List[str]
