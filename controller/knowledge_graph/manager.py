@@ -26,8 +26,8 @@ def get_by_project_id(org_id: str, project_id: str) -> List[RefineryKnowledgeGra
     knowledge_graphs: List[RefineryKnowledgeGraph] = (
         knowledge_graph_db_bo.get_by_project_id(org_id, project_id)
     )
-    if not knowledge_graphs:
-        raise EntityNotFoundException
+    # if not knowledge_graphs:
+    #     raise EntityNotFoundException
 
     return knowledge_graphs
 
