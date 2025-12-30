@@ -38,7 +38,7 @@ def get_data(request: Request, project_id: str):
 @router.post("/")
 def create(request: Request, data: KnowledgeGraphCreateRequest):
     user = auth_manager.get_user_by_info(request.state.info)
-    knowledge_graph_manager.create_graph(
+    knowledge_graph = knowledge_graph_manager.create_graph(
         user.organization_id,
         user.id,
         data.project_id,
@@ -46,7 +46,7 @@ def create(request: Request, data: KnowledgeGraphCreateRequest):
         data.description,
         data.type,
     )
-    return get_silent_success()
+    return pack_json_result({"id": str(knowledge_graph.id)}, wrap_for_frontend=False)
 
 
 @router.put("/{knowledge_graph_id}")

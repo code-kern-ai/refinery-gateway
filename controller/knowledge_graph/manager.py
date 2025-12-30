@@ -60,9 +60,10 @@ def create_graph(
         )
         return
 
-    knowledge_graph_db_bo.create(
+    knowledge_graph = knowledge_graph_db_bo.create(
         org_id, user_id, project_id, name, description, type, with_commit=True
     )
+    return knowledge_graph
 
 
 def update_graph(
