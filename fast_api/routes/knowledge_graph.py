@@ -50,12 +50,14 @@ def create(request: Request, data: KnowledgeGraphCreateRequest):
 
 
 @router.put("/{knowledge_graph_id}")
-def update(request: Request, knowledge_graph_id:str, data: KnowledgeGraphUpdateRequest):
+def update(
+    request: Request, knowledge_graph_id: str, data: KnowledgeGraphUpdateRequest
+):
     user = auth_manager.get_user_by_info(request.state.info)
     knowledge_graph_manager.update_graph(
         user.organization_id,
         user.id,
-        knowledge_graph_id
+        knowledge_graph_id,
         data.name,
         data.description,
     )

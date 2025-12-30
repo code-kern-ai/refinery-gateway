@@ -74,23 +74,23 @@ def update_graph(
     description: str,
 ) -> None:
     knowledge_graph = knowledge_graph_db_bo.get(org_id, knowledge_graph_id)
-    if not knowledge_graph_db_bo.get_by_project_id_and_type(
-        org_id, knowledge_graph.project_id, type
-    ):
-        create_notification(
-            NotificationType.KNOWLEDGE_GRAPH_NOT_FOUND,
-            user_id,
-            knowledge_graph.project_id,
-            type.value,
-        )
-        return
-    if not project_db_bo.is_integration_project(org_id, knowledge_graph.project_id):
-        create_notification(
-            NotificationType.KNOWLEDGE_GRAPH_NOT_SUPPORTED,
-            user_id,
-            knowledge_graph.project_id,
-        )
-        return
+    # if not knowledge_graph_db_bo.get_by_project_id_and_type(
+    #     org_id, knowledge_graph.project_id, knowledge_graph.type
+    # ):
+    #     create_notification(
+    #         NotificationType.KNOWLEDGE_GRAPH_NOT_FOUND,
+    #         user_id,
+    #         knowledge_graph.project_id,
+    #         knowledge_graph.type.value,
+    #     )
+    #     return
+    # if not project_db_bo.is_integration_project(org_id, knowledge_graph.project_id):
+    #     create_notification(
+    #         NotificationType.KNOWLEDGE_GRAPH_NOT_SUPPORTED,
+    #         user_id,
+    #         knowledge_graph.project_id,
+    #     )
+    #     return
 
     knowledge_graph_db_bo.update(
         org_id, knowledge_graph_id, name, description, with_commit=True
