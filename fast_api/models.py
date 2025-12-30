@@ -567,5 +567,10 @@ class KnowledgeGraphCreateRequest(BaseModel):
     type: KnowledgeGraphType
 
 
+class KnowledgeGraphUpdateRequest(BaseModel):
+    name: StrictStr
+    description: StrictStr
+
+
 class KnowledgeGraphDeleteRequest(BaseModel):
     ids: List[str]

@@ -16,7 +16,7 @@ def get(org_id: str, knowledge_graph_id: str) -> RefineryKnowledgeGraph:
     knowledge_graph: RefineryKnowledgeGraph = knowledge_graph_db_bo.get(
         org_id, knowledge_graph_id
     )
-    if not knowledge_graph:
+    if knowledge_graph_id and not knowledge_graph:
         raise EntityNotFoundException
 
     return knowledge_graph
@@ -26,17 +26,11 @@ def get_by_project_id(org_id: str, project_id: str) -> List[RefineryKnowledgeGra
     knowledge_graphs: List[RefineryKnowledgeGraph] = (
         knowledge_graph_db_bo.get_by_project_id(org_id, project_id)
     )
-    # if not knowledge_graphs:
-    #     raise EntityNotFoundException
-
     return knowledge_graphs
 
 
 def get_data(org_id: str, project_id: str) -> List[RefineryKnowledgeGraph]:
     integrations = integration_db_co.get_all_by_project_id(org_id, project_id)
-    if not integrations:
-        raise EntityNotFoundException
-
     return integration_record_db_io.get_all_sharepoints_by_integration_ids(
         [str(integration.id) for integration in integrations]
     )
@@ -68,6 +62,37 @@ def create_graph(
 
     knowledge_graph_db_bo.create(
         org_id, user_id, project_id, name, description, type, with_commit=True
+    )
+
+
+def update_graph(
+    org_id: str,
+    user_id: str,
+    knowledge_graph_id: str,
+    name: str,
+    description: str,
+) -> None:
+    knowledge_graph = knowledge_graph_db_bo.get(org_id, knowledge_graph_id)
+    if not knowledge_graph_db_bo.get_by_project_id_and_type(
+        org_id, knowledge_graph.project_id, type
+    ):
+        create_notification(
+            NotificationType.KNOWLEDGE_GRAPH_NOT_FOUND,
+            user_id,
+            knowledge_graph.project_id,
+            type.value,
+        )
+        return
+    if not project_db_bo.is_integration_project(org_id, knowledge_graph.project_id):
+        create_notification(
+            NotificationType.KNOWLEDGE_GRAPH_NOT_SUPPORTED,
+            user_id,
+            knowledge_graph.project_id,
+        )
+        return
+
+    knowledge_graph_db_bo.update(
+        org_id, knowledge_graph_id, name, description, with_commit=True
     )
 
 

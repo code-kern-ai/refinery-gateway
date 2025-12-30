@@ -2,6 +2,7 @@ from controller.knowledge_graph import manager as knowledge_graph_manager
 from controller.auth import manager as auth_manager
 from fast_api.models import (
     KnowledgeGraphCreateRequest,
+    KnowledgeGraphUpdateRequest,
     KnowledgeGraphDeleteRequest,
 )
 from fastapi import APIRouter, Request
@@ -44,6 +45,19 @@ def create(request: Request, data: KnowledgeGraphCreateRequest):
         data.name,
         data.description,
         data.type,
+    )
+    return get_silent_success()
+
+
+@router.put("/{knowledge_graph_id}")
+def update(request: Request, knowledge_graph_id:str, data: KnowledgeGraphUpdateRequest):
+    user = auth_manager.get_user_by_info(request.state.info)
+    knowledge_graph_manager.update_graph(
+        user.organization_id,
+        user.id,
+        knowledge_graph_id
+        data.name,
+        data.description,
     )
     return get_silent_success()
 
