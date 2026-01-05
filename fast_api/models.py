@@ -574,3 +574,7 @@ class KnowledgeGraphUpdateRequest(BaseModel):
 
 class KnowledgeGraphDeleteRequest(BaseModel):
     ids: List[str]
+
+
+class KnowledgeGraphLiveQuestion(BaseModel):
+    question: StrictStr

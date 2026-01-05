@@ -4,6 +4,7 @@ from fast_api.models import (
     KnowledgeGraphCreateRequest,
     KnowledgeGraphUpdateRequest,
     KnowledgeGraphDeleteRequest,
+    KnowledgeGraphLiveQuestion,
 )
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
@@ -69,3 +70,13 @@ def delete_many(request: Request, project_id: str, data: KnowledgeGraphDeleteReq
     user = auth_manager.get_user_by_info(request.state.info)
     knowledge_graph_manager.delete_many(user.organization_id, project_id, data.ids)
     return get_silent_success()
+
+
+@router.post("/execute-question")
+def execute_question(request: Request, data: KnowledgeGraphLiveQuestion):
+    question = data.question
+    user = auth_manager.get_user_by_info(request.state.info)
+    answer = knowledge_graph_manager.execute_question(
+        user.organization_id, user.id, question
+    )
+    return pack_json_result({"answer": answer}, wrap_for_frontend=False)
