@@ -584,4 +584,4 @@ class KnowledgeGraphStableQuestion(BaseModel):
     searchTerm: StrictStr
     groupBy: Optional[List[StrictStr]] = None
     aggregateBy: Optional[List[StrictStr]] = None
-    aggregateFunctions: List[StrictStr]
+    aggregateFunctions: List[StrictStr] = None
