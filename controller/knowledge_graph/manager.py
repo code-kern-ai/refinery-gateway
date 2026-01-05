@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 import os
 
@@ -36,10 +36,17 @@ def get_by_project_id(org_id: str, project_id: str) -> List[RefineryKnowledgeGra
 
 
 def get_data(
-    org_id: str, project_id: str, search_term: str = ""
+    project_id: str,
+    search_term: Optional[str] = None,
+    group_by: List[Optional[str]] = None,
+    aggregate_by: List[Optional[str]] = None,
+    aggregate_functions: List[Optional[str]] = None,
 ) -> Dict[str, List[Union[str, RefineryKnowledgeGraph]]]:
     integrations = integration_db_co.get_all_by_project_id(project_id)
-    db_info = integration_record_db_io.get_db_info(IntegrationSharepoint)
+    db_info = knowledge_graph_db_bo.get_db_info(
+        IntegrationSharepoint.__table__.schema or "public",
+        IntegrationSharepoint.__tablename__,
+    )
 
     exclude_data_types = ["json"]
     aggregate_data_types = ["integer", "bigint"]
@@ -61,7 +68,11 @@ def get_data(
         ],
         "records": sql_alchemy_to_dict(
             integration_record_db_io.get_all_sharepoints_by_integration_ids(
-                [str(integration.id) for integration in integrations], search_term
+                integration_ids=[str(integration.id) for integration in integrations],
+                search_term=search_term,
+                group_by=group_by,
+                aggregate_by=aggregate_by,
+                aggregate_functions=aggregate_functions,
             ),
             for_frontend=True,
         ),
