@@ -29,8 +29,8 @@ def get_by_project_id(org_id: str, project_id: str) -> List[RefineryKnowledgeGra
     return knowledge_graphs
 
 
-def get_data(org_id: str, project_id: str) -> List[RefineryKnowledgeGraph]:
-    integrations = integration_db_co.get_all_by_project_id(org_id, project_id)
+def get_data(project_id: str) -> List[RefineryKnowledgeGraph]:
+    integrations = integration_db_co.get_all_by_project_id(project_id)
     return integration_record_db_io.get_all_sharepoints_by_integration_ids(
         [str(integration.id) for integration in integrations]
     )

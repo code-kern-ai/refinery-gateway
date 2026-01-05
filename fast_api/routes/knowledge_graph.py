@@ -28,11 +28,8 @@ def get_by_project_id(request: Request, project_id: str):
 
 
 @router.get("/data/{project_id}")
-def get_data(request: Request, project_id: str):
-    user = auth_manager.get_user_by_info(request.state.info)
-    return pack_json_result(
-        knowledge_graph_manager.get_data(user.organization_id, project_id)
-    )
+def get_data(project_id: str):
+    return pack_json_result(knowledge_graph_manager.get_data(project_id))
 
 
 @router.post("/")
