@@ -66,6 +66,7 @@ def get_data(
             if item["data_type"] in aggregate_data_types
             and item["column_name"] not in exclude_aggregate_columns
         ],
+        "aggregate_functions": ["count", "sum", "avg", "max", "min"],
         "records": sql_alchemy_to_dict(
             integration_record_db_io.get_all_sharepoints_by_integration_ids(
                 integration_ids=[str(integration.id) for integration in integrations],
