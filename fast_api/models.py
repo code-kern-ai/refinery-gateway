@@ -578,3 +578,10 @@ class KnowledgeGraphDeleteRequest(BaseModel):
 
 class KnowledgeGraphLiveQuestion(BaseModel):
     question: StrictStr
+
+
+class KnowledgeGraphStableQuestion(BaseModel):
+    searchTerm: StrictStr
+    groupBy: Optional[List[StrictStr]] = None
+    aggregateBy: Optional[List[StrictStr]] = None
+    aggregateFunctions: List[StrictStr]

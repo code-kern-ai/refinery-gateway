@@ -5,6 +5,7 @@ from fast_api.models import (
     KnowledgeGraphUpdateRequest,
     KnowledgeGraphDeleteRequest,
     KnowledgeGraphLiveQuestion,
+    KnowledgeGraphStableQuestion,
 )
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
@@ -28,9 +29,17 @@ def get_by_project_id(request: Request, project_id: str):
     )
 
 
-@router.get("/data/{project_id}")
-def get_data(project_id: str):
-    return pack_json_result(knowledge_graph_manager.get_data(project_id))
+@router.post("/data/{project_id}")
+def get_data(project_id: str, data: KnowledgeGraphStableQuestion):
+    return pack_json_result(
+        knowledge_graph_manager.get_data(
+            project_id,
+            data.searchTerm,
+            data.groupBy,
+            data.aggregateBy,
+            data.aggregateFunctions,
+        )
+    )
 
 
 @router.post("/")
