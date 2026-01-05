@@ -581,7 +581,7 @@ class KnowledgeGraphLiveQuestion(BaseModel):
 
 
 class KnowledgeGraphStableQuestion(BaseModel):
-    searchTerm: StrictStr
+    searchTerm: Optional[StrictStr] = None
     groupBy: Optional[List[StrictStr]] = None
     aggregateBy: Optional[List[StrictStr]] = None
     aggregateFunctions: List[StrictStr] = None
