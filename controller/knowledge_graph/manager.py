@@ -145,10 +145,10 @@ def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
     knowledge_graph_db_bo.delete_many(org_id, project_id, ids, with_commit=True)
 
 
-def execute_question(org_id: str, user_id: str, question: str) -> str:
-    knowledge_graph = knowledge_graph_db_bo.get_by_project_id_and_type(
-        org_id, None, KnowledgeGraphType.LIVE
-    )
+def execute_question(
+    org_id: str, user_id: str, knowledge_graph_id: str, question: str
+) -> str:
+    knowledge_graph = knowledge_graph_db_bo.get(org_id, knowledge_graph_id)
     if not knowledge_graph:
         create_notification(
             NotificationType.KNOWLEDGE_GRAPH_NOT_FOUND,
@@ -169,7 +169,7 @@ def execute_question(org_id: str, user_id: str, question: str) -> str:
         return ""
 
     response = post_call_or_raise(
-        f"{COGNITION_GATEWAY}/api/knowledge-graphs/internal/{knowledge_graph.id}/execute-question",
+        f"{COGNITION_GATEWAY}/api/knowledge-graphs/internal/{knowledge_graph_id}/execute-question",
         {
             "question": question,
         },

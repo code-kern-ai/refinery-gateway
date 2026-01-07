@@ -78,11 +78,13 @@ def delete_many(request: Request, project_id: str, data: KnowledgeGraphDeleteReq
     return get_silent_success()
 
 
-@router.post("/execute-question")
-def execute_question(request: Request, data: KnowledgeGraphLiveQuestion):
+@router.post("/{knowledge_graph_id}/execute-question")
+def execute_question(
+    request: Request, knowledge_graph_id: str, data: KnowledgeGraphLiveQuestion
+):
     question = data.question
     user = auth_manager.get_user_by_info(request.state.info)
     answer = knowledge_graph_manager.execute_question(
-        user.organization_id, user.id, question
+        user.organization_id, user.id, knowledge_graph_id, question
     )
     return pack_json_result({"answer": answer}, wrap_for_frontend=False)
