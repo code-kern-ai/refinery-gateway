@@ -169,9 +169,9 @@ def execute_question(
         return ""
 
     response = post_call_or_raise(
-        f"{COGNITION_GATEWAY}/api/knowledge-graphs/internal/{knowledge_graph_id}/execute-question",
+        f"{COGNITION_GATEWAY}/api/v1/knowledge-graphs/internal/{knowledge_graph_id}/execute-question",
         {
             "question": question,
         },
     )
-    return response["answer"]
+    return response
