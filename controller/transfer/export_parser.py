@@ -11,7 +11,7 @@ from submodules.model import enums
 from submodules.model.models import LabelingTask
 from util.miscellaneous_functions import first_item, get_max_length_of_task_labels
 
-from util.sql_helper import parse_sql_text
+from util.sql_helper.sql_helper_none_submodule import parse_sql_text
 
 ILLEGAL_CHARACTER_REG_EX = r"[\000-\010]|[\013-\014]|[\016-\037]"
 

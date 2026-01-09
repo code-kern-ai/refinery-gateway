@@ -10,7 +10,7 @@ from pydantic import (
 from submodules.model.enums import (
     CustomerButtonType,
     CustomerButtonLocation,
-    KnowledgeGraphType,
+    DataBlockType,
 )
 
 """
@@ -560,28 +560,18 @@ class UpdateOneDriveFieldRequest(BaseModel):
     oneDrivePath: StrictStr
 
 
-class KnowledgeGraphCreateRequest(BaseModel):
+class DataBlockCreateRequest(BaseModel):
     project_id: str
     name: StrictStr
     description: StrictStr
-    type: KnowledgeGraphType
+    type: DataBlockType
 
 
-class KnowledgeGraphUpdateRequest(BaseModel):
+class DataBlockUpdateRequest(BaseModel):
     name: StrictStr
     description: StrictStr
+    sql_config: Optional[Dict[str, Any]] = None
 
 
-class KnowledgeGraphDeleteRequest(BaseModel):
+class DataBlockDeleteRequest(BaseModel):
     ids: List[str]
-
-
-class KnowledgeGraphLiveQuestion(BaseModel):
-    question: StrictStr
-
-
-class KnowledgeGraphStableQuestion(BaseModel):
-    searchTerm: Optional[StrictStr] = None
-    groupBy: Optional[List[StrictStr]] = None
-    aggregateBy: Optional[List[StrictStr]] = None
-    aggregateFunctions: List[StrictStr] = None

@@ -35,7 +35,7 @@ from fast_api.routes.task_execution import router as task_execution_router
 from fast_api.routes.record_internal import router as record_internal_router
 from fast_api.routes.playground import router as playground_router
 from fast_api.routes.inbox_mail import router as inbox_mail_router
-from fast_api.routes.knowledge_graph import router as knowledge_graph_router
+from fast_api.routes.data_block import router as data_block_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -65,7 +65,7 @@ from route_prefix import (
     PREFIX_TASK_EXECUTION,
     PREFIX_PLAYGROUND,
     PREFIX_INBOX_MAIL,
-    PREFIX_KNOWLEDGE_GRAPH,
+    PREFIX_DATA_BLOCK,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -130,7 +130,7 @@ fastapi_app.include_router(
 )
 
 fastapi_app.include_router(
-    knowledge_graph_router, prefix=PREFIX_KNOWLEDGE_GRAPH, tags=["knowledge-graph"]
+    data_block_router, prefix=PREFIX_DATA_BLOCK, tags=["data-block"]
 )
 
 app_name_internal = app_name + "-i"
