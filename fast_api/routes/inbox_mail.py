@@ -6,7 +6,6 @@ from fast_api.models import (
 )
 from controller.inbox_mail import manager as inbox_mail_manager
 from submodules.model.global_objects import inbox_mail as inbox_mail_go
-from submodules.model.business_objects import user
 from fastapi import APIRouter, HTTPException, Request
 from fast_api.routes.client_response import (
     get_silent_success,
@@ -131,7 +130,6 @@ def delete_inbox_mail_by_id(request: Request, mail_id: str):
 
 @router.get("/new")
 def has_new_inbox_mails(request: Request):
-
     user_is_admin = auth_manager.check_is_admin(request)
     user = auth_manager.get_user_by_info(request.state.info)
 
@@ -150,12 +148,12 @@ def has_new_inbox_mails(request: Request):
 @router.put("/thread/{thread_id}/unread/project")
 def update_inbox_mail_threads_unread_by_project(request: Request, thread_id: str):
     user_is_admin = auth_manager.check_is_admin(request)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
     if not inbox_mail_thread:
         raise HTTPException(status_code=404, detail="Thread not found")
 
-    if not user_is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_go.update_system_support_threads_read_by_threads_project(
         thread_id=thread_id
     )
@@ -165,12 +163,11 @@ def update_inbox_mail_threads_unread_by_project(request: Request, thread_id: str
 @router.put("/thread/{thread_id}/unread/content")
 def update_inbox_mail_threads_unread_by_content(request: Request, thread_id: str):
     user_is_admin = auth_manager.check_is_admin(request)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
     if not inbox_mail_thread:
         raise HTTPException(status_code=404, detail="Thread not found")
-
-    if not user_is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized")
 
     inbox_mail_go.update_system_support_threads_read_by_threads_content(
         thread_id=thread_id
