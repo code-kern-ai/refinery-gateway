@@ -145,3 +145,34 @@ def has_new_inbox_mails(request: Request):
             "totalNewInboxMails": total_new_inbox_mails,
         }
     )
+
+
+@router.put("/thread/{thread_id}/unread/project")
+def update_inbox_mail_threads_unread_by_project(request: Request, thread_id: str):
+    user_is_admin = auth_manager.check_is_admin(request)
+    inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
+    if not inbox_mail_thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    inbox_mail_go.update_system_support_threads_read_by_threads_project(
+        thread_id=thread_id
+    )
+    return get_silent_success()
+
+
+@router.put("/thread/{thread_id}/unread/content")
+def update_inbox_mail_threads_unread_by_content(request: Request, thread_id: str):
+    user_is_admin = auth_manager.check_is_admin(request)
+    inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
+    if not inbox_mail_thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    inbox_mail_go.update_system_support_threads_read_by_threads_content(
+        thread_id=thread_id
+    )
+    return get_silent_success()
