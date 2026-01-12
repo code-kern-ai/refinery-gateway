@@ -9,6 +9,7 @@ from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
     data_block as data_block_db_bo,
     project as project_db_bo,
+    record as record_db_bo,
     general,
 )
 from util.sql_helper.sql_helper_none_submodule import validate_sql_clause
@@ -38,10 +39,8 @@ def get_data(org_id: str, data_block_id: str) -> Dict[str, List[Union[str, DataB
     if not data_block:
         raise EntityNotFoundException
 
-    if data_block.type == DataBlockType.LIVE:
-        data_block_query = construct_data_block_query(
-            data_block,
-        )
+    if DataBlockType.from_string(data_block.type) == DataBlockType.LIVE:
+        data_block_query = construct_data_block_query(data_block)
         data_block_result = data_block_db_bo.update_result(
             data_block.project_id,
             data_block.id,
@@ -57,7 +56,7 @@ def get_data(org_id: str, data_block_id: str) -> Dict[str, List[Union[str, DataB
     return data_block_result.data if data_block_result else {}
 
 
-def create_graph(
+def create(
     org_id: str,
     user_id: str,
     project_id: str,
@@ -87,7 +86,7 @@ def create_graph(
     return data_block
 
 
-def update_graph(
+def update(
     org_id: str,
     user_id: str,
     data_block_id: str,
@@ -118,38 +117,8 @@ def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
     data_block_db_bo.delete_many(org_id, project_id, ids, with_commit=True)
 
 
-def execute_question(
-    org_id: str, user_id: str, data_block_id: str, question: str
-) -> str:
-    data_block = data_block_db_bo.get(org_id, data_block_id)
-    if not data_block:
-        create_notification(
-            NotificationType.data_block_NOT_FOUND,
-            user_id,
-            None,
-            DataBlockType.LIVE.value,
-        )
-        return ""
-
-    if not project_db_bo.is_integration_project(org_id, str(data_block.project_id)):
-        create_notification(
-            NotificationType.data_block_NOT_SUPPORTED,
-            user_id,
-            data_block.project_id,
-        )
-        return ""
-
-    response = post_call_or_raise(
-        f"{COGNITION_GATEWAY}/api/v1/knowledge-graphs/internal/{data_block_id}/execute-question",
-        {
-            "question": question,
-        },
-    )
-    return response
-
-
 def construct_data_block_query(data_block: DataBlock) -> str:
-    select_clause = data_block.sql_config.get("select", "*")
+    select_clause = data_block.sql_config.get("select", "r.data")
     if select_not_valid := validate_sql_clause(
         select=select_clause,
         include_db_check=False,
@@ -157,17 +126,16 @@ def construct_data_block_query(data_block: DataBlock) -> str:
         raise ValueError(
             f"Invalid SELECT clause in data block SQL config: {select_not_valid}"
         )
-    where_clause = data_block.sql_config.get("where", "1=1")
-    if where_not_valid := validate_sql_clause(
-        where=where_clause,
-        include_db_check=False,
-    ):
-        raise ValueError(
-            f"Invalid WHERE clause in data block SQL config: {where_not_valid}"
-        )
 
-    query_parts = ["SELECT :select FROM public.record r WHERE :where"]
-    params = {"select": select_clause, "where": where_clause}
+    where_clause = data_block.sql_config.get("where")
+    if where_clause:
+        if where_not_valid := validate_sql_clause(
+            where=where_clause,
+            include_db_check=False,
+        ):
+            raise ValueError(
+                f"Invalid WHERE clause in data block SQL config: {where_not_valid}"
+            )
 
     order_by_clause = data_block.sql_config.get("order_by")
     if order_by_clause:
@@ -178,11 +146,15 @@ def construct_data_block_query(data_block: DataBlock) -> str:
             raise ValueError(
                 f"Invalid ORDER BY clause in data block SQL config: {order_by_not_valid}"
             )
-        query_parts.append("ORDER BY :order_by")
-        params["order_by"] = order_by_clause
 
-    select_clause = data_block.sql_config.get("select", "*")
-    where_clause = data_block.sql_config.get("where", "1=1")
-    order_by_clause = data_block.sql_config.get("order_by")
-
-    return text(" ".join(query_parts)).bindparams(**params)
+    try:
+        return record_db_bo.get_record_data_by_sanitized_params(
+            str(data_block.project_id),
+            where_clause,
+            limit=10,
+            sanitized_select=select_clause,
+            order_by=order_by_clause,
+            return_query=True,
+        )
+    except Exception as e:
+        raise ValueError(f"Error fetching record data: {e}")

@@ -30,8 +30,8 @@ def validate_sql_clause(
     Validate a user-provided WHERE clause.
     Returns None if safe, otherwise a string reason for rejection.
     """
-    if not where and not order_by:
-        return "No WHERE or ORDER BY clause provided"
+    if not where and not order_by and not select:
+        return "No SELECT, WHERE or ORDER BY clause provided"
     select_or_where_or_order_by = select or where or order_by
     what = "WHERE" if where else "ORDER BY" if order_by else "SELECT"
     # Step 1: reject unsafe tokens

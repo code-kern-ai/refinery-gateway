@@ -36,7 +36,7 @@ def get_data(request: Request, data_block_id: str):
 @router.post("/")
 def create(request: Request, data: DataBlockCreateRequest):
     user = auth_manager.get_user_by_info(request.state.info)
-    data_block = data_block_manager.create_graph(
+    data_block = data_block_manager.create(
         user.organization_id,
         user.id,
         data.project_id,
@@ -50,7 +50,7 @@ def create(request: Request, data: DataBlockCreateRequest):
 @router.put("/{data_block_id}")
 def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
     user = auth_manager.get_user_by_info(request.state.info)
-    data_block_manager.update_graph(
+    data_block_manager.update(
         user.organization_id,
         user.id,
         data_block_id,
