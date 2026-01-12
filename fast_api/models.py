@@ -575,3 +575,10 @@ class DataBlockUpdateRequest(BaseModel):
 
 class DataBlockDeleteRequest(BaseModel):
     ids: List[str]
+
+
+class TestWhereConditionRequest(BaseModel):
+    select: Optional[str] = None
+    where: Optional[str] = None
+    orderBy: Optional[str] = None
+    groupBy: Optional[str] = None

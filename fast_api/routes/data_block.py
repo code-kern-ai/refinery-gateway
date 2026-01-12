@@ -1,9 +1,11 @@
 from controller.data_block import manager as data_block_manager
 from controller.auth import manager as auth_manager
+from util.sql_helper import sql_helper_none_submodule as sql_validator
 from fast_api.models import (
     DataBlockCreateRequest,
     DataBlockUpdateRequest,
     DataBlockDeleteRequest,
+    TestWhereConditionRequest,
 )
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
@@ -65,3 +67,17 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.delete_many(user.organization_id, project_id, data.ids)
     return get_silent_success()
+
+
+@router.post("/test-where-clause")
+def test_where_clause(data: TestWhereConditionRequest):
+    deny_reason = sql_validator.validate_sql_clause(
+        select=data.select,
+        where=data.where,
+        order_by=data.orderBy,
+        group_by=data.groupBy,
+        include_db_check=True,
+    )
+    return pack_json_result(
+        {"isValid": not deny_reason, "denyReason": deny_reason}, wrap_for_frontend=False
+    )

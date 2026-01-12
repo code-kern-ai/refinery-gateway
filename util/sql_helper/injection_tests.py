@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
     print("=== VALID CASES ===")
     for sql in VALID_CASES:
-        rejection_reason = validate_sql_clause(sql)
+        rejection_reason = validate_sql_clause(where=sql)
         if rejection_reason:
             print(
                 "FALSE NEGATIVES (rejected but shouldn't):", sql, "=>", rejection_reason
@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
     print("\n=== INVALID CASES ===")
     for sql in INVALID_CASES:
-        rejection_reason = validate_sql_clause(sql)
+        rejection_reason = validate_sql_clause(where=sql)
         if not rejection_reason:
             print("FALSE POSITIVES (not rejected but should):", sql)
         # else:

@@ -1,5 +1,4 @@
 from typing import Dict, List, Union
-from sqlalchemy import text
 
 import os
 
@@ -14,7 +13,6 @@ from submodules.model.business_objects import (
 )
 from util.sql_helper.sql_helper_none_submodule import validate_sql_clause
 from util.notification import create_notification
-from util.service_requests import post_call_or_raise
 
 COGNITION_GATEWAY = os.getenv("COGNITION_GATEWAY", "http://cognition-gateway:80")
 
@@ -118,7 +116,7 @@ def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
 
 
 def construct_data_block_query(data_block: DataBlock) -> str:
-    select_clause = data_block.sql_config.get("select", "r.data")
+    select_clause = data_block.sql_config.get("select")
     if select_not_valid := validate_sql_clause(
         select=select_clause,
         include_db_check=False,
@@ -137,6 +135,16 @@ def construct_data_block_query(data_block: DataBlock) -> str:
                 f"Invalid WHERE clause in data block SQL config: {where_not_valid}"
             )
 
+    group_by_clause = data_block.sql_config.get("group_by")
+    if group_by_clause:
+        if group_by_not_valid := validate_sql_clause(
+            group_by=group_by_clause,
+            include_db_check=False,
+        ):
+            raise ValueError(
+                f"Invalid GROUP BY clause in data block SQL config: {group_by_not_valid}"
+            )
+
     order_by_clause = data_block.sql_config.get("order_by")
     if order_by_clause:
         if order_by_not_valid := validate_sql_clause(
@@ -150,10 +158,11 @@ def construct_data_block_query(data_block: DataBlock) -> str:
     try:
         return record_db_bo.get_record_data_by_sanitized_params(
             str(data_block.project_id),
-            where_clause,
-            limit=10,
             sanitized_select=select_clause,
+            sanitized_where=where_clause,
             order_by=order_by_clause,
+            group_by=group_by_clause,
+            limit=10,
             return_query=True,
         )
     except Exception as e:

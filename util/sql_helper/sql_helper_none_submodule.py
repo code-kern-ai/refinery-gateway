@@ -23,6 +23,7 @@ def parse_sql_text(sql: str) -> str:
 def validate_sql_clause(
     select: Optional[str] = None,
     where: Optional[str] = None,
+    group_by: Optional[str] = None,
     order_by: Optional[str] = None,
     include_db_check: bool = False,
 ) -> str | None:
@@ -38,14 +39,35 @@ def validate_sql_clause(
     if reason := __contains_disallowed_tokens(select_or_where_or_order_by):
         return reason
 
-    # Step 2: parse the WHERE clause as an expression
+    # Step 2: parse the clause in context
     try:
-        expr = parse_one(select_or_where_or_order_by, read="postgres")
+        if where:
+            # Wrap in SELECT WHERE to parse correctly as a single context
+            parsed = parse_one(f"SELECT 1 WHERE {where}", read="postgres")
+            expr = parsed.args.get("where")
+        elif order_by:
+            # Wrap in SELECT ORDER BY to handle comma-separated lists correctly
+            parsed = parse_one(f"SELECT 1 ORDER BY {order_by}", read="postgres")
+            expr = parsed.args.get("order")
+        elif group_by:
+            parsed = parse_one(f"SELECT 1 GROUP BY {group_by}", read="postgres")
+            expr = parsed.args.get("group")
+        elif select:
+            parsed = parse_one(f"SELECT {select}", read="postgres")
+            expr = parsed.args.get("select")
     except ParseError:
         return f"Parse error => invalid {what} condition, check for correct syntax"
 
-    if reason := __contains_always_true(expr):
-        return reason
+    if not expr:
+        return f"Invalid {what} clause"
+
+    if where:
+        if reason := __contains_always_true(expr):
+            return reason
+    else:
+        for e in expr.expressions:
+            if reason := __contains_always_true(e):
+                return reason
 
     # Step 3: walk AST nodes
     for node in expr.walk():
@@ -55,6 +77,7 @@ def validate_sql_clause(
         if node.key == "column":
             if not str(node).startswith(ALLOWED_COLUMN_PREFIX):
                 return f"Column does not start with allowed prefix: {str(node)}"
+
     if include_db_check:
         # import here to avoid test file dependency issues
         from submodules.model.business_objects import general
@@ -71,6 +94,10 @@ def validate_sql_clause(
             elif order_by:
                 general.execute_all(
                     "SELECT 1 FROM public.record r ORDER BY " + order_by + " LIMIT 0"
+                )
+            elif group_by:
+                general.execute_all(
+                    "SELECT 1 FROM public.record r GROUP BY " + group_by + " LIMIT 0"
                 )
         except Exception as e:
             general.rollback()
