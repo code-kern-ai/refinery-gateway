@@ -87,6 +87,7 @@ ALLOWED_NODES = {
     "replace",
     "regexpilike",
     "regexplike",
+    "select",
     "strtotime",
     "strposition",
     "strtodate",

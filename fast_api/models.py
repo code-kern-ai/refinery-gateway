@@ -570,15 +570,11 @@ class DataBlockCreateRequest(BaseModel):
 class DataBlockUpdateRequest(BaseModel):
     name: StrictStr
     description: StrictStr
-    sql_config: Optional[Dict[str, Any]] = None
 
 
 class DataBlockDeleteRequest(BaseModel):
     ids: List[str]
 
 
-class TestWhereConditionRequest(BaseModel):
-    select: Optional[str] = None
-    where: Optional[str] = None
-    orderBy: Optional[str] = None
-    groupBy: Optional[str] = None
+class DataBlockExecuteQueryRequest(BaseModel):
+    sql_config: Optional[Dict[str, Any]] = None

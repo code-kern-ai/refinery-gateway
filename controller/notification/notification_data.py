@@ -322,17 +322,17 @@ __notification_data = {
         "level": enums.Notification.ERROR.value,
         "page": enums.Pages.SETTINGS.value,
     },
-    enums.NotificationType.KNOWLEDGE_GRAPH_ALREADY_EXISTS.value: {
-        "message_template": "@@arg@@ graph already exists.",
-        "title": "Knowledge graphs",
+    enums.NotificationType.DATA_BLOCK_ALREADY_EXISTS.value: {
+        "message_template": "@@arg@@ block already exists.",
+        "title": "Data blocks",
         "level": enums.Notification.ERROR.value,
-        "page": enums.Pages.KNOWLEDGE_GRAPH.value,
+        "page": enums.Pages.DATA_BLOCK.value,
     },
-    enums.NotificationType.KNOWLEDGE_GRAPH_NOT_SUPPORTED.value: {
-        "message_template": "Knowledge graph is not supported for this type of project.",
-        "title": "Knowledge graphs",
+    enums.NotificationType.DATA_BLOCK_NOT_SUPPORTED.value: {
+        "message_template": "Data block is not supported for this type of project.",
+        "title": "Data blocks",
         "level": enums.Notification.ERROR.value,
-        "page": enums.Pages.KNOWLEDGE_GRAPH.value,
+        "page": enums.Pages.DATA_BLOCK.value,
     },
 }
 

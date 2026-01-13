@@ -5,7 +5,7 @@ from fast_api.models import (
     DataBlockCreateRequest,
     DataBlockUpdateRequest,
     DataBlockDeleteRequest,
-    TestWhereConditionRequest,
+    DataBlockExecuteQueryRequest,
 )
 from fastapi import APIRouter, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
@@ -27,11 +27,20 @@ def get_by_project_id(request: Request, project_id: str):
     )
 
 
-@router.post("/data/{data_block_id}")
-def get_data(request: Request, data_block_id: str):
+@router.post("/query/{data_block_id}")
+def execute_query(
+    request: Request, data_block_id: str, data: DataBlockExecuteQueryRequest
+):
     user = auth_manager.get_user_by_info(request.state.info)
+    data_block_manager.update(
+        user.organization_id,
+        user.id,
+        data_block_id,
+        sql_config=data.sql_config,
+        overwrite_sql_config=True,
+    )
     return pack_json_result(
-        data_block_manager.get_data(user.organization_id, data_block_id)
+        data_block_manager.execute_query(user.organization_id, data_block_id)
     )
 
 
@@ -67,17 +76,3 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.delete_many(user.organization_id, project_id, data.ids)
     return get_silent_success()
-
-
-@router.post("/test-where-clause")
-def test_where_clause(data: TestWhereConditionRequest):
-    deny_reason = sql_validator.validate_sql_clause(
-        select=data.select,
-        where=data.where,
-        order_by=data.orderBy,
-        group_by=data.groupBy,
-        include_db_check=True,
-    )
-    return pack_json_result(
-        {"isValid": not deny_reason, "denyReason": deny_reason}, wrap_for_frontend=False
-    )

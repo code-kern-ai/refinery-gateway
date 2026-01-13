@@ -26,52 +26,60 @@ def validate_sql_clause(
     group_by: Optional[str] = None,
     order_by: Optional[str] = None,
     include_db_check: bool = False,
+    extend_allowed_nodes: Optional[set] = None,
 ) -> str | None:
     """
     Validate a user-provided WHERE clause.
     Returns None if safe, otherwise a string reason for rejection.
     """
-    if not where and not order_by and not select:
+    provided_clauses = list(filter(None, [select, where, order_by, group_by]))
+    if len(provided_clauses) == 0:
         return "No SELECT, WHERE or ORDER BY clause provided"
-    select_or_where_or_order_by = select or where or order_by
-    what = "WHERE" if where else "ORDER BY" if order_by else "SELECT"
+    elif len(provided_clauses) > 1:
+        return "Only one of SELECT, WHERE, ORDER BY, or GROUP BY clauses can be provided at a time"
+
+    what = (
+        "SELECT"
+        if select
+        else "WHERE" if where else "GROUP BY" if group_by else "ORDER BY"
+    )
     # Step 1: reject unsafe tokens
-    if reason := __contains_disallowed_tokens(select_or_where_or_order_by):
+    if reason := __contains_disallowed_tokens(select or where or group_by or order_by):
         return reason
 
     # Step 2: parse the clause in context
     try:
-        if where:
+        if select:
+            parsed = parse_one(f"SELECT {select}", read="postgres")
+            # expr = parsed.args.get("select")
+        elif where:
             # Wrap in SELECT WHERE to parse correctly as a single context
             parsed = parse_one(f"SELECT 1 WHERE {where}", read="postgres")
-            expr = parsed.args.get("where")
+            # expr = parsed.args.get("where")
+        elif group_by:
+            parsed = parse_one(f"SELECT 1 GROUP BY {group_by}", read="postgres")
+            # expr = parsed.args.get("group")
         elif order_by:
             # Wrap in SELECT ORDER BY to handle comma-separated lists correctly
             parsed = parse_one(f"SELECT 1 ORDER BY {order_by}", read="postgres")
-            expr = parsed.args.get("order")
-        elif group_by:
-            parsed = parse_one(f"SELECT 1 GROUP BY {group_by}", read="postgres")
-            expr = parsed.args.get("group")
-        elif select:
-            parsed = parse_one(f"SELECT {select}", read="postgres")
-            expr = parsed.args.get("select")
+            # expr = parsed.args.get("order")
     except ParseError:
         return f"Parse error => invalid {what} condition, check for correct syntax"
 
-    if not expr:
+    if not parsed:
         return f"Invalid {what} clause"
 
     if where:
-        if reason := __contains_always_true(expr):
+        if reason := __contains_always_true(parsed.expression):
             return reason
     else:
-        for e in expr.expressions:
+        for e in parsed.expressions:
             if reason := __contains_always_true(e):
                 return reason
 
     # Step 3: walk AST nodes
-    for node in expr.walk():
-        if node.key not in ALLOWED_NODES:
+    for node in parsed.walk():
+        if node.key not in ALLOWED_NODES.union(extend_allowed_nodes or set()):
             return f"Disallowed node: {node.key}"
 
         if node.key == "column":

@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional, Any
 
 import os
 
@@ -32,13 +32,27 @@ def get_by_project_id(org_id: str, project_id: str) -> List[DataBlock]:
     return data_blocks
 
 
-def get_data(org_id: str, data_block_id: str) -> Dict[str, List[Union[str, DataBlock]]]:
+def execute_query(org_id: str, data_block_id: str) -> List[Dict[str, Any]]:
     data_block = get(org_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
 
+    data_block_query = construct_data_block_query(data_block)
+    data_block_result = data_block_db_bo.get_result(
+        data_block.project_id, data_block.id
+    )
+
+    if not data_block_result:
+        data_block_result = data_block_db_bo.create_result(
+            data_block.project_id,
+            data_block.id,
+            data=list(
+                map(lambda x: x._asdict(), general.execute_all(data_block_query))
+            ),
+            with_commit=True,
+        )
+
     if DataBlockType.from_string(data_block.type) == DataBlockType.LIVE:
-        data_block_query = construct_data_block_query(data_block)
         data_block_result = data_block_db_bo.update_result(
             data_block.project_id,
             data_block.id,
@@ -47,11 +61,8 @@ def get_data(org_id: str, data_block_id: str) -> Dict[str, List[Union[str, DataB
             ),
             with_commit=True,
         )
-    else:
-        data_block_result = data_block_db_bo.get_result(
-            data_block.project_id, data_block.id
-        )
-    return data_block_result.data if data_block_result else {}
+
+    return data_block_result.data
 
 
 def create(
@@ -88,13 +99,15 @@ def update(
     org_id: str,
     user_id: str,
     data_block_id: str,
-    name: str,
-    description: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    sql_config: Optional[Dict[str, Dict[str, str]]] = None,
+    overwrite_sql_config: bool = False,
 ) -> None:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
         create_notification(
-            NotificationType.data_block_NOT_FOUND,
+            NotificationType.DATA_BLOCK_NOT_FOUND,
             user_id,
             data_block.project_id,
             data_block.type.value,
@@ -102,13 +115,21 @@ def update(
         return
     if not project_db_bo.is_integration_project(org_id, str(data_block.project_id)):
         create_notification(
-            NotificationType.data_block_NOT_SUPPORTED,
+            NotificationType.DATA_BLOCK_NOT_SUPPORTED,
             user_id,
             data_block.project_id,
         )
         return
 
-    data_block_db_bo.update(org_id, data_block_id, name, description, with_commit=True)
+    data_block_db_bo.update(
+        org_id,
+        data_block_id,
+        name,
+        description,
+        sql_config,
+        overwrite_sql_config,
+        with_commit=True,
+    )
 
 
 def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
@@ -116,7 +137,7 @@ def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
 
 
 def construct_data_block_query(data_block: DataBlock) -> str:
-    select_clause = data_block.sql_config.get("select")
+    select_clause = data_block.sql_config.get("config", {}).get("select_clause")
     if select_not_valid := validate_sql_clause(
         select=select_clause,
         include_db_check=False,
@@ -125,7 +146,7 @@ def construct_data_block_query(data_block: DataBlock) -> str:
             f"Invalid SELECT clause in data block SQL config: {select_not_valid}"
         )
 
-    where_clause = data_block.sql_config.get("where")
+    where_clause = data_block.sql_config.get("config", {}).get("where_clause")
     if where_clause:
         if where_not_valid := validate_sql_clause(
             where=where_clause,
@@ -135,7 +156,7 @@ def construct_data_block_query(data_block: DataBlock) -> str:
                 f"Invalid WHERE clause in data block SQL config: {where_not_valid}"
             )
 
-    group_by_clause = data_block.sql_config.get("group_by")
+    group_by_clause = data_block.sql_config.get("config", {}).get("group_by_clause")
     if group_by_clause:
         if group_by_not_valid := validate_sql_clause(
             group_by=group_by_clause,
@@ -145,7 +166,7 @@ def construct_data_block_query(data_block: DataBlock) -> str:
                 f"Invalid GROUP BY clause in data block SQL config: {group_by_not_valid}"
             )
 
-    order_by_clause = data_block.sql_config.get("order_by")
+    order_by_clause = data_block.sql_config.get("config", {}).get("order_by_clause")
     if order_by_clause:
         if order_by_not_valid := validate_sql_clause(
             order_by=order_by_clause,
