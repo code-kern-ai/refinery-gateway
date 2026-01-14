@@ -1,8 +1,8 @@
 """adds data blocks
 
-Revision ID: 1359c96883d8
+Revision ID: c56ef224e537
 Revises: e3e108cd4b22
-Create Date: 2026-01-09 15:26:20.959989
+Create Date: 2026-01-14 10:03:06.339377
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "1359c96883d8"
+revision = "c56ef224e537"
 down_revision = "e3e108cd4b22"
 branch_labels = None
 depends_on = None
@@ -30,6 +30,7 @@ def upgrade():
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("type", sa.String(), nullable=True),
         sa.Column("sql_config", sa.JSON(), nullable=True),
+        sa.Column("sql_schema", sa.ARRAY(sa.JSON()), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
