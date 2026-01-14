@@ -568,8 +568,8 @@ class DataBlockCreateRequest(BaseModel):
 
 
 class DataBlockUpdateRequest(BaseModel):
-    name: StrictStr
-    description: StrictStr
+    name: Optional[StrictStr] = None
+    description: Optional[StrictStr] = None
     sql_config: Optional[Dict[str, Any]] = None
     sql_schema: Optional[List[Dict[str, str]]] = None
 
