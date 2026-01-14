@@ -3,7 +3,12 @@ from typing import Dict, List, Union, Optional, Any
 import os
 
 from submodules.model import DataBlock
-from submodules.model.enums import NotificationType, DataBlockType, DataTypes
+from submodules.model.enums import (
+    NotificationType,
+    DataBlockType,
+    DataTypes,
+    AttributeState,
+)
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
     data_block as data_block_db_bo,
@@ -26,6 +31,10 @@ def get(org_id: str, data_block_id: str) -> DataBlock:
     return data_block
 
 
+def get_result(data_block_id: str) -> DataBlock:
+    return data_block_db_bo.get_result_by_data_block_id(data_block_id)
+
+
 def get_by_project_id(org_id: str, project_id: str) -> List[DataBlock]:
     data_blocks: List[DataBlock] = data_block_db_bo.get_by_project_id(
         org_id, project_id
@@ -43,6 +52,7 @@ def infer_query_schema(query: str) -> List[Dict[str, Union[str, DataTypes]]]:
             {
                 "column_name": column_name,
                 "column_data_type": _infer_type_from_value(value),
+                "state": AttributeState.USABLE.value,
             }
         )
     return schema
@@ -51,21 +61,21 @@ def infer_query_schema(query: str) -> List[Dict[str, Union[str, DataTypes]]]:
 def _infer_type_from_value(value: Any) -> str:
     """Infer JSON Schema type from Python value."""
     if value is None:
-        return DataTypes.UNKNOWN
+        return DataTypes.UNKNOWN.value
     elif isinstance(value, bool):
-        return DataTypes.BOOLEAN
+        return DataTypes.BOOLEAN.value
     elif isinstance(value, int):
-        return DataTypes.INTEGER
+        return DataTypes.INTEGER.value
     elif isinstance(value, float):
-        return DataTypes.NUMBER
-    elif isinstance(value, (dict, list)):
-        return DataTypes.UNKNOWN
+        return DataTypes.NUMBER.value
+    # elif isinstance(value, (dict, list)):
+    #     return DataTypes.TEXT.value
     else:
-        return DataTypes.TEXT
+        return DataTypes.TEXT.value
 
 
 def execute_query(
-    org_id: str, data_block_id: str, include_schema: bool = False
+    org_id: str, data_block_id: str, include_schema: bool = True
 ) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
     data_block = get(org_id, data_block_id)
     if not data_block:
@@ -98,10 +108,11 @@ def execute_query(
 
     if include_schema:
         schema = infer_query_schema(data_block_query)
-        return {
-            "data": data_block_result.data,
-            "schema": schema,
-        }
+        data_block_db_bo.update(
+            org_id,
+            data_block_id,
+            sql_schema=schema,
+        )
 
     return data_block_result.data
 
@@ -172,7 +183,6 @@ def update(
         sql_config,
         sql_schema,
         overwrite_sql_config,
-        overwrite_sql_schema,
         with_commit=True,
     )
 

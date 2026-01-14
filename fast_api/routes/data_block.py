@@ -1,14 +1,17 @@
+from fastapi import APIRouter, Request
+
+
 from controller.data_block import manager as data_block_manager
 from controller.auth import manager as auth_manager
-from util.sql_helper import sql_helper_none_submodule as sql_validator
 from fast_api.models import (
     DataBlockCreateRequest,
     DataBlockUpdateRequest,
     DataBlockDeleteRequest,
     DataBlockExecuteQueryRequest,
 )
-from fastapi import APIRouter, Request
 from fast_api.routes.client_response import get_silent_success, pack_json_result
+from util.sql_helper import sql_helper_none_submodule as sql_validator
+from submodules.model.util import sql_alchemy_to_dict
 
 router = APIRouter()
 
@@ -16,7 +19,12 @@ router = APIRouter()
 @router.get("/{data_block_id}")
 def get(request: Request, data_block_id: str):
     user = auth_manager.get_user_by_info(request.state.info)
-    return pack_json_result(data_block_manager.get(user.organization_id, data_block_id))
+    data_block = sql_alchemy_to_dict(
+        data_block_manager.get(user.organization_id, data_block_id)
+    )
+    data_block_result = data_block_manager.get_result(data_block_id)
+    data_block["data"] = data_block_result.data if data_block_result else []
+    return pack_json_result(data_block)
 
 
 @router.get("/project/{project_id}")
