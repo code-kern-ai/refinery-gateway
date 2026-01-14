@@ -133,13 +133,6 @@ def create(
             type.value,
         )
         return
-    if not project_db_bo.is_integration_project(org_id, project_id):
-        create_notification(
-            NotificationType.data_block_NOT_SUPPORTED,
-            user_id,
-            project_id,
-        )
-        return
 
     data_block = data_block_db_bo.create(
         org_id, user_id, project_id, name, description, type, with_commit=True
