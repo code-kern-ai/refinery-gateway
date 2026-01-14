@@ -570,6 +570,8 @@ class DataBlockCreateRequest(BaseModel):
 class DataBlockUpdateRequest(BaseModel):
     name: StrictStr
     description: StrictStr
+    sql_config: Optional[Dict[str, Any]] = None
+    sql_schema: Optional[List[Dict[str, str]]] = None
 
 
 class DataBlockDeleteRequest(BaseModel):

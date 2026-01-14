@@ -3,7 +3,7 @@ from typing import Dict, List, Union, Optional, Any
 import os
 
 from submodules.model import DataBlock
-from submodules.model.enums import NotificationType, DataBlockType
+from submodules.model.enums import NotificationType, DataBlockType, DataTypes
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
     data_block as data_block_db_bo,
@@ -11,6 +11,7 @@ from submodules.model.business_objects import (
     record as record_db_bo,
     general,
 )
+from submodules.model.util import sql_alchemy_to_dict
 from util.sql_helper.sql_helper_none_submodule import validate_sql_clause
 from util.notification import create_notification
 
@@ -32,7 +33,40 @@ def get_by_project_id(org_id: str, project_id: str) -> List[DataBlock]:
     return data_blocks
 
 
-def execute_query(org_id: str, data_block_id: str) -> List[Dict[str, Any]]:
+def infer_query_schema(query: str) -> List[Dict[str, Union[str, DataTypes]]]:
+    schema = []
+    result = sql_alchemy_to_dict(general.execute_first(query))
+
+    # Extract column information from result metadata
+    for column_name, value in result.items():
+        schema.append(
+            {
+                "column_name": column_name,
+                "column_data_type": _infer_type_from_value(value),
+            }
+        )
+    return schema
+
+
+def _infer_type_from_value(value: Any) -> str:
+    """Infer JSON Schema type from Python value."""
+    if value is None:
+        return DataTypes.UNKNOWN
+    elif isinstance(value, bool):
+        return DataTypes.BOOLEAN
+    elif isinstance(value, int):
+        return DataTypes.INTEGER
+    elif isinstance(value, float):
+        return DataTypes.NUMBER
+    elif isinstance(value, (dict, list)):
+        return DataTypes.UNKNOWN
+    else:
+        return DataTypes.TEXT
+
+
+def execute_query(
+    org_id: str, data_block_id: str, include_schema: bool = False
+) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
     data_block = get(org_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
@@ -61,6 +95,13 @@ def execute_query(org_id: str, data_block_id: str) -> List[Dict[str, Any]]:
             ),
             with_commit=True,
         )
+
+    if include_schema:
+        schema = infer_query_schema(data_block_query)
+        return {
+            "data": data_block_result.data,
+            "schema": schema,
+        }
 
     return data_block_result.data
 
@@ -102,7 +143,9 @@ def update(
     name: Optional[str] = None,
     description: Optional[str] = None,
     sql_config: Optional[Dict[str, Dict[str, str]]] = None,
+    sql_schema: Optional[List[Dict[str, str]]] = None,
     overwrite_sql_config: bool = False,
+    overwrite_sql_schema: bool = False,
 ) -> None:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
@@ -127,7 +170,9 @@ def update(
         name,
         description,
         sql_config,
+        sql_schema,
         overwrite_sql_config,
+        overwrite_sql_schema,
         with_commit=True,
     )
 

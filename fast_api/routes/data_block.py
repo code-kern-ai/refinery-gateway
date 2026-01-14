@@ -67,6 +67,8 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
         data_block_id,
         data.name,
         data.description,
+        data.sql_config,
+        data.sql_schema,
     )
     return get_silent_success()
 
