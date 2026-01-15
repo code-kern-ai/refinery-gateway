@@ -61,7 +61,7 @@ def create(
         relative_position=relative_position,
         user_created=user_created,
         source_code=source_code,
-        state=state or AttributeState.AUTOMATICALLY_CREATED.value,
+        state=state or AttributeState.USABLE.value,
         additional_config=additional_config,
         with_commit=True,
     )
