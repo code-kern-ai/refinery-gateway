@@ -140,15 +140,6 @@ def create(
     description: str,
     type: DataBlockType,
 ) -> None:
-    if data_block_db_bo.get_by_project_id_and_type(org_id, project_id, type):
-        create_notification(
-            NotificationType.data_block_EXISTS,
-            user_id,
-            project_id,
-            type.value,
-        )
-        return
-
     data_block = data_block_db_bo.create(
         org_id, user_id, project_id, name, description, type, with_commit=True
     )
@@ -171,13 +162,6 @@ def update(
             user_id,
             data_block.project_id,
             data_block.type.value,
-        )
-        return
-    if not project_db_bo.is_integration_project(org_id, str(data_block.project_id)):
-        create_notification(
-            NotificationType.DATA_BLOCK_NOT_SUPPORTED,
-            user_id,
-            data_block.project_id,
         )
         return
 
