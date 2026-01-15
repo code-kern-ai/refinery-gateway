@@ -2,15 +2,19 @@ from fastapi import APIRouter, Request
 
 
 from controller.data_block import manager as data_block_manager
+from controller.data_block import attributes as data_block_attributes_manager
 from controller.auth import manager as auth_manager
 from fast_api.models import (
     DataBlockCreateRequest,
     DataBlockUpdateRequest,
     DataBlockDeleteRequest,
     DataBlockExecuteQueryRequest,
+    DataBlockAttributeCreateRequest,
+    DataBlockAttributeUpdateRequest,
+    DataBlockAttributeDeleteRequest,
+    DataBlockAttributeSyncSchemaRequest,
 )
 from fast_api.routes.client_response import get_silent_success, pack_json_result
-from util.sql_helper import sql_helper_none_submodule as sql_validator
 from submodules.model.util import sql_alchemy_to_dict
 
 router = APIRouter()
@@ -24,6 +28,7 @@ def get(request: Request, data_block_id: str):
     )
     data_block_result = data_block_manager.get_result(data_block_id)
     data_block["data"] = data_block_result.data if data_block_result else []
+    data_block["sql_schema"] = data_block_attributes_manager.get_schema(data_block_id)
     return pack_json_result(data_block)
 
 
@@ -76,7 +81,6 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
         data.name,
         data.description,
         data.sql_config,
-        data.sql_schema,
     )
     return get_silent_success()
 
@@ -85,4 +89,93 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
 def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.delete_many(user.organization_id, project_id, data.ids)
+    return get_silent_success()
+
+
+# --- DataBlockAttributes Routes ---
+
+
+@router.get("/{data_block_id}/attributes")
+def get_attributes(request: Request, data_block_id: str):
+    auth_manager.get_user_by_info(request.state.info)
+    attributes = data_block_attributes_manager.get_all(data_block_id)
+    return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
+
+
+@router.get("/{data_block_id}/attributes/schema")
+def get_attributes_schema(request: Request, data_block_id: str):
+    auth_manager.get_user_by_info(request.state.info)
+    schema = data_block_attributes_manager.get_schema(data_block_id)
+    return pack_json_result(schema)
+
+
+@router.get("/{data_block_id}/attributes/{attribute_id}")
+def get_attribute(request: Request, data_block_id: str, attribute_id: str):
+    auth_manager.get_user_by_info(request.state.info)
+    attribute = data_block_attributes_manager.get(data_block_id, attribute_id)
+    return pack_json_result(sql_alchemy_to_dict(attribute))
+
+
+@router.post("/{data_block_id}/attributes")
+def create_attribute(
+    request: Request, data_block_id: str, data: DataBlockAttributeCreateRequest
+):
+    auth_manager.get_user_by_info(request.state.info)
+    attribute = data_block_attributes_manager.create(
+        data_block_id=data_block_id,
+        name=data.name,
+        data_type=data.data_type,
+        user_created=data.user_created,
+        source_code=data.source_code,
+        state=data.state,
+        additional_config=data.additional_config,
+    )
+    return pack_json_result({"id": str(attribute.id)}, wrap_for_frontend=False)
+
+
+@router.post("/{data_block_id}/attributes/sync-schema")
+def sync_attributes_schema(
+    request: Request, data_block_id: str, data: DataBlockAttributeSyncSchemaRequest
+):
+    auth_manager.get_user_by_info(request.state.info)
+    attributes = data_block_attributes_manager.sync_schema(data_block_id, data.schema)
+    return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
+
+
+@router.put("/{data_block_id}/attributes/{attribute_id}")
+def update_attribute(
+    request: Request,
+    data_block_id: str,
+    attribute_id: str,
+    data: DataBlockAttributeUpdateRequest,
+):
+    auth_manager.get_user_by_info(request.state.info)
+    attribute = data_block_attributes_manager.update(
+        data_block_id=data_block_id,
+        attribute_id=attribute_id,
+        name=data.name,
+        data_type=data.data_type,
+        relative_position=data.relative_position,
+        source_code=data.source_code,
+        state=data.state,
+        logs=data.logs,
+        progress=data.progress,
+        additional_config=data.additional_config,
+    )
+    return pack_json_result(sql_alchemy_to_dict(attribute))
+
+
+@router.delete("/{data_block_id}/attributes/{attribute_id}")
+def delete_attribute(request: Request, data_block_id: str, attribute_id: str):
+    auth_manager.get_user_by_info(request.state.info)
+    data_block_attributes_manager.delete(data_block_id, attribute_id)
+    return get_silent_success()
+
+
+@router.delete("/{data_block_id}/attributes")
+def delete_attributes_many(
+    request: Request, data_block_id: str, data: DataBlockAttributeDeleteRequest
+):
+    auth_manager.get_user_by_info(request.state.info)
+    data_block_attributes_manager.delete_many(data_block_id, data.ids)
     return get_silent_success()

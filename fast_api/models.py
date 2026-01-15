@@ -571,7 +571,6 @@ class DataBlockUpdateRequest(BaseModel):
     name: Optional[StrictStr] = None
     description: Optional[StrictStr] = None
     sql_config: Optional[Dict[str, Any]] = None
-    sql_schema: Optional[List[Dict[str, str]]] = None
 
 
 class DataBlockDeleteRequest(BaseModel):
@@ -580,3 +579,31 @@ class DataBlockDeleteRequest(BaseModel):
 
 class DataBlockExecuteQueryRequest(BaseModel):
     sql_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockAttributeCreateRequest(BaseModel):
+    name: StrictStr
+    data_type: StrictStr
+    user_created: Optional[StrictBool] = False
+    source_code: Optional[StrictStr] = None
+    state: Optional[StrictStr] = None
+    additional_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockAttributeUpdateRequest(BaseModel):
+    name: Optional[StrictStr] = None
+    data_type: Optional[StrictStr] = None
+    relative_position: Optional[StrictInt] = None
+    source_code: Optional[StrictStr] = None
+    state: Optional[StrictStr] = None
+    logs: Optional[List[StrictStr]] = None
+    progress: Optional[StrictFloat] = None
+    additional_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockAttributeDeleteRequest(BaseModel):
+    ids: List[str]
+
+
+class DataBlockAttributeSyncSchemaRequest(BaseModel):
+    schema: List[Dict[str, str]]

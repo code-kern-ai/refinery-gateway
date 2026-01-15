@@ -12,6 +12,7 @@ from submodules.model.enums import (
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
     data_block as data_block_db_bo,
+    data_block_attributes as data_block_attributes_db_bo,
     project as project_db_bo,
     record as record_db_bo,
     general,
@@ -90,6 +91,7 @@ def execute_query(
         data_block_result = data_block_db_bo.create_result(
             data_block.project_id,
             data_block.id,
+            sql_used=data_block_query,
             data=list(
                 map(lambda x: x._asdict(), general.execute_all(data_block_query))
             ),
@@ -105,13 +107,26 @@ def execute_query(
             ),
             with_commit=True,
         )
+    elif (
+        DataBlockType.from_string(data_block.type) == DataBlockType.STABLE
+        and data_block_result.sql_used != data_block_query
+    ):
+        data_block_result = data_block_db_bo.update_result(
+            data_block.project_id,
+            data_block.id,
+            sql_used=data_block_query,
+            data=list(
+                map(lambda x: x._asdict(), general.execute_all(data_block_query))
+            ),
+            with_commit=True,
+        )
 
     if include_schema:
         schema = infer_query_schema(data_block_query)
-        data_block_db_bo.update(
-            org_id,
+        data_block_attributes_db_bo.sync_attributes_from_schema(
             data_block_id,
-            sql_schema=schema,
+            schema,
+            with_commit=True,
         )
 
     return data_block_result.data
@@ -147,9 +162,7 @@ def update(
     name: Optional[str] = None,
     description: Optional[str] = None,
     sql_config: Optional[Dict[str, Dict[str, str]]] = None,
-    sql_schema: Optional[List[Dict[str, str]]] = None,
     overwrite_sql_config: bool = False,
-    overwrite_sql_schema: bool = False,
 ) -> None:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
@@ -174,7 +187,6 @@ def update(
         name,
         description,
         sql_config,
-        sql_schema,
         overwrite_sql_config,
         with_commit=True,
     )
