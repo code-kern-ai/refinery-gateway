@@ -1,8 +1,8 @@
 """adds data blocks
 
-Revision ID: c56ef224e537
+Revision ID: 9d4e4507878e
 Revises: e3e108cd4b22
-Create Date: 2026-01-14 10:03:06.339377
+Create Date: 2026-01-15 10:02:41.228766
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "c56ef224e537"
+revision = "9d4e4507878e"
 down_revision = "e3e108cd4b22"
 branch_labels = None
 depends_on = None
@@ -30,7 +30,6 @@ def upgrade():
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("type", sa.String(), nullable=True),
         sa.Column("sql_config", sa.JSON(), nullable=True),
-        sa.Column("sql_schema", sa.ARRAY(sa.JSON()), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["user.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["organization_id"], ["organization.id"], ondelete="CASCADE"
@@ -51,10 +50,42 @@ def upgrade():
         op.f("ix_data_block_project_id"), "data_block", ["project_id"], unique=False
     )
     op.create_table(
+        "data_block_attributes",
+        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("data_block_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("data_type", sa.String(), nullable=True),
+        sa.Column("relative_position", sa.Integer(), nullable=True),
+        sa.Column("user_created", sa.Boolean(), nullable=True),
+        sa.Column("source_code", sa.String(), nullable=True),
+        sa.Column("state", sa.String(), nullable=True),
+        sa.Column("logs", sa.ARRAY(sa.String()), nullable=True),
+        sa.Column("started_at", sa.DateTime(), nullable=True),
+        sa.Column("finished_at", sa.DateTime(), nullable=True),
+        sa.Column("progress", sa.Float(), nullable=True),
+        sa.Column(
+            "additional_config",
+            sa.JSON(),
+            nullable=True,
+            comment="used when data_type == LLM_RESPONSE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["data_block_id"], ["data_block.id"], ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        op.f("ix_data_block_attributes_data_block_id"),
+        "data_block_attributes",
+        ["data_block_id"],
+        unique=False,
+    )
+    op.create_table(
         "data_block_results",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("data_block_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("sql_used", sa.String(), nullable=True),
         sa.Column("data", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(
             ["data_block_id"], ["data_block.id"], ondelete="CASCADE"
@@ -86,6 +117,11 @@ def downgrade():
         op.f("ix_data_block_results_data_block_id"), table_name="data_block_results"
     )
     op.drop_table("data_block_results")
+    op.drop_index(
+        op.f("ix_data_block_attributes_data_block_id"),
+        table_name="data_block_attributes",
+    )
+    op.drop_table("data_block_attributes")
     op.drop_index(op.f("ix_data_block_project_id"), table_name="data_block")
     op.drop_index(op.f("ix_data_block_organization_id"), table_name="data_block")
     op.drop_index(op.f("ix_data_block_created_by"), table_name="data_block")
