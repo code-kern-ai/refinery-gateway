@@ -53,7 +53,7 @@ def infer_query_schema(query: str) -> List[Dict[str, Union[str, DataTypes]]]:
             {
                 "column_name": column_name,
                 "column_data_type": _infer_type_from_value(value),
-                "state": AttributeState.USABLE.value,
+                "state": AttributeState.AUTOMATICALLY_CREATED.value,
             }
         )
     return schema
