@@ -65,6 +65,8 @@ class Notify(HTTPEndpoint):
             return PlainTextResponse("OK")
         if upload_task_id == "download":
             return PlainTextResponse("OK")
+        if upload_task_id == "data-blocks":
+            return PlainTextResponse("OK")
         if org_id == "archive":
             return PlainTextResponse("OK")
 

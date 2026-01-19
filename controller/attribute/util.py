@@ -1,6 +1,6 @@
+from typing import Optional, Union, Any, List, Dict
 import sys
 import time
-from typing import Union, Any, List, Dict
 import uuid
 import docker
 import json
@@ -14,19 +14,20 @@ import datetime
 from dateutil import parser
 
 from exceptions.exceptions import LlmResponseError
+from util import notification
+from controller.knowledge_base import util as knowledge_base
+
+from submodules.s3 import controller as s3
 from submodules.model.business_objects import (
     attribute,
     general,
     record,
     project,
     tokenization,
+    data_block_attributes,
 )
-from submodules.model.models import Attribute
-from submodules.s3 import controller as s3
-from util import notification
-from controller.knowledge_base import util as knowledge_base
-from submodules.model import enums
-from submodules.model import daemon
+from submodules.model import enums, daemon
+from submodules.model.models import Attribute, DataBlockAttribute
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -39,21 +40,27 @@ LLM_RESPONSE_TMPL_PATH = "controller/attribute/llm_response_tmpl.py"
 
 
 def add_log_to_attribute_logs(
-    project_id: str, attribute_id: str, log: str, append_to_logs: bool = True
+    project_id: str,
+    attribute_id: str,
+    log: str,
+    append_to_logs: bool = True,
+    data_block_attribute_id: Optional[str] = None,
+    data_block_id: Optional[str] = None,
 ) -> None:
-    attribute_item = attribute.get(project_id, attribute_id)
+    if data_block_id and data_block_attribute_id:
+        db_bo = data_block_attributes
+        kwargs = dict(data_block_id=data_block_id, attribute_id=data_block_attribute_id)
+    else:
+        db_bo = attribute
+        kwargs = dict(project_id=project_id, attribute_id=attribute_id)
+    attribute_item = db_bo.get(**kwargs)
     berlin_now = datetime.datetime.now(__tz)
     time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
     line = f"{time_string} {log}"
 
     if not append_to_logs or not attribute_item.logs:
         logs = [line]
-        attribute.update(
-            project_id=project_id,
-            attribute_id=attribute_id,
-            logs=logs,
-            with_commit=True,
-        )
+        db_bo.update(logs=logs, with_commit=True, **kwargs)
     else:
         attribute_item.logs.append(line)
         general.commit()
@@ -274,7 +281,7 @@ def validate_llm_config(llm_config: Dict[str, Any]):
 
 
 def prepare_llm_response_code(
-    attribute_item: Attribute,
+    attribute_item: Union[Attribute, DataBlockAttribute],
     llm_playground_config: Union[Dict[str, Any], None] = None,
     llm_ac_cache_access_link: Union[str, None] = None,
     llm_ac_cache_file_upload_link: Union[str, None] = None,
@@ -380,20 +387,41 @@ async def ac(record):
 
 
 def run_attribute_calculation_exec_env(
-    attribute_id: str,
+    attribute_id: Optional[str],
     project_id: str,
     doc_bin: str,
     llm_playground_config: Union[Dict[str, Any], None] = None,
+    data_block_attribute_id: Optional[str] = None,
+    data_block_id: Optional[str] = None,
 ) -> None:
-    attribute_item = attribute.get(project_id, attribute_id)
+    s3_prefix = ""
+    if data_block_id and data_block_attribute_id:
+        attribute_item = data_block_attributes.get(
+            data_block_id, data_block_attribute_id
+        )
+        s3_prefix = "data-blocks/"
+    else:
+        attribute_item = attribute.get(project_id, attribute_id)
+
+    attribute_id = str(attribute_item.id)
 
     if attribute_item.logs and llm_playground_config is None:
-        add_log_to_attribute_logs(
-            project_id,
-            attribute_id,
-            "re-run attribute calculation",
-            append_to_logs=False,
-        )
+        if data_block_attribute_id:
+            add_log_to_attribute_logs(
+                project_id,
+                attribute_id=None,
+                log="re-run attribute calculation",
+                append_to_logs=False,
+                data_block_attribute_id=attribute_id,
+                data_block_id=data_block_id,
+            )
+        else:
+            add_log_to_attribute_logs(
+                project_id,
+                attribute_id,
+                "re-run attribute calculation",
+                append_to_logs=False,
+            )
 
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
@@ -404,10 +432,12 @@ def run_attribute_calculation_exec_env(
 
     source_code = attribute_item.source_code
     if attribute_item.data_type == enums.DataTypes.LLM_RESPONSE.value:
-        if not s3.object_exists(org_id, project_id + "/" + prefixed_llm_ac_cache):
+        if not s3.object_exists(
+            org_id, project_id + "/" + s3_prefix + prefixed_llm_ac_cache
+        ):
             s3.put_object(
                 org_id,
-                project_id + "/" + prefixed_llm_ac_cache,
+                project_id + "/" + s3_prefix + prefixed_llm_ac_cache,
                 "{}",
             )
 
@@ -416,10 +446,10 @@ def run_attribute_calculation_exec_env(
             kwargs.update(
                 {
                     "llm_ac_cache_access_link": s3.create_access_link(
-                        org_id, project_id + "/" + prefixed_llm_ac_cache
+                        org_id, project_id + "/" + s3_prefix + prefixed_llm_ac_cache
                     ),
                     "llm_ac_cache_file_upload_link": s3.create_file_upload_link(
-                        org_id, project_id + "/" + prefixed_llm_ac_cache
+                        org_id, project_id + "/" + s3_prefix + prefixed_llm_ac_cache
                     ),
                 }
             )
@@ -443,20 +473,26 @@ def run_attribute_calculation_exec_env(
 
     s3.put_object(
         org_id,
-        project_id + "/" + prefixed_function_name,
+        project_id + "/" + s3_prefix + prefixed_function_name,
         source_code,
     )
     s3.put_object(
         org_id,
-        project_id + "/" + prefixed_knowledge_base,
+        project_id + "/" + s3_prefix + prefixed_knowledge_base,
         knowledge_base.build_knowledge_base_from_project(project_id),
     )
     command = [
-        s3.create_access_link(org_id, project_id + "/" + doc_bin),
-        s3.create_access_link(org_id, project_id + "/" + prefixed_function_name),
-        s3.create_access_link(org_id, project_id + "/" + prefixed_knowledge_base),
+        s3.create_access_link(org_id, project_id + "/" + s3_prefix + doc_bin),
+        s3.create_access_link(
+            org_id, project_id + "/" + s3_prefix + prefixed_function_name
+        ),
+        s3.create_access_link(
+            org_id, project_id + "/" + s3_prefix + prefixed_knowledge_base
+        ),
         project_item.tokenizer_blank,
-        s3.create_file_upload_link(org_id, project_id + "/" + prefixed_payload),
+        s3.create_file_upload_link(
+            org_id, project_id + "/" + s3_prefix + prefixed_payload
+        ),
         attribute_item.data_type,
     ]
 
@@ -490,7 +526,7 @@ def run_attribute_calculation_exec_env(
     del __containers_running[container_name]
 
     try:
-        payload = s3.get_object(org_id, project_id + "/" + prefixed_payload)
+        payload = s3.get_object(org_id, project_id + "/" + s3_prefix + prefixed_payload)
         calculated_attributes = json.loads(payload)
     except Exception:
         print("Could not grab data from s3 -- attribute calculation")
@@ -498,16 +534,16 @@ def run_attribute_calculation_exec_env(
 
     if not doc_bin == "docbin_full":
         # sample records docbin should be deleted after calculation
-        s3.delete_object(org_id, project_id + "/" + doc_bin)
+        s3.delete_object(org_id, project_id + "/" + s3_prefix + doc_bin)
     elif (
         doc_bin == "docbin_full"
         and llm_playground_config is None
         and len(calculated_attributes) > 0
     ):
-        s3.delete_object(org_id, project_id + "/" + prefixed_llm_ac_cache)
+        s3.delete_object(org_id, project_id + "/" + s3_prefix + prefixed_llm_ac_cache)
 
-    s3.delete_object(org_id, project_id + "/" + prefixed_function_name)
-    s3.delete_object(org_id, project_id + "/" + prefixed_payload)
+    s3.delete_object(org_id, project_id + "/" + s3_prefix + prefixed_function_name)
+    s3.delete_object(org_id, project_id + "/" + s3_prefix + prefixed_payload)
 
     if llm_playground_config is None:
         attribute_item.logs = final_logs

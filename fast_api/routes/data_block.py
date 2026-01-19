@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Body
 
 
 from controller.data_block import manager as data_block_manager
@@ -13,6 +13,7 @@ from fast_api.models import (
     DataBlockAttributeUpdateRequest,
     DataBlockAttributeDeleteRequest,
     DataBlockAttributeSyncSchemaRequest,
+    RunLlmPlaygroundBody,
 )
 from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model.util import sql_alchemy_to_dict
@@ -27,9 +28,20 @@ def get(request: Request, data_block_id: str):
         data_block_manager.get(user.organization_id, data_block_id)
     )
     data_block_result = data_block_manager.get_result(data_block_id)
+    data_block = sql_alchemy_to_dict(
+        data_block, for_frontend=True, dont_wrap_uuids=False
+    )
     data_block["data"] = data_block_result.data if data_block_result else []
-    data_block["sql_schema"] = data_block_attributes_manager.get_schema(data_block_id)
-    return pack_json_result(data_block)
+    data_block["sqlSchema"] = sql_alchemy_to_dict(
+        data_block_attributes_manager.get_schema(data_block_id),
+        for_frontend=True,
+        dont_wrap_uuids=False,
+    )
+
+    return pack_json_result(
+        data_block,
+        wrap_for_frontend=False,
+    )
 
 
 @router.get("/project/{project_id}")
@@ -179,3 +191,42 @@ def delete_attributes_many(
     auth_manager.get_user_by_info(request.state.info)
     data_block_attributes_manager.delete_many(data_block_id, data.ids)
     return get_silent_success()
+
+
+@router.get("/{data_block_id}/attributes/{data_block_attribute_id}/sample-records")
+def get_sample_records(
+    request: Request,
+    data_block_id: str,
+    data_block_attribute_id: str,
+):
+    auth_manager.get_user_by_info(request.state.info)
+    record_ids, calculated_attributes = (
+        data_block_attributes_manager.calculate_sample_records(
+            data_block_id, data_block_attribute_id
+        )
+    )
+    return pack_json_result(
+        {
+            "record_ids": record_ids,
+            "calculated_attributes": calculated_attributes,
+        }
+    )
+
+
+@router.post("/{data_block_id}/attributes/{data_block_attribute_id}/run-llm-playground")
+def run_llm_playground(
+    request: Request,
+    data_block_id: str,
+    data_block_attribute_id: str,
+    body: RunLlmPlaygroundBody = Body(...),
+):
+    auth_manager.get_user_by_info(request.state.info)
+    return pack_json_result(
+        data_block_attributes_manager.run_llm_playground(
+            data_block_id=data_block_id,
+            data_block_attribute_id=data_block_attribute_id,
+            llm_playground_config=body.llm_config,
+            record_indices=body.record_ids,
+        ),
+        wrap_for_frontend=False,
+    )

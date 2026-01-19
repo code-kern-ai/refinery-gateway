@@ -1,19 +1,22 @@
 # function to be delted after full merge
 
 
-from typing import Any, Dict, List, Optional, Tuple, Union
-from submodules.model.business_objects import attribute, general, project, data_slice
-
+from typing import Any, Dict, Union
+from sqlalchemy.sql import text as sql_text
 import pandas as pd
 import numpy as np
+
+from submodules.model.business_objects import general, project, data_slice
 from submodules.model.business_objects.export import OUTSIDE_CONSTANT
 from submodules.model import enums
 from submodules.model.models import LabelingTask
-from util.miscellaneous_functions import first_item, get_max_length_of_task_labels
-
-from util.sql_helper.sql_helper_none_submodule import parse_sql_text
+from util.miscellaneous_functions import get_max_length_of_task_labels
 
 ILLEGAL_CHARACTER_REG_EX = r"[\000-\010]|[\013-\014]|[\016-\037]"
+
+
+def parse_sql_text(sql: str) -> str:
+    return sql_text(sql)
 
 
 def parse(

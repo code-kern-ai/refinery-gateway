@@ -1,14 +1,22 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
-from submodules.model import DataBlockAttributes
+from submodules.model import DataBlockAttribute
 from submodules.model.enums import AttributeState, DataTypes
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
+    data_block as data_block_db_bo,
     data_block_attributes as data_block_attributes_db_bo,
 )
+from controller.data_block import (
+    util as data_block_util,
+    attribute_calculation as data_block_attribute_calc,
+)
+from controller.attribute import util as attribute_util
+
+# from controller.shared import attribute_calculation as shared_calc
 
 
-def get(data_block_id: str, attribute_id: str) -> DataBlockAttributes:
+def get(data_block_id: str, attribute_id: str) -> DataBlockAttribute:
     attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
     if attribute_id and not attribute:
         raise EntityNotFoundException
@@ -18,11 +26,11 @@ def get(data_block_id: str, attribute_id: str) -> DataBlockAttributes:
 def get_all(
     data_block_id: str,
     state_filter: Optional[List[str]] = None,
-) -> List[DataBlockAttributes]:
+) -> List[DataBlockAttribute]:
     return data_block_attributes_db_bo.get_all(data_block_id, state_filter)
 
 
-def get_by_name(data_block_id: str, name: str) -> DataBlockAttributes:
+def get_by_name(data_block_id: str, name: str) -> DataBlockAttribute:
     return data_block_attributes_db_bo.get_by_name(data_block_id, name)
 
 
@@ -41,7 +49,7 @@ def create(
     source_code: Optional[str] = "",
     state: Optional[str] = None,
     additional_config: Optional[Dict[str, Any]] = None,
-) -> DataBlockAttributes:
+) -> DataBlockAttribute:
     # Get next relative position
     relative_position = (
         data_block_attributes_db_bo.get_relative_position(data_block_id) + 1
@@ -70,7 +78,7 @@ def create(
 def create_many(
     data_block_id: str,
     attributes: List[Dict[str, Any]],
-) -> List[DataBlockAttributes]:
+) -> List[DataBlockAttribute]:
     """
     Create multiple attributes at once.
     Each attribute dict should contain: name, data_type, and optionally state.
@@ -93,7 +101,7 @@ def update(
     logs: Optional[List[str]] = None,
     progress: Optional[float] = None,
     additional_config: Optional[Dict[str, Any]] = None,
-) -> DataBlockAttributes:
+) -> DataBlockAttribute:
     attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
     if not attribute:
         raise EntityNotFoundException
@@ -130,7 +138,7 @@ def delete_many(data_block_id: str, attribute_ids: List[str]) -> None:
 def sync_schema(
     data_block_id: str,
     schema: List[Dict[str, str]],
-) -> List[DataBlockAttributes]:
+) -> List[DataBlockAttribute]:
     """
     Synchronize attributes from a schema definition.
     This replaces the old sql_schema column functionality.
@@ -140,10 +148,85 @@ def sync_schema(
         schema: List of dicts with column_name, column_data_type, and optionally state
 
     Returns:
-        List of created/updated DataBlockAttributes
+        List of created/updated DataBlockAttribute
     """
     return data_block_attributes_db_bo.sync_attributes_from_schema(
         data_block_id=data_block_id,
         schema=schema,
         with_commit=True,
     )
+
+
+def calculate_sample_records(
+    data_block_id: str,
+    data_block_attribute_id: str,
+) -> Tuple[List[str], List[Any]]:
+    """
+    Calculate attribute values for sample records from a data block.
+
+    Args:
+        data_block_id: The data block ID
+        attribute_id: The attribute ID
+
+    Returns:
+        Tuple of (record_ids, calculated_values)
+    """
+    # Get data block for project_id
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    if not data_block:
+        raise EntityNotFoundException(f"Data block {data_block_id} not found")
+
+    project_id = str(data_block.project_id)
+
+    # Prepare doc_bin from DataBlockResults
+    doc_samples = data_block_util.prepare_sample_records(
+        data_block_attribute_id=data_block_attribute_id,
+        data_block_id=data_block_id,
+    )
+
+    # Run calculation using shared execution environment
+    calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
+        attribute_id=None,
+        data_block_attribute_id=data_block_attribute_id,
+        data_block_id=data_block_id,
+        project_id=project_id,
+        doc_bin=doc_samples,
+    )
+
+    # Get attribute for data type
+    attribute = data_block_attributes_db_bo.get(data_block_id, data_block_attribute_id)
+
+    return data_block_attribute_calc.format_calculation_results(
+        calculated_attributes,
+        attribute.data_type,
+    )
+
+
+def run_llm_playground(
+    data_block_id: str,
+    data_block_attribute_id: str,
+    llm_playground_config: Dict[str, Any],
+    record_indices: List[int],
+) -> Dict[str, Any]:
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    if not data_block:
+        raise EntityNotFoundException(f"Data block {data_block_id} not found")
+
+    project_id = str(data_block.project_id)
+
+    # Prepare doc_bin with specific records
+    record_samples = data_block_util.prepare_sample_records(
+        data_block_attribute_id=data_block_attribute_id,
+        data_block_id=data_block_id,
+        record_indices=record_indices,
+    )
+
+    # Run calculation with LLM playground config
+    calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
+        data_block_attribute_id=data_block_attribute_id,
+        project_id=project_id,
+        doc_bin=record_samples,
+        llm_playground_config=llm_playground_config,
+    )
+
+    return calculated_attributes
