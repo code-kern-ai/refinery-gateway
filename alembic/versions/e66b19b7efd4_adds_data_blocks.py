@@ -1,8 +1,8 @@
 """adds data blocks
 
-Revision ID: 9d4e4507878e
+Revision ID: e66b19b7efd4
 Revises: e3e108cd4b22
-Create Date: 2026-01-15 10:02:41.228766
+Create Date: 2026-01-19 09:17:39.226055
 
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "9d4e4507878e"
+revision = "e66b19b7efd4"
 down_revision = "e3e108cd4b22"
 branch_labels = None
 depends_on = None
