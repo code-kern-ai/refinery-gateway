@@ -554,3 +554,7 @@ class UpdateInboxMailThreadProgressRequest(BaseModel):
 
 class UpdateOneDriveFieldRequest(BaseModel):
     oneDrivePath: StrictStr
+
+
+class UpdateSoundSettingsRequest(BaseModel):
+    soundSettings: Dict[str, Any]
