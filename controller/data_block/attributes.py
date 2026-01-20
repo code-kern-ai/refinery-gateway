@@ -15,6 +15,24 @@ from controller.attribute import util as attribute_util
 
 # from controller.shared import attribute_calculation as shared_calc
 
+DEFAULT_LLM_RESPONSE_CONFIG = {
+    "llmIdentifier": "Open AI",
+    "templatePrompt": "Make your answer a single word, e.g. 'yes' or 'no'",
+    "questionPrompt": "Is this clickbait? => '{{ headline }}'",
+    "llmConfig": {
+        "model": "gpt-4o-mini",
+        "temperature": 0,
+        "maxLength": 1024,
+        "stopSequences": [],
+        "topP": 1,
+        "frequencyPenalty": 0,
+        "presencePenalty": 0,
+        "apiKey": None,
+        "apiBase": None,
+        "apiVersion": None,
+    },
+}
+
 
 def get(data_block_id: str, attribute_id: str) -> DataBlockAttribute:
     attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
@@ -61,6 +79,10 @@ def create(
         raise ValueError(
             f"Attribute with name '{name}' already exists for this data block"
         )
+
+    additional_config = None
+    if data_type == DataTypes.LLM_RESPONSE.value:
+        additional_config = DEFAULT_LLM_RESPONSE_CONFIG
 
     return data_block_attributes_db_bo.create(
         data_block_id=data_block_id,
