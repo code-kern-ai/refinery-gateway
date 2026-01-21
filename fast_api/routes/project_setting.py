@@ -246,6 +246,7 @@ def calculate_user_attribute_all_records(
         {
             "project_id": str(project_id),
             "attribute_id": str(body.attribute_id),
+            "data_block_id": body.data_block_id,
         },
         True,
     )

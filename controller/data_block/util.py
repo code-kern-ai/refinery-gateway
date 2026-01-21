@@ -1,51 +1,44 @@
-"""Utilities for data block attribute calculations."""
+from typing import Dict, List, Optional, Any
 
 import random
-from typing import Dict, List, Any, Optional
+import json
 
-from submodules.model.business_objects import (
-    data_block as data_block_db_bo,
-)
-from controller.data_block import attribute_calculation as data_block_attribute_calc
+from submodules.model.business_objects import data_block as data_block_db_bo
+from submodules.model.util import sql_alchemy_to_dict
+from submodules.s3 import controller as s3
+
+from controller.data_block.sql import execute_query
 
 
-def get_sample_records(
+def get_records(
+    org_id: str,
     data_block_id: str,
-    n: int = 10,
+    limit: int = 10,
     record_indices: Optional[List[int]] = None,
 ) -> List[Dict[str, Any]]:
-    """
-    Get sample records from DataBlockResults.
-
-    Args:
-        data_block_id: The data block ID
-        n: Number of samples to retrieve (default 10)
-        record_indices: Specific indices to retrieve (overrides n)
-
-    Returns:
-        List of sample record dictionaries
-    """
-    result = data_block_db_bo.get_result_by_data_block_id(data_block_id)
-    if not result or not result.data:
+    data = execute_query(org_id, data_block_id, limit=limit)
+    if not data:
         return []
-
-    data = result.data
 
     if record_indices is not None:
         # Use specific indices
         return [data[i] for i in record_indices if i < len(data)]
 
     # Random sample
-    sample_size = min(n, len(data))
-    indices = random.sample(range(len(data)), sample_size)
-    return [data[i] for i in indices]
+    if limit:
+        sample_size = min(limit, len(data))
+        indices = random.sample(range(len(data)), sample_size)
+        return [data[i] for i in indices]
+    else:
+        return data
 
 
-def prepare_sample_records(
-    data_block_attribute_id: str,
+def prepare_records(
     data_block_id: str,
+    attribute_id: str,
     record_indices: Optional[List[int]] = None,
-    n: int = 10,
+    limit: Optional[int] = None,
+    prefix: Optional[str] = None,
 ) -> str:
     data_block = data_block_db_bo.get_by_id(data_block_id)
     if not data_block:
@@ -54,11 +47,34 @@ def prepare_sample_records(
     org_id = str(data_block.organization_id)
     project_id = str(data_block.project_id)
 
-    sample_records = get_sample_records(data_block_id, n, record_indices)
+    sample_records = get_records(org_id, data_block_id, limit, record_indices)
 
-    return data_block_attribute_calc.prepare_samples_from_data(
+    return __prepare_records(
         org_id=org_id,
         project_id=project_id,
-        data_block_attribute_id=data_block_attribute_id,
+        attribute_id=attribute_id,
         records=sample_records,
+        prefix=prefix,
     )
+
+
+def __prepare_records(
+    org_id: str,
+    project_id: str,
+    attribute_id: str,
+    records: List[Dict[str, Any]],
+    prefix: Optional[str] = None,
+) -> str:
+    doc_json = json.dumps(
+        sql_alchemy_to_dict(
+            [
+                {"bytes": "", "columns": list(record.keys()), **record}
+                for record in records
+            ]
+        )
+    )
+    minio_prefix = (prefix or f"{attribute_id}_doc_bin") + ".json"
+
+    s3.put_object(org_id, f"{project_id}/data-blocks/{minio_prefix}", doc_json)
+
+    return minio_prefix

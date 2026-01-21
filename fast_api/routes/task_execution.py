@@ -1,4 +1,5 @@
 from controller.attribute import manager as attribute_manager
+from controller.data_block import attribute as data_block_attribute_manager
 from controller.payload import manager as payload_manager
 from controller.data_slice import manager as data_slice_manager
 from controller.weak_supervision import manager as weak_supervision_manager
@@ -24,13 +25,21 @@ router = APIRouter()
 def calculate_attributes(
     attribute_calculation_task_execution: AttributeCalculationTaskExecutionBody,
 ):
-    daemon.run_with_db_token(
-        attribute_manager.calculate_user_attribute_missing_records,
-        attribute_calculation_task_execution.project_id,
-        attribute_calculation_task_execution.organization_id,
-        attribute_calculation_task_execution.user_id,
-        attribute_calculation_task_execution.attribute_id,
-    )
+    if attribute_calculation_task_execution.data_block_id:
+        daemon.run_with_db_token(
+            data_block_attribute_manager.calculate_data_block_attribute_records,
+            attribute_calculation_task_execution.project_id,
+            attribute_calculation_task_execution.data_block_id,
+            attribute_calculation_task_execution.attribute_id,
+        )
+    else:
+        daemon.run_with_db_token(
+            attribute_manager.calculate_user_attribute_missing_records,
+            attribute_calculation_task_execution.project_id,
+            attribute_calculation_task_execution.organization_id,
+            attribute_calculation_task_execution.user_id,
+            attribute_calculation_task_execution.attribute_id,
+        )
 
     return get_silent_success()
 

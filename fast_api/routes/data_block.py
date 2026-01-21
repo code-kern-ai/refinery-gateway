@@ -1,9 +1,5 @@
 from fastapi import APIRouter, Request, Body
 
-
-from controller.data_block import manager as data_block_manager
-from controller.data_block import attributes as data_block_attributes_manager
-from controller.auth import manager as auth_manager
 from fast_api.models import (
     DataBlockCreateRequest,
     DataBlockUpdateRequest,
@@ -16,6 +12,10 @@ from fast_api.models import (
     RunLlmPlaygroundBody,
 )
 from fast_api.routes.client_response import get_silent_success, pack_json_result
+from controller.data_block import manager as data_block_manager
+from controller.data_block import attribute as data_block_attribute_manager
+from controller.auth import manager as auth_manager
+
 from submodules.model.util import sql_alchemy_to_dict
 
 router = APIRouter()
@@ -24,16 +24,16 @@ router = APIRouter()
 @router.get("/{data_block_id}")
 def get(request: Request, data_block_id: str):
     user = auth_manager.get_user_by_info(request.state.info)
+    data_block = data_block_manager.get(user.organization_id, data_block_id)
+    data = data_block.sql_data.copy()
     data_block = sql_alchemy_to_dict(
-        data_block_manager.get(user.organization_id, data_block_id)
+        data_block,
+        for_frontend=True,
+        dont_wrap_uuids=False,
     )
-    data_block_result = data_block_manager.get_result(data_block_id)
-    data_block = sql_alchemy_to_dict(
-        data_block, for_frontend=True, dont_wrap_uuids=False
-    )
-    data_block["data"] = data_block_result.data if data_block_result else []
+    data_block["sqlData"] = data
     data_block["sqlSchema"] = sql_alchemy_to_dict(
-        data_block_attributes_manager.get_schema(data_block_id),
+        data_block_attribute_manager.get_schema(data_block_id),
         for_frontend=True,
         dont_wrap_uuids=False,
     )
@@ -57,16 +57,13 @@ def execute_query(
     request: Request, data_block_id: str, data: DataBlockExecuteQueryRequest
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    data_block_manager.update(
-        user.organization_id,
-        user.id,
-        data_block_id,
+    results = data_block_manager.get_query_results(
+        org_id=user.organization_id,
+        user_id=user.id,
+        data_block_id=data_block_id,
         sql_config=data.sql_config,
-        overwrite_sql_config=True,
     )
-    return pack_json_result(
-        data_block_manager.execute_query(user.organization_id, data_block_id)
-    )
+    return pack_json_result(results)
 
 
 @router.post("/")
@@ -93,6 +90,7 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
         data.name,
         data.description,
         data.sql_config,
+        # overwrite_sql=True,
     )
     return get_silent_success()
 
@@ -110,21 +108,21 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
 @router.get("/{data_block_id}/attributes")
 def get_attributes(request: Request, data_block_id: str):
     auth_manager.get_user_by_info(request.state.info)
-    attributes = data_block_attributes_manager.get_all(data_block_id)
+    attributes = data_block_attribute_manager.get_all(data_block_id)
     return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
 
 
 @router.get("/{data_block_id}/attributes/schema")
 def get_attributes_schema(request: Request, data_block_id: str):
     auth_manager.get_user_by_info(request.state.info)
-    schema = data_block_attributes_manager.get_schema(data_block_id)
+    schema = data_block_attribute_manager.get_schema(data_block_id)
     return pack_json_result(schema)
 
 
 @router.get("/{data_block_id}/attributes/{attribute_id}")
 def get_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
-    attribute = data_block_attributes_manager.get(data_block_id, attribute_id)
+    attribute = data_block_attribute_manager.get(data_block_id, attribute_id)
     return pack_json_result(sql_alchemy_to_dict(attribute))
 
 
@@ -133,7 +131,7 @@ def create_attribute(
     request: Request, data_block_id: str, data: DataBlockAttributeCreateRequest
 ):
     auth_manager.get_user_by_info(request.state.info)
-    attribute = data_block_attributes_manager.create(
+    attribute = data_block_attribute_manager.create(
         data_block_id=data_block_id,
         name=data.name,
         data_type=data.data_type,
@@ -150,7 +148,7 @@ def sync_attributes_schema(
     request: Request, data_block_id: str, data: DataBlockAttributeSyncSchemaRequest
 ):
     auth_manager.get_user_by_info(request.state.info)
-    attributes = data_block_attributes_manager.sync_schema(data_block_id, data.schema)
+    attributes = data_block_attribute_manager.sync_schema(data_block_id, data.schema)
     return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
 
 
@@ -162,7 +160,7 @@ def update_attribute(
     data: DataBlockAttributeUpdateRequest,
 ):
     auth_manager.get_user_by_info(request.state.info)
-    attribute = data_block_attributes_manager.update(
+    attribute = data_block_attribute_manager.update(
         data_block_id=data_block_id,
         attribute_id=attribute_id,
         name=data.name,
@@ -180,7 +178,7 @@ def update_attribute(
 @router.delete("/{data_block_id}/attributes/{attribute_id}")
 def delete_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
-    data_block_attributes_manager.delete(data_block_id, attribute_id)
+    data_block_attribute_manager.delete(data_block_id, attribute_id)
     return get_silent_success()
 
 
@@ -189,7 +187,7 @@ def delete_attributes_many(
     request: Request, data_block_id: str, data: DataBlockAttributeDeleteRequest
 ):
     auth_manager.get_user_by_info(request.state.info)
-    data_block_attributes_manager.delete_many(data_block_id, data.ids)
+    data_block_attribute_manager.delete_many(data_block_id, data.ids)
     return get_silent_success()
 
 
@@ -199,10 +197,13 @@ def get_sample_records(
     data_block_id: str,
     data_block_attribute_id: str,
 ):
-    auth_manager.get_user_by_info(request.state.info)
+    user = auth_manager.get_user_by_info(request.state.info)
     record_ids, calculated_attributes = (
-        data_block_attributes_manager.calculate_sample_records(
-            data_block_id, data_block_attribute_id
+        data_block_attribute_manager.calculate_sample_records(
+            user.organization_id,
+            data_block_id,
+            attribute_id=data_block_attribute_id,
+            limit=10,
         )
     )
     return pack_json_result(
@@ -222,7 +223,7 @@ def run_llm_playground(
 ):
     auth_manager.get_user_by_info(request.state.info)
     return pack_json_result(
-        data_block_attributes_manager.run_llm_playground(
+        data_block_attribute_manager.run_llm_playground(
             data_block_id=data_block_id,
             data_block_attribute_id=data_block_attribute_id,
             llm_playground_config=body.llm_config,

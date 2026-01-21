@@ -261,6 +261,7 @@ class UpdateAttributeBody(BaseModel):
 
 class CalculateUserAttributeAllRecordsBody(BaseModel):
     attribute_id: StrictStr
+    data_block_id: Optional[StrictStr] = None
 
 
 class RunLlmPlaygroundBody(BaseModel):
@@ -407,9 +408,10 @@ class CancelTaskBody(BaseModel):
 
 class AttributeCalculationTaskExecutionBody(BaseModel):
     organization_id: StrictStr
-    project_id: StrictStr
+    project_id: Optional[StrictStr] = None
     user_id: StrictStr
     attribute_id: StrictStr
+    data_block_id: Optional[StrictStr] = None
 
 
 class InformationSourceTaskExecutionBody(BaseModel):
