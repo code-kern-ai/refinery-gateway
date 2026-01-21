@@ -556,5 +556,5 @@ class UpdateOneDriveFieldRequest(BaseModel):
     oneDrivePath: StrictStr
 
 
-class UpdateSoundSettingsRequest(BaseModel):
-    soundSettings: Dict[str, Any]
+class UpdateSettingsRequest(BaseModel):
+    settings: Dict[str, Any]
