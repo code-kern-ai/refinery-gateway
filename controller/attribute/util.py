@@ -212,7 +212,9 @@ def test_azure_llm_connection(
     return response.json()["choices"][0]["message"]["content"]
 
 
-def validate_user_prompt(project_id: str, user_prompt: str):
+def validate_user_prompt(
+    project_id: str, user_prompt: str, data_block_id: Optional[str] = None
+):
     def parse_mustache_attribute_names(mustache_str: str) -> List[str]:
         for brace in "{}":
             mustache_str = mustache_str.replace(brace, "")
@@ -232,8 +234,14 @@ def validate_user_prompt(project_id: str, user_prompt: str):
             "You can access attributes by using '{{ attribute_name }}' in your prompt."
         )
 
+    identifier = project_id
+    db_bo = attribute
+    if data_block_id:
+        identifier = data_block_id
+        db_bo = data_block_attributes
+
     for attr in mustache_attributes:
-        if not attribute.get_by_name(project_id, attr):
+        if not db_bo.get_by_name(identifier, attr):
             raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
 
 
@@ -282,6 +290,7 @@ def validate_llm_config(llm_config: Dict[str, Any]):
 
 def prepare_llm_response_code(
     attribute_item: Union[Attribute, DataBlockAttribute],
+    project_id: Optional[str] = None,
     llm_playground_config: Union[Dict[str, Any], None] = None,
     llm_ac_cache_access_link: Union[str, None] = None,
     llm_ac_cache_file_upload_link: Union[str, None] = None,
@@ -323,8 +332,9 @@ async def ac(record):
 
     # already raises expressive LlmResponseError
     validate_user_prompt(
-        project_id=attribute_item.project_id,
+        project_id=getattr(attribute_item, "project_id", project_id),
         user_prompt=llm_config["questionPrompt"],
+        data_block_id=getattr(attribute_item, "data_block_id", None),
     )
     validate_llm_config(llm_config=llm_config)
 
@@ -456,17 +466,30 @@ def run_attribute_calculation_exec_env(
 
         try:
             source_code = prepare_llm_response_code(
-                attribute_item, llm_playground_config=llm_playground_config, **kwargs
+                attribute_item,
+                project_id,
+                llm_playground_config=llm_playground_config,
+                **kwargs,
             )
         except LlmResponseError as e:
             error_message = e.args[0]
             if llm_playground_config is None:
-                add_log_to_attribute_logs(
-                    attribute_item.project_id,
-                    attribute_item.id,
-                    error_message,
-                    append_to_logs=False,
-                )
+                if data_block_attribute_id:
+                    add_log_to_attribute_logs(
+                        project_id,
+                        attribute_id=None,
+                        log=error_message,
+                        append_to_logs=False,
+                        data_block_attribute_id=attribute_id,
+                        data_block_id=data_block_id,
+                    )
+                else:
+                    add_log_to_attribute_logs(
+                        project_id,
+                        attribute_item.id,
+                        error_message,
+                        append_to_logs=False,
+                    )
                 return {}
             else:
                 return {"logs": [error_message]}
