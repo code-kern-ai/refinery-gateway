@@ -448,10 +448,12 @@ def run_llm_playground(
 
     # Run calculation with LLM playground config
     calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
-        attribute_id=attribute_id,
+        attribute_id=None,
         project_id=project_id,
         doc_bin=record_samples,
         llm_playground_config=llm_playground_config,
+        data_block_id=data_block_id,
+        data_block_attribute_id=attribute_id,
     )
 
     return calculated_attributes

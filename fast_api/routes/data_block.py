@@ -214,18 +214,18 @@ def get_sample_records(
     )
 
 
-@router.post("/{data_block_id}/attributes/{data_block_attribute_id}/run-llm-playground")
+@router.post("/{data_block_id}/attributes/{attribute_id}/run-llm-playground")
 def run_llm_playground(
     request: Request,
     data_block_id: str,
-    data_block_attribute_id: str,
+    attribute_id: str,
     body: RunLlmPlaygroundBody = Body(...),
 ):
     auth_manager.get_user_by_info(request.state.info)
     return pack_json_result(
         data_block_attribute_manager.run_llm_playground(
             data_block_id=data_block_id,
-            data_block_attribute_id=data_block_attribute_id,
+            attribute_id=attribute_id,
             llm_playground_config=body.llm_config,
             record_indices=body.record_ids,
         ),
