@@ -226,12 +226,12 @@ def __calculate_data_block_attribute_records(
                 log="Calculation of attribute failed.",
             )
             return
-    except Exception:
+    except Exception as e:
         __notify_attribute_calculation_failed(
             project_id=project_id,
             data_block_id=data_block_id,
             attribute_id=attribute_id,
-            log="Attribute calculation failed",
+            log=f"Attribute calculation failed: {str(e)}",
         )
         general.remove_and_refresh_session()
         return

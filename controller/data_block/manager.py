@@ -132,7 +132,10 @@ def update_add_user_created_attribute(
     changed = 0
     for record_id, attribute_value in calculated_attributes.items():
         record_item = next(
-            filter(lambda x: x["record_id"] == record_id, data_block.sql_data), None
+            filter(
+                lambda x: str(x["record_id"]) == str(record_id), data_block.sql_data
+            ),
+            None,
         )
         if not record_item:
             # this can happen if an record was deleted or the tokenizer file isn't up to date

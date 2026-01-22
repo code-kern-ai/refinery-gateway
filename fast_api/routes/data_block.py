@@ -178,7 +178,7 @@ def update_attribute(
 @router.delete("/{data_block_id}/attributes/{attribute_id}")
 def delete_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
-    data_block_attribute_manager.delete(data_block_id, attribute_id)
+    data_block_attribute_manager.delete_many(data_block_id, [attribute_id])
     return get_silent_success()
 
 

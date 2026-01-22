@@ -73,7 +73,7 @@ def __prepare_records(
             ]
         )
     )
-    minio_prefix = (prefix or f"{attribute_id}_doc_bin") + ".json"
+    minio_prefix = prefix or f"{attribute_id}_doc_bin.json"
 
     s3.put_object(org_id, f"{project_id}/data-blocks/{minio_prefix}", doc_json)
 
