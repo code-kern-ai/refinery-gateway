@@ -2,12 +2,14 @@ import json
 from typing import Dict, List, Any, Optional, Tuple
 from sqlalchemy import sql
 
+from submodules.s3 import controller as s3
 from submodules.model import daemon
 from submodules.model.models import DataBlockAttribute
 from submodules.model.enums import AttributeState, DataTypes
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
     general,
+    project as project_db_bo,
     data_block as data_block_db_bo,
     data_block_attributes as data_block_attributes_db_bo,
 )
@@ -143,10 +145,63 @@ def update(
     )
 
 
-def delete_many(data_block_id: str, attribute_ids: List[str]) -> None:
-    data_block_attributes_db_bo.delete_many(
-        data_block_id, attribute_ids, with_commit=True
-    )
+def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -> None:
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    if not attribute_ids:
+        attribute_ids = data_block_attributes_db_bo.get_all(
+            data_block_id=data_block_id,
+            # TODO: confirm if both states are needed
+            state_filter=[AttributeState.INITIAL.value, AttributeState.USABLE.value],
+        )
+    for attribute_id in attribute_ids:
+        attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
+        if attribute_item.user_created:
+            # is_text_attribute = (
+            #     attribute_item.data_type == DataTypes.TEXT.value
+            #     or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+            # )
+            project_item = project_db_bo.get(data_block.project_id)
+            org_id = str(project_item.organization_id)
+            is_usable = attribute_item.state == AttributeState.USABLE.value
+            if is_usable:
+                data_block_manager.delete_user_created_attribute(
+                    data_block_id=data_block_id,
+                    attribute_id=attribute_id,
+                    with_commit=True,
+                )
+            elif (
+                not is_usable
+                and attribute_item.data_type == DataTypes.LLM_RESPONSE.value
+            ):
+                s3.delete_object(
+                    org_id,
+                    str(project_item.id)
+                    + "/data-blocks/"
+                    + f"{attribute_id}_llm_ac_cache",
+                )
+                s3.delete_object(
+                    org_id,
+                    str(project_item.id)
+                    + "/data-blocks/"
+                    + f"{attribute_id}_knowledge",
+                )
+
+            data_block_attributes_db_bo.delete(
+                data_block_id, attribute_id, with_commit=True
+            )
+            # NOTE: docbin_full gets re-uploaded on each execute_query call
+            # if is_usable and not is_text_attribute:
+            #     request_reupload_docbins(project_id)
+            notification.send_organization_update(
+                project_id=data_block.project_id,
+                message=f"calculate_attribute:deleted:{attribute_id}",
+            )
+            if is_usable:
+                notification.send_organization_update(
+                    project_id=data_block.project_id, message="attributes_updated"
+                )
+        else:
+            raise ValueError("Attribute is not user created")
 
 
 def sync_schema(

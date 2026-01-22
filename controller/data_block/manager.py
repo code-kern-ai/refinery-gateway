@@ -4,7 +4,9 @@ import os
 from sqlalchemy.orm.attributes import flag_modified
 
 from controller.data_block.sql import execute_query
+from controller.data_block import attribute as data_block_attribute_manager
 
+from submodules.s3 import controller as s3
 from submodules.model import DataBlock
 from submodules.model.enums import (
     NotificationType,
@@ -117,7 +119,13 @@ def update(
     )
 
 
-def delete_many(org_id: str, project_id: str, ids: List[str]) -> None:
+def delete_many(org_id: str, project_id: str, ids: Optional[List[str]] = None) -> None:
+    for id in ids:
+        data_block_attribute_manager.delete_many(id)
+        s3.delete_object(
+            org_id, str(project_id) + "/data-blocks/" + id + "/docbin_full"
+        )
+
     data_block_db_bo.delete_many(org_id, project_id, ids, with_commit=True)
 
 
