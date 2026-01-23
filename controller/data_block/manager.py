@@ -49,46 +49,56 @@ def update_query_results(
     sql_config: Optional[Dict[str, Dict[str, Any]]] = None,
     include_schema: bool = True,
 ) -> List[Dict[str, Any]]:
-    # TODO: don't update sql_data for LIVE queries
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+
     update(
         org_id,
         user_id,
         data_block_id,
         sql_config=sql_config,
-        sql_data=[],
         overwrite_sql=True,
         with_commit=True,
     )
+
     results = execute_query(
         org_id,
         data_block_id,
         include_schema=include_schema,
     )
-    data_block = update(
-        org_id,
-        user_id,
-        data_block_id=data_block_id,
-        sql_data=results,
-        overwrite_sql=True,
-        with_commit=True,
-    )
 
     if data_block.type == DataBlockType.STABLE.value:
+        update(
+            org_id,
+            user_id,
+            data_block_id=data_block_id,
+            sql_data=results,
+            overwrite_sql=True,
+            with_commit=True,
+        )
+
+        task_list = []
         for attribute in data_block_attributes_db_bo.get_all(
             data_block_id=data_block_id,
             state_filter=[AttributeState.USABLE.value],
         ):
-            # TODO: send as task list instead of individual tasks
-            task_master_manager.queue_task(
-                str(org_id),
-                str(user_id),
-                TaskType.ATTRIBUTE_CALCULATION,
+            task_list.append(
                 {
                     "project_id": str(data_block.project_id),
+                    "task_type": TaskType.ATTRIBUTE_CALCULATION.value,
                     "attribute_id": str(attribute.id),
                     "data_block_id": data_block_id,
+                }
+            )
+
+        if task_list:
+            task_master_manager.queue_task(
+                org_id=str(org_id),
+                user_id=str(user_id),
+                task_type=TaskType.TASK_QUEUE,
+                task_info={
+                    "project_id": str(data_block.project_id),
+                    "task_list": task_list,
                 },
-                True,
             )
     return results
 
@@ -144,7 +154,7 @@ def delete_many(org_id: str, project_id: str, ids: Optional[List[str]] = None) -
     for id in ids:
         data_block_attribute_manager.delete_many(id)
         s3.delete_object(
-            org_id, str(project_id) + "/data-blocks/" + id + "/docbin_full"
+            str(org_id), str(project_id) + "/data-blocks/" + id + "/docbin_full"
         )
 
     data_block_db_bo.delete_many(org_id, project_id, ids, with_commit=True)

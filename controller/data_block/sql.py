@@ -48,15 +48,19 @@ def construct_data_block_query(
     limit_clause = data_block.sql_config.get("config", {}).get("limit")
 
     try:
-        return record_db_bo.get_record_data_by_sanitized_params(
+        sql_query = record_db_bo.get_record_data_by_sanitized_params(
             str(data_block.project_id),
-            sanitized_select=select_clause
-            + ",ROW_NUMBER() OVER() AS record_id",  # TODO: move row_number to a superselect
+            sanitized_select=select_clause,
             sanitized_where=where_clause,
             order_by=order_by_clause,
             sanitized_group_by=group_by_clause,
             limit=limit or limit_clause,
             return_query=True,
+        )
+        return (
+            "SELECT ROW_NUMBER() OVER() AS record_id, * FROM ("
+            + sql_query
+            + ") AS sql_query_results"
         )
     except Exception as e:
         raise ValueError(f"Error fetching record data: {e}")
