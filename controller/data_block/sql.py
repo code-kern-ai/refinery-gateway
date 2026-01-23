@@ -45,15 +45,17 @@ def construct_data_block_query(
     where_clause = data_block.sql_config.get("config", {}).get("where_clause")
     group_by_clause = data_block.sql_config.get("config", {}).get("group_by_clause")
     order_by_clause = data_block.sql_config.get("config", {}).get("order_by_clause")
+    limit_clause = data_block.sql_config.get("config", {}).get("limit")
 
     try:
         return record_db_bo.get_record_data_by_sanitized_params(
             str(data_block.project_id),
-            sanitized_select="ROW_NUMBER() OVER() AS record_id," + select_clause,
+            sanitized_select=select_clause
+            + ",ROW_NUMBER() OVER() AS record_id",  # TODO: move row_number to a superselect
             sanitized_where=where_clause,
             order_by=order_by_clause,
             sanitized_group_by=group_by_clause,
-            limit=limit,
+            limit=limit or limit_clause,
             return_query=True,
         )
     except Exception as e:

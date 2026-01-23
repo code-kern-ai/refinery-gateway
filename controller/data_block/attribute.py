@@ -231,6 +231,8 @@ def calculate_data_block_attribute_records(
     data_block_id: str,
     attribute_id: str,
 ) -> Tuple[List[str], List[Any]]:
+    # TODO: why are calculations not reporting final state?
+    # TODO: attributes being duplicated on query re-execution
     if data_block_attributes_db_bo.get_all(
         data_block_id=data_block_id, state_filter=[AttributeState.RUNNING.value]
     ):

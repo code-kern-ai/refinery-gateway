@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Body
+from fastapi import APIRouter, Request, Body, Depends
 
 from fast_api.models import (
     DataBlockCreateRequest,
@@ -25,7 +25,7 @@ router = APIRouter()
 def get(request: Request, data_block_id: str):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block = data_block_manager.get(user.organization_id, data_block_id)
-    data = data_block.sql_data.copy()
+    data = data_block.sql_data.copy() if data_block.sql_data else None
     data_block = sql_alchemy_to_dict(
         data_block,
         for_frontend=True,
@@ -57,7 +57,7 @@ def execute_query(
     request: Request, data_block_id: str, data: DataBlockExecuteQueryRequest
 ):
     user = auth_manager.get_user_by_info(request.state.info)
-    results = data_block_manager.get_query_results(
+    results = data_block_manager.update_query_results(
         org_id=user.organization_id,
         user_id=user.id,
         data_block_id=data_block_id,
@@ -231,3 +231,25 @@ def run_llm_playground(
         ),
         wrap_for_frontend=False,
     )
+
+
+@router.get(
+    "/{data_block_id}/record-by-record-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_record_by_record_id(
+    data_block_id: str,
+    record_id: str,
+):
+    if record_id is None or record_id == "null":
+        return pack_json_result(None)
+
+    record = data_block_manager.get_record(data_block_id, record_id)
+
+    data = {
+        "id": str(record["record_id"]),
+        "data": record,
+        "dataBlockId": data_block_id,
+    }
+
+    return pack_json_result(data)

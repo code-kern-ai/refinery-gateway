@@ -5,12 +5,15 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from controller.data_block.sql import execute_query
 from controller.data_block import attribute as data_block_attribute_manager
+from controller.task_master import manager as task_master_manager
 
 from submodules.s3 import controller as s3
 from submodules.model import DataBlock
 from submodules.model.enums import (
     NotificationType,
     DataBlockType,
+    AttributeState,
+    TaskType,
 )
 from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.business_objects import (
@@ -38,14 +41,14 @@ def get_by_project_id(org_id: str, project_id: str) -> List[DataBlock]:
     return data_blocks
 
 
-def get_query_results(
+def update_query_results(
     org_id: str,
     user_id: str,
     data_block_id: str,
-    sql_config: Dict[str, Dict[str, Any]],
+    sql_config: Optional[Dict[str, Dict[str, Any]]] = None,
     include_schema: bool = True,
-    limit: int = 100,
 ) -> List[Dict[str, Any]]:
+    # TODO: don't update sql_data for LIVE queries
     update(
         org_id,
         user_id,
@@ -59,9 +62,8 @@ def get_query_results(
         org_id,
         data_block_id,
         include_schema=include_schema,
-        limit=limit,
     )
-    update(
+    data_block = update(
         org_id,
         user_id,
         data_block_id=data_block_id,
@@ -69,6 +71,24 @@ def get_query_results(
         overwrite_sql=True,
         with_commit=True,
     )
+
+    if data_block.type == DataBlockType.STABLE.value:
+        for attribute in data_block_attributes_db_bo.get_all(
+            data_block_id=data_block_id,
+            state_filter=[AttributeState.USABLE.value],
+        ):
+            # TODO: send as task list instead of individual tasks
+            task_master_manager.queue_task(
+                str(org_id),
+                str(user_id),
+                TaskType.ATTRIBUTE_CALCULATION,
+                {
+                    "project_id": str(data_block.project_id),
+                    "attribute_id": str(attribute.id),
+                    "data_block_id": data_block_id,
+                },
+                True,
+            )
     return results
 
 
@@ -96,7 +116,7 @@ def update(
     sql_data: Optional[Dict[str, Any]] = None,
     overwrite_sql: bool = False,
     with_commit=True,
-) -> None:
+) -> Optional[DataBlock]:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
         create_notification(
@@ -107,7 +127,7 @@ def update(
         )
         return
 
-    data_block_db_bo.update(
+    return data_block_db_bo.update(
         org_id,
         data_block_id,
         name,
@@ -172,3 +192,16 @@ def delete_user_created_attribute(
         if (i + 1) % 1000 == 0:
             general.flush_or_commit(with_commit)
     general.flush_or_commit(with_commit)
+
+
+def get_record(data_block_id: str, record_id: str):
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    if not data_block or not data_block.sql_data:
+        raise EntityNotFoundException(f"Data block {data_block_id} not found")
+    record = next(
+        filter(lambda x: str(x["record_id"]) == str(record_id), data_block.sql_data),
+        None,
+    )
+    if not record:
+        raise EntityNotFoundException(f"Record {record_id} not found in data block")
+    return record

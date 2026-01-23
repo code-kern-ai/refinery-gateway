@@ -413,6 +413,7 @@ def run_attribute_calculation_exec_env(
     else:
         attribute_item = attribute.get(project_id, attribute_id)
 
+    # TODO: AttributeError: 'NoneType' object has no attribute 'id'
     attribute_id = str(attribute_item.id)
 
     if attribute_item.logs and llm_playground_config is None:
