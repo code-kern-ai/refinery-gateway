@@ -200,7 +200,7 @@ def get_record(data_block_id: str, record_id: Optional[str] = None):
     if not data_block or not data_block.sql_data:
         raise EntityNotFoundException(f"Data block {data_block_id} not found")
 
-    if not record_id:
+    if not record_id or record_id == "null":
         record = random.choice(data_block.sql_data)
     else:
         record = next(
