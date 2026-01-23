@@ -174,6 +174,7 @@ def __recalculate_missing_attributes_and_embeddings(
     project_id: str, user_id: str
 ) -> None:
     __calculate_missing_attributes(project_id, user_id)
+    # TODO: has_datablocks
     has_embeddings = recreate_or_extend_embeddings(project_id)
     if not has_embeddings:
         return

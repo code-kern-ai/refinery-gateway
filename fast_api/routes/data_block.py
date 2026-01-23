@@ -239,12 +239,12 @@ def run_llm_playground(
 )
 def get_record_by_record_id(
     data_block_id: str,
-    record_id: str,
+    record_id: str = None,
 ):
     if record_id is None or record_id == "null":
-        return pack_json_result(None)
-
-    record = data_block_manager.get_record(data_block_id, record_id)
+        record = data_block_manager.get_record(data_block_id)
+    else:
+        record = data_block_manager.get_record(data_block_id, record_id)
 
     data = {
         "id": str(record["record_id"]),

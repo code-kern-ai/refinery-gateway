@@ -1,3 +1,4 @@
+import random
 from typing import Dict, List, Optional, Any
 
 import os
@@ -194,14 +195,20 @@ def delete_user_created_attribute(
     general.flush_or_commit(with_commit)
 
 
-def get_record(data_block_id: str, record_id: str):
+def get_record(data_block_id: str, record_id: Optional[str] = None):
     data_block = data_block_db_bo.get_by_id(data_block_id)
     if not data_block or not data_block.sql_data:
         raise EntityNotFoundException(f"Data block {data_block_id} not found")
-    record = next(
-        filter(lambda x: str(x["record_id"]) == str(record_id), data_block.sql_data),
-        None,
-    )
+
+    if not record_id:
+        record = random.choice(data_block.sql_data)
+    else:
+        record = next(
+            filter(
+                lambda x: str(x["record_id"]) == str(record_id), data_block.sql_data
+            ),
+            None,
+        )
     if not record:
         raise EntityNotFoundException(f"Record {record_id} not found in data block")
     return record
