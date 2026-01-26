@@ -64,6 +64,7 @@ def update_query_results(
         org_id,
         data_block_id,
         sync_schema=sync_schema,
+        limit=sql_config["config"].get("limit_clause") if sql_config else None,
     )
 
     if data_block.type == DataBlockType.STABLE.value:
