@@ -17,6 +17,7 @@ from controller.data_block import attribute as data_block_attribute_manager
 from controller.auth import manager as auth_manager
 
 from submodules.model.util import sql_alchemy_to_dict
+import json
 
 router = APIRouter()
 
@@ -233,10 +234,7 @@ def run_llm_playground(
     )
 
 
-@router.get(
-    "/{data_block_id}/record-by-record-id",
-    dependencies=[Depends(auth_manager.check_project_access_dep)],
-)
+@router.get("/{data_block_id}/record-by-record-id")
 def get_record_by_record_id(
     data_block_id: str,
     record_id: str = None,
@@ -248,7 +246,7 @@ def get_record_by_record_id(
 
     data = {
         "id": str(record["record_id"]),
-        "data": record,
+        "data": json.dumps(record["data"]),
         "dataBlockId": data_block_id,
     }
 
