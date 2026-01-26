@@ -83,7 +83,7 @@ def create(
     if data_type == DataTypes.LLM_RESPONSE.value:
         additional_config = additional_config or DEFAULT_LLM_RESPONSE_CONFIG
 
-    return data_block_attributes_db_bo.create(
+    attribute = data_block_attributes_db_bo.create(
         data_block_id=data_block_id,
         name=name,
         data_type=data_type,
@@ -97,6 +97,12 @@ def create(
         additional_config=additional_config,
         with_commit=True,
     )
+
+    notification.send_organization_update(
+        project_id=attribute.project_id,
+        message=f"calculate_attribute:created:{str(attribute.id)}",
+    )
+    return attribute
 
 
 def create_many(
@@ -130,7 +136,7 @@ def update(
     if not attribute:
         raise EntityNotFoundException
 
-    return data_block_attributes_db_bo.update(
+    attribute = data_block_attributes_db_bo.update(
         data_block_id=data_block_id,
         attribute_id=attribute_id,
         name=name,
@@ -143,6 +149,12 @@ def update(
         additional_config=additional_config,
         with_commit=True,
     )
+
+    notification.send_organization_update(
+        project_id=attribute.project_id,
+        message=f"calculate_attribute:updated:{str(attribute.id)}",
+    )
+    return attribute
 
 
 def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -> None:
