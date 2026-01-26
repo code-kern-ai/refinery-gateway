@@ -20,7 +20,6 @@ def create_inbox_mail_by_thread(
     meta_data: Optional[Dict[str, Any]] = None,
     thread_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-
     return inbox_mail.create_by_thread(
         org_id=org_id,
         sender_id=sender_id,
@@ -84,6 +83,7 @@ def get_inbox_mail_threads_overview(
     page: int = 1,
     limit: int = 10,
     user_is_admin: bool = False,
+    filters: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     overview_by_threads = inbox_mail.get_overview_by_threads(
         org_id=org_id,
@@ -91,6 +91,7 @@ def get_inbox_mail_threads_overview(
         page=page,
         limit=limit,
         user_is_admin=user_is_admin,
+        filters=filters,
     )
 
     admin_user_ids = [str(u.id) for u in user.get_admin_users()]
@@ -121,7 +122,6 @@ def create_auto_generated_inbox_mail_thread_for_error(
     is_important: bool = False,
     meta_data: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-
     inbox_mail.create_by_thread(
         org_id=org_id,
         sender_id=None,
@@ -152,7 +152,6 @@ def extend_inbox_mail_sender_receiver_names(
     is_admin_support_thread: bool = False,
     is_auto_generated: bool = False,
 ) -> None:
-
     recipient_ids = [
         rid for rid in participant_ids if str(rid) != str(mail_dict.get("sender_id"))
     ]
