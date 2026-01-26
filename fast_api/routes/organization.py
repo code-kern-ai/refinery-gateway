@@ -160,7 +160,6 @@ def get_all_user(
 # in use cognition-ui & refinery-ui & admin-dashboard (08.01.25)
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
-
     data = admin_message_manager.get_messages(limit, active_only=True)
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
@@ -319,6 +318,7 @@ def get_mapped_sorted_paginated_users(
             "metadata_public": user.metadata_public,
             "sso_provider": user.sso_provider,
             "messages_created_this_month": user.messages_created_this_month,
+            "messages_created_today": user.messages_created_today,
         }
         for user in active_users
     ]
