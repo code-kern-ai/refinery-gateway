@@ -45,10 +45,6 @@ def get(data_block_id: str, attribute_id: str) -> DataBlockAttribute:
     attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
     if attribute_id and not attribute:
         raise EntityNotFoundException
-    # TODO: select *
-    # from public.data_block db
-    # where db.sql_config::text like '%data->>''file_extension''%'
-    # ;
     return attribute
 
 

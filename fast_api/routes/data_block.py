@@ -246,8 +246,8 @@ def get_record_by_record_id(
 
     data = {
         "id": str(record["record_id"]),
-        "data": json.dumps(record["data"]),
-        "dataBlockId": data_block_id,
+        "data": json.dumps(record),
+        "data_block_id": data_block_id,
     }
 
     return pack_json_result(data)

@@ -24,10 +24,11 @@ from submodules.model.business_objects import (
     record,
     project,
     tokenization,
+    data_block,
     data_block_attributes,
 )
 from submodules.model import enums, daemon
-from submodules.model.models import Attribute, DataBlockAttribute
+from submodules.model.models import Attribute, DataBlock, DataBlockAttribute
 
 client = docker.from_env()
 image = os.getenv("AC_EXEC_ENV_IMAGE")
@@ -668,4 +669,12 @@ def set_progress(
     general.commit()
     notification.send_organization_update(
         project_id, f"calculate_attribute:progress:{attribute.id}:{final_progress}"
+    )
+
+
+def get_dependant_data_blocks(
+    org_id: str, project_id: str, refinery_attribute_name: str
+) -> List[DataBlock]:
+    return data_block.get_refinery_attribute_dependants(
+        org_id, project_id, refinery_attribute_name
     )

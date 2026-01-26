@@ -16,6 +16,7 @@ from submodules.model.enums import (
     DataTypes,
     RecordTokenizationScope,
     AttributeVisibility,
+    TaskType,
 )
 from util import notification
 
@@ -23,7 +24,7 @@ from submodules.model import daemon
 from submodules.s3 import controller as s3
 
 from controller.task_master import manager as task_master_manager
-from submodules.model.enums import TaskType
+from controller.data_block import manager as data_block_manager
 from . import util
 from sqlalchemy import sql
 from hashlib import md5
@@ -240,6 +241,7 @@ def calculate_user_attribute_missing_records(
     user_id: str,
     attribute_id: str,
     include_rats: bool = True,
+    check_data_blocks_dependency: bool = False,
 ) -> None:
     if attribute.get_all(
         project_id=project_id, state_filter=[AttributeState.RUNNING.value]
@@ -291,6 +293,7 @@ def calculate_user_attribute_missing_records(
         user_id,
         attribute_id,
         include_rats,
+        check_data_blocks_dependency,
     )
 
 
@@ -300,6 +303,7 @@ def __calculate_user_attribute_missing_records(
     user_id: str,
     attribute_id: str,
     include_rats: bool,
+    check_data_blocks_dependency: bool = False,
 ) -> None:
     general.get_ctx_token()
 
@@ -424,6 +428,20 @@ def __calculate_user_attribute_missing_records(
     notification.send_organization_update(
         project_id, f"calculate_attribute:finished:{attribute_id}"
     )
+
+    if check_data_blocks_dependency:
+        dependant_data_blocks = util.get_dependant_data_blocks(
+            org_id, project_id, attribute_item.name
+        )
+        if dependant_data_blocks:
+            for data_block in dependant_data_blocks:
+                data_block_manager.update_query_results(
+                    org_id,
+                    user_id,
+                    data_block_id=str(data_block.id),
+                    include_schema=False,
+                )
+
     general.remove_and_refresh_session()
 
 
