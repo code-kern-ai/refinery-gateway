@@ -583,6 +583,11 @@ class DataBlockExecuteQueryRequest(BaseModel):
     sql_config: Optional[Dict[str, Any]] = None
 
 
+class DataBlockExecuteQueryRequestInternal(BaseModel):
+    user_id: str
+    org_id: str
+
+
 class DataBlockAttributeCreateRequest(BaseModel):
     name: StrictStr
     data_type: StrictStr

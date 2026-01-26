@@ -110,7 +110,7 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
 def get_attributes(request: Request, data_block_id: str):
     auth_manager.get_user_by_info(request.state.info)
     attributes = data_block_attribute_manager.get_all(data_block_id)
-    return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
+    return pack_json_result(attributes)
 
 
 @router.get("/{data_block_id}/attributes/schema")
@@ -124,7 +124,7 @@ def get_attributes_schema(request: Request, data_block_id: str):
 def get_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
     attribute = data_block_attribute_manager.get(data_block_id, attribute_id)
-    return pack_json_result(sql_alchemy_to_dict(attribute))
+    return pack_json_result(attribute)
 
 
 @router.post("/{data_block_id}/attributes")

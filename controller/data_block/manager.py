@@ -47,7 +47,7 @@ def update_query_results(
     user_id: str,
     data_block_id: str,
     sql_config: Optional[Dict[str, Dict[str, Any]]] = None,
-    include_schema: bool = True,
+    sync_schema: bool = True,
 ) -> List[Dict[str, Any]]:
     data_block = data_block_db_bo.get_by_id(data_block_id)
 
@@ -63,7 +63,7 @@ def update_query_results(
     results = execute_query(
         org_id,
         data_block_id,
-        include_schema=include_schema,
+        sync_schema=sync_schema,
     )
 
     if data_block.type == DataBlockType.STABLE.value:

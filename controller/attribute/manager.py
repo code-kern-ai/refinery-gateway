@@ -453,7 +453,7 @@ def __calculate_user_attribute_missing_records(
                     org_id,
                     user_id,
                     data_block_id=str(data_block.id),
-                    include_schema=False,
+                    sync_schema=False,
                 )
 
     general.remove_and_refresh_session()

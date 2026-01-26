@@ -18,7 +18,7 @@ from submodules.model.business_objects import (
 def execute_query(
     org_id: str,
     data_block_id: str,
-    include_schema: bool = True,
+    sync_schema: bool = True,
     limit: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     data_block = data_block_db_bo.get(org_id, data_block_id)
@@ -27,7 +27,7 @@ def execute_query(
 
     sql = construct_data_block_query(data_block, limit=limit)
 
-    if include_schema:
+    if sync_schema:
         schema = infer_query_schema(sql)
         data_block_attributes_db_bo.sync_attributes_from_schema(
             data_block_id,
