@@ -228,7 +228,7 @@ def run_llm_playground(
             data_block_id=data_block_id,
             attribute_id=attribute_id,
             llm_playground_config=body.llm_config,
-            record_indices=body.record_ids,
+            record_ids=body.record_ids,
         ),
         wrap_for_frontend=False,
     )

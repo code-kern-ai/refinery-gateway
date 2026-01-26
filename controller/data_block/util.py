@@ -14,15 +14,15 @@ def get_records(
     org_id: str,
     data_block_id: str,
     limit: int = 10,
-    record_indices: Optional[List[int]] = None,
+    record_ids: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     data = execute_query(org_id, data_block_id, limit=limit)
     if not data:
         return []
 
-    if record_indices is not None:
+    if record_ids is not None:
         # Use specific indices
-        return [data[i] for i in record_indices if i < len(data)]
+        return [record for record in data if record["id"] in map(int, record_ids)]
 
     # Random sample
     if limit:
@@ -36,7 +36,7 @@ def get_records(
 def prepare_records(
     data_block_id: str,
     attribute_id: str,
-    record_indices: Optional[List[int]] = None,
+    record_ids: Optional[List[int]] = None,
     limit: Optional[int] = None,
     prefix: Optional[str] = None,
 ) -> str:
@@ -47,7 +47,7 @@ def prepare_records(
     org_id = str(data_block.organization_id)
     project_id = str(data_block.project_id)
 
-    sample_records = get_records(org_id, data_block_id, limit, record_indices)
+    sample_records = get_records(org_id, data_block_id, limit, record_ids)
 
     return __prepare_records(
         org_id=org_id,
