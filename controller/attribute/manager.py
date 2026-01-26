@@ -9,6 +9,7 @@ from submodules.model.business_objects import (
     project,
     tokenization,
     general,
+    data_block,
 )
 from submodules.model.models import Attribute
 from submodules.model.enums import (
@@ -21,6 +22,7 @@ from submodules.model.enums import (
 from util import notification
 
 from submodules.model import daemon
+from submodules.model.util import sql_alchemy_to_dict
 from submodules.s3 import controller as s3
 
 from controller.task_master import manager as task_master_manager
@@ -50,6 +52,18 @@ DEFAULT_LLM_RESPONSE_CONFIG = {
 
 def get_attribute(project_id: str, attribute_id: str) -> Attribute:
     return attribute.get(project_id, attribute_id)
+
+
+def get_attribute_expanded(project_id: str, attribute_id: str) -> Attribute:
+    attribute_item = sql_alchemy_to_dict(attribute.get(project_id, attribute_id))
+    attribute_item["related_data_blocks"] = sql_alchemy_to_dict(
+        data_block.get_refinery_attribute_dependants(
+            org_id=project.get_org_id(project_id),
+            project_id=project_id,
+            refinery_attribute_name=attribute_item["name"],
+        )
+    )
+    return attribute_item
 
 
 def get_all_attributes_by_names(
