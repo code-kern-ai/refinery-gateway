@@ -22,7 +22,9 @@ def get_records(
 
     if record_ids is not None:
         # Use specific indices
-        return [record for record in data if record["id"] in map(int, record_ids)]
+        return [
+            record for record in data if record["record_id"] in map(int, record_ids)
+        ]
 
     # Random sample
     if limit:
@@ -36,7 +38,7 @@ def get_records(
 def prepare_records(
     data_block_id: str,
     attribute_id: str,
-    record_ids: Optional[List[int]] = None,
+    record_ids: Optional[List[str]] = None,
     limit: Optional[int] = None,
     prefix: Optional[str] = None,
 ) -> str:

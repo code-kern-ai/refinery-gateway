@@ -487,7 +487,7 @@ def run_llm_playground(
     data_block_id: str,
     attribute_id: str,
     llm_playground_config: Dict[str, Any],
-    record_indices: List[int],
+    record_ids: List[int],
 ) -> Dict[str, Any]:
     data_block = data_block_db_bo.get_by_id(data_block_id)
     if not data_block:
@@ -499,7 +499,7 @@ def run_llm_playground(
     record_samples = data_block_util.prepare_records(
         data_block_id=data_block_id,
         attribute_id=attribute_id,
-        record_indices=record_indices,
+        record_ids=record_ids,
         limit=10,
     )
 
