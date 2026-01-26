@@ -80,6 +80,7 @@ def create(
             f"Attribute with name '{name}' already exists for this data block"
         )
 
+    data_block = data_block_db_bo.get_by_id(data_block_id)
     if data_type == DataTypes.LLM_RESPONSE.value:
         additional_config = additional_config or DEFAULT_LLM_RESPONSE_CONFIG
 
@@ -99,7 +100,7 @@ def create(
     )
 
     notification.send_organization_update(
-        project_id=attribute.project_id,
+        project_id=data_block.project_id,
         message=f"calculate_attribute:created:{str(attribute.id)}",
     )
     return attribute
@@ -132,8 +133,10 @@ def update(
     progress: Optional[float] = None,
     additional_config: Optional[Dict[str, Any]] = None,
 ) -> DataBlockAttribute:
-    attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
-    if not attribute:
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    if not data_block or not data_block_attributes_db_bo.get(
+        data_block_id, attribute_id
+    ):
         raise EntityNotFoundException
 
     attribute = data_block_attributes_db_bo.update(
@@ -151,7 +154,7 @@ def update(
     )
 
     notification.send_organization_update(
-        project_id=attribute.project_id,
+        project_id=data_block.project_id,
         message=f"calculate_attribute:updated:{str(attribute.id)}",
     )
     return attribute
