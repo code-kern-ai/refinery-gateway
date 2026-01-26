@@ -14,4 +14,4 @@ def execute_query(data_block_id: str, data: DataBlockExecuteQueryRequestInternal
         user_id=data.user_id,
         data_block_id=data_block_id,
     )
-    return pack_json_result(results)
+    return pack_json_result(results, wrap_for_frontend=False)
