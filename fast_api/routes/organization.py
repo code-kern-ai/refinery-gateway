@@ -52,6 +52,7 @@ USER_INFO_WHITELIST = {
     "use_new_cognition_ui",
     "auto_logout_minutes",
     "one_drive_path",
+    "is_light_user",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
@@ -109,7 +110,17 @@ def get_user_info_extended(request: Request):
         ),
         "first_name": name.get("first") if name else None,
         "last_name": name.get("last") if name else None,
+        "light_user_config": None,
+        "messages_created_today": None,
+        "messages_created_this_month": None,
     }
+
+    if user.is_light_user:
+        org = organization.get(user.organization_id)
+        if org and org.light_user_config and org.light_user_config.get("is_active"):
+            user_dict["light_user_config"] = org.light_user_config
+            user_dict["messages_created_today"] = user.messages_created_today
+            user_dict["messages_created_this_month"] = user.messages_created_this_month
 
     return pack_json_result(user_dict)
 
