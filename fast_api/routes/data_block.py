@@ -8,7 +8,6 @@ from fast_api.models import (
     DataBlockAttributeCreateRequest,
     DataBlockAttributeUpdateRequest,
     DataBlockAttributeDeleteRequest,
-    DataBlockAttributeSyncSchemaRequest,
     RunLlmPlaygroundBody,
 )
 from fast_api.routes.client_response import get_silent_success, pack_json_result
@@ -63,6 +62,7 @@ def execute_query(
         user_id=user.id,
         data_block_id=data_block_id,
         sql_config=data.sql_config,
+        sync_schema=True,
     )
     return pack_json_result(results)
 
@@ -142,15 +142,6 @@ def create_attribute(
         additional_config=data.additional_config,
     )
     return pack_json_result({"id": str(attribute.id)}, wrap_for_frontend=False)
-
-
-@router.post("/{data_block_id}/attributes/sync-schema")
-def sync_attributes_schema(
-    request: Request, data_block_id: str, data: DataBlockAttributeSyncSchemaRequest
-):
-    auth_manager.get_user_by_info(request.state.info)
-    attributes = data_block_attribute_manager.sync_schema(data_block_id, data.schema)
-    return pack_json_result([sql_alchemy_to_dict(attr) for attr in attributes])
 
 
 @router.put("/{data_block_id}/attributes/{attribute_id}")
@@ -239,10 +230,7 @@ def get_record_by_record_id(
     data_block_id: str,
     record_id: str = None,
 ):
-    if record_id is None or record_id == "null":
-        record = data_block_manager.get_record(data_block_id)
-    else:
-        record = data_block_manager.get_record(data_block_id, record_id)
+    record = data_block_manager.get_record(data_block_id, record_id)
 
     data = {
         "id": str(record["record_id"]),

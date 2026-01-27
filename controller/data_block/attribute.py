@@ -106,21 +106,6 @@ def create(
     return attribute
 
 
-def create_many(
-    data_block_id: str,
-    attributes: List[Dict[str, Any]],
-) -> List[DataBlockAttribute]:
-    """
-    Create multiple attributes at once.
-    Each attribute dict should contain: name, data_type, and optionally state.
-    """
-    return data_block_attributes_db_bo.create_many(
-        data_block_id=data_block_id,
-        attributes=attributes,
-        with_commit=True,
-    )
-
-
 def update(
     data_block_id: str,
     attribute_id: str,
@@ -217,28 +202,6 @@ def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -
                 )
         else:
             raise ValueError("Attribute is not user created")
-
-
-def sync_schema(
-    data_block_id: str,
-    schema: List[Dict[str, str]],
-) -> List[DataBlockAttribute]:
-    """
-    Synchronize attributes from a schema definition.
-    This replaces the old sql_schema column functionality.
-
-    Args:
-        data_block_id: The ID of the data block
-        schema: List of dicts with column_name, column_data_type, and optionally state
-
-    Returns:
-        List of created/updated DataBlockAttribute
-    """
-    return data_block_attributes_db_bo.sync_attributes_from_schema(
-        data_block_id=data_block_id,
-        schema=schema,
-        with_commit=True,
-    )
 
 
 def calculate_data_block_attribute_records(
@@ -366,50 +329,6 @@ def __calculate_data_block_attribute_records(
         data_block_attribute_id=attribute_id,
         data_block_id=data_block_id,
     )
-    # attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
-    # if (
-    #     attribute_item
-    #     and (
-    #         attribute_item.data_type == DataTypes.TEXT.value
-    #         or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
-    #     )
-    #     and not attribute_item.state == AttributeState.FAILED.value
-    # ):
-    #     util.add_log_to_attribute_logs(
-    #         project_id, attribute_id, "Triggering tokenization."
-    #     )
-    #     try:
-    #         task_master_manager.queue_task(
-    #             str(org_id),
-    #             str(user_id),
-    #             TaskType.TOKENIZATION,
-    #             {
-    #                 "scope": RecordTokenizationScope.ATTRIBUTE.value,
-    #                 "attribute_id": str(attribute_item.id),
-    #                 "include_rats": include_rats,
-    #                 "project_id": str(project_id),
-    #             },
-    #         )
-
-    #     except Exception:
-    #         record.delete_user_created_attribute(
-    #             project_id=project_id,
-    #             attribute_id=attribute_id,
-    #             with_commit=True,
-    #         )
-    #         __notify_attribute_calculation_failed(
-    #             project_id=project_id,
-    #             attribute_id=attribute_id,
-    #             log="Writing to the database failed.",
-    #         )
-    #         general.remove_and_refresh_session()
-    #         return
-
-    # else:
-    #     util.add_log_to_attribute_logs(
-    #         project_id, attribute_id, "Adding attribute to docbins."
-    #     )
-    #     request_reupload_docbins(project_id)
 
     attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
     if attribute_item.state == AttributeState.FAILED.value:
@@ -470,12 +389,10 @@ def calculate_sample_records(
 
     project_id = str(data_block.project_id)
 
-    # Prepare doc_bin from DataBlockResults
     sample_records_prefix = data_block_util.prepare_records(
         data_block_id=data_block_id, attribute_id=attribute_id, limit=limit
     )
 
-    # Run calculation using shared execution environment
     calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
         attribute_id=None,
         project_id=project_id,
@@ -490,7 +407,6 @@ def calculate_sample_records(
         DataTypes.EMBEDDING_LIST.value,
         DataTypes.TEXT_LIST.value,
     ):
-        # JSON serialize list values for frontend transfer
         values = [json.dumps(v) for v in calculated_attributes.values()]
     else:
         values = list(calculated_attributes.values())
@@ -510,7 +426,6 @@ def run_llm_playground(
 
     project_id = str(data_block.project_id)
 
-    # Prepare doc_bin with specific records
     record_samples = data_block_util.prepare_records(
         data_block_id=data_block_id,
         attribute_id=attribute_id,
@@ -518,7 +433,6 @@ def run_llm_playground(
         limit=10,
     )
 
-    # Run calculation with LLM playground config
     calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
         attribute_id=None,
         project_id=project_id,

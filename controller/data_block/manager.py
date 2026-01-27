@@ -80,7 +80,7 @@ def update_query_results(
         task_list = []
         for attribute in data_block_attributes_db_bo.get_all(
             data_block_id=data_block_id,
-            state_filter=[AttributeState.USABLE.value],
+            state_filter=[AttributeState.USABLE.value, AttributeState.FAILED.value],
         ):
             task_list.append(
                 {
@@ -212,7 +212,7 @@ def get_record(data_block_id: str, record_id: Optional[str] = None):
     if not data_block or not data_block.sql_data:
         raise EntityNotFoundException(f"Data block {data_block_id} not found")
 
-    if not record_id or record_id == "null":
+    if record_id is None or record_id == "null":
         record = random.choice(data_block.sql_data)
     else:
         record = next(

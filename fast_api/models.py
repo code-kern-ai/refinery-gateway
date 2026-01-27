@@ -610,7 +610,3 @@ class DataBlockAttributeUpdateRequest(BaseModel):
 
 class DataBlockAttributeDeleteRequest(BaseModel):
     ids: List[str]
-
-
-class DataBlockAttributeSyncSchemaRequest(BaseModel):
-    schema: List[Dict[str, str]]

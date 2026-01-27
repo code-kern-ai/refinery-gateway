@@ -13,6 +13,7 @@ from submodules.model.business_objects import (
     record as record_db_bo,
     general,
 )
+from util import notification
 
 
 def execute_query(
@@ -29,12 +30,10 @@ def execute_query(
 
     if sync_schema:
         schema = infer_query_schema(sql)
-        data_block_attributes_db_bo.sync_attributes_from_schema(
-            data_block_id,
-            schema,
-            with_commit=True,
+        sync_attributes_from_schema(
+            data_block_id=data_block_id,
+            schema=schema,
         )
-
     return sql_alchemy_to_dict(general.execute_all(sql), for_frontend=False)
 
 
@@ -99,3 +98,34 @@ def _infer_type_from_value(value: Any) -> str:
     #     return DataTypes.TEXT.value
     else:
         return DataTypes.TEXT.value
+
+
+def sync_attributes_from_schema(
+    data_block_id: str, schema: List[Dict[str, str]]
+) -> None:
+    """
+    Synchronize attributes from a schema definition.
+    This replaces the old sql_schema column functionality.
+
+    Args:
+        data_block_id: The ID of the data block
+        schema: List of dicts with column_name, column_data_type, and optionally state
+
+    Returns:
+        List of created/updated DataBlockAttribute
+    """
+    data_block = data_block_db_bo.get_by_id(data_block_id)
+    attrs = data_block_attributes_db_bo.sync_attributes_from_schema(
+        data_block_id=data_block_id,
+        schema=schema,
+        with_commit=True,
+    )
+    # for attr in attrs:
+    #     notification.send_organization_update(
+    #         project_id=data_block.project_id,
+    #         message=f"calculate_attribute:updated:{str(attr.id)}",
+    #     )
+    # notification.send_organization_update(
+    #     project_id=data_block.project_id,
+    #     message=f"calculate_attribute:finished:{str(attr.id)}",
+    # )
