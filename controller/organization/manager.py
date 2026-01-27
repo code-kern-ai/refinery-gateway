@@ -21,7 +21,6 @@ def change_organization(org_id: str, changes: Dict[str, Any]) -> None:
         raise ValueError(f"Organization with id {org_id} does not exist")
 
     for k in changes:
-
         if hasattr(org, k):
             setattr(org, k, changes[k])
         else:
@@ -49,7 +48,7 @@ def get_user_info(user) -> User:
     return user_expanded
 
 
-def get_user_count(organization_id: str) -> int:
+def get_user_count(organization_id: str) -> Dict[str, int]:
     return organization.get_user_count(organization_id)
 
 
@@ -63,7 +62,7 @@ def get_all_users(
     parsed = None
     if user_role:
         try:
-            parsed = enums.UserRoles[user_role.upper()]
+            parsed = enums.UserRoles[user_role.upper()]  # noqa: F841
         except KeyError:
             raise ValueError(f"Invalid UserRoles: {user_role}")
     all_users = []

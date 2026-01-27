@@ -67,6 +67,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "conversation_lifespan_days",
     "file_lifespan_days",
     "token_limit",
+    "light_user_config",
 }
 RELEASE_NOTIFICATIONS_WHITELIST = {"id", "link", "config"}
 
@@ -319,6 +320,7 @@ def get_mapped_sorted_paginated_users(
             "sso_provider": user.sso_provider,
             "messages_created_this_month": user.messages_created_this_month,
             "messages_created_today": user.messages_created_today,
+            "is_light_user": user.is_light_user,
         }
         for user in active_users
     ]
@@ -408,4 +410,15 @@ def update_release_notification(
 def delete_release_notification(request: Request, notification_id: str):
     auth_manager.check_admin_access(request.state.info)
     release_notification.delete(notification_id, with_commit=True)
+    return get_silent_success()
+
+
+# in use admin-dashboard (27.01.26)
+@router.put("/toggle-light-user-status/{user_id}")
+def toggle_light_user_status(request: Request, user_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    u = user_manager.get_or_create_user(user_id)
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_manager.update_user_field(user_id, "is_light_user", not u.is_light_user)
     return get_silent_success()
