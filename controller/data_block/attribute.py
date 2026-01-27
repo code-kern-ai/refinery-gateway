@@ -340,6 +340,9 @@ def __calculate_data_block_attribute_records(
         )
         general.remove_and_refresh_session()
         return
+    data_block_util.prepare_records(
+        data_block_id, attribute_id=attribute_id, prefix=doc_bin
+    )
     attribute_util.set_progress(project_id, attribute_item, 1.0)
     data_block_attributes_db_bo.update(
         data_block_id=data_block_id,

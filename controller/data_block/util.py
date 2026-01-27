@@ -5,34 +5,33 @@ import json
 
 from submodules.model.business_objects import data_block as data_block_db_bo
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.models import DataBlock
 from submodules.s3 import controller as s3
-
-from controller.data_block.sql import execute_query
 
 
 def get_records(
-    org_id: str,
-    data_block_id: str,
+    data_block: DataBlock,
     limit: int = 10,
     record_ids: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
-    data = execute_query(org_id, data_block_id, limit=limit)
-    if not data:
+    if not data_block.sql_data:
         return []
 
     if record_ids is not None:
         # Use specific indices
         return [
-            record for record in data if record["record_id"] in map(int, record_ids)
+            record
+            for record in data_block.sql_data
+            if record["record_id"] in map(int, record_ids)
         ]
 
     # Random sample
     if limit:
-        sample_size = min(limit, len(data))
-        indices = random.sample(range(len(data)), sample_size)
-        return [data[i] for i in indices]
+        sample_size = min(limit, len(data_block.sql_data))
+        indices = random.sample(range(len(data_block.sql_data)), sample_size)
+        return [data_block.sql_data[i] for i in indices]
     else:
-        return data
+        return data_block.sql_data
 
 
 def prepare_records(
@@ -49,7 +48,7 @@ def prepare_records(
     org_id = str(data_block.organization_id)
     project_id = str(data_block.project_id)
 
-    sample_records = get_records(org_id, data_block_id, limit, record_ids)
+    sample_records = get_records(data_block, limit, record_ids)
 
     return __prepare_records(
         org_id=org_id,
