@@ -366,8 +366,6 @@ def test_where_clause(request: Request, data: TestWhereConditionRequest = Body(.
         order_by=data.orderBy,
         include_db_check=True,
         extend_allowed_nodes=extend_allowed_nodes,
-        # disable data block SELECTs from providing a record_id
-        extend_disallowed_column_prefix={"record_id"} if data.select else set(),
     )
     if extend_allowed_nodes and not isinstance(deny_reason, dict):
         # wrapper to force dict structure for single clause validation with extended nodes

@@ -591,7 +591,7 @@ class DataBlockExecuteQueryRequestInternal(BaseModel):
 class DataBlockAttributeCreateRequest(BaseModel):
     name: StrictStr
     data_type: StrictStr
-    user_created: Optional[StrictBool] = False
+    user_created: StrictBool = False
     source_code: Optional[StrictStr] = None
     state: Optional[StrictStr] = None
     additional_config: Optional[Dict[str, Any]] = None

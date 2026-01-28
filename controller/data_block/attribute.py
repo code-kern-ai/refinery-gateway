@@ -25,7 +25,7 @@ from util import notification
 DEFAULT_LLM_RESPONSE_CONFIG = {
     "llmIdentifier": "Open AI",
     "templatePrompt": "Make your answer a single word, e.g. 'yes' or 'no'",
-    "questionPrompt": "Is this clickbait? => '{{ headline }}'",
+    "questionPrompt": "Is this a folder? => '{{ extension }}'",
     "llmConfig": {
         "model": "gpt-4o-mini",
         "temperature": 0,
@@ -156,10 +156,6 @@ def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -
     for attribute_id in attribute_ids:
         attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
         if attribute_item.user_created:
-            # is_text_attribute = (
-            #     attribute_item.data_type == DataTypes.TEXT.value
-            #     or attribute_item.data_type == DataTypes.LLM_RESPONSE.value
-            # )
             project_item = project_db_bo.get(data_block.project_id)
             org_id = str(project_item.organization_id)
             is_usable = attribute_item.state == AttributeState.USABLE.value
@@ -190,8 +186,6 @@ def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -
                 data_block_id, attribute_id, with_commit=True
             )
             # NOTE: docbin_full gets re-uploaded on each execute_query call
-            # if is_usable and not is_text_attribute:
-            #     request_reupload_docbins(project_id)
             notification.send_organization_update(
                 project_id=data_block.project_id,
                 message=f"calculate_attribute:deleted:{attribute_id}",
@@ -209,8 +203,6 @@ def calculate_data_block_attribute_records(
     data_block_id: str,
     attribute_id: str,
 ) -> Tuple[List[str], List[Any]]:
-    # TODO: why are calculations not reporting final state?
-    # TODO: attributes being duplicated on query re-execution
     if data_block_attributes_db_bo.get_all(
         data_block_id=data_block_id, state_filter=[AttributeState.RUNNING.value]
     ):
@@ -272,7 +264,6 @@ def __calculate_data_block_attribute_records(
             project_id=project_id,
             doc_bin=doc_bin,
             data_block_id=data_block_id,
-            data_block_attribute_id=attribute_id,
         )
         if not calculated_attributes:
             __notify_attribute_calculation_failed(
@@ -294,9 +285,8 @@ def __calculate_data_block_attribute_records(
 
     attribute_util.add_log_to_attribute_logs(
         project_id,
-        None,
+        attribute_id,
         "Writing results to the database.",
-        data_block_attribute_id=attribute_id,
         data_block_id=data_block_id,
     )
     # add calculated attributes to database
@@ -324,9 +314,8 @@ def __calculate_data_block_attribute_records(
 
     attribute_util.add_log_to_attribute_logs(
         project_id,
-        None,
+        attribute_id,
         "Finished writing.",
-        data_block_attribute_id=attribute_id,
         data_block_id=data_block_id,
     )
 
@@ -366,7 +355,7 @@ def __notify_attribute_calculation_failed(
     append_to_logs: bool = True,
 ) -> None:
     attribute_util.add_log_to_attribute_logs(
-        project_id, None, log, append_to_logs, attribute_id, data_block_id
+        project_id, attribute_id, log, append_to_logs, data_block_id
     )
     data_block_attributes_db_bo.update(
         data_block_id=data_block_id,
@@ -397,24 +386,13 @@ def calculate_sample_records(
     )
 
     calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
-        attribute_id=None,
+        attribute_id=attribute_id,
         project_id=project_id,
         data_block_id=data_block_id,
-        data_block_attribute_id=attribute_id,
         doc_bin=sample_records_prefix,
     )
 
-    # Get attribute for data type
-    attribute = data_block_attributes_db_bo.get(data_block_id, attribute_id)
-    if attribute.data_type in (
-        DataTypes.EMBEDDING_LIST.value,
-        DataTypes.TEXT_LIST.value,
-    ):
-        values = [json.dumps(v) for v in calculated_attributes.values()]
-    else:
-        values = list(calculated_attributes.values())
-
-    return list(calculated_attributes.keys()), values
+    return list(calculated_attributes.keys()), list(calculated_attributes.values())
 
 
 def run_llm_playground(
@@ -437,12 +415,11 @@ def run_llm_playground(
     )
 
     calculated_attributes = attribute_util.run_attribute_calculation_exec_env(
-        attribute_id=None,
+        attribute_id=attribute_id,
         project_id=project_id,
         doc_bin=record_samples,
         llm_playground_config=llm_playground_config,
         data_block_id=data_block_id,
-        data_block_attribute_id=attribute_id,
     )
 
     return calculated_attributes

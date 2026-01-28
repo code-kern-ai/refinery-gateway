@@ -45,23 +45,26 @@ def add_log_to_attribute_logs(
     attribute_id: str,
     log: str,
     append_to_logs: bool = True,
-    data_block_attribute_id: Optional[str] = None,
     data_block_id: Optional[str] = None,
 ) -> None:
-    if data_block_id and data_block_attribute_id:
-        db_bo = data_block_attributes
-        kwargs = dict(data_block_id=data_block_id, attribute_id=data_block_attribute_id)
+    attribute_item = None
+    if data_block_id:
+        attribute_item = data_block_attributes.get(data_block_id, attribute_id)
     else:
-        db_bo = attribute
-        kwargs = dict(project_id=project_id, attribute_id=attribute_id)
-    attribute_item = db_bo.get(**kwargs)
+        attribute_item = attribute.get(project_id, attribute_id)
+
     berlin_now = datetime.datetime.now(__tz)
     time_string = berlin_now.strftime("%Y-%m-%dT%H:%M:%S")
     line = f"{time_string} {log}"
 
     if not append_to_logs or not attribute_item.logs:
         logs = [line]
-        db_bo.update(logs=logs, with_commit=True, **kwargs)
+        if isinstance(attribute_item, Attribute):
+            attribute.update(project_id, attribute_id, logs=logs, with_commit=True)
+        else:
+            data_block_attributes.update(
+                data_block_id, attribute_id, logs=logs, with_commit=True
+            )
     else:
         attribute_item.logs.append(line)
         general.commit()
@@ -235,14 +238,10 @@ def validate_user_prompt(
             "You can access attributes by using '{{ attribute_name }}' in your prompt."
         )
 
-    identifier = project_id
-    db_bo = attribute
-    if data_block_id:
-        identifier = data_block_id
-        db_bo = data_block_attributes
-
     for attr in mustache_attributes:
-        if not db_bo.get_by_name(identifier, attr):
+        if data_block_id and not data_block_attributes.get_by_name(data_block_id, attr):
+            raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
+        elif not data_block_id and not attribute.get_by_name(project_id, attr):
             raise LlmResponseError(f"Attribute '{attr}' does not exist in the project.")
 
 
@@ -398,42 +397,29 @@ async def ac(record):
 
 
 def run_attribute_calculation_exec_env(
-    attribute_id: Optional[str],
+    attribute_id: str,
     project_id: str,
     doc_bin: str,
     llm_playground_config: Union[Dict[str, Any], None] = None,
-    data_block_attribute_id: Optional[str] = None,
     data_block_id: Optional[str] = None,
 ) -> None:
     s3_prefix = ""
-    if data_block_id and data_block_attribute_id:
-        attribute_item = data_block_attributes.get(
-            data_block_id, data_block_attribute_id
-        )
+    if data_block_id:
+        attribute_item = data_block_attributes.get(data_block_id, attribute_id)
         s3_prefix = "data-blocks/"
     else:
         attribute_item = attribute.get(project_id, attribute_id)
 
-    # TODO: AttributeError: 'NoneType' object has no attribute 'id'
     attribute_id = str(attribute_item.id)
 
     if attribute_item.logs and llm_playground_config is None:
-        if data_block_attribute_id:
-            add_log_to_attribute_logs(
-                project_id,
-                attribute_id=None,
-                log="re-run attribute calculation",
-                append_to_logs=False,
-                data_block_attribute_id=attribute_id,
-                data_block_id=data_block_id,
-            )
-        else:
-            add_log_to_attribute_logs(
-                project_id,
-                attribute_id,
-                "re-run attribute calculation",
-                append_to_logs=False,
-            )
+        add_log_to_attribute_logs(
+            project_id,
+            attribute_id,
+            log="re-run attribute calculation",
+            append_to_logs=False,
+            data_block_id=data_block_id,
+        )
 
     prefixed_function_name = f"{attribute_id}_fn"
     prefixed_payload = f"{attribute_id}_payload.json"
@@ -476,22 +462,13 @@ def run_attribute_calculation_exec_env(
         except LlmResponseError as e:
             error_message = e.args[0]
             if llm_playground_config is None:
-                if data_block_attribute_id:
-                    add_log_to_attribute_logs(
-                        project_id,
-                        attribute_id=None,
-                        log=error_message,
-                        append_to_logs=False,
-                        data_block_attribute_id=attribute_id,
-                        data_block_id=data_block_id,
-                    )
-                else:
-                    add_log_to_attribute_logs(
-                        project_id,
-                        attribute_item.id,
-                        error_message,
-                        append_to_logs=False,
-                    )
+                add_log_to_attribute_logs(
+                    project_id,
+                    attribute_id,
+                    log=error_message,
+                    append_to_logs=False,
+                    data_block_id=data_block_id,
+                )
                 return {}
             else:
                 return {"logs": [error_message]}

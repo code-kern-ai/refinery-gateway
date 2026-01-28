@@ -30,6 +30,7 @@ def get(request: Request, data_block_id: str):
         data_block,
         for_frontend=True,
         dont_wrap_uuids=False,
+        column_blacklist=["sql_data"],
     )
     data_block["sqlData"] = data
     data_block["sqlSchema"] = sql_alchemy_to_dict(
@@ -104,13 +105,6 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
 
 
 # --- DataBlockAttributes Routes ---
-
-
-@router.get("/{data_block_id}/attributes")
-def get_attributes(request: Request, data_block_id: str):
-    auth_manager.get_user_by_info(request.state.info)
-    attributes = data_block_attribute_manager.get_all(data_block_id)
-    return pack_json_result(attributes)
 
 
 @router.get("/{data_block_id}/attributes/schema")

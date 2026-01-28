@@ -180,7 +180,7 @@ def update_add_user_created_attribute(
             None,
         )
         if not record_item:
-            # this can happen if an record was deleted or the tokenizer file isn't up to date
+            # this can happen if an record was deleted since calculation started
             continue
         record_item[attribute_item.name] = attribute_value
         flag_modified(data_block, "sql_data")

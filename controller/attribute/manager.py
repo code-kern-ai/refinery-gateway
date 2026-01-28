@@ -58,7 +58,6 @@ def get_attribute_expanded(project_id: str, attribute_id: str) -> Attribute:
     attribute_item = sql_alchemy_to_dict(attribute.get(project_id, attribute_id))
     attribute_item["related_data_blocks"] = sql_alchemy_to_dict(
         data_block.get_refinery_attribute_dependants(
-            org_id=project.get_org_id(project_id),
             project_id=project_id,
             refinery_attribute_name=attribute_item["name"],
         )
