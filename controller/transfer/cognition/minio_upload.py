@@ -7,7 +7,6 @@ from submodules.model import enums, etl_utils
 from submodules.model.business_objects import general
 from submodules.model.global_objects import etl_task as etl_task_bo
 from submodules.model.cognition_objects import (
-    project as project_db_co,
     file_reference as file_reference_db_co,
     markdown_file as markdown_file_db_co,
     markdown_dataset as markdown_dataset_db_co,
@@ -58,7 +57,6 @@ def handle_cognition_file_upload(path_parts: List[str]):
         conversation_id = file_reference.meta_data.get("conversation_id")
         full_config, tokenizer = etl_utils.get_full_config_and_tokenizer_from_config_id(
             file_reference,
-            etl_config_id=project_db_co.get_default_etl_config_id(project_id),
             project_id=project_id,
             conversation_id=conversation_id,
         )
