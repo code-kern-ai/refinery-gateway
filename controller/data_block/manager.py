@@ -49,6 +49,7 @@ def update_query_results(
     sql_config: Optional[Dict[str, Dict[str, Any]]] = None,
     sync_schema: bool = True,
 ) -> List[Dict[str, Any]]:
+    task_list = []
     data_block = data_block_db_bo.get_by_id(data_block_id)
 
     update(
@@ -57,14 +58,13 @@ def update_query_results(
         data_block_id,
         sql_config=sql_config,
         overwrite_sql=True,
-        with_commit=True,
+        with_commit=False,
     )
 
     results = execute_query(
         org_id,
         data_block_id,
         sync_schema=sync_schema,
-        limit=sql_config["config"].get("limit_clause") if sql_config else None,
     )
 
     if data_block.type == DataBlockType.STABLE.value:
@@ -74,10 +74,9 @@ def update_query_results(
             data_block_id=data_block_id,
             sql_data=results,
             overwrite_sql=True,
-            with_commit=True,
+            with_commit=False,
         )
 
-        task_list = []
         for attribute in data_block_attributes_db_bo.get_all(
             data_block_id=data_block_id,
             state_filter=[AttributeState.USABLE.value, AttributeState.FAILED.value],
@@ -91,17 +90,19 @@ def update_query_results(
                 }
             )
 
-        if task_list:
-            task_master_manager.queue_task(
-                org_id=str(org_id),
-                user_id=str(user_id),
-                task_type=TaskType.TASK_QUEUE,
-                task_info={
-                    "project_id": str(data_block.project_id),
-                    "task_list": task_list,
-                },
-                project_id=str(data_block.project_id),
-            )
+    general.flush_or_commit()
+
+    if task_list:
+        task_master_manager.queue_task(
+            org_id=str(org_id),
+            user_id=str(user_id),
+            task_type=TaskType.TASK_QUEUE,
+            task_info={
+                "project_id": str(data_block.project_id),
+                "task_list": task_list,
+            },
+            project_id=str(data_block.project_id),
+        )
     return results
 
 

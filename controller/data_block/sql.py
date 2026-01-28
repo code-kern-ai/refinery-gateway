@@ -19,13 +19,12 @@ def execute_query(
     org_id: str,
     data_block_id: str,
     sync_schema: bool = True,
-    limit: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
 
-    sql = construct_data_block_query(data_block, limit=limit)
+    sql = construct_data_block_query(data_block)
 
     if sync_schema:
         schema = infer_query_schema(sql)
@@ -37,14 +36,12 @@ def execute_query(
     return sql_alchemy_to_dict(general.execute_all(sql), for_frontend=False)
 
 
-def construct_data_block_query(
-    data_block: DataBlock, limit: Optional[int] = None
-) -> str:
+def construct_data_block_query(data_block: DataBlock) -> str:
     select_clause = data_block.sql_config.get("config", {}).get("select_clause")
     where_clause = data_block.sql_config.get("config", {}).get("where_clause")
     group_by_clause = data_block.sql_config.get("config", {}).get("group_by_clause")
     order_by_clause = data_block.sql_config.get("config", {}).get("order_by_clause")
-    limit_clause = data_block.sql_config.get("config", {}).get("limit")
+    limit_clause = data_block.sql_config.get("config", {}).get("limit_clause")
 
     try:
         sql_query = record_db_bo.get_record_data_by_sanitized_params(
@@ -53,7 +50,7 @@ def construct_data_block_query(
             sanitized_where=where_clause,
             order_by=order_by_clause,
             sanitized_group_by=group_by_clause,
-            limit=limit or limit_clause,
+            limit=limit_clause,
             return_query=True,
         )
         return (
