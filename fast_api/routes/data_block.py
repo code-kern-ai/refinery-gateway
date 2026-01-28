@@ -45,7 +45,10 @@ def get(request: Request, data_block_id: str):
     )
 
 
-@router.get("/project/{project_id}")
+@router.get(
+    "/project/{project_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_by_project_id(request: Request, project_id: str):
     user = auth_manager.get_user_by_info(request.state.info)
     return pack_json_result(
@@ -97,7 +100,10 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
     return get_silent_success()
 
 
-@router.delete("/{project_id}")
+@router.delete(
+    "/{project_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.delete_many(user.organization_id, project_id, data.ids)

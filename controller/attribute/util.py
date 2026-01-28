@@ -650,8 +650,8 @@ def set_progress(
 
 
 def get_dependant_data_blocks(
-    org_id: str, project_id: str, refinery_attribute_name: str
+    project_id: str, refinery_attribute_name: str
 ) -> List[DataBlock]:
     return data_block.get_refinery_attribute_dependants(
-        org_id, project_id, refinery_attribute_name
+        project_id, refinery_attribute_name
     )

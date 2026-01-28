@@ -444,7 +444,7 @@ def __calculate_user_attribute_missing_records(
 
     if check_data_blocks_dependency:
         dependant_data_blocks = util.get_dependant_data_blocks(
-            org_id, project_id, attribute_item.name
+            project_id, attribute_item.name
         )
         if dependant_data_blocks:
             for data_block in dependant_data_blocks:
