@@ -59,6 +59,21 @@ def get_by_project_id(request: Request, project_id: str):
     )
 
 
+@router.get(
+    "/project/{project_id}/mini",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_by_project_id(request: Request, project_id: str):
+    user = auth_manager.get_user_by_info(request.state.info)
+
+    data_blocks = data_block_manager.get_by_project_id(user.organization_id, project_id)
+    data_blocks_extended = [
+        {"id": str(data_block.get("id")), "name": str(data_block.get("name"))}
+        for data_block in sql_alchemy_to_dict(data_blocks)
+    ]
+    return pack_json_result(data_blocks_extended)
+
+
 @router.post(
     "/query/{project_id}/{data_block_id}",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
