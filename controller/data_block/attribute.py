@@ -145,7 +145,9 @@ def update(
     return attribute
 
 
-def delete_many(data_block_id: str, attribute_ids: Optional[List[str]] = None) -> None:
+def delete_attributes(
+    data_block_id: str, attribute_ids: Optional[List[str]] = None
+) -> None:
     data_block = data_block_db_bo.get_by_id(data_block_id)
     if not attribute_ids:
         attribute_ids = data_block_attributes_db_bo.get_all(
