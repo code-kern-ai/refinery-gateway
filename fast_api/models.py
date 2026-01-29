@@ -563,7 +563,6 @@ class UpdateOneDriveFieldRequest(BaseModel):
 
 
 class DataBlockCreateRequest(BaseModel):
-    project_id: str
     name: StrictStr
     description: StrictStr
     type: DataBlockType

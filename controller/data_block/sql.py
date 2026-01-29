@@ -17,10 +17,11 @@ from submodules.model.business_objects import (
 
 def execute_query(
     org_id: str,
+    project_id: str,
     data_block_id: str,
     sync_schema: bool = True,
 ) -> List[Dict[str, Any]]:
-    data_block = data_block_db_bo.get(org_id, data_block_id)
+    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
 

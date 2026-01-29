@@ -21,10 +21,13 @@ import json
 router = APIRouter()
 
 
-@router.get("/{data_block_id}")
-def get(request: Request, data_block_id: str):
+@router.get(
+    "/single/{project_id}/{data_block_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get(request: Request, project_id: str, data_block_id: str):
     user = auth_manager.get_user_by_info(request.state.info)
-    data_block = data_block_manager.get(user.organization_id, data_block_id)
+    data_block = data_block_manager.get(user.organization_id, project_id, data_block_id)
     data = data_block.sql_data.copy() if data_block.sql_data else None
     data_block = sql_alchemy_to_dict(
         data_block,
@@ -56,14 +59,21 @@ def get_by_project_id(request: Request, project_id: str):
     )
 
 
-@router.post("/query/{data_block_id}")
+@router.post(
+    "/query/{project_id}/{data_block_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def execute_query(
-    request: Request, data_block_id: str, data: DataBlockExecuteQueryRequest
+    request: Request,
+    project_id: str,
+    data_block_id: str,
+    data: DataBlockExecuteQueryRequest,
 ):
     user = auth_manager.get_user_by_info(request.state.info)
     results = data_block_manager.update_query_results(
         org_id=user.organization_id,
         user_id=user.id,
+        project_id=project_id,
         data_block_id=data_block_id,
         sql_config=data.sql_config,
         sync_schema=True,
@@ -71,13 +81,16 @@ def execute_query(
     return pack_json_result(results)
 
 
-@router.post("/")
-def create(request: Request, data: DataBlockCreateRequest):
+@router.post(
+    "/{project_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def create(request: Request, project_id: str, data: DataBlockCreateRequest):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block = data_block_manager.create(
         user.organization_id,
         user.id,
-        data.project_id,
+        project_id,
         data.name,
         data.description,
         data.type,
@@ -85,11 +98,17 @@ def create(request: Request, data: DataBlockCreateRequest):
     return pack_json_result({"id": str(data_block.id)}, wrap_for_frontend=False)
 
 
-@router.put("/{data_block_id}")
-def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
+@router.put(
+    "/project/{project_id}/{data_block_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def update(
+    request: Request, project_id: str, data_block_id: str, data: DataBlockUpdateRequest
+):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.update(
         user.organization_id,
+        project_id,
         data_block_id,
         data.name,
         data.description,
@@ -182,9 +201,13 @@ def delete_attributes_many(
     return get_silent_success()
 
 
-@router.get("/{data_block_id}/attributes/{data_block_attribute_id}/sample-records")
+@router.get(
+    "/{project_id}/{data_block_id}/attributes/{data_block_attribute_id}/sample-records",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_sample_records(
     request: Request,
+    project_id: str,
     data_block_id: str,
     data_block_attribute_id: str,
 ):
@@ -192,6 +215,7 @@ def get_sample_records(
     record_ids, calculated_attributes = (
         data_block_attribute_manager.calculate_sample_records(
             user.organization_id,
+            project_id,
             data_block_id,
             attribute_id=data_block_attribute_id,
             limit=10,
