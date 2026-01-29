@@ -58,7 +58,7 @@ def update_query_results(
         data_block_id,
         sql_config=sql_config,
         overwrite_sql=True,
-        with_commit=False,
+        with_commit=True,
     )
 
     results = execute_query(
@@ -74,7 +74,7 @@ def update_query_results(
             data_block_id=data_block_id,
             sql_data=results,
             overwrite_sql=True,
-            with_commit=False,
+            with_commit=True,
         )
 
         for attribute in data_block_attributes_db_bo.get_all(
@@ -89,8 +89,6 @@ def update_query_results(
                     "data_block_id": data_block_id,
                 }
             )
-
-    general.flush_or_commit()
 
     if task_list:
         task_master_manager.queue_task(
