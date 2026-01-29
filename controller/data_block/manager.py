@@ -54,7 +54,6 @@ def update_query_results(
 
     update(
         org_id,
-        user_id,
         data_block_id,
         sql_config=sql_config,
         overwrite_sql=True,
@@ -70,7 +69,6 @@ def update_query_results(
     if data_block.type == DataBlockType.STABLE.value:
         update(
             org_id,
-            user_id,
             data_block_id=data_block_id,
             sql_data=results,
             overwrite_sql=True,
@@ -120,7 +118,6 @@ def create(
 
 def update(
     org_id: str,
-    user_id: str,
     data_block_id: str,
     name: Optional[str] = None,
     description: Optional[str] = None,
@@ -131,13 +128,7 @@ def update(
 ) -> Optional[DataBlock]:
     data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
-        create_notification(
-            NotificationType.DATA_BLOCK_NOT_FOUND,
-            user_id,
-            data_block.project_id,
-            data_block.type.value,
-        )
-        return
+        raise EntityNotFoundException
 
     return data_block_db_bo.update(
         org_id,

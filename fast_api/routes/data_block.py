@@ -90,7 +90,6 @@ def update(request: Request, data_block_id: str, data: DataBlockUpdateRequest):
     user = auth_manager.get_user_by_info(request.state.info)
     data_block_manager.update(
         user.organization_id,
-        user.id,
         data_block_id,
         data.name,
         data.description,
