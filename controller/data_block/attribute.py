@@ -149,55 +149,50 @@ def delete_attributes(
     data_block_id: str, attribute_ids: Optional[List[str]] = None
 ) -> None:
     data_block = data_block_db_bo.get_by_id(data_block_id)
+    project_item = project_db_bo.get(data_block.project_id)
     if not attribute_ids:
-        attribute_ids = data_block_attributes_db_bo.get_all(
+        attribute_items = data_block_attributes_db_bo.get_all(
             data_block_id=data_block_id,
-            # TODO: confirm if both states are needed
-            state_filter=[AttributeState.INITIAL.value, AttributeState.USABLE.value],
+            user_created=True,
         )
-    for attribute_id in attribute_ids:
-        attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
-        if attribute_item.user_created:
-            project_item = project_db_bo.get(data_block.project_id)
-            org_id = str(project_item.organization_id)
-            is_usable = attribute_item.state == AttributeState.USABLE.value
-            if is_usable:
-                data_block_manager.delete_user_created_attribute(
-                    data_block_id=data_block_id,
-                    attribute_id=attribute_id,
-                    with_commit=True,
-                )
-            elif (
-                not is_usable
-                and attribute_item.data_type == DataTypes.LLM_RESPONSE.value
-            ):
-                s3.delete_object(
-                    org_id,
-                    str(project_item.id)
-                    + "/data-blocks/"
-                    + f"{attribute_id}_llm_ac_cache",
-                )
-                s3.delete_object(
-                    org_id,
-                    str(project_item.id)
-                    + "/data-blocks/"
-                    + f"{attribute_id}_knowledge",
-                )
+    else:
+        attribute_items = data_block_attributes_db_bo.get_all_by_ids(
+            data_block_id=data_block_id,
+            attribute_ids=attribute_ids,
+        )
 
-            data_block_attributes_db_bo.delete(
-                data_block_id, attribute_id, with_commit=True
+    attribute_ids = [str(attr.id) for attr in attribute_items]
+    for attribute_item in attribute_items:
+        attribute_id = str(attribute_item.id)
+        org_id = str(project_item.organization_id)
+        is_usable = attribute_item.state == AttributeState.USABLE.value
+        if is_usable:
+            data_block_manager.delete_user_created_attribute(
+                data_block_id=data_block_id,
+                attribute_id=attribute_id,
+                with_commit=False,
             )
-            # NOTE: docbin_full gets re-uploaded on each execute_query call
-            notification.send_organization_update(
-                project_id=data_block.project_id,
-                message=f"calculate_attribute:deleted:{attribute_id}",
+        elif not is_usable and attribute_item.data_type == DataTypes.LLM_RESPONSE.value:
+            s3.delete_object(
+                org_id,
+                str(project_item.id) + "/data-blocks/" + f"{attribute_id}_llm_ac_cache",
             )
-            if is_usable:
-                notification.send_organization_update(
-                    project_id=data_block.project_id, message="attributes_updated"
-                )
-        else:
-            raise ValueError("Attribute is not user created")
+            s3.delete_object(
+                org_id,
+                str(project_item.id) + "/data-blocks/" + f"{attribute_id}_knowledge",
+            )
+
+        data_block_attributes_db_bo.delete(
+            data_block_id, attribute_id, with_commit=False
+        )
+
+    general.commit()
+
+    for attribute_id in attribute_ids:
+        notification.send_organization_update(
+            project_id=data_block.project_id,
+            message=f"calculate_attribute:deleted:{attribute_id}",
+        )
 
 
 def calculate_data_block_attribute_records(
@@ -227,7 +222,7 @@ def calculate_data_block_attribute_records(
             project_id=project_id,
             data_block_id=data_block_id,
             attribute_id=attribute_id,
-            log="Calculation of attribute failed. Another attribute with the same name is already in state usable or uploaded.",
+            log="Calculation of attribute failed. Another attribute with the same name already exists.",
             append_to_logs=False,
         )
         return
@@ -300,6 +295,7 @@ def __calculate_data_block_attribute_records(
             with_commit=True,
         )
     except Exception:
+        general.rollback()
         data_block_manager.delete_user_created_attribute(
             data_block_id=data_block_id,
             attribute_id=attribute_id,
@@ -378,7 +374,7 @@ def calculate_sample_records(
     limit: int = 10,
 ) -> Tuple[List[str], List[Any]]:
     # Get data block for project_id
-    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
+    data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException(f"Data block {data_block_id} not found")
 

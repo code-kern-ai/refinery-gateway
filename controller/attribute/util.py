@@ -638,7 +638,7 @@ def read_container_logs_thread(
 
 def set_progress(
     project_id: str,
-    attribute: Attribute,
+    attribute: Union[Attribute, DataBlockAttribute],
     progress: float,
 ) -> None:
     final_progress = round(progress, 4)
