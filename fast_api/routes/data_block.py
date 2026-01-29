@@ -131,21 +131,30 @@ def delete_many(request: Request, project_id: str, data: DataBlockDeleteRequest)
 # --- DataBlockAttributes Routes ---
 
 
-@router.get("/{data_block_id}/attributes/schema")
+@router.get(
+    "/project/{project_id}/{data_block_id}/attributes/schema",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_attributes_schema(request: Request, data_block_id: str):
     auth_manager.get_user_by_info(request.state.info)
     schema = data_block_attribute_manager.get_schema(data_block_id)
     return pack_json_result(schema)
 
 
-@router.get("/{data_block_id}/attributes/{attribute_id}")
+@router.get(
+    "/{project_id}/{data_block_id}/attributes/{attribute_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
     attribute = data_block_attribute_manager.get(data_block_id, attribute_id)
     return pack_json_result(attribute)
 
 
-@router.post("/{data_block_id}/attributes")
+@router.post(
+    "/{project_id}/{data_block_id}/attributes",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def create_attribute(
     request: Request, data_block_id: str, data: DataBlockAttributeCreateRequest
 ):
@@ -162,7 +171,10 @@ def create_attribute(
     return pack_json_result({"id": str(attribute.id)}, wrap_for_frontend=False)
 
 
-@router.put("/{data_block_id}/attributes/{attribute_id}")
+@router.put(
+    "/{project_id}/{data_block_id}/attributes/{attribute_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def update_attribute(
     request: Request,
     data_block_id: str,
@@ -185,7 +197,10 @@ def update_attribute(
     return pack_json_result(sql_alchemy_to_dict(attribute))
 
 
-@router.delete("/{data_block_id}/attributes/{attribute_id}")
+@router.delete(
+    "/{project_id}/{data_block_id}/attributes/{attribute_id}",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def delete_attribute(request: Request, data_block_id: str, attribute_id: str):
     auth_manager.get_user_by_info(request.state.info)
     data_block_attribute_manager.delete_attributes(data_block_id, [attribute_id])
@@ -220,7 +235,10 @@ def get_sample_records(
     )
 
 
-@router.post("/{data_block_id}/attributes/{attribute_id}/run-llm-playground")
+@router.post(
+    "/{project_id}/{data_block_id}/attributes/{attribute_id}/run-llm-playground",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def run_llm_playground(
     request: Request,
     data_block_id: str,
@@ -239,7 +257,10 @@ def run_llm_playground(
     )
 
 
-@router.get("/{data_block_id}/record-by-record-id")
+@router.get(
+    "/{project_id}/{data_block_id}/record-by-record-id",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
 def get_record_by_record_id(
     data_block_id: str,
     record_id: str = None,
