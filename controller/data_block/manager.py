@@ -150,7 +150,7 @@ def update(
 
 def delete_many(org_id: str, project_id: str, ids: Optional[List[str]] = None) -> None:
     for id in ids:
-        data_block_attribute_manager.delete_many(id)
+        data_block_attribute_manager.delete_attributes(id)
         s3.delete_object(
             str(org_id), str(project_id) + "/data-blocks/" + id + "/docbin_full"
         )
