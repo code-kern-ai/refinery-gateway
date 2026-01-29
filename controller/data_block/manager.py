@@ -28,7 +28,7 @@ COGNITION_GATEWAY = os.getenv("COGNITION_GATEWAY", "http://cognition-gateway:80"
 
 
 def get(org_id: str, project_id: str, data_block_id: str) -> DataBlock:
-    data_block: DataBlock = data_block_db_bo.get(org_id, project_id, data_block_id)
+    data_block: DataBlock = data_block_db_bo.get(org_id, data_block_id)
     if data_block_id and not data_block:
         raise EntityNotFoundException
 
@@ -55,7 +55,6 @@ def update_query_results(
 
     update(
         org_id,
-        project_id,
         data_block_id,
         sql_config=sql_config,
         overwrite_sql=True,
@@ -64,7 +63,6 @@ def update_query_results(
 
     results = execute_query(
         org_id,
-        project_id,
         data_block_id,
         sync_schema=sync_schema,
     )
@@ -72,7 +70,6 @@ def update_query_results(
     if data_block.type == DataBlockType.STABLE.value:
         update(
             org_id,
-            project_id,
             data_block_id=data_block_id,
             sql_data=results,
             overwrite_sql=True,
@@ -81,8 +78,9 @@ def update_query_results(
 
         for attribute in data_block_attributes_db_bo.get_all(
             data_block_id=data_block_id,
-            state_filter=[AttributeState.USABLE.value, AttributeState.FAILED.value],
+            state_filter=[AttributeState.USABLE.value],
         ):
+            # NOTE: docbin_full gets re-uploaded on each TaskType.ATTRIBUTE_CALCULATION call
             task_list.append(
                 {
                     "project_id": str(data_block.project_id),
@@ -122,7 +120,6 @@ def create(
 
 def update(
     org_id: str,
-    project_id: str,
     data_block_id: str,
     name: Optional[str] = None,
     description: Optional[str] = None,
@@ -131,13 +128,12 @@ def update(
     overwrite_sql: bool = False,
     with_commit=True,
 ) -> Optional[DataBlock]:
-    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
+    data_block = data_block_db_bo.get(org_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
 
     return data_block_db_bo.update(
         org_id,
-        project_id,
         data_block_id,
         name,
         description,
@@ -166,41 +162,31 @@ def update_add_user_created_attribute(
 ) -> None:
     data_block = data_block_db_bo.get_by_id(data_block_id)
     attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
-    changed = 0
+    existing_record_items = {
+        str(item["record_id"]): i for i, item in enumerate(data_block.sql_data)
+    }
     for record_id, attribute_value in calculated_attributes.items():
-        record_item = next(
-            filter(
-                lambda x: str(x["record_id"]) == str(record_id), data_block.sql_data
-            ),
-            None,
-        )
+        idx = existing_record_items.get(str(record_id))
+        record_item = data_block.sql_data[idx] if idx is not None else None
         if not record_item:
             # this can happen if an record was deleted since calculation started
             continue
         record_item[attribute_item.name] = attribute_value
-        flag_modified(data_block, "sql_data")
-        if changed > 1000:
-            changed = 0
-            general.flush_or_commit(with_commit)
-        changed += 1
+    flag_modified(data_block, "sql_data")
     general.flush_or_commit(with_commit)
 
 
 def delete_user_created_attribute(
     data_block_id: str, attribute_id: str, with_commit: bool = False
 ) -> None:
-    data_block = data_block_db_bo.get_by_id(data_block_id)
     attribute_item = data_block_attributes_db_bo.get(data_block_id, attribute_id)
 
     if not attribute_item.user_created:
         return
 
-    for i in range(len(data_block.sql_data)):
-        del data_block.sql_data[i][attribute_item.name]
-        flag_modified(data_block, "sql_data")
-        if (i + 1) % 1000 == 0:
-            general.flush_or_commit(with_commit)
-    general.flush_or_commit(with_commit)
+    data_block_attributes_db_bo.delete_user_created_attribute(
+        data_block_id, attribute_item.name, with_commit=with_commit
+    )
 
 
 def get_record(data_block_id: str, record_id: Optional[str] = None):
