@@ -69,7 +69,7 @@ def create(
     data_type: str = DataTypes.TEXT.value,
     user_created: bool = False,
     relative_position: Optional[int] = None,
-    source_code: Optional[str] = "",
+    source_code: Optional[str] = None,
     state: Optional[str] = None,
     additional_config: Optional[Dict[str, Any]] = None,
 ) -> DataBlockAttribute:
