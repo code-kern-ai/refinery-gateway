@@ -25,6 +25,12 @@ def execute_query(
         raise EntityNotFoundException
 
     sql = construct_data_block_query(data_block)
+    data_block = data_block_db_bo.update(
+        org_id=org_id,
+        project_id=str(data_block.project_id),
+        data_block_id=data_block_id,
+        sql_config={"query": sql},
+    )
 
     if sync_schema:
         schema = infer_query_schema(sql)
@@ -34,7 +40,9 @@ def execute_query(
             with_commit=True,
         )
     return sql_alchemy_to_dict(
-        general.execute_all(sql), for_frontend=True, dont_convert_keys=True
+        data_block_db_bo.execute_query(data_block),
+        for_frontend=True,
+        dont_convert_keys=True,
     )
 
 
