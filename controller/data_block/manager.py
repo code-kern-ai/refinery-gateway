@@ -22,13 +22,12 @@ from submodules.model.business_objects import (
     data_block_attributes as data_block_attributes_db_bo,
     general,
 )
-from util.notification import create_notification
 
 COGNITION_GATEWAY = os.getenv("COGNITION_GATEWAY", "http://cognition-gateway:80")
 
 
-def get(org_id: str, project_id: str, data_block_id: str) -> DataBlock:
-    data_block: DataBlock = data_block_db_bo.get(org_id, data_block_id)
+def get(org_id, project_id: str, data_block_id: str) -> DataBlock:
+    data_block: DataBlock = data_block_db_bo.get(org_id, project_id, data_block_id)
     if data_block_id and not data_block:
         raise EntityNotFoundException
 
@@ -51,10 +50,11 @@ def update_query_results(
     sync_schema: bool = True,
 ) -> List[Dict[str, Any]]:
     task_list = []
-    data_block = data_block_db_bo.get_by_id(data_block_id)
+    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
 
     update(
         org_id,
+        project_id,
         data_block_id,
         sql_config=sql_config,
         overwrite_sql=True,
@@ -70,6 +70,7 @@ def update_query_results(
     if data_block.type == DataBlockType.STABLE.value:
         update(
             org_id,
+            project_id,
             data_block_id=data_block_id,
             sql_data=results,
             overwrite_sql=True,
@@ -120,6 +121,7 @@ def create(
 
 def update(
     org_id: str,
+    project_id: str,
     data_block_id: str,
     name: Optional[str] = None,
     description: Optional[str] = None,
@@ -128,12 +130,13 @@ def update(
     overwrite_sql: bool = False,
     with_commit=True,
 ) -> Optional[DataBlock]:
-    data_block = data_block_db_bo.get(org_id, data_block_id)
+    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException
 
     return data_block_db_bo.update(
         org_id,
+        project_id,
         data_block_id,
         name,
         description,

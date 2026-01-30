@@ -20,7 +20,7 @@ def execute_query(
     data_block_id: str,
     sync_schema: bool = True,
 ) -> List[Dict[str, Any]]:
-    data_block = data_block_db_bo.get(org_id, data_block_id)
+    data_block = data_block_db_bo.get_by_id(data_block_id)
     if not data_block:
         raise EntityNotFoundException
 

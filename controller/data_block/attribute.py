@@ -374,7 +374,7 @@ def calculate_sample_records(
     limit: int = 10,
 ) -> Tuple[List[str], List[Any]]:
     # Get data block for project_id
-    data_block = data_block_db_bo.get(org_id, data_block_id)
+    data_block = data_block_db_bo.get(org_id, project_id, data_block_id)
     if not data_block:
         raise EntityNotFoundException(f"Data block {data_block_id} not found")
 
