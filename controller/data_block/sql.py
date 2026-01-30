@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Union, Any
 
 from submodules.model import DataBlock
 from submodules.model.util import sql_alchemy_to_dict
@@ -33,7 +33,9 @@ def execute_query(
             schema=schema,
             with_commit=True,
         )
-    return sql_alchemy_to_dict(general.execute_all(sql), for_frontend=False)
+    return sql_alchemy_to_dict(
+        general.execute_all(sql), for_frontend=True, dont_convert_keys=True
+    )
 
 
 def construct_data_block_query(data_block: DataBlock) -> str:

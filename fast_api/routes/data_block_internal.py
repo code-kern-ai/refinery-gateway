@@ -12,6 +12,7 @@ def execute_query(data_block_id: str, data: DataBlockExecuteQueryRequestInternal
     results = data_block_manager.update_query_results(
         org_id=data.org_id,
         user_id=data.user_id,
+        project_id=data.project_id,
         data_block_id=data_block_id,
     )
     return pack_json_result(results, wrap_for_frontend=False)

@@ -11,7 +11,6 @@ from controller.task_master import manager as task_master_manager
 from submodules.s3 import controller as s3
 from submodules.model import DataBlock
 from submodules.model.enums import (
-    NotificationType,
     DataBlockType,
     AttributeState,
     TaskType,

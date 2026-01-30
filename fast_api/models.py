@@ -585,6 +585,7 @@ class DataBlockExecuteQueryRequest(BaseModel):
 class DataBlockExecuteQueryRequestInternal(BaseModel):
     user_id: str
     org_id: str
+    project_id: str
 
 
 class DataBlockAttributeCreateRequest(BaseModel):
