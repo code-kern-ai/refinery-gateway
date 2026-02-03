@@ -14,6 +14,7 @@ from fast_api.models import (
     MissingUsersBody,
     RemoveUserToOrganizationBody,
     UpdateOneDriveFieldRequest,
+    UpdateSettingsRequest,
 )
 from controller.auth import manager as auth_manager
 from controller.auth import kratos
@@ -52,6 +53,8 @@ USER_INFO_WHITELIST = {
     "use_new_cognition_ui",
     "auto_logout_minutes",
     "one_drive_path",
+    "sound_settings",
+    "notification_settings",
     "is_light_user",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
@@ -303,6 +306,16 @@ def set_language_display(request: Request, field: str, value: str):
 def set_one_drive_field(request: Request, body: UpdateOneDriveFieldRequest = Body(...)):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     user_manager.update_user_field(user_id, "one_drive_path", body.oneDrivePath)
+    return get_silent_success()
+
+
+# in use cognition-ui (19.01.26)
+@router.put("/update-settings/{setting_type}")
+def update_settings(
+    request: Request, setting_type: str, body: UpdateSettingsRequest = Body(...)
+):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    user_manager.update_user_field(user_id, f"{setting_type}", body.settings)
     return get_silent_success()
 
 
