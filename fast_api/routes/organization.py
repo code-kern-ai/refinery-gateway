@@ -14,6 +14,7 @@ from fast_api.models import (
     MissingUsersBody,
     RemoveUserToOrganizationBody,
     UpdateOneDriveFieldRequest,
+    UpdateSettingsRequest,
 )
 from controller.auth import manager as auth_manager
 from controller.auth import kratos
@@ -52,6 +53,9 @@ USER_INFO_WHITELIST = {
     "use_new_cognition_ui",
     "auto_logout_minutes",
     "one_drive_path",
+    "sound_settings",
+    "notification_settings",
+    "is_light_user",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
@@ -67,6 +71,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "conversation_lifespan_days",
     "file_lifespan_days",
     "token_limit",
+    "light_user_config",
 }
 RELEASE_NOTIFICATIONS_WHITELIST = {"id", "link", "config"}
 
@@ -108,7 +113,17 @@ def get_user_info_extended(request: Request):
         ),
         "first_name": name.get("first") if name else None,
         "last_name": name.get("last") if name else None,
+        "light_user_config": None,
+        "messages_created_today": None,
+        "messages_created_this_month": None,
     }
+
+    if user.is_light_user:
+        org = organization.get(user.organization_id)
+        if org and org.light_user_config and org.light_user_config.get("is_active"):
+            user_dict["light_user_config"] = org.light_user_config
+            user_dict["messages_created_today"] = user.messages_created_today
+            user_dict["messages_created_this_month"] = user.messages_created_this_month
 
     return pack_json_result(user_dict)
 
@@ -160,7 +175,6 @@ def get_all_user(
 # in use cognition-ui & refinery-ui & admin-dashboard (08.01.25)
 @router.get("/all-active-admin-messages")
 def all_active_admin_messages(request: Request, limit: int = 100) -> str:
-
     data = admin_message_manager.get_messages(limit, active_only=True)
     data_dict = sql_alchemy_to_dict(
         data, column_whitelist=ACTIVE_ADMIN_MESSAGES_WHITELIST
@@ -295,6 +309,16 @@ def set_one_drive_field(request: Request, body: UpdateOneDriveFieldRequest = Bod
     return get_silent_success()
 
 
+# in use cognition-ui (19.01.26)
+@router.put("/update-settings/{setting_type}")
+def update_settings(
+    request: Request, setting_type: str, body: UpdateSettingsRequest = Body(...)
+):
+    user_id = auth_manager.get_user_id_by_info(request.state.info)
+    user_manager.update_user_field(user_id, f"{setting_type}", body.settings)
+    return get_silent_success()
+
+
 # in use admin-dashboard (08.01.25)
 @router.post("/mapped-sorted-paginated-users")
 def get_mapped_sorted_paginated_users(
@@ -319,6 +343,8 @@ def get_mapped_sorted_paginated_users(
             "metadata_public": user.metadata_public,
             "sso_provider": user.sso_provider,
             "messages_created_this_month": user.messages_created_this_month,
+            "messages_created_today": user.messages_created_today,
+            "is_light_user": user.is_light_user,
         }
         for user in active_users
     ]
@@ -408,4 +434,15 @@ def update_release_notification(
 def delete_release_notification(request: Request, notification_id: str):
     auth_manager.check_admin_access(request.state.info)
     release_notification.delete(notification_id, with_commit=True)
+    return get_silent_success()
+
+
+# in use admin-dashboard (27.01.26)
+@router.put("/toggle-light-user-status/{user_id}")
+def toggle_light_user_status(request: Request, user_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    u = user_manager.get_or_create_user(user_id)
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_manager.update_user_field(user_id, "is_light_user", not u.is_light_user)
     return get_silent_success()

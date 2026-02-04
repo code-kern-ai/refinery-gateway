@@ -553,4 +553,8 @@ class UpdateInboxMailThreadProgressRequest(BaseModel):
 
 
 class UpdateOneDriveFieldRequest(BaseModel):
-    oneDrivePath: StrictStr
+    oneDrivePath: Optional[str] = None
+
+
+class UpdateSettingsRequest(BaseModel):
+    settings: Dict[str, Any]
