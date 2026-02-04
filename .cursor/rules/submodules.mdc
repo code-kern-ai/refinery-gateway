@@ -38,6 +38,17 @@ s3.get_object(bucket, object_name)
 
 **Don't modify when**: Change belongs in gateway code (routes/controllers), just using existing functionality.
 
+## Database Schema Changes
+
+**When adding new tables or columns** in `submodules/model`:
+
+1. Make changes in `submodules/model/models.py` (add entity class or modify columns)
+2. Update `submodules/model/enums.py` if adding a new table (add to `Tablenames` enum)
+3. Create migration: `./db commit "Description of changes"`
+4. Apply migration: `./db migrate`
+
+**This is mandatory** - schema changes require both `commit` and `migrate` steps. See `submodules/model/.cursor/rules/entities.mdc` for detailed migration guidelines.
+
 ## Common Patterns
 
 ```python
