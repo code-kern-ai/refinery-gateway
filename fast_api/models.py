@@ -617,3 +617,7 @@ class TestWhereConditionRequest(BaseModel):
     where: Optional[str] = None
     groupBy: Optional[str] = None
     orderBy: Optional[str] = None
+
+
+class UpdateSettingsRequest(BaseModel):
+    settings: Dict[str, Any]
