@@ -49,7 +49,7 @@ s3.get_object(bucket, object_name)
 
 **Important**: Database migrations MUST be done only from `refinery-gateway` root directory, not from within the submodule.
 
-**This is mandatory** - schema changes require both `commit` and `migrate` steps. See `submodules/model/.cursor/rules/entities.mdc` for detailed migration guidelines.
+**For detailed migration workflow and examples**, see `submodules/model/.cursor/rules/entities.mdc` → Database Migrations section.
 
 ## Common Patterns
 
