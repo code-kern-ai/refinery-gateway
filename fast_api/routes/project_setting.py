@@ -69,8 +69,8 @@ def get_attribute_by_attribute_id(
     attribute_id: str,
 ):
     data = sql_alchemy_to_dict(
-        attribute_manager.get_attribute(project_id, attribute_id),
-        column_whitelist=ATTRIBUTE_WHITELIST,
+        attribute_manager.get_attribute_expanded(project_id, attribute_id),
+        column_whitelist=ATTRIBUTE_WHITELIST + ["related_data_blocks"],
     )
     return pack_json_result(data)
 
@@ -246,6 +246,7 @@ def calculate_user_attribute_all_records(
         {
             "project_id": str(project_id),
             "attribute_id": str(body.attribute_id),
+            "data_block_id": body.data_block_id,
         },
         True,
     )

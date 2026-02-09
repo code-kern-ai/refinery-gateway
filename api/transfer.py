@@ -2,6 +2,7 @@ import logging
 import traceback
 import time
 import os
+
 from typing import Optional
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse
@@ -10,30 +11,25 @@ from controller.embedding.manager import recreate_or_extend_embeddings
 from controller.transfer.cognition import (
     import_preparator as cognition_preparator,
 )
+from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
+from controller.transfer import manager as transfer_manager
+from controller.upload_task import manager as upload_task_manager
+from controller.attribute import manager as attribute_manager
+from controller.task_master import manager as task_master_manager
+from util.notification import create_notification
+from util import notification, service_requests
 from exceptions.exceptions import BadPasswordError
+
+from submodules.model import enums, daemon
+from submodules.model.models import UploadTask
 from submodules.model.business_objects import (
     attribute,
     general,
     tokenization,
     project,
+    data_block,
 )
 from submodules.model.cognition_objects import integration
-from util import service_requests
-
-from controller.transfer import manager as transfer_manager
-from controller.upload_task import manager as upload_task_manager
-from controller.attribute import manager as attribute_manager
-
-from submodules.model import enums
-from util.notification import create_notification
-from submodules.model.enums import NotificationType
-from submodules.model.models import UploadTask
-from util import notification
-from submodules.model import daemon
-from controller.transfer.cognition.minio_upload import handle_cognition_file_upload
-
-from controller.task_master import manager as task_master_manager
-from submodules.model.enums import TaskType, RecordTokenizationScope
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -64,6 +60,8 @@ class Notify(HTTPEndpoint):
         if len(project_id) != 36:
             return PlainTextResponse("OK")
         if upload_task_id == "download":
+            return PlainTextResponse("OK")
+        if upload_task_id == "data-blocks":
             return PlainTextResponse("OK")
         if org_id == "archive":
             return PlainTextResponse("OK")
@@ -127,10 +125,10 @@ def init_file_import(task: UploadTask, project_id: str, is_global_update: bool) 
         task_master_manager.queue_task(
             str(org_id),
             str(task.user_id),
-            TaskType.TOKENIZATION,
+            enums.TaskType.TOKENIZATION,
             {
                 "project_id": str(project_id),
-                "scope": RecordTokenizationScope.PROJECT.value,
+                "scope": enums.RecordTokenizationScope.PROJECT.value,
                 "include_rats": True,
                 "only_uploaded_attributes": only_usable_attributes,
             },
@@ -141,14 +139,14 @@ def file_import_error_handling(
     task: UploadTask,
     project_id: str,
     is_global_update: bool,
-    notification_type: Optional[NotificationType] = None,
+    notification_type: Optional[enums.NotificationType] = None,
     print_traceback: bool = True,
 ) -> None:
     general.rollback()
     task.state = enums.UploadStates.ERROR.value
     general.commit()
     if not notification_type:
-        notification_type = NotificationType.IMPORT_FAILED
+        notification_type = enums.NotificationType.IMPORT_FAILED
     create_notification(
         notification_type,
         task.user_id,
@@ -245,7 +243,8 @@ def __calculate_missing_attributes(project_id: str, user_id: str) -> None:
                     project.get_org_id(project_id),
                     user_id,
                     current_att_id,
-                    True,
+                    include_rats=True,
+                    check_data_blocks_dependency=True,
                 )
             else:
                 if tokenization.is_doc_bin_creation_running_for_attribute(

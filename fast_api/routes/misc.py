@@ -10,6 +10,7 @@ from fast_api.models import (
     CreateCustomerButton,
     UpdateCustomerButton,
     AdminQueryFilterBody,
+    TestWhereConditionRequest,
 )
 from fast_api.routes.client_response import (
     pack_json_result,
@@ -28,6 +29,7 @@ from submodules.model.global_objects import (
     admin_queries as admin_queries_db_go,
 )
 from submodules.model.util import sql_alchemy_to_dict
+from submodules.model.sql_validator import validate_sql_clause
 from submodules.model.enums import (
     try_parse_enum_value,
     CustomerButtonType,
@@ -343,4 +345,40 @@ def get_admin_query_excel(
     return FileResponse(
         file_path,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@router.post("/test-where-clause")
+def test_where_clause(request: Request, data: TestWhereConditionRequest = Body(...)):
+    extend_allowed_nodes = set()
+    full_clause_check = False
+    for key in data.__dict__.keys():
+        if data.__dict__[key] is not None:
+            full_clause_check = True
+            break
+    if full_clause_check:
+        extend_allowed_nodes = {"select", "where", "group", "order", "ordered"}
+
+    deny_reason = validate_sql_clause(
+        select=data.select,
+        where=data.where,
+        group_by=data.groupBy,
+        order_by=data.orderBy,
+        include_db_check=True,
+        extend_allowed_nodes=extend_allowed_nodes,
+    )
+    if extend_allowed_nodes and not isinstance(deny_reason, dict):
+        # wrapper to force dict structure for single clause validation with extended nodes
+        # print(data.__dict__, flush=True)
+        deny_reason = {
+            node: deny_reason if data.__dict__[node] else None
+            for node in data.__dict__.keys()
+        }
+    isValid = False
+    if full_clause_check:
+        isValid = all(v is None for v in deny_reason.values())
+    else:
+        isValid = deny_reason is None
+    return pack_json_result(
+        {"isValid": isValid, "denyReason": deny_reason}, wrap_for_frontend=False
     )
