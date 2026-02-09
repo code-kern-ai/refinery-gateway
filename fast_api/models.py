@@ -7,7 +7,11 @@ from pydantic import (
     StrictStr,
     ConfigDict,
 )
-from submodules.model.enums import CustomerButtonType, CustomerButtonLocation
+from submodules.model.enums import (
+    CustomerButtonType,
+    CustomerButtonLocation,
+    DataBlockType,
+)
 
 """
 Pydantic models for FastAPI.
@@ -257,6 +261,7 @@ class UpdateAttributeBody(BaseModel):
 
 class CalculateUserAttributeAllRecordsBody(BaseModel):
     attribute_id: StrictStr
+    data_block_id: Optional[StrictStr] = None
 
 
 class RunLlmPlaygroundBody(BaseModel):
@@ -403,9 +408,10 @@ class CancelTaskBody(BaseModel):
 
 class AttributeCalculationTaskExecutionBody(BaseModel):
     organization_id: StrictStr
-    project_id: StrictStr
+    project_id: Optional[StrictStr] = None
     user_id: StrictStr
     attribute_id: StrictStr
+    data_block_id: Optional[StrictStr] = None
 
 
 class InformationSourceTaskExecutionBody(BaseModel):
@@ -553,7 +559,64 @@ class UpdateInboxMailThreadProgressRequest(BaseModel):
 
 
 class UpdateOneDriveFieldRequest(BaseModel):
-    oneDrivePath: Optional[str] = None
+    oneDrivePath: StrictStr
+
+
+class DataBlockCreateRequest(BaseModel):
+    name: StrictStr
+    description: StrictStr
+    type: DataBlockType
+
+
+class DataBlockUpdateRequest(BaseModel):
+    name: Optional[StrictStr] = None
+    description: Optional[StrictStr] = None
+    sql_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockDeleteRequest(BaseModel):
+    ids: List[str]
+
+
+class DataBlockExecuteQueryRequest(BaseModel):
+    sql_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockExecuteQueryRequestInternal(BaseModel):
+    user_id: str
+    org_id: str
+    project_id: str
+
+
+class DataBlockAttributeCreateRequest(BaseModel):
+    name: StrictStr
+    data_type: StrictStr
+    user_created: StrictBool = False
+    source_code: Optional[StrictStr] = None
+    state: Optional[StrictStr] = None
+    additional_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockAttributeUpdateRequest(BaseModel):
+    name: Optional[StrictStr] = None
+    data_type: Optional[StrictStr] = None
+    relative_position: Optional[StrictInt] = None
+    source_code: Optional[StrictStr] = None
+    state: Optional[StrictStr] = None
+    logs: Optional[List[StrictStr]] = None
+    progress: Optional[StrictFloat] = None
+    additional_config: Optional[Dict[str, Any]] = None
+
+
+class DataBlockAttributeDeleteRequest(BaseModel):
+    ids: List[str]
+
+
+class TestWhereConditionRequest(BaseModel):
+    select: Optional[str] = None
+    where: Optional[str] = None
+    groupBy: Optional[str] = None
+    orderBy: Optional[str] = None
 
 
 class UpdateSettingsRequest(BaseModel):

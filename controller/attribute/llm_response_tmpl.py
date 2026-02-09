@@ -287,7 +287,7 @@ def get_llm_config_a2vybg():
 
 
 async def get_llm_response(record: dict, cached_records: dict):
-    curr_running_id = str(record["running_id"])
+    curr_running_id = str(record.get("running_id", record.get("record_id")))
 
     if curr_running_id in cached_records:
         return cached_records[curr_running_id]
