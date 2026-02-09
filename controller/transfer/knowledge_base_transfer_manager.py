@@ -26,7 +26,7 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
     elif file_type == "xlsx":
         df = pd.read_excel(download_file_name)
     elif file_type == "html":
-        df = pd.read_html(download_file_name)
+        df = pd.read_html(download_file_name, flavor="html.parser")
     elif file_type == "json":
         df = pd.read_json(download_file_name)
 
