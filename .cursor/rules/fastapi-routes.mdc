@@ -1,0 +1,120 @@
+---
+description: Rules for FastAPI route definitions and HTTP handling
+globs: ["fast_api/routes/**/*.py"]
+alwaysApply: true
+---
+
+# FastAPI Routes Guidelines
+
+Routes handle HTTP request/response logic. Keep routes thin - validate input, call controllers, format responses.
+
+## Route Structure
+
+```python
+from fastapi import APIRouter, Depends, Request
+from controller.auth import manager as auth_manager
+from fast_api.routes.client_response import pack_json_result, get_silent_success
+
+router = APIRouter()
+
+@router.get(
+    "/{project_id}/data",
+    dependencies=[Depends(auth_manager.check_project_access_dep)],
+)
+def get_data(project_id: str):
+    data = manager.get_data(project_id)
+    return pack_json_result(data)
+```
+
+## Authentication
+
+```python
+# Project access
+dependencies=[Depends(auth_manager.check_project_access_dep)]
+
+# Admin operations
+dependencies=[
+    Depends(auth_manager.check_project_access_dep),
+    Depends(auth_manager.check_group_auth),
+]
+
+# User context
+org_id = auth_manager.get_organization_id_by_info(request.state.info)
+```
+
+## Response Patterns
+
+```python
+# With data
+return pack_json_result(data)
+
+# No data
+return get_silent_success()
+
+# Custom status
+return pack_json_result(None, status_code=204)
+
+# Error handling
+from fast_api.routes.client_response import GENERIC_FAILURE_RESPONSE
+try:
+    result = manager.operation()
+    return pack_json_result(result)
+except EntityNotFoundException:
+    return pack_json_result({"error": str(e)}, status_code=404)
+except Exception as e:
+    logger.error(f"Error: {e}")
+    return GENERIC_FAILURE_RESPONSE
+```
+
+## Data Transformation
+
+Always use whitelists when converting SQLAlchemy objects:
+
+```python
+from submodules.model.util import sql_alchemy_to_dict
+
+ATTRIBUTES_WHITELIST = {"id", "name", "data_type", "is_primary_key"}
+
+@router.get("/{project_id}/all-attributes")
+def get_attributes(project_id: str):
+    data = manager.get_all_attributes(project_id)
+    data_dict = sql_alchemy_to_dict(data, column_whitelist=ATTRIBUTES_WHITELIST)
+    return pack_json_result(data_dict)
+```
+
+## Request Parameters
+
+```python
+# Path parameters
+@router.get("/{project_id}/record/{record_id}")
+def get_record(project_id: str, record_id: str):
+    pass
+
+# Query parameters
+from fastapi import Query
+from typing import List, Union
+
+@router.get("/{project_id}/all-attributes")
+def get_attributes(
+    project_id: str,
+    state_filter: Union[List[str], None] = Query(default=None),
+):
+    pass
+
+# Request body
+from fast_api.models import CreateProjectBody
+
+@router.post("/create-project")
+def create_project(body: CreateProjectBody):
+    pass
+```
+
+## Best Practices
+
+1. Keep routes thin - delegate to controllers
+2. Use dependencies for authentication
+3. Always use `pack_json_result()` or `get_silent_success()`
+4. Use whitelists with `sql_alchemy_to_dict()`
+5. Use type hints for all parameters
+6. Handle exceptions appropriately
+7. Use kebab-case for route paths: `/all-projects`, `/project-by-project-id`

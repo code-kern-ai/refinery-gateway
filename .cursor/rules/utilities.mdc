@@ -1,0 +1,45 @@
+---
+description: Rules for utility functions and helper modules
+globs: ["util/**/*.py"]
+alwaysApply: true
+---
+
+# Utilities Guidelines
+
+Utilities contain reusable, stateless helper functions.
+
+## Common Utilities
+
+**Security:**
+```python
+from util import security
+encrypted = security.encrypt("value")
+decrypted = security.decrypt(encrypted)
+```
+
+**Notifications:**
+```python
+from util import notification
+notification.create_notification(user_id=user_id, project_id=project_id, type=NotificationType.PROJECT_CREATED)
+```
+
+**Miscellaneous:**
+```python
+from util.miscellaneous_functions import chunk_list
+chunks = chunk_list(large_list, chunk_size=100)
+```
+
+## Best Practices
+
+1. Keep utilities stateless and reusable
+2. Use type hints for all functions
+3. Document with docstrings
+4. Single responsibility per function
+5. Avoid side effects when possible
+6. Make functions easily testable
+
+## Utility vs Controller vs Route
+
+- **Utilities**: Pure transformations, formatting, validation, generic helpers
+- **Controllers**: Business logic requiring database access, orchestration
+- **Routes**: HTTP handling, input validation, response formatting
