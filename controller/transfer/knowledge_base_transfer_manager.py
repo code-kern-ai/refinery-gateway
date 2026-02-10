@@ -26,6 +26,10 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
     elif file_type == "xlsx":
         df = pd.read_excel(download_file_name)
     elif file_type == "html":
+<<<<<<< HEAD
+=======
+        # Use built-in html.parser to avoid lxml (XXE-vulnerable); flavor='html.parser' uses stdlib only.
+>>>>>>> ae1850581c727ed0b9a98c91f0797d69f19e145f
         df = pd.read_html(download_file_name, flavor="html.parser")
     elif file_type == "json":
         df = pd.read_json(download_file_name)
