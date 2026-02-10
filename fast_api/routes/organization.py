@@ -7,12 +7,14 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateAdminMessageBody,
     CreateOrganizationBody,
+    CreateCrossSellingBody,
     CreateUpdateReleaseNotificationBody,
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
     MissingUsersBody,
     RemoveUserToOrganizationBody,
+    UpdateCrossSellingBody,
     UpdateOneDriveFieldRequest,
     UpdateSettingsRequest,
 )
@@ -474,9 +476,9 @@ def get_cross_selling(request: Request, cross_selling_id: str):
 
 
 @router.post("/cross-selling")
-def create_cross_selling(request: Request):
+def create_cross_selling(request: Request, body: CreateCrossSellingBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
-    entity = cross_selling_manager.create_cross_selling()
+    entity = cross_selling_manager.create_cross_selling(name=body.name)
     data = sql_alchemy_to_dict(
         entity, column_whitelist=CROSS_SELLING_WHITELIST
     )
@@ -484,10 +486,14 @@ def create_cross_selling(request: Request):
 
 
 @router.put("/cross-selling/{cross_selling_id}")
-def update_cross_selling(request: Request, cross_selling_id: str):
+def update_cross_selling(
+    request: Request, cross_selling_id: str, body: UpdateCrossSellingBody = Body(...)
+):
     auth_manager.check_admin_access(request.state.info)
     try:
-        entity = cross_selling_manager.update_cross_selling(cross_selling_id)
+        entity = cross_selling_manager.update_cross_selling(
+            cross_selling_id, name=body.name
+        )
         data = sql_alchemy_to_dict(
             entity, column_whitelist=CROSS_SELLING_WHITELIST
         )

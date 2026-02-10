@@ -544,6 +544,14 @@ class CreateUpdateReleaseNotificationBody(BaseModel):
     config: Dict[str, Any]
 
 
+class CreateCrossSellingBody(BaseModel):
+    name: StrictStr
+
+
+class UpdateCrossSellingBody(BaseModel):
+    name: StrictStr
+
+
 class InboxMailCreateRequest(BaseModel):
     recipientIds: List[str]
     subject: str
