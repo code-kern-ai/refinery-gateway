@@ -544,11 +544,7 @@ class CreateUpdateReleaseNotificationBody(BaseModel):
     config: Dict[str, Any]
 
 
-class CreateCrossSellingBody(BaseModel):
-    name: StrictStr
-
-
-class UpdateCrossSellingBody(BaseModel):
+class CreateUpdateCrossSellingBody(BaseModel):
     name: StrictStr
 
 

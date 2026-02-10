@@ -12,14 +12,7 @@ from api import transfer as transfer_api
 from util.decorator import param_debounce
 
 USER_INFO_WHITELIST = {"id", "role"}
-ORGANIZATION_WHITELIST = {
-    "id",
-    "name",
-    "max_rows",
-    "max_cols",
-    "max_char_count",
-    "cross_selling_id",
-}
+ORGANIZATION_WHITELIST = {"id", "name", "max_rows", "max_cols", "max_char_count"}
 
 
 def change_organization(org_id: str, changes: Dict[str, Any]) -> None:

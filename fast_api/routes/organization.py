@@ -7,14 +7,13 @@ from fast_api.models import (
     ChangeUserRoleBody,
     CreateAdminMessageBody,
     CreateOrganizationBody,
-    CreateCrossSellingBody,
+    CreateUpdateCrossSellingBody,
     CreateUpdateReleaseNotificationBody,
     DeleteOrganizationBody,
     DeleteUserBody,
     MappedSortedPaginatedUsers,
     MissingUsersBody,
     RemoveUserToOrganizationBody,
-    UpdateCrossSellingBody,
     UpdateOneDriveFieldRequest,
     UpdateSettingsRequest,
 )
@@ -454,54 +453,45 @@ def toggle_light_user_status(request: Request, user_id: str):
     return get_silent_success()
 
 
-# Cross-selling endpoints
+# in use admin-dashboard (10.02.26)
 @router.get("/cross-selling")
 def get_all_cross_sellings(request: Request):
     auth_manager.check_admin_access(request.state.info)
     data = cross_selling_manager.get_all_cross_sellings()
-    data_dict = sql_alchemy_to_dict(
-        data, column_whitelist=CROSS_SELLING_WHITELIST
-    )
+    data_dict = sql_alchemy_to_dict(data, column_whitelist=CROSS_SELLING_WHITELIST)
     return pack_json_result(data_dict)
 
 
-@router.get("/cross-selling/{cross_selling_id}")
-def get_cross_selling(request: Request, cross_selling_id: str):
-    auth_manager.check_admin_access(request.state.info)
-    try:
-        data = cross_selling_manager.get_cross_selling_dict(cross_selling_id)
-        return pack_json_result(data)
-    except EntityNotFoundException as e:
-        return pack_json_result({"error": str(e)}, status_code=404)
-
-
+# in use admin-dashboard (10.02.26)
 @router.post("/cross-selling")
-def create_cross_selling(request: Request, body: CreateCrossSellingBody = Body(...)):
+def create_cross_selling(
+    request: Request, body: CreateUpdateCrossSellingBody = Body(...)
+):
     auth_manager.check_admin_access(request.state.info)
     entity = cross_selling_manager.create_cross_selling(name=body.name)
-    data = sql_alchemy_to_dict(
-        entity, column_whitelist=CROSS_SELLING_WHITELIST
-    )
+    data = sql_alchemy_to_dict(entity, column_whitelist=CROSS_SELLING_WHITELIST)
     return pack_json_result(data)
 
 
+# in use admin-dashboard (10.02.26)
 @router.put("/cross-selling/{cross_selling_id}")
 def update_cross_selling(
-    request: Request, cross_selling_id: str, body: UpdateCrossSellingBody = Body(...)
+    request: Request,
+    cross_selling_id: str,
+    body: CreateUpdateCrossSellingBody = Body(...),
 ):
     auth_manager.check_admin_access(request.state.info)
     try:
         entity = cross_selling_manager.update_cross_selling(
             cross_selling_id, name=body.name
         )
-        data = sql_alchemy_to_dict(
-            entity, column_whitelist=CROSS_SELLING_WHITELIST
-        )
+        data = sql_alchemy_to_dict(entity, column_whitelist=CROSS_SELLING_WHITELIST)
         return pack_json_result(data)
     except EntityNotFoundException as e:
         return pack_json_result({"error": str(e)}, status_code=404)
 
 
+# in use admin-dashboard (10.02.26)
 @router.delete("/cross-selling/{cross_selling_id}")
 def delete_cross_selling(request: Request, cross_selling_id: str):
     auth_manager.check_admin_access(request.state.info)
