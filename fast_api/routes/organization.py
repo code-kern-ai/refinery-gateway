@@ -26,9 +26,11 @@ from controller.organization import manager
 from controller.admin_message import manager as admin_message_manager
 from controller.organization import manager as organization_manager
 from controller.user import manager as user_manager
+from controller.cross_selling import manager as cross_selling_manager
 
 from fast_api.routes.client_response import get_silent_success, pack_json_result
 from submodules.model.business_objects import organization, release_notification, user
+from submodules.model.exceptions import EntityNotFoundException
 from submodules.model.util import sql_alchemy_to_dict
 from util import notification
 
@@ -64,6 +66,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "created_at",
     "started_at",
     "is_paying",
+    "cross_selling_id",
     "max_rows",
     "max_cols",
     "max_char_count",
@@ -73,6 +76,7 @@ ALL_ORGANIZATIONS_WHITELIST = {
     "token_limit",
     "light_user_config",
 }
+CROSS_SELLING_WHITELIST = {"id", "name", "created_at"}
 RELEASE_NOTIFICATIONS_WHITELIST = {"id", "link", "config"}
 
 
@@ -446,3 +450,57 @@ def toggle_light_user_status(request: Request, user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     user_manager.update_user_field(user_id, "is_light_user", not u.is_light_user)
     return get_silent_success()
+
+
+# Cross-selling endpoints
+@router.get("/cross-selling")
+def get_all_cross_sellings(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    data = cross_selling_manager.get_all_cross_sellings()
+    data_dict = sql_alchemy_to_dict(
+        data, column_whitelist=CROSS_SELLING_WHITELIST
+    )
+    return pack_json_result(data_dict)
+
+
+@router.get("/cross-selling/{cross_selling_id}")
+def get_cross_selling(request: Request, cross_selling_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    try:
+        data = cross_selling_manager.get_cross_selling_dict(cross_selling_id)
+        return pack_json_result(data)
+    except EntityNotFoundException as e:
+        return pack_json_result({"error": str(e)}, status_code=404)
+
+
+@router.post("/cross-selling")
+def create_cross_selling(request: Request):
+    auth_manager.check_admin_access(request.state.info)
+    entity = cross_selling_manager.create_cross_selling()
+    data = sql_alchemy_to_dict(
+        entity, column_whitelist=CROSS_SELLING_WHITELIST
+    )
+    return pack_json_result(data)
+
+
+@router.put("/cross-selling/{cross_selling_id}")
+def update_cross_selling(request: Request, cross_selling_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    try:
+        entity = cross_selling_manager.update_cross_selling(cross_selling_id)
+        data = sql_alchemy_to_dict(
+            entity, column_whitelist=CROSS_SELLING_WHITELIST
+        )
+        return pack_json_result(data)
+    except EntityNotFoundException as e:
+        return pack_json_result({"error": str(e)}, status_code=404)
+
+
+@router.delete("/cross-selling/{cross_selling_id}")
+def delete_cross_selling(request: Request, cross_selling_id: str):
+    auth_manager.check_admin_access(request.state.info)
+    try:
+        cross_selling_manager.delete_cross_selling(cross_selling_id)
+        return get_silent_success()
+    except EntityNotFoundException as e:
+        return pack_json_result({"error": str(e)}, status_code=404)
