@@ -1,10 +1,61 @@
 import os
+from html.parser import HTMLParser
 from submodules.model import UploadTask, enums
 from submodules.model.business_objects import knowledge_term, organization
 from submodules.model.business_objects import general
 from controller.upload_task import manager as upload_task_manager
 from submodules.s3 import controller as s3
 import pandas as pd
+
+
+def _parse_html_tables_to_dataframe(path: str) -> pd.DataFrame:
+    """Parse the first HTML table from a file using stdlib html.parser only (no lxml).
+    Avoids pd.read_html so we do not trigger lxml/XXE-related parsers.
+    """
+    with open(path, encoding="utf-8", errors="replace") as f:
+        html_content = f.read()
+
+    class TableParser(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.in_table = False
+            self.in_row = False
+            self.in_cell = False
+            self.current_row: list[str] = []
+            self.rows: list[list[str]] = []
+            self.current_cell_text: list[str] = []
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag == "table":
+                self.in_table = True
+                self.rows = []
+            elif self.in_table and tag == "tr":
+                self.in_row = True
+                self.current_row = []
+            elif self.in_table and self.in_row and tag in ("td", "th"):
+                self.in_cell = True
+                self.current_cell_text = []
+
+        def handle_endtag(self, tag: str) -> None:
+            if tag == "table":
+                self.in_table = False
+            elif tag == "tr":
+                if self.in_table and self.current_row:
+                    self.rows.append(self.current_row)
+                self.in_row = False
+            elif tag in ("td", "th") and self.in_cell:
+                self.current_row.append("".join(self.current_cell_text).strip())
+                self.in_cell = False
+
+        def handle_data(self, data: str) -> None:
+            if self.in_cell:
+                self.current_cell_text.append(data)
+
+    parser = TableParser()
+    parser.feed(html_content)
+    if not parser.rows:
+        return pd.DataFrame()
+    return pd.DataFrame(parser.rows[1:], columns=parser.rows[0])
 
 
 def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
@@ -26,8 +77,7 @@ def import_knowledge_base_file(project_id: str, task: UploadTask) -> None:
     elif file_type == "xlsx":
         df = pd.read_excel(download_file_name)
     elif file_type == "html":
-        # Use built-in html.parser to avoid lxml (XXE-vulnerable); flavor='html.parser' uses stdlib only.
-        df = pd.read_html(download_file_name, flavor="html.parser")
+        df = _parse_html_tables_to_dataframe(download_file_name)
     elif file_type == "json":
         df = pd.read_json(download_file_name)
 
