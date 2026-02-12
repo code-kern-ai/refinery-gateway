@@ -31,5 +31,5 @@ def update_cross_selling(cross_selling_id: str, name: str = None) -> CrossSellin
 def delete_cross_selling(cross_selling_id: str) -> None:
     entity = cross_selling_bo.get(cross_selling_id)
     if not entity:
-        raise EntityNotFoundException(f"Cross selling {cross_selling_id} not found")
+        return
     cross_selling_bo.delete(cross_selling_id, with_commit=True)
