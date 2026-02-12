@@ -35,6 +35,8 @@ from fast_api.routes.task_execution import router as task_execution_router
 from fast_api.routes.record_internal import router as record_internal_router
 from fast_api.routes.playground import router as playground_router
 from fast_api.routes.inbox_mail import router as inbox_mail_router
+from fast_api.routes.data_block import router as data_block_router
+from fast_api.routes.data_block_internal import router as data_block_internal_router
 from middleware.database_session import handle_db_session
 from middleware.starlette_tmp_middleware import DatabaseSessionHandler
 from starlette.applications import Starlette
@@ -64,6 +66,8 @@ from route_prefix import (
     PREFIX_TASK_EXECUTION,
     PREFIX_PLAYGROUND,
     PREFIX_INBOX_MAIL,
+    PREFIX_DATA_BLOCK,
+    PREFIX_DATA_BLOCK_INTERNAL,
 )
 from util import security, clean_up
 from middleware import log_storage
@@ -127,20 +131,27 @@ fastapi_app.include_router(
     inbox_mail_router, prefix=PREFIX_INBOX_MAIL, tags=["inbox_mail"]
 )
 
+fastapi_app.include_router(
+    data_block_router, prefix=PREFIX_DATA_BLOCK, tags=["data-block"]
+)
+
 app_name_internal = app_name + "-i"
 fastapi_app_internal = FastAPI(title=app_name_internal)
 
 fastapi_app_internal.include_router(
     task_execution_router, prefix=PREFIX_TASK_EXECUTION, tags=["task-execution"]
 )
-
 fastapi_app_internal.include_router(
     record_internal_router, prefix=PREFIX_RECORD_INTERNAL, tags=["record-internal"]
 )
 fastapi_app_internal.include_router(
     project_internal_router, prefix=PREFIX_PROJECT_INTERNAL, tags=["project-internal"]
 )
-
+fastapi_app_internal.include_router(
+    data_block_internal_router,
+    prefix=PREFIX_DATA_BLOCK_INTERNAL,
+    tags=["data-block-internal"],
+)
 
 routes = [
     Route("/full_config", FullConfigRest),

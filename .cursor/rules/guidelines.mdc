@@ -1,0 +1,76 @@
+---
+description: Main guidelines and architecture overview for refinery-gateway
+alwaysApply: true
+---
+
+# Refinery Gateway Guidelines
+
+Gateway service guidelines ensuring consistency across API routes, controllers, middleware, and related code.
+
+## Overview
+
+The `refinery-gateway` is a FastAPI-based gateway service that manages incoming requests and holds workflow logic for the Refinery platform. It serves as the API layer between the UI/Python SDK and the underlying data models and services.
+
+## Architecture
+
+The gateway follows a layered architecture:
+
+- **FastAPI Routes** (`fast_api/routes/`): HTTP endpoint definitions and request/response handling
+- **Controllers** (`controller/`): Business logic and orchestration layer
+- **Middleware** (`middleware/`): Request processing, authentication, database session management
+- **Submodules** (`submodules/`): Shared modules for models and S3 operations
+- **Utilities** (`util/`): Helper functions and shared utilities
+- **Exceptions** (`exceptions/`): Custom exception definitions
+- **API Models** (`fast_api/models.py`): Pydantic models for request/response validation
+
+## Guideline Files
+
+- **[submodules.mdc](./submodules.mdc)** - Rules for working with submodules
+- **[fastapi-routes.mdc](./fastapi-routes.mdc)** - Rules for FastAPI route definitions
+- **[controllers.mdc](./controllers.mdc)** - Rules for controller modules and business logic
+- **[middleware.mdc](./middleware.mdc)** - Rules for middleware and request processing
+- **[exceptions.mdc](./exceptions.mdc)** - Rules for exception handling and custom exceptions
+- **[api-models.mdc](./api-models.mdc)** - Rules for Pydantic models and request/response validation
+- **[utilities.mdc](./utilities.mdc)** - Rules for utility functions and helpers
+
+## General Principles
+
+1. **Separation of Concerns**: Routes handle HTTP, controllers contain business logic, submodules handle data access
+2. **Type Safety**: Use type hints consistently, leverage Pydantic for validation
+3. **Consistency**: Follow established naming conventions and patterns
+4. **Security**: Always validate authentication and authorization, sanitize inputs
+5. **Error Handling**: Use appropriate HTTP status codes and consistent error responses
+6. **Submodule Integration**: Always check submodule rules before making changes to submodule code
+
+## Directory Structure
+
+```
+refinery-gateway/
+├── fast_api/              # FastAPI application code
+│   ├── models.py          # Pydantic models
+│   ├── types.py           # Type definitions
+│   └── routes/            # API route definitions
+├── controller/            # Business logic layer
+│   ├── auth/              # Authentication logic
+│   ├── project/           # Project management
+│   └── ...                # Other domain controllers
+├── middleware/            # Request middleware
+│   ├── database_session.py
+│   └── ...
+├── submodules/            # Git submodules
+│   ├── model/             # Database models and business objects
+│   └── s3/                # S3 storage operations
+├── util/                  # Utility functions
+├── exceptions/            # Custom exceptions
+└── api/                   # Legacy API handlers
+```
+
+## Quick Reference
+
+**Response Patterns**: Use `pack_json_result()` for data, `get_silent_success()` for no-data operations, `GENERIC_FAILURE_RESPONSE` for errors. Always use `sql_alchemy_to_dict()` with whitelists.
+
+**Authentication**: Use `Depends(auth_manager.check_project_access_dep)` for project access, `Depends(auth_manager.check_group_auth)` for admin. Access user context via `request.state.info`.
+
+**Database**: Sessions managed by middleware. Use submodule business objects, never create SQLAlchemy sessions directly.
+
+**Submodules**: Always check `submodules/{name}/.cursor/rules/` before modifying submodule code.

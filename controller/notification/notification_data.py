@@ -322,6 +322,18 @@ __notification_data = {
         "level": enums.Notification.ERROR.value,
         "page": enums.Pages.SETTINGS.value,
     },
+    enums.NotificationType.DATA_BLOCK_ALREADY_EXISTS.value: {
+        "message_template": "@@arg@@ block already exists.",
+        "title": "Data blocks",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.DATA_BLOCK.value,
+    },
+    enums.NotificationType.DATA_BLOCK_NOT_SUPPORTED.value: {
+        "message_template": "Data block is not supported for this type of project.",
+        "title": "Data blocks",
+        "level": enums.Notification.ERROR.value,
+        "page": enums.Pages.DATA_BLOCK.value,
+    },
 }
 
 

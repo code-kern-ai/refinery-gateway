@@ -1,0 +1,75 @@
+---
+description: Rules for Pydantic models and request/response validation
+globs: ["fast_api/models.py"]
+alwaysApply: true
+---
+
+# API Models Guidelines
+
+Pydantic models validate request bodies and ensure type safety.
+
+## Model Definition
+
+**Basic structure:**
+```python
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
+from typing import Optional, List, Dict, Any
+
+class CreateProjectBody(BaseModel):
+    name: StrictStr
+    description: Optional[StrictStr] = None
+    organization_id: StrictStr
+
+class CreateLabelsBody(BaseModel):
+    labelingTaskId: StrictStr
+    labels: List[StrictStr]
+
+class SearchRecordsExtendedBody(BaseModel):
+    filterData: Any = None
+    offset: StrictInt
+    limit: StrictInt
+```
+
+## Naming Conventions
+
+- Request bodies: `CreateProjectBody`, `UpdateProjectBody`, `DeleteRecordBody`
+- Use descriptive names ending in `Body`
+
+## Usage in Routes
+
+```python
+from fast_api.models import CreateProjectBody
+
+@router.post("/create-project")
+def create_project(body: CreateProjectBody):
+    project = manager.create_project(
+        name=body.name,
+        description=body.description,
+        organization_id=body.organization_id,
+    )
+    return pack_json_result(sql_alchemy_to_dict(project))
+```
+
+## Field Validation
+
+```python
+from pydantic import field_validator, Field
+
+class CreateProjectBody(BaseModel):
+    name: StrictStr = Field(min_length=1, max_length=100)
+    
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Project name cannot be empty')
+        return v.strip()
+```
+
+## Best Practices
+
+1. Use strict types (`StrictStr`, `StrictInt`, etc.) for validation
+2. Provide defaults for optional fields
+3. Use descriptive model names ending in `Body`
+4. Validate inputs using validators or Field constraints
+5. Use proper type hints for all fields

@@ -1,0 +1,58 @@
+---
+description: Rules for middleware and request processing
+globs: ["middleware/**/*.py"]
+alwaysApply: true
+---
+
+# Middleware Guidelines
+
+Middleware handles cross-cutting concerns: database sessions, authentication, logging.
+
+## Database Session Management
+
+Sessions are managed automatically by `middleware/database_session.py`. Never create SQLAlchemy sessions directly.
+
+**Use submodule session wrapper:**
+```python
+from submodules.model.session_wrapper import run_db_async_with_session
+
+result = await run_db_async_with_session(my_function, arg1, arg2, "session_key")
+```
+
+## Request State
+
+Middleware sets `request.state` with user context:
+
+```python
+from fastapi import Request
+
+@router.get("/endpoint")
+def my_endpoint(request: Request):
+    info = request.state.info  # Set by middleware
+    org_id = auth_manager.get_organization_id_by_info(info)
+    user_id = auth_manager.get_user_id_by_info(info)
+```
+
+## Error Handling
+
+Middleware catches exceptions and returns generic failure:
+
+```python
+async def handle_db_session(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        return response
+    except Exception:
+        print(traceback.format_exc(), flush=True)
+        return GENERIC_FAILURE_RESPONSE
+    finally:
+        general.remove_and_refresh_session()
+```
+
+## Best Practices
+
+1. Never create SQLAlchemy sessions directly - use session wrapper
+2. Always cleanup resources in `finally` blocks
+3. Use `request.state` to pass data between middleware and routes
+4. Use `run_db_async_with_session` for async database operations
+5. Keep middleware lightweight - move heavy operations to controllers

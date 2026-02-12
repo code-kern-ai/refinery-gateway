@@ -1,0 +1,120 @@
+---
+description: Rules for controller modules and business logic
+globs: ["controller/**/*.py"]
+alwaysApply: true
+---
+
+# Controllers Guidelines
+
+Controllers contain business logic and orchestrate operations between routes, submodules, and external services.
+
+## Import Patterns
+
+```python
+# Submodules
+from submodules.model.business_objects import project, record
+from submodules.model import Project, enums
+from submodules.model.exceptions import EntityNotFoundException
+from submodules.s3 import controller as s3
+
+# Other controllers
+from controller.auth import manager as auth_manager
+
+# Utilities
+from util import notification
+from util.miscellaneous_functions import chunk_list
+```
+
+## Function Patterns
+
+**Get operations:**
+```python
+def get_project(project_id: str) -> Project:
+    proj = project.get(project_id)
+    if not proj:
+        raise EntityNotFoundException(f"Project {project_id} not found")
+    return proj
+```
+
+**Create operations:**
+```python
+def create_project(name: str, organization_id: str, user_id: str, with_commit: bool = True) -> Project:
+    if not name or not name.strip():
+        raise ValueError("Project name cannot be empty")
+    
+    org = organization.get(organization_id)
+    if not org:
+        raise EntityNotFoundException(f"Organization {organization_id} not found")
+    
+    return project.create(name=name, organization_id=organization_id, created_by=user_id, with_commit=with_commit)
+```
+
+**Update operations:**
+```python
+def update_project(project_id: str, changes: Dict[str, Any], with_commit: bool = True) -> Project:
+    proj = project.get(project_id)
+    if not proj:
+        raise EntityNotFoundException(f"Project {project_id} not found")
+    
+    for key, value in changes.items():
+        setattr(proj, key, value)
+    
+    if with_commit:
+        general.commit()
+    return proj
+```
+
+## Business Logic Patterns
+
+**Validation:**
+```python
+def create_attribute(project_id: str, name: str, data_type: str) -> Attribute:
+    proj = project.get(project_id)
+    if not proj:
+        raise EntityNotFoundException(f"Project {project_id} not found")
+    
+    if not name or not name.strip():
+        raise ValueError("Attribute name cannot be empty")
+    
+    existing = attribute.get_by_name(project_id, name)
+    if existing:
+        raise ValueError(f"Attribute '{name}' already exists")
+    
+    return attribute.create(project_id=project_id, name=name, data_type=data_type, with_commit=True)
+```
+
+**Transaction management:**
+```python
+def bulk_create_records(project_id: str, records_data: List[Dict[str, Any]], with_commit: bool = True):
+    created_records = []
+    for data in records_data:
+        rec = record.create(project_id=project_id, data=data, with_commit=False)
+        created_records.append(rec)
+    if with_commit:
+        general.commit()
+    return created_records
+```
+
+**Async operations:**
+```python
+from submodules.model import daemon
+
+def run_weak_supervision(project_id: str, user_id: str) -> None:
+    daemon.run_with_db_token(weak_supervision_service.initiate_weak_supervision, project_id, user_id)
+    notification.create_notification(user_id=user_id, project_id=project_id, type=NotificationType.WEAK_SUPERVISION_STARTED)
+```
+
+## Constants
+
+```python
+ALL_PROJECTS_WHITELIST = {"id", "name", "description", "tokenizer", "status", "created_at", "created_by"}
+```
+
+## Best Practices
+
+1. Single responsibility per function
+2. Always validate inputs
+3. Use type hints for all parameters
+4. Use `with_commit` parameter appropriately
+5. Use submodule business objects, never SQLAlchemy directly
+6. Keep business logic in controllers, not routes
