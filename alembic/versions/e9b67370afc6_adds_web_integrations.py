@@ -1,7 +1,7 @@
 """adds web integrations
 
 Revision ID: e9b67370afc6
-Revises: a1b2c3d4e5f6
+Revises: b2c3d4e5f6a7
 Create Date: 2026-02-16 09:13:24.735449
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "e9b67370afc6"
-down_revision = "a1b2c3d4e5f6"
+down_revision = "b2c3d4e5f6a7"
 branch_labels = None
 depends_on = None
 
