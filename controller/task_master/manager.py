@@ -12,6 +12,7 @@ def queue_task(
     task_type: enums.TaskType,
     task_info: Union[List[Dict[str, Any]], Dict[str, Any]],
     project_id: Optional[str] = None,
+    priority: bool = False,
 ) -> requests.Response:
 
     task_payload = {
@@ -20,6 +21,7 @@ def queue_task(
         "taskType": task_type.value,
         "taskInfo": task_info,
         "projectId": project_id,
+        "priority": priority,
     }
     return requests.put(f"{TASK_MASTER_URL}/task/queue", json=task_payload)
 
