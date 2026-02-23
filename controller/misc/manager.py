@@ -12,7 +12,6 @@ import pandas as pd
 from submodules.model.util import ensure_sql_text
 from submodules.model.business_objects import general
 
-
 from util import service_requests
 
 BASE_URI_UPDATER = os.getenv("UPDATER")

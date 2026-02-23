@@ -26,9 +26,7 @@ from submodules.model.global_objects import (
     admin_queries as admin_queries_db_go,
 )
 from submodules.model.sql_validator import validate_sql_clause
-from submodules.model.enums import (
-    AdminQueries,
-)
+from submodules.model.enums import AdminQueries
 from submodules.model.business_objects import task_queue as task_queue_bo
 
 router = APIRouter()

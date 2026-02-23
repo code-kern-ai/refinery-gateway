@@ -7,9 +7,7 @@ from pydantic import (
     StrictStr,
     ConfigDict,
 )
-from submodules.model.enums import (
-    DataBlockType,
-)
+from submodules.model.enums import DataBlockType
 
 """
 Pydantic models for FastAPI.
@@ -523,6 +521,10 @@ class GetEmbeddingNameBody(BaseModel):
 class CreateUpdateReleaseNotificationBody(BaseModel):
     link: StrictStr
     config: Dict[str, Any]
+
+
+class CreateUpdateCrossSellingBody(BaseModel):
+    name: StrictStr
 
 
 class InboxMailCreateRequest(BaseModel):
