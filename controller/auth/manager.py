@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from controller.auth import kratos
 from fastapi import Request
@@ -16,10 +16,18 @@ from submodules.model.business_objects import general, organization
 from submodules.model.business_objects.user import check_email_in_full_admin
 from submodules.model.models import Organization, Project, User
 import sqlalchemy
+from dataclasses import dataclass
+from .kratos import get_identity_is_admin
 
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+
+@dataclass(frozen=True)
+class AdminData:
+    is_admin: bool
+    is_full_admin: bool
 
 
 def get_organization_id_by_info(info) -> Organization:
@@ -90,8 +98,8 @@ def check_project_access(info, project_id: str) -> None:
         raise AuthManagerError("Project not found")
 
 
-def check_admin_access(info) -> None:
-    if not check_is_admin(info.context["request"]):
+def check_admin_access(request_state: Any) -> None:
+    if not request_state.adm.is_admin:
         raise AuthManagerError("Admin access required")
 
 
@@ -115,24 +123,31 @@ def check_project_access_from_user_id(
 
 
 def check_is_admin(request: Any) -> bool:
+    state = getattr(request.state, "adm", None)
+    if not state:
+        raise AuthManagerError("Admin state is not set in request.state.adm")
+    return state.is_admin
+
+
+def __check_is_admin_header(request: Request) -> Tuple[bool, bool]:
     if "Authorization" in request.headers:
         jwt_decoded: Dict[str, Any] = jwt.decode(
             request.headers["Authorization"].split(" ")[1],
             options={"verify_signature": False},
         )
-        subject: Dict[str, Any] = jwt_decoded["session"]["identity"]
-        if (
-            subject["traits"]["email"].split("@")[1] == "kern.ai"
-            and subject["verifiable_addresses"][0]["verified"]
-        ):
-            return True
-        elif (
-            # subject metadata_public can be None so we use or {} instead of get with default
-            (subject.get("metadata_public") or {}).get("role") == "ADMIN"
-            and subject["verifiable_addresses"][0]["verified"]
-        ):
-            return True
-    return False
+        identity = jwt_decoded["session"]["identity"]
+        email = identity["traits"]["email"]
+
+        return get_identity_is_admin(identity), check_email_in_full_admin(email)
+    return False, False
+
+
+def parse_admin_info(request: Any) -> None:
+    is_admin, is_full_admin = __check_is_admin_header(request)
+    request.state.adm = AdminData(
+        is_admin=is_admin,
+        is_full_admin=is_full_admin,
+    )
 
 
 def check_is_single_organization() -> bool:

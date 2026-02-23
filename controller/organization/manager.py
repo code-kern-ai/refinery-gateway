@@ -105,7 +105,7 @@ def delete_organization(name: str) -> None:
     all_users = user.get_all(org.id)
     unassigned = False
     for u in all_users:
-        if (u.email or "").endswith("@kern.ai"):
+        if u.is_admin:
             unassigned = True
             u.organization_id = None
     if unassigned:
