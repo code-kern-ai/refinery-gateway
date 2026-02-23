@@ -152,7 +152,7 @@ def get_all_user(
     org_id: str = None,
 ):
     relevant_users = []
-    user_is_admin = auth_manager.check_is_admin(request)
+    user_is_admin = auth_manager.check_admin_access(request.state)
     if org_id:
         if not user_is_admin:
             raise HTTPException(status_code=403, detail="Not authorized")

@@ -34,7 +34,7 @@ router = APIRouter()
 
 @router.get("/is-admin")
 def get_is_admin(request: Request) -> Dict:
-    data = auth.check_is_admin(request)
+    data = auth.check_admin_access(request.state)
     return pack_json_result(data)
 
 
@@ -55,7 +55,7 @@ def model_provider_delete_model(
     request: Request, body: ModelProviderDeleteModelBody = Body(...)
 ):
     if not auth.check_is_single_organization():
-        auth.check_admin_access(request.state.info)
+        auth.check_admin_access(request.state)
     model_provider_manager.model_provider_delete_model(body.model_name)
 
     return get_silent_success()
@@ -66,7 +66,7 @@ def model_provider_download_model(
     request: Request, body: ModelProviderDownloadModelBody = Body(...)
 ):
     if not auth.check_is_single_organization():
-        auth.check_admin_access(request.state.info)
+        auth.check_admin_access(request.state)
     model_provider_manager.model_provider_download_model(body.model_name)
 
     return get_silent_success()
@@ -74,7 +74,7 @@ def model_provider_download_model(
 
 @router.get("/all-tasks")
 def get_all_tasks(request: Request, page: int = 1, limit: int = 100):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     tasks = controller_manager.monitor_all_tasks(page=page, limit=limit)
     return pack_json_result(tasks)
 
@@ -87,7 +87,7 @@ def delete_from_task_queue_db(
     task_id: str,
     org_id: str,
 ):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     task_master_manager.delete_task(org_id, task_id)
     return get_silent_success()
 
@@ -98,7 +98,7 @@ def cancel_task(
     body: CancelTaskBody = Body(...),
 ):
 
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     task_type = body.task_type
     task_info = body.task_info
     task_id = body.task_id
@@ -140,14 +140,14 @@ def cancel_task(
 
 @router.post("/cancel-all-running-tasks")
 def cancel_all_running_tasks(request: Request):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     controller_manager.cancel_all_running_tasks()
     return get_silent_success()
 
 
 @router.post("/pause-task-queue")
 def pause_task_queue(request: Request, task_queue_pause: bool):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     task_queue_pause_response = task_master_manager.pause_task_queue(task_queue_pause)
     task_queue_pause = False
     if task_queue_pause_response.ok:
@@ -160,7 +160,7 @@ def pause_task_queue(request: Request, task_queue_pause: bool):
 
 @router.get("/pause-task-queue")
 def get_task_queue_pause(request: Request):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     task_queue_pause_response = task_master_manager.get_task_queue_pause()
     task_queue_pause = False
     if task_queue_pause_response.ok:
@@ -207,7 +207,7 @@ def check_valid_emails(request: Request, body: CheckInviteUsersBody = Body(...))
 def get_admin_queries(
     request: Request, query: AdminQueries, body: AdminQueryFilterBody = Body(...)
 ):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
     data = admin_queries_db_go.get_result_admin_query(query, body.parameters)
@@ -218,7 +218,7 @@ def get_admin_queries(
 def get_admin_query_excel(
     request: Request, query: AdminQueries, body: AdminQueryFilterBody = Body(...)
 ):
-    auth.check_admin_access(request.state.info)
+    auth.check_admin_access(request.state)
     if not auth.check_is_full_admin(request):
         raise AuthManagerError("Full admin access required")
 

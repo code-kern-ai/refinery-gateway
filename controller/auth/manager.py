@@ -122,12 +122,6 @@ def check_project_access_from_user_id(
     return True
 
 
-def check_is_admin(request: Any) -> bool:
-    state = getattr(request.state, "adm", None)
-    if not state:
-        raise AuthManagerError("Admin state is not set in request.state.adm")
-    return state.is_admin
-
 
 def __check_is_admin_header(request: Request) -> Tuple[bool, bool]:
     if "Authorization" in request.headers:
@@ -163,8 +157,6 @@ def extract_state_info(request: Request, key: str) -> Any:
             user = get_user_by_info(request.state.info)
             if user and user.organization_id:
                 value = str(user.organization_id)
-        elif key == "is_admin":
-            value = check_is_admin(request)
         elif key == "log_request":
             # lazy and => db access only if admin is true
             if extract_state_info(request, "is_admin"):
@@ -183,15 +175,10 @@ def extract_state_info(request: Request, key: str) -> Any:
 def check_is_full_admin(request: Any) -> bool:
     if request.url.hostname == "localhost" and request.url.port == 7051:
         return True
-    if check_is_admin(request):
-        jwt_decoded: Dict[str, Any] = jwt.decode(
-            request.headers["Authorization"].split(" ")[1],
-            options={"verify_signature": False},
-        )
-        subject: Dict[str, Any] = jwt_decoded["session"]["identity"]
-        if check_email_in_full_admin(subject["traits"]["email"]):
-            return True
-    return False
+    state = getattr(request.state, "adm", None)
+    if not state:
+        raise AuthManagerError("Admin state is not set in request.state.adm")
+    return state.is_full_admin
 
 
 def invite_users(
