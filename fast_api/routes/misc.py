@@ -1,14 +1,12 @@
 from exceptions.exceptions import AuthManagerError
-from fastapi import APIRouter, Body, Request, status
-from fastapi.responses import PlainTextResponse, FileResponse
+from fastapi import APIRouter, Body, Request
+from fastapi.responses import FileResponse
 from fast_api.models import (
     CancelTaskBody,
     CheckInviteUsersBody,
     InviteUsersBody,
     ModelProviderDeleteModelBody,
     ModelProviderDownloadModelBody,
-    CreateCustomerButton,
-    UpdateCustomerButton,
     AdminQueryFilterBody,
     TestWhereConditionRequest,
 )
@@ -17,7 +15,7 @@ from fast_api.routes.client_response import (
     get_silent_success,
     GENERIC_FAILURE_RESPONSE,
 )
-from typing import Dict, Optional
+from typing import Dict
 from controller.auth import manager as auth
 from controller.misc import manager
 from controller.monitor import manager as controller_manager
@@ -25,15 +23,10 @@ from controller.model_provider import manager as model_provider_manager
 from controller.task_master import manager as task_master_manager
 from submodules.model import enums
 from submodules.model.global_objects import (
-    customer_button as customer_button_db_go,
     admin_queries as admin_queries_db_go,
 )
-from submodules.model.util import sql_alchemy_to_dict
 from submodules.model.sql_validator import validate_sql_clause
 from submodules.model.enums import (
-    try_parse_enum_value,
-    CustomerButtonType,
-    CustomerButtonLocation,
     AdminQueries,
 )
 from submodules.model.business_objects import task_queue as task_queue_bo
@@ -178,113 +171,6 @@ def get_task_queue_pause(request: Request):
         except Exception:
             task_queue_pause = False
     return pack_json_result(task_queue_pause)
-
-
-# this endpoint is meant to be used by the frontend to get the customer buttons for the current user
-# location is a filter to prevent the frontend from having to filter the buttons itself
-# also doesn't convert the key!
-@router.get("/my-customer-buttons/{location}")
-def get_my_customer_buttons(request: Request, location: CustomerButtonLocation):
-    # only of users org & filters for visible
-    # to be used by everyone, filters for only visible
-    org_id = auth.get_user_by_info(request.state.info).organization_id
-    if not org_id:
-        return pack_json_result([])
-    org_id = str(org_id)
-    return pack_json_result(
-        customer_button_db_go.get_by_org_id(org_id, True, location),
-    )
-
-
-# admin endpoint that converts the keys back to readable format!
-@router.get("/all-customer-buttons")
-def get_all_customer_buttons(request: Request, only_visible: Optional[bool] = None):
-    # all (only for admins on admin page!)
-    auth.check_admin_access(request.state.info)
-
-    return pack_json_result(
-        manager.finalize_customer_buttons(
-            [
-                sql_alchemy_to_dict(obj)
-                for obj in customer_button_db_go.get_all(only_visible)
-            ],
-            False,
-            True,
-        )
-    )
-
-
-@router.post("/create-customer-button")
-def add_customer_button(creation_request: CreateCustomerButton, request: Request):
-    # all (only for admins on admin page!)
-    auth.check_admin_access(request.state.info)
-    manager.convert_config_url_key_with_base64(creation_request.config)
-    if msg := manager.check_config_for_type(
-        creation_request.type, creation_request.config, False
-    ):
-        return PlainTextResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=msg,
-        )
-    user_id = auth.get_user_id_by_jwt_token(request)
-
-    return pack_json_result(
-        customer_button_db_go.create(
-            creation_request.org_id,
-            creation_request.type,
-            creation_request.location,
-            creation_request.config,
-            user_id,
-            creation_request.visible,
-        )
-    )
-
-
-@router.delete("/customer-button/{button_id}")
-def delete_customer_buttons(button_id: str, request: Request):
-    # all (only for admins on admin page!)
-    auth.check_admin_access(request.state.info)
-    customer_button_db_go.delete(button_id)
-    return get_silent_success()
-
-
-@router.post("/update-customer-button/{button_id}")
-def update_customer_buttons(
-    button_id: str, update_request: UpdateCustomerButton, request: Request
-):
-    # (only for admins on admin page!)
-    auth.check_admin_access(request.state.info)
-
-    button = customer_button_db_go.get(button_id)
-    if not button:
-        return PlainTextResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content="Button not found",
-        )
-
-    check_type = update_request.type or try_parse_enum_value(
-        button.type, CustomerButtonType
-    )
-    if update_request.config:
-        manager.convert_config_url_key_with_base64(update_request.config)
-    check_config = update_request.config or button.config
-
-    if msg := manager.check_config_for_type(check_type, check_config, False):
-        return PlainTextResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=msg,
-        )
-    return pack_json_result(
-        customer_button_db_go.update(
-            button_id,
-            update_request.org_id,
-            update_request.type,
-            update_request.location,
-            update_request.config,
-            None,  # creation user
-            update_request.visible,
-        )
-    )
 
 
 @router.get("/is-full-admin")

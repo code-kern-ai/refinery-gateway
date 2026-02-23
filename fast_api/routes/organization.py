@@ -367,10 +367,10 @@ def delete_user(request: Request, body: DeleteUserBody = Body(...)):
 
 
 # in use admin-dashboard (08.01.25)
-@router.post("/missing-users-interaction-and-message-count")
-def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
+@router.post("/missing-kratos-data")
+def get_missing_kratos_data(request: Request, body: MissingUsersBody = Body(...)):
     auth_manager.check_admin_access(request.state.info)
-    data = user.get_missing_users(body.user_ids)
+    data = user.get_missing_kratos_data(body.user_ids)
     return pack_json_result(data, wrap_for_frontend=False)
 
 
