@@ -28,6 +28,17 @@ LANGUAGE_MESSAGES = {
     "de": "Hallo!\n\nKlicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
 }
 
+# One-time code invite: static link + code in email (avoids spam filters opening links)
+LANGUAGE_INVITE_WITH_CODE = {
+    "en": "Hello!\n\nGo to this link to complete your account setup:\n\n{invite_link}\n\nYour one-time code: {recovery_code}\n\n",
+    "de": "Hallo!\n\nGehen Sie zu diesem Link, um Ihre Kontoeinrichtung abzuschließen:\n\n{invite_link}\n\nIhr Einmal-Code: {recovery_code}\n\n",
+}
+
+LANGUAGE_INVITE_CODE_EXPIRATION = {
+    "en": "Enter the code on the page. The code is valid for 2 days and can only be used once. Contact your system admin if you have issues.",
+    "de": "Geben Sie den Code auf der Seite ein. Der Code ist 2 Tage gültig und kann nur einmal verwendet werden. Kontaktieren Sie Ihren Systemadministrator bei Problemen.",
+}
+
 INVITATION_SUBJECT = "Sie sind zu unserer app eingeladen/You are invited to our app"
 
 LANGUAGE_EXPIRATION_INFO = {
@@ -247,6 +258,15 @@ def get_recovery_link(user_id: str) -> str:
     return response_link.json() if response_link.ok else None
 
 
+def get_recovery_code(user_id: str) -> Dict[str, Any]:
+    payload = {
+        "expires_in": "48h",
+        "identity_id": user_id,
+    }
+    response = requests.post(f"{KRATOS_ADMIN_URL}/recovery/code", json=payload)
+    return response.json() if response.ok else None
+
+
 def email_with_link(to_email: str, recovery_link: str) -> None:
     msg = MIMEText(
         f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
@@ -275,6 +295,39 @@ def send_bulk_emails(emails: List[str], recovery_links: List[str]) -> None:
             msg = MIMEText(
                 f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
             )
+            msg["Subject"] = INVITATION_SUBJECT
+            msg["From"] = "signup@kern.ai"
+            msg["To"] = to_email
+            server.send_message(msg)
+
+
+def send_bulk_invite_emails_with_code(
+    emails: List[str], invite_data: List[Dict[str, str]]
+) -> None:
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        if SMTP_USER and SMTP_PASSWORD:
+            server.ehlo()
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+
+        for to_email, data in zip(emails, invite_data):
+            invite_link = data["invite_link"]
+            recovery_code = data["recovery_code"]
+            body_de = (
+                LANGUAGE_INVITE_WITH_CODE["de"].format(
+                    invite_link=invite_link, recovery_code=recovery_code
+                )
+                + "\n"
+                + LANGUAGE_INVITE_CODE_EXPIRATION["de"]
+            )
+            body_en = (
+                LANGUAGE_INVITE_WITH_CODE["en"].format(
+                    invite_link=invite_link, recovery_code=recovery_code
+                )
+                + "\n"
+                + LANGUAGE_INVITE_CODE_EXPIRATION["en"]
+            )
+            msg = MIMEText(f"{body_de}\n\n------\n\n{body_en}")
             msg["Subject"] = INVITATION_SUBJECT
             msg["From"] = "signup@kern.ai"
             msg["To"] = to_email

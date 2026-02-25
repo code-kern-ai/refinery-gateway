@@ -1,5 +1,7 @@
+import os
 import re
 from typing import Any, Dict, List, Optional
+from urllib.parse import parse_qs, quote, urlparse
 
 from controller.auth import kratos
 from fastapi import Request
@@ -179,6 +181,22 @@ def check_is_full_admin(request: Any) -> bool:
     return False
 
 
+# Base URL for the static invite page (user enters one-time code here)
+INVITE_PAGE_BASE_URL = os.getenv("INVITE_PAGE_BASE_URL", "http://localhost:4455")
+
+
+def _invite_link_with_flow(recovery_link: str, email: str) -> str:
+    """Build static invite URL with flow id so the frontend can submit the code to the correct Kratos flow."""
+    if not recovery_link:
+        return f"{INVITE_PAGE_BASE_URL}/auth/recovery"
+    parsed = urlparse(recovery_link)
+    params = parse_qs(parsed.query)
+    flow_id = (params.get("flow") or [None])[0]
+    if flow_id:
+        return f"{INVITE_PAGE_BASE_URL}/auth/invite?flow={flow_id}"
+    return f"{INVITE_PAGE_BASE_URL}/auth/invite"
+
+
 def invite_users(
     creation_user_id: str,
     emails: List[str],
@@ -189,7 +207,7 @@ def invite_users(
     team_ids: Optional[List[str]] = None,
 ):
     user_ids = []
-    recovery_links = []
+    invite_data: List[Dict[str, str]] = []
     organization = organization_manager.get_organization_by_name(organization_name)
     if organization is None:
         raise exceptions.EntityNotFoundException("Organization not found")
@@ -208,7 +226,7 @@ def invite_users(
         try:
             role = enums.UserRoles[user_role.upper()].value
         except KeyError:
-            raise ValueError(f"Invalid role: {role}")
+            raise ValueError(f"Invalid role: {user_role}")
         user_database.role = role
         user_database.organization_id = organization.id
 
@@ -218,13 +236,17 @@ def invite_users(
                 creation_user_id, user["id"], team_ids, with_commit=False
             )
 
-        # Get the recovery link for the email
-        recovery_link = kratos.get_recovery_link(user["id"])
-        if not recovery_link:
-            raise AuthManagerError("Failed to get recovery link")
-        recovery_links.append(recovery_link["recovery_link"])
+        # One-time code: Kratos returns recovery_code + recovery_link (with flow id)
+        recovery = kratos.get_recovery_code(user["id"])
+        if not recovery or not recovery.get("recovery_code"):
+            raise AuthManagerError("Failed to get recovery code for invite")
+        print(recovery)
+        invite_link = _invite_link_with_flow(recovery.get("recovery_link") or "", email)
+        invite_data.append(
+            {"invite_link": invite_link, "recovery_code": recovery["recovery_code"]}
+        )
     general.commit()
-    kratos.send_bulk_emails(emails, recovery_links)
+    kratos.send_bulk_invite_emails_with_code(emails, invite_data)
     kratos.__refresh_identity_cache()
     organization_manager.sync_organization_sharepoint_integrations(organization.id)
     return user_ids
