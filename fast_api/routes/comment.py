@@ -34,7 +34,7 @@ def get_all_comments(request: Request):
         if project_id:
             auth_manager.check_project_access(request.state.info, project_id)
         else:
-            auth_manager.check_admin_access(request.state.info)
+            auth_manager.check_admin_access(request.state)
 
         if comment_id:
             data = manager.get_comment_by_comment_id(user_id, comment_id)
@@ -65,7 +65,7 @@ def create_comment(request: Request, body: CreateCommentBody = Body(...)):
     if body.project_id:
         auth_manager.check_project_access(request.state.info, body.project_id)
     else:
-        auth_manager.check_admin_access(request.state.info)
+        auth_manager.check_admin_access(request.state)
 
     if body.xftype == CommentCategory.USER.value:
         user_id = body.xfkey
@@ -92,7 +92,7 @@ def delete_comment(
     if body.project_id:
         auth_manager.check_project_access(request.state.info, body.project_id)
     else:
-        auth_manager.check_admin_access(request.state.info)
+        auth_manager.check_admin_access(request.state)
 
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     manager.delete_comment(body.comment_id, user_id)
@@ -117,7 +117,7 @@ def update_comment(
     if body.project_id:
         auth_manager.check_project_access(request.state.info, body.project_id)
     else:
-        auth_manager.check_admin_access(request.state.info)
+        auth_manager.check_admin_access(request.state)
 
     user = auth_manager.get_user_by_info(request.state.info)
     item = manager.update_comment(body.comment_id, user, body.changes)
@@ -137,5 +137,5 @@ def update_comment(
 @router.get("/get-unique-comments-keys-for")
 def get_unique_comments_keys_for(request: Request, xftype: str):
     if xftype in [CommentCategory.ORGANIZATION.value, CommentCategory.USER.value]:
-        auth_manager.check_admin_access(request.state.info)
+        auth_manager.check_admin_access(request.state)
     return manager.get_unique_comments_keys_for(xftype)
