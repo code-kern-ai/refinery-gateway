@@ -158,10 +158,11 @@ def extract_state_info(request: Request, key: str) -> Any:
             user = get_user_by_info(request.state.info)
             if user and user.organization_id:
                 value = str(user.organization_id)
-        elif key == "log_request" and request.state.adm.is_admin:
-            value = organization.log_admin_requests(
-                extract_state_info(request, "organization_id")
-            )
+        elif key == "log_request":
+            if request.state.adm.is_admin:
+                value = organization.log_admin_requests(
+                    extract_state_info(request, "organization_id")
+                )
         else:
             raise ValueError(f"unknown {key} in extract_state_info")
 
