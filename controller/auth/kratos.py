@@ -23,15 +23,9 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
-LANGUAGE_MESSAGES = {
-    "en": "Hello!\n\nClick the link to complete your account setup:\n\n",
-    "de": "Hallo!\n\nKlicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n",
-}
-
-# One-time code invite: static link + code in email (avoids spam filters opening links)
 LANGUAGE_INVITE_WITH_CODE = {
-    "en": "Hello!\n\nGo to this link to complete your account setup:\n\n{invite_link}\n\nYour one-time code: {recovery_code}\n\n",
-    "de": "Hallo!\n\nGehen Sie zu diesem Link, um Ihre Kontoeinrichtung abzuschließen:\n\n{invite_link}\n\nIhr Einmal-Code: {recovery_code}\n\n",
+    "en": "Hello!\n\nClick the link to complete your account setup:\n\n{invite_link}\n\nYour one-time code: {recovery_code}\n\n",
+    "de": "Hallo!\n\nKlicken Sie auf den Link, um Ihre Kontoeinrichtung abzuschließen:\n\n{invite_link}\n\nIhr Einmal-Code: {recovery_code}\n\n",
 }
 
 LANGUAGE_INVITE_CODE_EXPIRATION = {
@@ -40,11 +34,6 @@ LANGUAGE_INVITE_CODE_EXPIRATION = {
 }
 
 INVITATION_SUBJECT = "Sie sind zu unserer app eingeladen/You are invited to our app"
-
-LANGUAGE_EXPIRATION_INFO = {
-    "en": "This link can only be clicked once and is valid for 2 days. Contact your system admin if you have issues.",
-    "de": "Dieser Link kann nur einmal angeklickt werden und ist 2 Tage lang gültig. Kontaktieren Sie Ihren Systemadministrator, wenn Sie Probleme haben.",
-}
 
 
 def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]:
@@ -248,58 +237,15 @@ def delete_user_kratos(user_id: str) -> bool:
     return False
 
 
-def get_recovery_link(user_id: str) -> str:
-    payload_recovery_link = {
-        "expires_in": "48h",
-        "identity_id": user_id,
-    }
-    response_link = requests.post(
-        f"{KRATOS_ADMIN_URL}/recovery/link", json=payload_recovery_link
-    )
-    return response_link.json() if response_link.ok else None
-
-
 def get_recovery_code(user_id: str) -> Dict[str, Any]:
-    payload = {
+    payload_recovery_code = {
         "expires_in": "48h",
         "identity_id": user_id,
     }
-    response = requests.post(f"{KRATOS_ADMIN_URL}/recovery/code", json=payload)
-    return response.json() if response.ok else None
-
-
-def email_with_link(to_email: str, recovery_link: str) -> None:
-    msg = MIMEText(
-        f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
+    response = requests.post(
+        f"{KRATOS_ADMIN_URL}/recovery/code", json=payload_recovery_code
     )
-    msg["Subject"] = INVITATION_SUBJECT
-    msg["From"] = "signup@kern.ai"
-    msg["To"] = to_email
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        if SMTP_USER and SMTP_PASSWORD:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
-
-
-def send_bulk_emails(emails: List[str], recovery_links: List[str]) -> None:
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        if SMTP_USER and SMTP_PASSWORD:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-
-        for to_email, recovery_link in zip(emails, recovery_links):
-            msg = MIMEText(
-                f"{LANGUAGE_MESSAGES['de']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['de']}\n\n\n------\n\n{LANGUAGE_MESSAGES['en']}{recovery_link}\n\n{LANGUAGE_EXPIRATION_INFO['en']}",
-            )
-            msg["Subject"] = INVITATION_SUBJECT
-            msg["From"] = "signup@kern.ai"
-            msg["To"] = to_email
-            server.send_message(msg)
+    return response.json() if response.ok else None
 
 
 def send_bulk_invite_emails_with_code(
