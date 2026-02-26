@@ -189,7 +189,7 @@ def _prepare_invite_link(recovery_link: str) -> str:
     params = parse_qs(parsed.query)
     flow_id = (params.get("flow") or [None])[0]
     if flow_id:
-        return f"{INVITE_PAGE_URL}/auth/invite?flow={flow_id}"
+        return f"{INVITE_PAGE_URL}?flow={flow_id}"
     return INVITE_PAGE_URL
 
 
