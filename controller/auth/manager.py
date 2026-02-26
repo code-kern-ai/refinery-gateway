@@ -25,6 +25,8 @@ DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 INVITE_PAGE_URL = os.getenv("INVITE_PAGE_URL")
+if not INVITE_PAGE_URL:
+    raise RuntimeError("INVITE_PAGE_URL must be set for invite flows")
 
 
 @dataclass(frozen=True)

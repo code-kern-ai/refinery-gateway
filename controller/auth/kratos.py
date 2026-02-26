@@ -245,6 +245,12 @@ def get_recovery_code(user_id: str) -> Dict[str, Any]:
     response = requests.post(
         f"{KRATOS_ADMIN_URL}/recovery/code", json=payload_recovery_code
     )
+    if not response.ok:
+        logger.warning(
+            "Kratos recovery/code failed: status=%s body=%s",
+            response.status_code,
+            response.text[:500],
+        )
     return response.json() if response.ok else None
 
 
