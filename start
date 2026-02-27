@@ -123,7 +123,7 @@ docker run -d --rm \
 -e SMTP_HOST=mailhog \
 -e SMTP_PORT=1025 \
 -e ENABLE_TELEMETRY=$ENABLE_TELEMETRY \
--e INVITE_PAGE_URL=http://$HOST_IP/auth/invite \
+-e INVITE_PAGE_URL=http://localhost:4455/auth/invite \
 -v "$INFERENCE_DIR":/inference \
 -v "$LOG_DIR":/logs \
 -v "$CONFIG_DIR":/config \
