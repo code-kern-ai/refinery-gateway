@@ -1,4 +1,6 @@
+import os
 import re
+from urllib.parse import parse_qs, urlparse
 from typing import Any, Dict, List, Optional, Tuple
 
 from controller.auth import kratos
@@ -22,6 +24,9 @@ from .kratos import get_identity_is_admin
 DEV_USER_ID = "741df1c2-a531-43b6-b259-df23bc78e9a2"
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+INVITE_PAGE_URL = os.getenv("INVITE_PAGE_URL")
+if not INVITE_PAGE_URL:
+    raise RuntimeError("INVITE_PAGE_URL must be set for invite flows")
 
 
 @dataclass(frozen=True)
@@ -122,7 +127,6 @@ def check_project_access_from_user_id(
     return True
 
 
-
 def __check_is_admin_header(request: Request) -> Tuple[bool, bool]:
     if "Authorization" in request.headers:
         jwt_decoded: Dict[str, Any] = jwt.decode(
@@ -157,7 +161,8 @@ def extract_state_info(request: Request, key: str) -> Any:
             user = get_user_by_info(request.state.info)
             if user and user.organization_id:
                 value = str(user.organization_id)
-        elif key == "log_request" and request.state.adm.is_admin:
+        elif key == "log_request":
+            if request.state.adm.is_admin:
                 value = organization.log_admin_requests(
                     extract_state_info(request, "organization_id")
                 )
@@ -179,6 +184,17 @@ def check_is_full_admin(request: Any) -> bool:
     return state.is_full_admin
 
 
+def _prepare_invite_link(recovery_link: str) -> str:
+    if not recovery_link:
+        return INVITE_PAGE_URL
+    parsed = urlparse(recovery_link)
+    params = parse_qs(parsed.query)
+    flow_id = (params.get("flow") or [None])[0]
+    if flow_id:
+        return f"{INVITE_PAGE_URL}?flow={flow_id}"
+    return INVITE_PAGE_URL
+
+
 def invite_users(
     creation_user_id: str,
     emails: List[str],
@@ -189,7 +205,7 @@ def invite_users(
     team_ids: Optional[List[str]] = None,
 ):
     user_ids = []
-    recovery_links = []
+    invite_data: List[Dict[str, str]] = []
     organization = organization_manager.get_organization_by_name(organization_name)
     if organization is None:
         raise exceptions.EntityNotFoundException("Organization not found")
@@ -208,7 +224,7 @@ def invite_users(
         try:
             role = enums.UserRoles[user_role.upper()].value
         except KeyError:
-            raise ValueError(f"Invalid role: {role}")
+            raise ValueError(f"Invalid role: {user_role}")
         user_database.role = role
         user_database.organization_id = organization.id
 
@@ -218,13 +234,16 @@ def invite_users(
                 creation_user_id, user["id"], team_ids, with_commit=False
             )
 
-        # Get the recovery link for the email
-        recovery_link = kratos.get_recovery_link(user["id"])
-        if not recovery_link:
-            raise AuthManagerError("Failed to get recovery link")
-        recovery_links.append(recovery_link["recovery_link"])
+        # Get the recovery code and link
+        recovery = kratos.get_recovery_code(user["id"])
+        if not recovery or not recovery.get("recovery_code"):
+            raise AuthManagerError("Failed to get recovery code for invite")
+        invite_link = _prepare_invite_link(recovery.get("recovery_link") or "")
+        invite_data.append(
+            {"invite_link": invite_link, "recovery_code": recovery["recovery_code"]}
+        )
     general.commit()
-    kratos.send_bulk_emails(emails, recovery_links)
+    kratos.send_bulk_invite_emails_with_code(emails, invite_data)
     kratos.__refresh_identity_cache()
     organization_manager.sync_organization_sharepoint_integrations(organization.id)
     return user_ids
