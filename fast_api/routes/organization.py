@@ -136,7 +136,7 @@ def get_user_info_extended(request: Request):
 # in use admin dashboard (08.01.25)
 @router.get("/org-id-name-map")
 def get_org_id_name_map(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     return pack_json_result(
         organization.get_org_id_to_name_map(), wrap_for_frontend=False
     )
@@ -152,7 +152,7 @@ def get_all_user(
     org_id: str = None,
 ):
     relevant_users = []
-    user_is_admin = auth_manager.check_is_admin(request)
+    user_is_admin = auth_manager.check_admin_access(request.state)
     if org_id:
         if not user_is_admin:
             raise HTTPException(status_code=403, detail="Not authorized")
@@ -190,7 +190,7 @@ def all_active_admin_messages(request: Request, limit: int = 100) -> str:
 # in use admin-dashboard (08.01.25)
 @router.get("/all-admin-messages")
 def all_admin_messages(request: Request, limit: int = 100) -> str:
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     data = admin_message_manager.get_messages(limit, active_only=False)
     data_dict = sql_alchemy_to_dict(data)
     return pack_json_result(data_dict)
@@ -199,7 +199,7 @@ def all_admin_messages(request: Request, limit: int = 100) -> str:
 # in use admin-dashboard (08.01.25)
 @router.post("/create-organization")
 def create_organization(request: Request, body: CreateOrganizationBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     organization_manager.create_organization(body.name)
     return get_silent_success()
 
@@ -209,7 +209,7 @@ def create_organization(request: Request, body: CreateOrganizationBody = Body(..
 def add_user_to_organization(
     request: Request, body: AddUserToOrganizationBody = Body(...)
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_manager.update_organization_of_user(body.organization_name, body.user_mail)
     return get_silent_success()
 
@@ -219,7 +219,7 @@ def add_user_to_organization(
 def remove_user_from_organization(
     request: Request, body: RemoveUserToOrganizationBody = Body(...)
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_manager.remove_organization_from_user(body.user_mail)
     return get_silent_success()
 
@@ -227,7 +227,7 @@ def remove_user_from_organization(
 # in use admin-dashboard (08.01.25)
 @router.post("/change-organization")
 def change_organization(request: Request, body: ChangeOrganizationBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     organization_manager.change_organization(body.org_id, json.loads(body.changes))
     return get_silent_success()
 
@@ -235,7 +235,7 @@ def change_organization(request: Request, body: ChangeOrganizationBody = Body(..
 # in use admin-dashboard (08.01.25)
 @router.get("/user-roles")
 def get_user_roles(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     data = user_manager.get_user_roles()
     return pack_json_result(data, wrap_for_frontend=False)
 
@@ -243,7 +243,7 @@ def get_user_roles(request: Request):
 # in use admin-dashboard (08.01.25)
 @router.post("/change-user-role")
 def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_manager.update_user_role(body.user_id, body.role)
     return get_silent_success()
 
@@ -251,7 +251,7 @@ def change_user_role(request: Request, body: ChangeUserRoleBody = Body(...)):
 # in use admin-dashboard (08.01.25)
 @router.get("/all-organizations")
 def get_all_organizations(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     organizations = manager.get_all_organizations()
     org_dicts = [
         {
@@ -266,7 +266,7 @@ def get_all_organizations(request: Request):
 # in use admin-dashboard (08.01.25)
 @router.delete("/delete-organization")
 def delete_organization(request: Request, body: DeleteOrganizationBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     organization_manager.delete_organization(body.name)
     return get_silent_success()
 
@@ -274,7 +274,7 @@ def delete_organization(request: Request, body: DeleteOrganizationBody = Body(..
 # in use admin-dashboard (08.01.25)
 @router.post("/create-admin-message")
 def create_admin_message(request: Request, body: CreateAdminMessageBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     admin_message_manager.create_admin_message(
         body.text, body.level, body.archive_date, body.scheduled_date, user_id
@@ -289,7 +289,7 @@ def archive_admin_message(
     request: Request,
     body: ArchiveAdminMessageBody = Body(...),
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     admin_message_manager.archive_admin_message(
         body.message_id, user_id, body.archived_reason
@@ -329,7 +329,7 @@ def update_settings(
 def get_mapped_sorted_paginated_users(
     request: Request, body: MappedSortedPaginatedUsers = Body(...)
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     count_users = user_manager.get_active_users_filtered(body.filter_minutes)
     active_users = user_manager.get_active_users_filtered(
         body.filter_minutes, body.sort_key, body.sort_direction, body.offset, body.limit
@@ -366,23 +366,23 @@ def get_mapped_sorted_paginated_users(
 # in use admin-dashboard (08.01.25)
 @router.delete("/delete-user")
 def delete_user(request: Request, body: DeleteUserBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_manager.delete_user(body.user_id)
     return get_silent_success()
 
 
 # in use admin-dashboard (08.01.25)
-@router.post("/missing-users-interaction-and-message-count")
-def get_missing_users_interaction(request: Request, body: MissingUsersBody = Body(...)):
-    auth_manager.check_admin_access(request.state.info)
-    data = user.get_missing_users(body.user_ids)
+@router.post("/missing-kratos-data")
+def get_missing_kratos_data(request: Request, body: MissingUsersBody = Body(...)):
+    auth_manager.check_admin_access(request.state)
+    data = user.get_missing_kratos_data(body.user_ids)
     return pack_json_result(data, wrap_for_frontend=False)
 
 
 # in use admin-dashboard (08.01.25)
 @router.get("/user-to-organization")
 def get_user_to_organization(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     data = user.get_user_to_organization()
     return pack_json_result(data, wrap_for_frontend=False)
 
@@ -390,7 +390,7 @@ def get_user_to_organization(request: Request):
 # in use admin-dashboard (01.10.25)
 @router.get("/all-release-notifications-admin")
 def get_all_release_notifications(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     data = sql_alchemy_to_dict(release_notification.get_all())
     for item in data:
         item["createdByEmail"] = resolve_user_mail_by_id(item["created_by"])
@@ -412,7 +412,7 @@ def get_release_notifications(request: Request):
 def create_release_notification(
     request: Request, body: CreateUpdateReleaseNotificationBody = Body(...)
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     validate_result = manager.validate_json_release_notification(body.config)
     if validate_result["is_valid"]:
@@ -427,7 +427,7 @@ def update_release_notification(
     notification_id: str,
     body: CreateUpdateReleaseNotificationBody = Body(...),
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     release_notification.update(
         notification_id, body.link, body.config, with_commit=True
     )
@@ -437,7 +437,7 @@ def update_release_notification(
 # in use admin-dashboard (02.10.25)
 @router.delete("/delete-release-notification/{notification_id}")
 def delete_release_notification(request: Request, notification_id: str):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     release_notification.delete(notification_id, with_commit=True)
     return get_silent_success()
 
@@ -445,7 +445,7 @@ def delete_release_notification(request: Request, notification_id: str):
 # in use admin-dashboard (27.01.26)
 @router.put("/toggle-light-user-status/{user_id}")
 def toggle_light_user_status(request: Request, user_id: str):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     u = user_manager.get_or_create_user(user_id)
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -456,7 +456,7 @@ def toggle_light_user_status(request: Request, user_id: str):
 # in use admin-dashboard (10.02.26)
 @router.get("/cross-selling")
 def get_all_cross_sellings(request: Request):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     data = cross_selling_manager.get_all_cross_sellings()
     data_dict = sql_alchemy_to_dict(data, column_whitelist=CROSS_SELLING_WHITELIST)
     return pack_json_result(data_dict)
@@ -467,7 +467,7 @@ def get_all_cross_sellings(request: Request):
 def create_cross_selling(
     request: Request, body: CreateUpdateCrossSellingBody = Body(...)
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     entity = cross_selling_manager.create_cross_selling(name=body.name)
     data = sql_alchemy_to_dict(entity, column_whitelist=CROSS_SELLING_WHITELIST)
     return pack_json_result(data)
@@ -480,7 +480,7 @@ def update_cross_selling(
     cross_selling_id: str,
     body: CreateUpdateCrossSellingBody = Body(...),
 ):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     try:
         entity = cross_selling_manager.update_cross_selling(
             cross_selling_id, name=body.name
@@ -494,7 +494,7 @@ def update_cross_selling(
 # in use admin-dashboard (10.02.26)
 @router.delete("/cross-selling/{cross_selling_id}")
 def delete_cross_selling(request: Request, cross_selling_id: str):
-    auth_manager.check_admin_access(request.state.info)
+    auth_manager.check_admin_access(request.state)
     try:
         cross_selling_manager.delete_cross_selling(cross_selling_id)
         return get_silent_success()

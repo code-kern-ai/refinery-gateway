@@ -181,6 +181,7 @@ def __migrate_kratos_users():
         if user_id not in users_kratos or users_kratos[user_id] is None:
             continue
         user_identity = users_kratos[user_id]["identity"]
+
         if user_database.email != user_identity["traits"]["email"]:
             user_database.email = user_identity["traits"]["email"]
         if (
@@ -210,5 +211,6 @@ def __migrate_kratos_users():
         )
         if user_database.sso_provider != sso_provider:
             user_database.sso_provider = sso_provider
-
+        if user_database.is_admin != users_kratos[user_id]["simple"]["is_admin"]:
+            user_database.is_admin = users_kratos[user_id]["simple"]["is_admin"]
     general.commit()
