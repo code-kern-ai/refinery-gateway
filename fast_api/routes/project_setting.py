@@ -248,7 +248,7 @@ def calculate_user_attribute_all_records(
             "attribute_id": str(body.attribute_id),
             "data_block_id": body.data_block_id,
         },
-        True,
+        priority=True,
     )
 
     return get_silent_success()
