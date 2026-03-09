@@ -1,7 +1,7 @@
 """adds web integrations
 
 Revision ID: d454676ee76f
-Revises: 1133d27823e3
+Revises: e08f38f06e98
 Create Date: 2026-03-03 16:51:11.127269
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "d454676ee76f"
-down_revision = "1133d27823e3"
+down_revision = "e08f38f06e98"
 branch_labels = None
 depends_on = None
 
