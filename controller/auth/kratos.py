@@ -20,7 +20,7 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # user_id -> {"identity" -> full identity, "simple" -> {"id": str, "mail": str, "firstName": str, "lastName": str}}
 # "collected" -> timestamp
-KRATOS_IDENTITY_CACHE: Dict[str, Any] = {}
+KRATOS_IDENTITY_CACHE: Dict[str, Any] = {"collected": datetime(1975, 1, 1)}
 KRATOS_IDENTITY_CACHE_TIMEOUT = timedelta(minutes=30)
 
 LANGUAGE_INVITE_WITH_CODE = {
@@ -71,7 +71,7 @@ def __refresh_identity_cache(update_db_users: bool = True) -> None:
 
         KRATOS_IDENTITY_CACHE["collected"] = collected
     else:
-        KRATOS_IDENTITY_CACHE = {}
+        KRATOS_IDENTITY_CACHE = {"collected": datetime(1975, 1, 1)}
 
     if update_db_users:
         manager.migrate_kratos_users()
