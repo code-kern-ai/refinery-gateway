@@ -41,7 +41,8 @@ def get_cached_values(update_db_users: bool = True) -> Dict[str, Dict[str, Any]]
     if not KRATOS_IDENTITY_CACHE or len(KRATOS_IDENTITY_CACHE) == 0:
         __refresh_identity_cache(update_db_users)
     elif (
-        KRATOS_IDENTITY_CACHE["collected"] + KRATOS_IDENTITY_CACHE_TIMEOUT
+        KRATOS_IDENTITY_CACHE.get("collected", datetime(1975, 1, 1))
+        + KRATOS_IDENTITY_CACHE_TIMEOUT
         < datetime.now()
     ):
         __refresh_identity_cache(update_db_users)

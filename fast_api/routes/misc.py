@@ -34,8 +34,7 @@ router = APIRouter()
 
 @router.get("/is-admin")
 def get_is_admin(request: Request) -> Dict:
-    data = auth.check_admin_access(request.state)
-    return pack_json_result(data)
+    return pack_json_result(request.state.adm.is_admin)
 
 
 @router.get("/version-overview")
