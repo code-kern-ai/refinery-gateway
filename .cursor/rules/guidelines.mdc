@@ -74,3 +74,7 @@ refinery-gateway/
 **Database**: Sessions managed by middleware. Use submodule business objects, never create SQLAlchemy sessions directly.
 
 **Submodules**: Always check `submodules/{name}/.cursor/rules/` before modifying submodule code.
+
+## Alembic Migrations
+  - Column defaults belong in the ORM model (submodule), not as `server_default` in migrations.
+    Do not suggest adding `server_default` unless there is a specific need for database-level defaults.
