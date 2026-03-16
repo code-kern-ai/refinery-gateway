@@ -99,7 +99,6 @@ def update_query_results(
                 "project_id": str(data_block.project_id),
                 "task_list": task_list,
             },
-            project_id=str(data_block.project_id),
         )
     return results
 

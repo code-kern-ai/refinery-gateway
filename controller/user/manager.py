@@ -111,7 +111,7 @@ def update_user_field(user_id: str, field: str, value: Any) -> User:
     user_item = user.get(user_id)
     if not user_item:
         raise ValueError("User not found")
-    if field == "use_new_cognition_ui":
+    if field == "use_new_cognition_ui" or field == "use_chat_auto_scroll":
         value = is_string_true_value(value)
 
     if value == "null":
