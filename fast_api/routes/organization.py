@@ -59,6 +59,7 @@ USER_INFO_WHITELIST = {
     "sound_settings",
     "notification_settings",
     "is_light_user",
+    "use_chat_auto_scroll",
 }
 USER_INFO_RENAME_MAP = {"email": "mail"}
 ALL_ORGANIZATIONS_WHITELIST = {
