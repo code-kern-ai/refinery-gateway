@@ -252,7 +252,7 @@ pydantic-core==2.18.4
     #   pydantic
 pygments==2.19.2
     # via rich
-pyjwt==2.4.0
+pyjwt==2.12.0
     # via -r requirements/requirements.in
 pyminizip==0.2.6
     # via -r requirements/requirements.in
@@ -302,10 +302,6 @@ sqlalchemy==1.4.42
     # via
     #   -r requirements/common-requirements.txt
     #   alembic
-sqlglot[rs]==27.20.0
-    # via -r requirements/requirements.in
-sqlglotrs==0.6.2
-    # via sqlglot
 srsly==2.5.2
     # via
     #   confection
