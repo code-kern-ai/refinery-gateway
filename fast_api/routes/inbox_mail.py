@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.post("")
 def create_inbox_mail_by_thread(request: Request, inbox_mail: InboxMailCreateRequest):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     user = auth_manager.get_user_by_info(request.state.info)
 
     if inbox_mail.threadId:
@@ -52,7 +52,7 @@ def create_inbox_mail_by_thread(request: Request, inbox_mail: InboxMailCreateReq
 
 @router.get("/thread/{thread_id}")
 def get_inbox_mails_by_thread(request: Request, thread_id: str) -> List[Dict[str, Any]]:
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
 
     user = auth_manager.get_user_by_info(request.state.info)
 
@@ -72,7 +72,7 @@ def get_inbox_mail_thread_overview_paginated(
     limit: int = 10,
     filters: Optional[List[str]] = Query(default=None),
 ):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     user = auth_manager.get_user_by_info(request.state.info)
     mail = inbox_mail_manager.get_inbox_mail_threads_overview(
         org_id=user.organization_id,
@@ -91,7 +91,7 @@ def update_inbox_mail_thread_progress(
     thread_id: str,
     inbox_mail_thread_update: UpdateInboxMailThreadProgressRequest,
 ):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     user = auth_manager.get_user_by_info(request.state.info)
 
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
@@ -133,7 +133,7 @@ def delete_inbox_mail_by_id(request: Request, mail_id: str):
 
 @router.get("/new")
 def has_new_inbox_mails(request: Request):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     user = auth_manager.get_user_by_info(request.state.info)
 
     total_new_inbox_mails = inbox_mail_manager.get_new_inbox_mails_info(
@@ -150,7 +150,7 @@ def has_new_inbox_mails(request: Request):
 
 @router.put("/thread/{thread_id}/unread/project")
 def update_inbox_mail_threads_unread_by_project(request: Request, thread_id: str):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     if not user_is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
@@ -165,7 +165,7 @@ def update_inbox_mail_threads_unread_by_project(request: Request, thread_id: str
 
 @router.put("/thread/{thread_id}/unread/content")
 def update_inbox_mail_threads_unread_by_content(request: Request, thread_id: str):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     if not user_is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
@@ -180,7 +180,7 @@ def update_inbox_mail_threads_unread_by_content(request: Request, thread_id: str
 
 @router.put("/thread/{thread_id}/unread-last")
 def mark_inbox_mail_thread_as_unread(request: Request, thread_id: str):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     if not user_is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     inbox_mail_thread = inbox_mail_go.get_inbox_mail_thread_by_id(thread_id=thread_id)
@@ -193,7 +193,7 @@ def mark_inbox_mail_thread_as_unread(request: Request, thread_id: str):
 
 @router.delete("/thread/{thread_id}/similar")
 def delete_similar_system_threads(request: Request, thread_id: str):
-    user_is_admin = auth_manager.check_admin_access(request.state)
+    user_is_admin = request.state.adm.is_admin
     if not user_is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
 
