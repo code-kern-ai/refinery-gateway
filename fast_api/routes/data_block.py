@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Body, Depends
+from fastapi import APIRouter, Request, Body, Depends, Query
 
 from fast_api.models import (
     DataBlockCreateRequest,
@@ -63,10 +63,14 @@ def get_by_project_id(request: Request, project_id: str):
     "/project/{project_id}/mini",
     dependencies=[Depends(auth_manager.check_project_access_dep)],
 )
-def get_by_project_id(request: Request, project_id: str):
+def get_project_data_blocks_mini(
+    request: Request, project_id: str, only_executed: bool
+):
     user = auth_manager.get_user_by_info(request.state.info)
 
-    data_blocks = data_block_manager.get_by_project_id(user.organization_id, project_id)
+    data_blocks = data_block_manager.get_by_project_id(
+        user.organization_id, project_id, only_executed=only_executed
+    )
     data_blocks_extended = [
         {"id": str(data_block.get("id")), "name": str(data_block.get("name"))}
         for data_block in sql_alchemy_to_dict(data_blocks)

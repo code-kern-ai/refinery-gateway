@@ -33,9 +33,11 @@ def get(org_id, project_id: str, data_block_id: str) -> DataBlock:
     return data_block
 
 
-def get_by_project_id(org_id: str, project_id: str) -> List[DataBlock]:
+def get_by_project_id(
+    org_id: str, project_id: str, only_executed: bool = False
+) -> List[DataBlock]:
     data_blocks: List[DataBlock] = data_block_db_bo.get_all_by_project_id(
-        org_id, project_id
+        org_id, project_id, only_executed=only_executed
     )
     return data_blocks
 
