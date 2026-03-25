@@ -148,7 +148,14 @@ def get_userid_from_mail(user_mail: str) -> str:
         if values[key]["simple"]["mail"] == user_mail:
             return key
     # not in cached values, try search kratos
-    return __search_kratos_for_user_mail(user_mail)["id"]
+    result = __search_kratos_for_user_mail(user_mail)
+    if result is None:
+        print(
+            f"get_userid_from_mail: no kratos identity found for mail={user_mail}",
+            flush=True,
+        )
+        return None
+    return result["id"]
 
 
 def __search_kratos_for_user_mail(user_mail: str) -> str:
@@ -315,14 +322,23 @@ def get_admin_users_by_public_metadata() -> List[Dict[str, Any]]:
 
 
 def get_identity_is_admin(identity: Dict[str, Any]) -> bool:
-
-    if (identity.get("metadata_public") or {}).get("role") == "ADMIN" and identity[
-        "verifiable_addresses"
-    ][0]["verified"]:
-        return True
-    if (
-        identity["traits"]["email"].split("@")[1] == "kern.ai"
-        and identity["verifiable_addresses"][0]["verified"]
-    ):
-        return True
-    return False
+    try:
+        if (identity.get("metadata_public") or {}).get("role") == "ADMIN" and identity[
+            "verifiable_addresses"
+        ][0]["verified"]:
+            return True
+        if (
+            identity["traits"]["email"].split("@")[1] == "kern.ai"
+            and identity["verifiable_addresses"][0]["verified"]
+        ):
+            return True
+        return False
+    except Exception:
+        print(
+            f"get_identity_is_admin: faulty identity record - "
+            f"id={identity.get('id', 'UNKNOWN')}, "
+            f"traits={identity.get('traits')}, "
+            f"verifiable_addresses={identity.get('verifiable_addresses')}",
+            flush=True,
+        )
+        return False
