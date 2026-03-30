@@ -26,6 +26,7 @@ from submodules.model.global_objects import (
     admin_queries as admin_queries_db_go,
 )
 from submodules.model.sql_validator import validate_sql_clause
+from submodules.model.sql_validator.constants import DATA_BLOCK_EXTENDED_AST_NODE_KEYS
 from submodules.model.enums import AdminQueries
 from submodules.model.business_objects import task_queue as task_queue_bo
 
@@ -240,12 +241,13 @@ def test_where_clause(request: Request, data: TestWhereConditionRequest = Body(.
             full_clause_check = True
             break
     if full_clause_check:
-        extend_allowed_nodes = {"select", "where", "group", "order", "ordered"}
+        extend_allowed_nodes = set(DATA_BLOCK_EXTENDED_AST_NODE_KEYS)
 
     deny_reason = validate_sql_clause(
         select=data.select,
         where=data.where,
         group_by=data.groupBy,
+        having=data.having,
         order_by=data.orderBy,
         include_db_check=True,
         extend_allowed_nodes=extend_allowed_nodes,

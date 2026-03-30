@@ -50,6 +50,7 @@ def construct_data_block_query(data_block: DataBlock) -> str:
     select_clause = data_block.sql_config.get("config", {}).get("select_clause")
     where_clause = data_block.sql_config.get("config", {}).get("where_clause")
     group_by_clause = data_block.sql_config.get("config", {}).get("group_by_clause")
+    having_clause = data_block.sql_config.get("config", {}).get("having_clause")
     order_by_clause = data_block.sql_config.get("config", {}).get("order_by_clause")
     limit_clause = data_block.sql_config.get("config", {}).get("limit_clause")
 
@@ -60,6 +61,7 @@ def construct_data_block_query(data_block: DataBlock) -> str:
             sanitized_where=where_clause,
             order_by=order_by_clause,
             sanitized_group_by=group_by_clause,
+            sanitized_having=having_clause if having_clause else None,
             limit=limit_clause,
             return_query=True,
         )
