@@ -599,6 +599,7 @@ class TestWhereConditionRequest(BaseModel):
     select: Optional[str] = None
     where: Optional[str] = None
     groupBy: Optional[str] = None
+    having: Optional[str] = None
     orderBy: Optional[str] = None
 
 
