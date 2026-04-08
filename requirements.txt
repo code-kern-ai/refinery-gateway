@@ -91,8 +91,6 @@ googleapis-common-protos==1.74.0
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.3.2
-    # via sqlalchemy
 grpcio==1.80.0
     # via
     #   -r requirements/common-requirements.txt
@@ -295,6 +293,10 @@ sqlalchemy==1.4.42
     # via
     #   -r requirements/common-requirements.txt
     #   alembic
+sqlglot[rs]==27.20.0
+    # via -r requirements/requirements.in
+sqlglotrs==0.6.2
+    # via sqlglot
 srsly==2.5.3
     # via
     #   spacy
