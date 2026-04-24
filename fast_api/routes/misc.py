@@ -50,6 +50,13 @@ def has_updates(request: Request) -> Dict:
     return pack_json_result(data)
 
 
+@router.post("/update-to-newest")
+def post_update_to_newest(request: Request) -> Dict:
+    auth.check_admin_access(request.state)
+    updated = manager.update_to_newest()
+    return pack_json_result({"updated": updated})
+
+
 @router.delete("/model-provider-delete-model")
 def model_provider_delete_model(
     request: Request, body: ModelProviderDeleteModelBody = Body(...)
