@@ -96,9 +96,9 @@ docker run -d --rm \
 --name refinery-gateway \
 -p $DEBUG_PORT:$DEBUG_PORT \
 -p 7051:80 \
--e AC_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ac-exec-env:parent-image-updates \
--e LF_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-lf-exec-env:parent-image-updates \
--e ML_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ml-exec-env:parent-image-updates \
+-e AC_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ac-exec-env:dev$IS_ARM64 \
+-e LF_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-lf-exec-env:dev$IS_ARM64 \
+-e ML_EXEC_ENV_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-ml-exec-env:dev$IS_ARM64 \
 -e LF_NETWORK=dev-setup_default \
 -e S3_ENDPOINT="http://$HOST_IP:7053" \
 -e S3_ENDPOINT_LOCAL=object-storage:9000 \
