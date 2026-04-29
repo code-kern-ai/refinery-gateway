@@ -149,11 +149,17 @@ def get_active_users_filtered(
     sort_direction: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
+    filter_organization_id: Optional[str] = None,
 ) -> List[User]:
     now = datetime.now()
     last_interaction_range = (now - timedelta(minutes=minutes)) if minutes > 0 else None
     return user.get_active_users_after_filter(
-        last_interaction_range, sort_key, sort_direction, offset, limit
+        last_interaction_range,
+        sort_key,
+        sort_direction,
+        offset,
+        limit,
+        filter_organization_id,
     )
 
 
