@@ -332,7 +332,7 @@ def get_mapped_sorted_paginated_users(
 ):
     auth_manager.check_admin_access(request.state)
     count_users = user_manager.get_active_users_filtered(
-        filter_minutes=body.filter_minutes,
+        body.filter_minutes,
         filter_organization_id=body.filter_organization_id,
     )
     active_users = user_manager.get_active_users_filtered(
