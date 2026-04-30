@@ -390,6 +390,7 @@ class MappedSortedPaginatedUsers(BaseModel):
     offset: int
     limit: int
     filter_minutes: int
+    filter_organization_id: Optional[StrictStr] = None
 
 
 class DeleteUserBody(BaseModel):
