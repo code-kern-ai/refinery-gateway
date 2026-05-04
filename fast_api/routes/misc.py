@@ -38,18 +38,6 @@ def get_is_admin(request: Request) -> Dict:
     return pack_json_result(request.state.adm.is_admin)
 
 
-@router.get("/version-overview")
-def get_version_overview(request: Request) -> Dict:
-    data = manager.get_version_overview()
-    return pack_json_result(data)
-
-
-@router.get("/has-updates")
-def has_updates(request: Request) -> Dict:
-    data = manager.has_updates()
-    return pack_json_result(data)
-
-
 @router.delete("/model-provider-delete-model")
 def model_provider_delete_model(
     request: Request, body: ModelProviderDeleteModelBody = Body(...)
