@@ -1,10 +1,15 @@
-ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
+ARG PARENT_IMAGE=kernai/refinery-parent-images:v2.5.0-common
 
 FROM ${PARENT_IMAGE} AS builder
+
+ENV VENV_PATH=/opt/venv
+ENV PATH="${VENV_PATH}/bin:${PATH}"
 
 WORKDIR /app
 
 USER root
+
+RUN if [ ! -d "${VENV_PATH}" ]; then python -m venv "${VENV_PATH}"; fi
 
 # used for encryption and zipping of files
 RUN apt-get update && \
