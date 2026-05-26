@@ -1,4 +1,4 @@
-ARG PARENT_IMAGE=kernai/refinery-parent-images:v2.5.0-common
+ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
 
 FROM ${PARENT_IMAGE} AS builder
 
@@ -23,13 +23,16 @@ COPY . .
 
 FROM ${PARENT_IMAGE}
 
+ENV VENV_PATH=/opt/venv
+ENV PATH="${VENV_PATH}/bin:${PATH}"
+
 WORKDIR /app
 
 USER root
 
-COPY --from=builder --chown=65532:65532 /opt/venv /opt/venv
+COPY --from=builder --chown=65532:65532 ${VENV_PATH} ${VENV_PATH}
 COPY --from=builder --chown=65532:65532 /app /app
 
 USER 65532:65532
 
-CMD ["/usr/local/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "app:app"]
+CMD ["/opt/venv/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "app:app"]
