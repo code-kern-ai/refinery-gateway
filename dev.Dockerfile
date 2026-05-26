@@ -1,4 +1,4 @@
-ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:hardened-images-common
+ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
 FROM ${PARENT_IMAGE}
 
 WORKDIR /app
