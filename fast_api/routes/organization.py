@@ -14,7 +14,6 @@ from fast_api.models import (
     MappedSortedPaginatedUsers,
     MissingUsersBody,
     RemoveUserToOrganizationBody,
-    UpdateOneDriveFieldRequest,
     UpdateSettingsRequest,
 )
 from controller.auth import manager as auth_manager
@@ -55,9 +54,7 @@ USER_INFO_WHITELIST = {
     "email",
     "use_new_cognition_ui",
     "auto_logout_minutes",
-    "one_drive_path",
     "sound_settings",
-    "notification_settings",
     "is_light_user",
     "use_chat_auto_scroll",
 }
@@ -304,14 +301,6 @@ def archive_admin_message(
 def set_language_display(request: Request, field: str, value: str):
     user_id = auth_manager.get_user_id_by_info(request.state.info)
     user_manager.update_user_field(user_id, field, value)
-    return get_silent_success()
-
-
-# in use cognition-ui (15.12.25)
-@router.post("/update-one-drive-field")
-def set_one_drive_field(request: Request, body: UpdateOneDriveFieldRequest = Body(...)):
-    user_id = auth_manager.get_user_id_by_info(request.state.info)
-    user_manager.update_user_field(user_id, "one_drive_path", body.oneDrivePath)
     return get_silent_success()
 
 

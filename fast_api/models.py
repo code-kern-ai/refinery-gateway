@@ -542,10 +542,6 @@ class UpdateInboxMailThreadProgressRequest(BaseModel):
     progressState: str
 
 
-class UpdateOneDriveFieldRequest(BaseModel):
-    oneDrivePath: StrictStr
-
-
 class DataBlockCreateRequest(BaseModel):
     name: StrictStr
     description: StrictStr
