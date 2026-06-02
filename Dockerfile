@@ -1,4 +1,4 @@
-ARG PARENT_IMAGE=kernai/refinery-parent-images:v2.5.0-common
+ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:dev-common
 
 FROM ${PARENT_IMAGE} AS builder
 
@@ -38,6 +38,13 @@ USER root
 COPY --from=builder --chown=65532:65532 ${VENV_PATH} ${VENV_PATH}
 COPY --from=builder --chown=65532:65532 /app /app
 
-USER 65532:65532
+ARG DOCKER_GID=999
+RUN if id nonroot >/dev/null 2>&1; then \
+      groupadd -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || \
+        groupmod -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || true; \
+      usermod -aG dockerhost nonroot; \
+    fi
+
+USER nonroot
 
 CMD ["/opt/venv/bin/uvicorn", "--host", "0.0.0.0", "--port", "80", "app:app"]
