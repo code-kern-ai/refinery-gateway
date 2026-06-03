@@ -1,17 +1,17 @@
 ARG PARENT_IMAGE=registry.dev.kern.ai/code-kern-ai/refinery-parent-images:hardened-images-common
+ARG DHI_PYTHON_BUILD=dhi.io/python:3.11-debian12-dev
 
-FROM ${PARENT_IMAGE} AS builder
+FROM ${PARENT_IMAGE} AS venv-source
+
+FROM ${DHI_PYTHON_BUILD} AS builder
 
 ENV VENV_PATH=/opt/venv
 ENV PATH="${VENV_PATH}/bin:${PATH}"
 
 WORKDIR /app
 
-USER root
+COPY --from=venv-source ${VENV_PATH} ${VENV_PATH}
 
-RUN if [ ! -d "${VENV_PATH}" ]; then python -m venv "${VENV_PATH}"; fi
-
-# used for encryption and zipping of files
 RUN apt-get update && \
     apt-get install --no-install-recommends -y curl libc6-dev zlib1g gcc && \
     rm -rf /var/lib/apt/lists/*
@@ -26,6 +26,12 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+ARG DOCKER_GID=999
+RUN groupadd -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || \
+      groupmod -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || true && \
+    (getent passwd nonroot >/dev/null || useradd -u 65532 -g 65532 -M -s /bin/sh nonroot) && \
+    usermod -aG dockerhost nonroot
+
 FROM ${PARENT_IMAGE}
 
 ENV VENV_PATH=/opt/venv
@@ -33,17 +39,9 @@ ENV PATH="${VENV_PATH}/bin:${PATH}"
 
 WORKDIR /app
 
-USER root
-
+COPY --from=builder /etc/group /etc/group
 COPY --from=builder --chown=65532:65532 ${VENV_PATH} ${VENV_PATH}
 COPY --from=builder --chown=65532:65532 /app /app
-
-ARG DOCKER_GID=999
-RUN if id nonroot >/dev/null 2>&1; then \
-      groupadd -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || \
-        groupmod -o -g "${DOCKER_GID}" dockerhost 2>/dev/null || true; \
-      usermod -aG dockerhost nonroot; \
-    fi
 
 USER nonroot
 

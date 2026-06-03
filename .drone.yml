@@ -18,10 +18,10 @@ steps:
       - submodules
     settings:
       platform: linux/amd64
-      registry: registry.dev.kern.ai
-      username:
+      base_image_registry: registry.dev.kern.ai
+      base_image_username:
         from_secret: docker_username
-      password:
+      base_image_password:
         from_secret: docker_password
       repo: "registry.dev.kern.ai/${DRONE_REPO}"
       tags: ["${DRONE_COMMIT_SHA}", "${DRONE_COMMIT_BRANCH}"]
@@ -84,10 +84,10 @@ steps:
       - submodules
     settings:
       platform: linux/arm64
-      registry: registry.dev.kern.ai
-      username:
+      base_image_registry: registry.dev.kern.ai
+      base_image_username:
         from_secret: docker_username
-      password:
+      base_image_password:
         from_secret: docker_password
       repo: "registry.dev.kern.ai/${DRONE_REPO}"
       tags: ["${DRONE_COMMIT_SHA}_arm64", "${DRONE_COMMIT_BRANCH}_arm64"]
