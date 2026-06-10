@@ -24,12 +24,15 @@ from submodules.model import enums, daemon
 from submodules.model.models import UploadTask
 from submodules.model.business_objects import (
     attribute,
+    embedding as embedding_bo,
     general,
+    monitor,
     tokenization,
     project,
-    data_block,
 )
 from submodules.model.cognition_objects import integration
+
+EMBEDDING_FAILURE_MESSAGE = "Failure processing embeddings"
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -170,7 +173,10 @@ def __recalculate_missing_attributes_and_embeddings(
     project_id: str, user_id: str
 ) -> None:
     __calculate_missing_attributes(project_id, user_id)
-    has_embeddings = recreate_or_extend_embeddings(project_id)
+    has_embeddings = recreate_or_extend_embeddings(project_id, user_id=user_id)
+    if __project_has_failed_embeddings(project_id):
+        __fail_refinery_syncing_integrations_on_embedding_failure(project_id)
+        return
     if not has_embeddings:
         return
 
@@ -181,6 +187,26 @@ def __recalculate_missing_attributes_and_embeddings(
     for integration_item in integration_items:
         integration_id = str(integration_item.id)
         post_process_integration(integration_id)
+
+
+def __project_has_failed_embeddings(project_id: str) -> bool:
+    embeddings = embedding_bo.get_all_embeddings_by_project_id(project_id)
+    return any(embed.state == enums.EmbeddingState.FAILED.value for embed in embeddings)
+
+
+def __fail_refinery_syncing_integrations_on_embedding_failure(project_id: str) -> None:
+    integration_items = integration.get_all_by_project_id(project_id)
+    for integration_item in integration_items:
+        if (
+            integration_item.state
+            != enums.CognitionIntegrationState.REFINERY_SYNCING.value
+        ):
+            continue
+        monitor.set_integration_task_to_failed(
+            str(integration_item.id),
+            is_synced=False,
+            error_message=EMBEDDING_FAILURE_MESSAGE,
+        )
 
 
 def post_process_integration(integration_id: str) -> None:
