@@ -6,7 +6,7 @@ alembic==1.7.1
 docker==7.1.0
 openai==1.31.0
 openpyxl==3.0.10
-pyjwt==2.12.0
+pyjwt==2.13.0
 pyminizip==0.2.6
 rncryptor==3.3.0
 spacy[ja]==3.8.14
