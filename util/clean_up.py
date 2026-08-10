@@ -1,4 +1,4 @@
-from submodules.model.business_objects import upload_task
+from submodules.model.business_objects import general, upload_task
 import os
 import shutil
 from submodules.model.daemon import run_without_db_token
@@ -7,7 +7,11 @@ from submodules.model.global_objects import timed_executions
 
 
 def clean_up_database() -> None:
-    upload_task.remove_all_keys(with_commit=True)
+    general.get_ctx_token()
+    try:
+        upload_task.remove_all_keys(with_commit=True)
+    finally:
+        general.remove_and_refresh_session()
 
 
 def clean_up_disk() -> None:
@@ -34,7 +38,10 @@ def __run_timed_executions() -> None:
     sleep(10)  # wait a bit until app is started
     while True:
         try:
+            general.get_ctx_token()
             timed_executions.execute_time_key_update(with_commit=True)
         except Exception as e:
             print(f"Error during timed executions: {e}")
+        finally:
+            general.remove_and_refresh_session()
         sleep(3600)  # run every hour
