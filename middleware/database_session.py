@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_db_session(request: Request, call_next):
-    auth_manager.parse_admin_info(request)
-    info = _prepare_info(request)
     general.get_ctx_token()
     try:
+        auth_manager.parse_admin_info(request)
+        info = _prepare_info(request)
         info.context = {"request": request}
         request.state.info = info
         request.state.parsed = {}
