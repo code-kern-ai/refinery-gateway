@@ -55,9 +55,30 @@ LLM_KWARGS_A2VYBG = {
 
 IS_O_SERIES_A2VYBG = bool("@@IS_O_SERIES@@")
 
+
+def _model_rejects_stop_a2vybg(model: str) -> bool:
+    # GPT-5 (except the original gpt-5-chat) and o1/o3/o4 reject stop.
+    # o3-mini and gpt-5-chat still accept it. Azure deployment names vary.
+    name = (model or "").strip().lower()
+    if "gpt-5-chat" in name:
+        return False
+    if "gpt-5" in name:
+        return True
+    if name.startswith("o3-mini"):
+        return False
+    return name.startswith(("o1", "o3", "o4"))
+
+
 if IS_O_SERIES_A2VYBG:
     del LLM_KWARGS_A2VYBG["temperature"]
     LLM_KWARGS_A2VYBG["max_completion_tokens"] = LLM_KWARGS_A2VYBG.pop("max_tokens")
+
+if (
+    IS_O_SERIES_A2VYBG
+    or _model_rejects_stop_a2vybg(MODEL_A2VYBG)
+    or not LLM_KWARGS_A2VYBG.get("stop")
+):
+    LLM_KWARGS_A2VYBG.pop("stop", None)
 
 
 SYSTEM_PROMPT_A2VYBG = (

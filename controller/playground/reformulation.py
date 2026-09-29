@@ -68,8 +68,10 @@ def __get_openai_value_from(
                 if hasattr(t, "message") and hasattr(t.message, "content"):
                     return t.message.content or ""
             elif isinstance(open_ai_obj, ChatCompletionChunk):
-                if hasattr(t, "delta") and hasattr(t.delta, "content"):
-                    return t.delta.content or ""
+                delta = getattr(t, "delta", None)
+                if delta is None:
+                    return ""
+                return getattr(delta, "content", None) or ""
     else:
         raise ValueError("Unknown open_ai_obj:" + type(open_ai_obj))
     ## if we reach this point, we couldn't access the value
