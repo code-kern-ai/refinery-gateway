@@ -85,12 +85,14 @@ docker==7.2.0
     # via -r requirements/requirements.in
 et-xmlfile==2.0.0
     # via openpyxl
-fastapi==0.142.2
+fastapi==0.136.3
     # via -r requirements/common-requirements.txt
 googleapis-common-protos==1.75.5
     # via
     #   -r requirements/common-requirements.txt
     #   opentelemetry-exporter-otlp-proto-grpc
+greenlet==3.5.6
+    # via sqlalchemy
 grpcio==1.84.0
     # via
     #   -r requirements/common-requirements.txt
@@ -152,7 +154,6 @@ openpyxl==3.1.5
 opentelemetry-api==1.45.0
     # via
     #   -r requirements/common-requirements.txt
-    #   fastapi
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
